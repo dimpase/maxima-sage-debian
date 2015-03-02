@@ -1,3 +1,11 @@
+maxima (5.35.1-1.1) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+  * Create new package maxima-ecl including the maxima ecl binary.
+  * Apply patch build-fasl.patch from Sage to build a fasl library for ecl.
+
+ -- Tobias Hansen <thansen@debian.org>  Mon, 02 Mar 2015 18:33:29 +0100
+
 maxima (5.35.1-1) unstable; urgency=medium
 
   * New upstream release
