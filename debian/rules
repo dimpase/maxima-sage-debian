@@ -166,8 +166,9 @@ install-stamp: build-stamp $(BOOK) $(INSTALLS)
 
 	$(MAKE) install DESTDIR=$$(pwd)/debian/tmp INSTALL="/usr/bin/install -D"
 
+	mkdir -p $$(pwd)/debian/tmp/usr/lib/ecl
 	cp $$(pwd)/src/binary-ecl/maxima.fas \
-		debian/tmp/usr/lib/maxima/$(MVERS)/
+		debian/tmp/usr/lib/ecl/
 
 	mkdir -p $$(pwd)/debian/tmp/usr/share/doc/maxima-doc
 	cp -a debian/tmp/usr/share/maxima/$(MVERS)/doc/* \
