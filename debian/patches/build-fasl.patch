@@ -1,9 +1,9 @@
-Build a fasl library for ecl in addition to an executable program.
-
-References:
-* http://trac.sagemath.org/ticket/16178
-* https://github.com/cschwan/sage-on-gentoo/issues/226
-* https://bugs.gentoo.org/show_bug.cgi?id=499634
+Description: Build a fasl library for ecl in addition to an executable program.
+ References:
+ * http://trac.sagemath.org/ticket/16178
+ * https://github.com/cschwan/sage-on-gentoo/issues/226
+ * https://bugs.gentoo.org/show_bug.cgi?id=499634
+Origin: http://git.sagemath.org/sage.git/tree/build/pkgs/maxima/patches/build-fasl.patch
 
 --- a/src/maxima.system
 +++ b/src/maxima.system
