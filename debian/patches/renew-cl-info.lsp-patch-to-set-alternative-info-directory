@@ -22,15 +22,13 @@ Forwarded: <no|not-needed|url proving that it has been forwarded>
 Reviewed-By: <name and email of someone who approved the patch>
 Last-Update: <YYYY-MM-DD>
 
-Index: maxima-5.34.0/src/cl-info.lisp
-===================================================================
---- maxima-5.34.0.orig/src/cl-info.lisp
-+++ maxima-5.34.0/src/cl-info.lisp
+--- a/src/cl-info.lisp
++++ b/src/cl-info.lisp
 @@ -49,6 +49,8 @@
  
  ; ------------------ search help topics ------------------
  
-+(defvar maxima::*maxima-index-dir* nil)
++(defvar maxima::*maxima-index-dir* "/usr/share/doc/maxima/info")
 +
  (defun load-primary-index ()
    ;; Load the index, but make sure we use a sensible *read-base*.
