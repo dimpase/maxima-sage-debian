@@ -266,7 +266,7 @@ binary-indep: build install
 	dh_installchangelogs  -i
 	dh_link -i
 	dh_strip -i
-	dh_compress -i -X.shtml -X.hh -Xmaxima-index.lisp
+	dh_compress -i -X.shtml -X.hh
 	dh_fixperms -i
 	dh_installdeb -i
 	dh_shlibdeps -i
@@ -289,7 +289,7 @@ binary-arch: build install
 	dh_installchangelogs  -a
 	dh_link -a
 	dh_strip -a $(NO_STRIP)
-	dh_compress -a
+	dh_compress -a -Xmaxima-index.lisp
 	dh_fixperms -a
 	dh_installdeb -a
 	dh_shlibdeps -a
