@@ -266,7 +266,7 @@ binary-indep: build install
 	dh_installchangelogs  -i
 	dh_link -i
 	dh_strip -i
-	dh_compress -i -X.shtml -X.hh
+	dh_compress -i -X.shtml -X.hh -X.info
 	dh_fixperms -i
 	dh_installdeb -i
 	dh_shlibdeps -i
