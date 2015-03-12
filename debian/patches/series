@@ -3,3 +3,6 @@ renew-cl-info.lsp-patch-to-set-alternative-info-directory
 update-config-sub-guess
 utf8-gcl-alphabetp
 build-fasl.patch
+0001-taylor2-Avoid-blowing-the-stack-when-diff-expand-isn.patch
+matrixexp.patch
+stdin-illegal-seek.patch
