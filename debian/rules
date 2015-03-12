@@ -65,7 +65,8 @@ build-stamp:
 		--prefix=/usr \
 		--libexec=/usr/lib \
 		--mandir=/usr/share/man \
-		--infodir=/usr/share/info 
+		--infodir=/usr/share/info \
+		git_found=false
 
 	cp debian/favicon.ico doc/info/figures/
 
