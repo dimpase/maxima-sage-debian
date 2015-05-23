@@ -59,11 +59,13 @@ build-stamp:
 	echo '(progn (dolist (l (quote si::(clines defentry system object bye quit get-setf-method))) (import l :cl)(export l :cl))(export (quote *load-pathname*) :si)(setf (symbol-function (quote si::get-setf-method)) (symbol-function (quote get-setf-expansion)))(setq si::*optimize-maximum-pages* nil)(si::save-system "gcl"))' | GCL_ANSI=t gcl
 
 	PATH=$$(pwd):$$PATH GCL_ANSI=t ./configure --enable-gcl $$(gcl -batch -eval '(progn #-native-reloc(princ "--enable-gcl-alt-link"))') \
+		--enable-ecl \
 		--enable-sys-proclaim \
 		--prefix=/usr \
 		--libexec=/usr/lib \
 		--mandir=/usr/share/man \
-		--infodir=/usr/share/info 
+		--infodir=/usr/share/info \
+		git_found=false
 
 	cp debian/favicon.ico doc/info/figures/
 
@@ -167,6 +169,10 @@ install-stamp: build-stamp $(BOOK) $(INSTALLS)
 
 	$(MAKE) install DESTDIR=$$(pwd)/debian/tmp INSTALL="/usr/bin/install -D"
 
+	mkdir -p $$(pwd)/debian/tmp/usr/lib/ecl
+	cp $$(pwd)/src/binary-ecl/maxima.fas \
+		debian/tmp/usr/lib/ecl/
+
 	mkdir -p $$(pwd)/debian/tmp/usr/share/doc/maxima-doc
 	cp -a debian/tmp/usr/share/maxima/$(MVERS)/doc/* \
 		$$(pwd)/debian/tmp/usr/share/doc/maxima-doc 
@@ -263,7 +269,7 @@ binary-indep: build install
 	dh_installchangelogs  -i
 	dh_link -i
 	dh_strip -i
-	dh_compress -i -X.shtml -X.hh -Xmaxima-index.lisp
+	dh_compress -i -X.shtml -X.hh -X.info
 	dh_fixperms -i
 	dh_installdeb -i
 	dh_shlibdeps -i
@@ -286,7 +292,7 @@ binary-arch: build install
 	dh_installchangelogs  -a
 	dh_link -a
 	dh_strip -a $(NO_STRIP)
-	dh_compress -a
+	dh_compress -a -Xmaxima-index.lisp
 	dh_fixperms -a
 	dh_installdeb -a
 	dh_shlibdeps -a
