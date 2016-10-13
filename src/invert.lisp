@@ -16,16 +16,16 @@
     adj))
 
 (defmfun $invert_by_adjoint (mat)
-  (let* ((adj (simplify ($adjoint mat)))
-	 (ans (let (($scalarmatrixp t))
-		(div adj
-		     (ncmul2 (simplify ($row mat 1))
-			     (simplify ($col adj 1)))))))
-    (if (and (like (trd-msymeval $scalarmatrixp '$scalarmatrixp) t)
-	     (eql ($length mat) 1))
-	(maref ans 1 1)
-	ans)))
-
+  (let*
+    ((adj (simplify ($adjoint mat)))
+     (det (let (($scalarmatrixp t))
+               (ncmul2 (simplify ($row mat 1))
+                       (simplify ($col adj 1)))))
+     (mat1 (if (and $scalarmatrixp (= ($length mat) 1)) (maref adj 1 1) adj)))
+    (if $detout
+      `((mtimes) ((mexpt) ,det -1) ,mat1)
+      (div mat1 det))))
+  
 (add2lnc '$adjoint $props)
 (add2lnc '$invert_by_adjoint $props)
 
@@ -57,11 +57,11 @@
   (if $detout
     (let*
       ((field (mfuncall '$require_ring field-name "$second" "$invert"))
-       (d-i (invert-by-lu-with-determinant m field-name))
+       (d-i (funcall 'invert-by-lu-with-determinant m field-name))
        (d (first d-i))
        (i (second d-i))
-       (d-times-i (multiply-matrix-elements d (mring-mult field) i))
-       (d^-1 (funcall (mring-reciprocal field) d)))
+       (d-times-i (multiply-matrix-elements d (funcall 'mring-mult field) i))
+       (d^-1 (funcall (funcall 'mring-reciprocal field) d)))
       (list '(mtimes) d^-1 d-times-i))
     (mfuncall '$invert_by_lu m field-name)))
 

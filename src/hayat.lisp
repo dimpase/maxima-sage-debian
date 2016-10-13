@@ -115,7 +115,7 @@
 
 (declare-top
  (special vlist
-	  varlist		;List of all the variables occuring in a power
+	  varlist		;List of all the variables occurring in a power
 				;series, the power series variables at the end
 	  genvar		;The list of gensyms corresponding to varlist
 	  modulus		;
@@ -1108,7 +1108,7 @@
    (cond ((or (eq lim1 '$zero) (eq lim2 '$zero)) (setq lim '$zero))
 	 ((and (lim-infp lim1) (lim-infp lim2)) (setq lim '$inf))
 	 ((and (lim-zerop lim1) (lim-zerop lim2)) (setq lim '$pos))
-	 ((or (when (lim-finitep lim2) (exch lim1 lim2) 't)
+	 ((or (when (lim-finitep lim2) (rotatef lim1 lim2) 't)
 	      (lim-finitep lim1))
 	  (when (and (eq lim1 '$finite) (lim-infp lim1))
 	     (break "Undefined finite*inf in lim-times"))
@@ -1190,7 +1190,7 @@
 				   ps-terms)))
 		  ((null po-terms)
 	   ;; This must be exact so that when we invert in rat-ps above
-	   ;; we dont lose any terms. E.g. try
+	   ;; we don't lose any terms. E.g. try
 	   ;; taylor(log(1+exp(-1/x)),x,0,5). When taylor2'ing exp(-1/x),
 	   ;; if you used current trunc here this would return exp(1/x)...5
 	   ;; which would then be trunc'd to degree 3 by psexpt.
@@ -1293,13 +1293,17 @@
 	    (e> e1 e2))
 	(progn
 	  (when (eq (tvar-lim v2) '$finite)
-	    (exch v1 v2) (exch e1 e2) (setq reverse? (not reverse?)))
+	    (rotatef v1 v2)
+	    (rotatef e1 e2)
+	    (setq reverse? (not reverse?)))
 	  (if (eq (tvar-lim v1) '$finite)
 	      (if (eq (tvar-lim v2) '$finite)
 		  (great v1 v2) reverse?)
 	      (progn
 		(when (mtimesp v2)
-		  (exch v1 v2) (exch e1 e2) (setq reverse? (not reverse?)))
+		  (rotatef v1 v2)
+		  (rotatef e1 e2)
+		  (setq reverse? (not reverse?)))
 		(setq ans
 		      (if (mtimesp v1)
 			  (stronger-vars? (order-vars-by-strength (cdr v1))
@@ -1307,7 +1311,9 @@
 								      (ncons (m^ v2 (edisrep e2))))))
 			  (progn
 			    (when (tvar? v2)
-			      (exch v1 v2) (exch e1 e2) (setq reverse? (not reverse?)))
+			      (rotatef v1 v2)
+			      (rotatef e1 e2)
+			      (setq reverse? (not reverse?)))
 			    (if (tvar? v1)
 				(cond ((tvar? v2)
 				       (let ((n1 (cdr (data-gvar-o (get-datum v1 t))))
@@ -1322,7 +1328,9 @@
 				      (t (tay-err (intl:gettext "taylor: Unhandled var in stronger-var?."))))
 				(progn
 				  (when (eq (caar v2) '%log)
-				    (exch v1 v2) (exch e1 e2) (setq reverse? (not reverse?)))
+				    (rotatef v1 v2)
+				    (rotatef e1 e2)
+				    (setq reverse? (not reverse?)))
 				  (if (eq (caar v1) '%log)
 				      (cond ((eq (caar v2) '%log)
 					     (stronger-var? (cadr v1) (cadr v2)))
@@ -1844,7 +1852,7 @@
    (let ((exact-poly t) (tlist) (*within-srf?* 't))
       (setq x (taylor1 x ()) tlist (mrat-tlist x))
       ;; Set trunc levels in the local tlist to correspond to the maximum
-      ;; level occuring in any series.
+      ;; level occurring in any series.
       (do ((data tlist (cdr data))
 	   (truncs (trunc-vector (mrat-ps x) () )))
 	  ((null data))
@@ -2299,7 +2307,7 @@
 		     ;; The reason we call var-expand below instead of taylor2
 		     ;; is that we must be sure the call is not truncated to
 		     ;; 0 which would cause an error in psexpt if exp < 0.
-		     ;; For example, this occured in TAYLOR(X^2/Y,[X,Y],0,2).
+		     ;; For example, this occurred in TAYLOR(X^2/Y,[X,Y],0,2).
 		     (pstimes
 		      ;; Must ensure that we get back a series truncated
 		      ;; to at least what is specified by tlist. This means
@@ -2340,7 +2348,7 @@
 
 (defun try-expansion (arg func)
   (prog (funame funord fun-lc argord psarg arg-trunc temp exact-poly)
-     ;; We bind exact-poly to () since we dont want psexpt retaining
+     ;; We bind exact-poly to () since we don't want psexpt retaining
      ;; higher order terms when subst'ing into series (which aren't exact).
      ;; Try diff-expanding unknown subsripted functions.
      (unless (or (atom func) (known-ps (caar func)))

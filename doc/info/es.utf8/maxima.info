@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/es.utf8//include-maxima.texi.
+/home/vttoth/dev/maxima/doc/info/es.utf8//include-maxima.texi.
 
 Este es el Manual de Maxima en versión Texinfo
 
@@ -11,383 +11,385 @@ END-INFO-DIR-ENTRY
 
 
 Indirect:
-maxima.info-1: 316
-maxima.info-2: 261297
-maxima.info-3: 530185
-maxima.info-4: 816770
-maxima.info-5: 1096831
-maxima.info-6: 1377030
-maxima.info-7: 1639640
-maxima.info-8: 1937206
-maxima.info-9: 2235871
-maxima.info-10: 2312018
+maxima.info-1: 308
+maxima.info-2: 261289
+maxima.info-3: 530187
+maxima.info-4: 816918
+maxima.info-5: 1096985
+maxima.info-6: 1377184
+maxima.info-7: 1639794
+maxima.info-8: 1937922
+maxima.info-9: 2236587
+maxima.info-10: 2312734
 
 Tag Table:
 (Indirect)
-Node: Top316
-Node: Introducción a Maxima16241
-Node: Detección e informe de fallos23353
-Node: Funciones y variables para la detección e informe de fallos23605
-Node: Ayuda28691
-Node: Documentación28885
-Node: Funciones y variables para la ayuda29957
-Node: Línea de comandos39568
-Node: Introducción a la línea de comandos39863
-Node: Funciones y variables para la línea de comandos45507
-Node: Funciones y variables para la impresión73425
-Node: Tipos de datos y estructuras95126
-Node: Números95398
-Node: Introducción a los números95641
-Node: Funciones y variables para los números99355
-Node: Cadenas de texto110235
-Node: Introducción a las cadenas de texto110496
-Node: Funciones y variables para las cadenas de texto112862
-Node: Constantes115836
-Node: Funciones y variables para Constantes116034
-Node: Listas120959
-Node: Introducción a las listas121165
-Node: Funciones y variables para listas122067
-Node: Arrays146655
-Node: Introducción a los arrays146866
-Node: Funciones y variables para los arrays149867
-Node: Estructuras169194
-Node: Introducción a las estructuras169410
-Node: Funciones y variables para las estructuras171135
-Node: Operadores175795
-Node: Introducción a los operadores176150
-Node: Operadores aritméticos182096
-Node: Operadores relacionales191769
-Node: Operadores lógicos194482
-Node: Operadores para ecuaciones197464
-Node: Operadores de asignación202615
-Node: Operadores definidos por el usuario212779
-Node: Evaluación223535
-Node: Introducción a la evaluación223739
-Node: Funciones y variables para la evaluación227560
-Node: Expresiones254260
-Node: Introducción a las expresiones254529
-Node: Nombres y verbos256136
-Node: Identificadores258707
-Node: Desigualdades260972
-Node: Funciones y variables para expresiones261297
-Node: Simplificación311248
-Node: Introducción a la simplificación311480
-Node: Funciones y variables para simplificación316019
-Node: Funciones matemáticas344023
-Node: Funciones para los números344406
-Node: Funciones para los números complejos356132
-Node: Funciones combinatorias361279
-Node: Funciones radicales exponenciales y logarítmicas368728
-Node: Funciones trigonométricas378798
-Node: Introducción a la trigonometría379119
-Node: Funciones y variables para trigonometría380157
-Node: Números aleatorios395195
-Node: Base de datos de Maxima398128
-Node: Introducción a la base de datos de Maxima398484
-Node: Funciones y variables para las propiedades401911
-Node: Funciones y variables para los hechos423330
-Node: Funciones y variables para los predicados440188
-Node: Gráficos448334
-Node: Introducción a los gráficos448663
-Node: Formatos gráficos450304
-Node: Funciones y variables para gráficos453163
-Node: Opciones gráficas469060
-Node: Opciones para Gnuplot482608
-Node: Funciones para el formato Gnuplot_pipes486635
-Node: Lectura y escritura487786
-Node: Comentarios488106
-Node: Archivos489373
-Node: Funciones y variables para lectura y escritura490629
-Node: Funciones y variables para salida TeX513253
-Node: Funciones y variables para salida Fortran523735
-Node: Polinomios526679
-Node: Introducción a los polinomios526901
-Node: Funciones y variables para polinomios530185
-Node: Funciones Especiales591514
-Node: Introducción a las funciones especiales591996
-Node: Funciones de Bessel594149
-Node: Funciones de Airy600851
-Node: Funciones Gamma y factorial602396
-Node: Integral exponencial634830
-Node: Función de error636351
-Node: Funciones de Struve638281
-Node: Funciones hipergeométricas638806
-Node: Funciones de cilindro parabólico641307
-Node: Funciones y variables para las funciones especiales641939
-Node: Funciones elípticas649408
-Node: Introducción a las funciones e integrales elípticas649728
-Node: Funciones y variables para funciones elípticas653712
-Node: Funciones y variables para integrales elípticas656267
-Node: Límites658183
-Node: Funciones y variables para límites658353
-Node: Diferenciación662189
-Node: Funciones y variables para la diferenciación662375
-Node: Integración690995
-Node: Introducción a la integración691274
-Node: Funciones y variables para integración692310
-Node: Introducción a QUADPACK717943
-Ref: Introducción a QUADPACK-Footnote-1721853
-Ref: Introducción a QUADPACK-Footnote-2721916
-Ref: Introducción a QUADPACK-Footnote-3721979
-Ref: Introducción a QUADPACK-Footnote-4722019
-Ref: Introducción a QUADPACK-Footnote-5722078
-Ref: Introducción a QUADPACK-Footnote-6722114
-Ref: Introducción a QUADPACK-Footnote-7722152
-Node: Funciones y variables para QUADPACK722334
-Node: Ecuaciones746903
-Node: Funciones y variable para las ecuaciones747090
-Node: Ecuaciones Diferenciales790244
-Node: Introducción a las ecuaciones diferenciales790524
-Node: Funciones y variables para ecuaciones diferenciales791178
-Node: Métodos numéricos799361
-Node: Introducción a la transformada rápida de Fourier799852
-Node: Funciones y variables para la transformada rápida de Fourier800273
-Node: Funciones para la resolución numérica de ecuaciones808277
-Node: Introducción a la resolución numérica de ecuaciones diferenciales815342
-Node: Funciones para la resolución numérica de ecuaciones diferenciales816770
-Node: Matrices y Álgebra Lineal831109
-Node: Introducción a las matrices y el álgebra lineal831400
-Node: Operador punto831778
-Node: Vectores833250
-Node: Paquete eigen834456
-Node: Funciones y variables para las matrices y el álgebra lineal835269
-Node: Afines887332
-Node: Funciones y variables para Afines887497
-Node: itensor892856
-Node: Introducción a itensor893033
-Node: Funciones y variables para itensor905261
-Node: ctensor976502
-Node: Introducción a ctensor976680
-Node: Funciones y variables para ctensor981309
-Node: atensor1038031
-Node: Introducción a atensor1038226
-Node: Funciones y variables para atensor1042272
-Node: Sumas productos y series1048002
-Node: Funciones y variables para sumas y productos1048435
-Node: Introducción a las series1061111
-Node: Funciones y variables para las series1061754
-Node: Introducción a las series de Fourier1089974
-Node: Funciones y variables para series de Fourier1090445
-Node: Funciones y variables para series de Poisson1093840
-Node: Teoría de Números1096621
-Node: Funciones y variables para teoría de números1096831
-Node: Simetrías1135200
-Node: Funciones y variables para simetrías1136545
-Node: Grupos1174726
-Node: Funciones y variables para grupos1174888
-Node: Entorno de Ejecución1176861
-Node: Introducción al entorno de ejecución1177141
-Node: Interrupciones1178397
-Node: Funciones y variables para el entorno de ejecución1179604
-Node: Miscelánea de opciones1187604
-Node: Introducción a la miscelánea de opciones1187896
-Node: Share1188327
-Node: Funciones y variables para la miscelánea de opciones1189093
-Node: Reglas y patrones1195441
-Node: Introducción a reglas y patrones1195687
-Node: Funciones y variables sobre reglas y patrones1196800
-Node: Conjuntos1236372
-Node: Introducción a los conjuntos1236594
-Node: Funciones y variables para los conjuntos1247323
-Node: Definición de Funciones1298531
-Node: Introducción a la definición de funciones1298827
-Node: Funciones1299073
-Node: Macros1304529
-Node: Funciones y variables para la definición de funciones1313690
-Node: Programación1371157
-Node: Lisp y Maxima1371426
-Node: Recolector de basura1375763
-Node: Introducción a la programación1376683
-Node: Funciones y variables para la programación1377030
-Node: Depurado1408357
-Node: Depuración del código fuente1408588
-Node: Claves de depuración1412735
-Node: Funciones y variables para depurado1415263
-Node: augmented_lagrangian1426175
-Node: Funciones y variables para augmented_lagrangian1426381
-Node: Bernstein1430598
-Node: Funciones y variables para Bernstein1430767
-Node: bode1435735
-Node: Funciones y variables para bode1435875
-Node: cobyla1439136
-Node: Introducción a cobyla1439335
-Node: Funciones y variables para cobyla1441626
-Node: Ejemplos para cobyla1444695
-Node: contrib_ode1445417
-Node: Introducción a contrib_ode1445725
-Node: Funciones y variables para contrib_ode1451247
-Node: Posibles mejoras a contrib_ode1456336
-Node: Pruebas realizadas con contrib_ode1457477
-Node: Referencias para contrib_ode1458319
-Node: descriptive1459883
-Node: Introducción a descriptive1460200
-Node: Funciones y variables para el tratamiento de datos1465432
-Node: Funciones y variables de parámetros descriptivos1478909
-Node: Funciones y variables para gráficos estadísticos1510376
-Node: diag1530471
-Node: Funciones y variables para diag1530614
-Node: distrib1547692
-Node: Introducción a distrib1547937
-Node: Funciones y variables para distribuciones continuas1554274
-Node: Funciones y variables para distribuciones discretas1614230
-Node: draw1638883
-Node: Introducción a draw1639124
-Node: Funciones y variables para draw1639640
-Node: Funciones y variables para picture1770914
-Node: Funciones y variables para worldmap1775532
-Node: drawdf1788033
-Node: Introducción a drawdf1788204
-Node: Funciones y variables para drawdf1790044
-Node: dynamics1798560
-Node: El paquete dynamics1798780
-Node: Análisis gráfico de sistemas dinámicos discretos1799489
-Ref: chaosgame1799752
-Ref: evolution1800585
-Ref: evolution2d1801324
-Ref: ifs1802309
-Ref: orbits1803856
-Ref: staircase1805143
-Node: Visualización usando VTK1806082
-Ref: scene1806573
-Ref: scene_opciones1808859
-Ref: scene_azimuth1808910
-Ref: scene_background1809220
-Ref: scene_elevation1809489
-Ref: scene_height1809828
-Ref: scene_restart1810008
-Ref: scene_tstep1810277
-Ref: scene_width1810507
-Ref: scene_windowname1810686
-Ref: scene_windowtitle1811025
-Ref: scene_objetos1811253
-Ref: cone1811302
-Ref: cube1812182
-Ref: cylinder1812533
-Ref: sphere1813213
-Ref: objeto_opciones1813333
-Ref: objeto_animation1813406
-Ref: objeto_capping1814065
-Ref: objeto_center1814329
-Ref: objeto_color1814755
-Ref: objeto_endphi1815004
-Ref: objeto_endtheta1815465
-Ref: objeto_height1815931
-Ref: objeto_linewidth1816099
-Ref: objeto_opacity1816290
-Ref: objeto_orientation1816550
-Ref: objeto_origin1816947
-Ref: objeto_phiresolution1817224
-Ref: objeto_points1817548
-Ref: objeto_pointsize1817836
-Ref: objeto_position1818023
-Ref: objeto_radius1818242
-Ref: objeto_resolution1818477
-Ref: objeto_scale1818711
-Ref: objeto_startphi1819207
-Ref: objeto_starttheta1819669
-Ref: objeto_surface1820134
-Ref: objeto_thetaresolution1820417
-Ref: objeto_track1820755
-Ref: objeto_xlength1821833
-Ref: objeto_ylength1822063
-Ref: objeto_zlength1822293
-Ref: objeto_wireframe1822523
-Node: ezunits1822814
-Node: Introducción a ezunits1823027
-Node: Introducción a physical_constants1826937
-Node: Funciones y variables para ezunits1831884
-Node: f901860655
-Node: Funciones y variables para f901860790
-Node: finance1862869
-Node: Introducción a finance1863044
-Node: Funciones y Variables para finance1863652
-Node: fractals1874844
-Node: Introducción a fractals1875133
-Node: Definiciones para IFS fractals1875697
-Node: Definiciones para fractales complejos1877567
-Node: Definiciones para cops de Koch1879869
-Node: Definiciones para curvas de Peano1880846
-Node: ggf1881667
-Node: Funciones y variables para ggf1881802
-Node: graphs1883711
-Node: Introducción a graphs1883880
-Node: Funciones y variables para graphs1885010
-Node: grobner1935109
-Node: Introducción a grobner1935286
-Node: Funciones y variables para grobner1937206
-Node: impdiff1951071
-Node: Funciones y variables para impdiff1951223
-Node: interpol1951867
-Node: Introducción a interpol1952049
-Node: Funciones y variables para interpol1952451
-Node: lapack1965693
-Node: Introducción a lapack1965865
-Node: Funciones y variables para lapack1966160
-Node: lbfgs1986145
-Node: Introducción a lbfgs1986314
-Node: Funciones y variables para lbfgs1987379
-Node: lindstedt2002931
-Node: Funciones y variables para lindstedt2003094
-Node: linearalgebra2004381
-Node: Introducción a linearalgebra2004592
-Node: Funciones y variables para linearalgebra2009127
-Node: lsquares2036589
-Node: Funciones y variables para lsquares2036753
-Node: makeOrders2059019
-Node: Funciones y variables para makeOrders2059183
-Node: minpack2060183
-Node: Introducción a minpack2060364
-Node: Funciones y variables para minpack2060666
-Node: mnewton2065257
-Node: Funciones y variables para mnewton2065412
-Node: numericalio2067811
-Node: Introducción a numericalio2068098
-Node: Funciones y variables para entrada y salida en formato texto2072642
-Node: Funciones y variables para entrada y salida en formato binario2078257
-Node: opsubst2082512
-Node: Funciones y variables para opsubst2082669
-Node: orthopoly2085173
-Node: Introducción a polinomios ortogonales2085387
-Ref: Evaluación numérica2096317
-Node: Funciones y variables para polinomios ortogonales2103685
-Node: romberg2111430
-Node: Funciones y variables para romberg2111583
-Node: simplex2118963
-Node: Introducción a simplex2119148
-Node: Funciones y variables para simplex2119640
-Node: simplification2123636
-Node: Introducción a simplification2123936
-Node: Paquete absimp2124336
-Node: Paquete facexp2125434
-Node: Paquete functs2130860
-Node: Paquete ineq2137588
-Node: Paquete rducon2142004
-Node: Paquete scifac2143639
-Node: Paquete sqdnst2144798
-Node: solve_rec2145988
-Node: Introducción a solve_rec2146181
-Node: Funciones y variables para solve_rec2146945
-Node: stats2156287
-Node: Introducción a stats2156563
-Node: Funciones y variables para inference_result2157764
-Node: Funciones y variables para stats2162735
-Node: Funciones y variables para distribuciones especiales2198842
-Node: stirling2200228
-Node: Funciones y variables para stirling2200384
-Node: stringproc2203099
-Node: Introducción al procesamiento de cadenas2203401
-Node: Funciones y variables para entrada y salida2207849
-Node: Funciones y variables para caracteres2218218
-Node: Funciones y variables para cadenas2221347
-Node: to_poly_solve2235696
-Node: Funciones y variables para to_poly_solve2235871
-Node: unit2280031
-Node: Introducción a units2280205
-Node: Funciones y variables para units2283531
-Node: zeilberger2303588
-Node: Introducción a zeilberger2303802
-Node: Funciones y variables para zeilberger2305918
-Node: Índice de Funciones y Variables2312018
+Node: Top308
+Node: Introducción a Maxima16233
+Node: Detección e informe de fallos23345
+Node: Funciones y variables para la detección e informe de fallos23597
+Node: Ayuda28683
+Node: Documentación28877
+Node: Funciones y variables para la ayuda29949
+Node: Línea de comandos39560
+Node: Introducción a la línea de comandos39855
+Node: Funciones y variables para la línea de comandos45499
+Node: Funciones y variables para la impresión73417
+Node: Tipos de datos y estructuras95118
+Node: Números95390
+Node: Introducción a los números95633
+Node: Funciones y variables para los números99347
+Node: Cadenas de texto110227
+Node: Introducción a las cadenas de texto110488
+Node: Funciones y variables para las cadenas de texto112854
+Node: Constantes115828
+Node: Funciones y variables para Constantes116026
+Node: Listas120951
+Node: Introducción a las listas121157
+Node: Funciones y variables para listas122059
+Node: Arrays146647
+Node: Introducción a los arrays146858
+Node: Funciones y variables para los arrays149859
+Node: Estructuras169186
+Node: Introducción a las estructuras169402
+Node: Funciones y variables para las estructuras171127
+Node: Operadores175787
+Node: Introducción a los operadores176142
+Node: Operadores aritméticos182088
+Node: Operadores relacionales191761
+Node: Operadores lógicos194474
+Node: Operadores para ecuaciones197456
+Node: Operadores de asignación202607
+Node: Operadores definidos por el usuario212771
+Node: Evaluación223527
+Node: Introducción a la evaluación223731
+Node: Funciones y variables para la evaluación227552
+Node: Expresiones254252
+Node: Introducción a las expresiones254521
+Node: Nombres y verbos256128
+Node: Identificadores258699
+Node: Desigualdades260964
+Node: Funciones y variables para expresiones261289
+Node: Simplificación311240
+Node: Introducción a la simplificación311472
+Node: Funciones y variables para simplificación316011
+Node: Funciones matemáticas344015
+Node: Funciones para los números344398
+Node: Funciones para los números complejos356124
+Node: Funciones combinatorias361271
+Node: Funciones radicales exponenciales y logarítmicas368720
+Node: Funciones trigonométricas378790
+Node: Introducción a la trigonometría379111
+Node: Funciones y variables para trigonometría380149
+Node: Números aleatorios395187
+Node: Base de datos de Maxima398120
+Node: Introducción a la base de datos de Maxima398476
+Node: Funciones y variables para las propiedades401903
+Node: Funciones y variables para los hechos423322
+Node: Funciones y variables para los predicados440180
+Node: Gráficos448326
+Node: Introducción a los gráficos448655
+Node: Formatos gráficos450306
+Node: Funciones y variables para gráficos453165
+Ref: plot2d455607
+Node: Opciones gráficas469062
+Ref: color470836
+Node: Opciones para Gnuplot482610
+Node: Funciones para el formato Gnuplot_pipes486637
+Node: Lectura y escritura487788
+Node: Comentarios488108
+Node: Archivos489375
+Node: Funciones y variables para lectura y escritura490631
+Node: Funciones y variables para salida TeX513255
+Node: Funciones y variables para salida Fortran523737
+Node: Polinomios526681
+Node: Introducción a los polinomios526903
+Node: Funciones y variables para polinomios530187
+Node: Funciones Especiales591516
+Node: Introducción a las funciones especiales591998
+Node: Funciones de Bessel594151
+Node: Funciones de Airy600853
+Node: Funciones Gamma y factorial602398
+Node: Integral exponencial634832
+Node: Función de error636353
+Node: Funciones de Struve638283
+Node: Funciones hipergeométricas638808
+Node: Funciones de cilindro parabólico641309
+Node: Funciones y variables para las funciones especiales641941
+Node: Funciones elípticas649410
+Node: Introducción a las funciones e integrales elípticas649730
+Node: Funciones y variables para funciones elípticas653714
+Node: Funciones y variables para integrales elípticas656269
+Node: Límites658185
+Node: Funciones y variables para límites658355
+Node: Diferenciación662191
+Node: Funciones y variables para la diferenciación662377
+Node: Integración690997
+Node: Introducción a la integración691276
+Node: Funciones y variables para integración692312
+Node: Introducción a QUADPACK717958
+Ref: Introducción a QUADPACK-Footnote-1721868
+Ref: Introducción a QUADPACK-Footnote-2721931
+Ref: Introducción a QUADPACK-Footnote-3721994
+Ref: Introducción a QUADPACK-Footnote-4722034
+Ref: Introducción a QUADPACK-Footnote-5722093
+Ref: Introducción a QUADPACK-Footnote-6722129
+Ref: Introducción a QUADPACK-Footnote-7722167
+Node: Funciones y variables para QUADPACK722349
+Node: Ecuaciones746918
+Node: Funciones y variable para las ecuaciones747105
+Node: Ecuaciones Diferenciales790259
+Node: Introducción a las ecuaciones diferenciales790539
+Node: Funciones y variables para ecuaciones diferenciales791193
+Node: Métodos numéricos799376
+Node: Introducción a la transformada rápida de Fourier799867
+Node: Funciones y variables para la transformada rápida de Fourier800288
+Node: Funciones para la resolución numérica de ecuaciones808425
+Node: Introducción a la resolución numérica de ecuaciones diferenciales815490
+Node: Funciones para la resolución numérica de ecuaciones diferenciales816918
+Node: Matrices y Álgebra Lineal831257
+Node: Introducción a las matrices y el álgebra lineal831548
+Node: Operador punto831926
+Node: Vectores833398
+Node: Paquete eigen834604
+Node: Funciones y variables para las matrices y el álgebra lineal835417
+Node: Afines887480
+Node: Funciones y variables para Afines887645
+Node: itensor893004
+Node: Introducción a itensor893181
+Node: Funciones y variables para itensor905409
+Node: ctensor976650
+Node: Introducción a ctensor976828
+Node: Funciones y variables para ctensor981457
+Node: atensor1038179
+Node: Introducción a atensor1038374
+Node: Funciones y variables para atensor1042420
+Node: Sumas productos y series1048150
+Node: Funciones y variables para sumas y productos1048583
+Node: Introducción a las series1061265
+Node: Funciones y variables para las series1061908
+Node: Introducción a las series de Fourier1090128
+Node: Funciones y variables para series de Fourier1090599
+Node: Funciones y variables para series de Poisson1093994
+Node: Teoría de Números1096775
+Node: Funciones y variables para teoría de números1096985
+Node: Simetrías1135354
+Node: Funciones y variables para simetrías1136699
+Node: Grupos1174880
+Node: Funciones y variables para grupos1175042
+Node: Entorno de Ejecución1177015
+Node: Introducción al entorno de ejecución1177295
+Node: Interrupciones1178551
+Node: Funciones y variables para el entorno de ejecución1179758
+Node: Miscelánea de opciones1187758
+Node: Introducción a la miscelánea de opciones1188050
+Node: Share1188481
+Node: Funciones y variables para la miscelánea de opciones1189247
+Node: Reglas y patrones1195595
+Node: Introducción a reglas y patrones1195841
+Node: Funciones y variables sobre reglas y patrones1196954
+Node: Conjuntos1236526
+Node: Introducción a los conjuntos1236748
+Node: Funciones y variables para los conjuntos1247477
+Node: Definición de Funciones1298685
+Node: Introducción a la definición de funciones1298981
+Node: Funciones1299227
+Node: Macros1304683
+Node: Funciones y variables para la definición de funciones1313844
+Node: Programación1371311
+Node: Lisp y Maxima1371580
+Node: Recolector de basura1375917
+Node: Introducción a la programación1376837
+Node: Funciones y variables para la programación1377184
+Node: Depurado1408511
+Node: Depuración del código fuente1408742
+Node: Claves de depuración1412889
+Node: Funciones y variables para depurado1415417
+Node: augmented_lagrangian1426329
+Node: Funciones y variables para augmented_lagrangian1426535
+Node: Bernstein1430752
+Node: Funciones y variables para Bernstein1430921
+Node: bode1435889
+Node: Funciones y variables para bode1436029
+Node: cobyla1439290
+Node: Introducción a cobyla1439489
+Node: Funciones y variables para cobyla1441780
+Node: Ejemplos para cobyla1444849
+Node: contrib_ode1445571
+Node: Introducción a contrib_ode1445879
+Node: Funciones y variables para contrib_ode1451401
+Node: Posibles mejoras a contrib_ode1456490
+Node: Pruebas realizadas con contrib_ode1457631
+Node: Referencias para contrib_ode1458473
+Node: descriptive1460037
+Node: Introducción a descriptive1460354
+Node: Funciones y variables para el tratamiento de datos1465586
+Node: Funciones y variables de parámetros descriptivos1479063
+Node: Funciones y variables para gráficos estadísticos1510530
+Node: diag1530625
+Node: Funciones y variables para diag1530768
+Node: distrib1547846
+Node: Introducción a distrib1548091
+Node: Funciones y variables para distribuciones continuas1554428
+Node: Funciones y variables para distribuciones discretas1614384
+Node: draw1639037
+Node: Introducción a draw1639278
+Node: Funciones y variables para draw1639794
+Node: Funciones y variables para picture1771622
+Node: Funciones y variables para worldmap1776240
+Node: drawdf1788732
+Node: Introducción a drawdf1788903
+Node: Funciones y variables para drawdf1790743
+Node: dynamics1799259
+Node: El paquete dynamics1799479
+Node: Análisis gráfico de sistemas dinámicos discretos1800205
+Ref: chaosgame1800468
+Ref: evolution1801301
+Ref: evolution2d1802040
+Ref: ifs1803025
+Ref: orbits1804572
+Ref: staircase1805859
+Node: Visualización usando VTK1806798
+Ref: scene1807289
+Ref: scene_opciones1809575
+Ref: scene_azimuth1809626
+Ref: scene_background1809936
+Ref: scene_elevation1810205
+Ref: scene_height1810544
+Ref: scene_restart1810724
+Ref: scene_tstep1810993
+Ref: scene_width1811223
+Ref: scene_windowname1811402
+Ref: scene_windowtitle1811741
+Ref: scene_objetos1811969
+Ref: cone1812018
+Ref: cube1812898
+Ref: cylinder1813249
+Ref: sphere1813929
+Ref: objeto_opciones1814049
+Ref: objeto_animation1814122
+Ref: objeto_capping1814781
+Ref: objeto_center1815045
+Ref: objeto_color1815471
+Ref: objeto_endphi1815720
+Ref: objeto_endtheta1816181
+Ref: objeto_height1816647
+Ref: objeto_linewidth1816815
+Ref: objeto_opacity1817006
+Ref: objeto_orientation1817266
+Ref: objeto_origin1817663
+Ref: objeto_phiresolution1817940
+Ref: objeto_points1818264
+Ref: objeto_pointsize1818552
+Ref: objeto_position1818739
+Ref: objeto_radius1818958
+Ref: objeto_resolution1819193
+Ref: objeto_scale1819427
+Ref: objeto_startphi1819923
+Ref: objeto_starttheta1820385
+Ref: objeto_surface1820850
+Ref: objeto_thetaresolution1821133
+Ref: objeto_track1821471
+Ref: objeto_xlength1822549
+Ref: objeto_ylength1822779
+Ref: objeto_zlength1823009
+Ref: objeto_wireframe1823239
+Node: ezunits1823530
+Node: Introducción a ezunits1823743
+Node: Introducción a physical_constants1827653
+Node: Funciones y variables para ezunits1832600
+Node: f901861371
+Node: Funciones y variables para f901861506
+Node: finance1863585
+Node: Introducción a finance1863760
+Node: Funciones y Variables para finance1864368
+Node: fractals1875560
+Node: Introducción a fractals1875849
+Node: Definiciones para IFS fractals1876413
+Node: Definiciones para fractales complejos1878283
+Node: Definiciones para cops de Koch1880585
+Node: Definiciones para curvas de Peano1881562
+Node: ggf1882383
+Node: Funciones y variables para ggf1882518
+Node: graphs1884427
+Node: Introducción a graphs1884596
+Node: Funciones y variables para graphs1885726
+Node: grobner1935825
+Node: Introducción a grobner1936002
+Node: Funciones y variables para grobner1937922
+Node: impdiff1951787
+Node: Funciones y variables para impdiff1951939
+Node: interpol1952583
+Node: Introducción a interpol1952765
+Node: Funciones y variables para interpol1953167
+Node: lapack1966409
+Node: Introducción a lapack1966581
+Node: Funciones y variables para lapack1966876
+Node: lbfgs1986861
+Node: Introducción a lbfgs1987030
+Node: Funciones y variables para lbfgs1988095
+Node: lindstedt2003647
+Node: Funciones y variables para lindstedt2003810
+Node: linearalgebra2005097
+Node: Introducción a linearalgebra2005308
+Node: Funciones y variables para linearalgebra2009843
+Node: lsquares2037305
+Node: Funciones y variables para lsquares2037469
+Node: makeOrders2059735
+Node: Funciones y variables para makeOrders2059899
+Node: minpack2060899
+Node: Introducción a minpack2061080
+Node: Funciones y variables para minpack2061382
+Node: mnewton2065973
+Node: Funciones y variables para mnewton2066128
+Node: numericalio2068527
+Node: Introducción a numericalio2068814
+Node: Funciones y variables para entrada y salida en formato texto2073358
+Node: Funciones y variables para entrada y salida en formato binario2078973
+Node: opsubst2083228
+Node: Funciones y variables para opsubst2083385
+Node: orthopoly2085889
+Node: Introducción a polinomios ortogonales2086103
+Ref: Evaluación numérica2097033
+Node: Funciones y variables para polinomios ortogonales2104401
+Node: romberg2112146
+Node: Funciones y variables para romberg2112299
+Node: simplex2119679
+Node: Introducción a simplex2119864
+Node: Funciones y variables para simplex2120356
+Node: simplification2124352
+Node: Introducción a simplification2124652
+Node: Paquete absimp2125052
+Node: Paquete facexp2126150
+Node: Paquete functs2131576
+Node: Paquete ineq2138304
+Node: Paquete rducon2142720
+Node: Paquete scifac2144355
+Node: Paquete sqdnst2145514
+Node: solve_rec2146704
+Node: Introducción a solve_rec2146897
+Node: Funciones y variables para solve_rec2147661
+Node: stats2157003
+Node: Introducción a stats2157279
+Node: Funciones y variables para inference_result2158480
+Node: Funciones y variables para stats2163451
+Node: Funciones y variables para distribuciones especiales2199558
+Node: stirling2200944
+Node: Funciones y variables para stirling2201100
+Node: stringproc2203815
+Node: Introducción al procesamiento de cadenas2204117
+Node: Funciones y variables para entrada y salida2208565
+Node: Funciones y variables para caracteres2218934
+Node: Funciones y variables para cadenas2222063
+Node: to_poly_solve2236412
+Node: Funciones y variables para to_poly_solve2236587
+Node: unit2280747
+Node: Introducción a units2280921
+Node: Funciones y variables para units2284247
+Node: zeilberger2304304
+Node: Introducción a zeilberger2304518
+Node: Funciones y variables para zeilberger2306634
+Node: Índice de Funciones y Variables2312734
 
 End Tag Table
 

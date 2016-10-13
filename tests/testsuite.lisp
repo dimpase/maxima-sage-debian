@@ -7,9 +7,12 @@
 
 (setf $testsuite_files
       '((mlist simp)
-        "rtestnset" "rtest1" "rtest1a"
+        "rtest_rules"
+        "rtestnset" 
+        ((mlist) "rtest1" 180)
+        "rtest1a"
         ((mlist) "rtest2" 86 95)
-         "rtest4"
+	"rtest4"
         "rtest5"
         "rtest6" "rtest6a" "rtest6b" "rtest7"
         "rtest9" 
@@ -45,7 +48,7 @@
         "rtest_boolean"
         "rtest_round"
         ((mlist simp) "rtest_map" 2 3 4)
-        ((mlist simp) "rtest_sign" 21 25 30 40 65 72 77 79)
+        ((mlist simp) "rtest_sign" 21 25 30 40 65 72 79)
         "rtest_algebraic"
         "rtest_gamma"
         "rtest_expintegral"
@@ -57,9 +60,11 @@
         ((mlist simp) "rtest_sqrt" 89)
         ((mlist simp) "rtest_carg" 40 41)
         ((mlist simp) "rtest_log")
-        ((mlist simp) "rtest_power" 19 20 26 58 62 65)
+        ((mlist simp) "rtest_power" 19 20 26 58 65)
         "rtestdefstruct"
         "rtest_limit"
         "rtest_powerseries"
         ((mlist) "rtest_laplace" 29 49 50 51 54 59 60 61 62 78 80)
+        "rtest_plotoptions"
 	))
+

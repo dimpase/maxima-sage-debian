@@ -94,6 +94,12 @@
 		 (apply *alt-display1d* form ())
 		 (linear-displa form))))))
 
+(defmspec $with_default_2d_display (expr)
+  (let ((*alt-display2d* nil)
+        ($display2d t)
+        (mexpr (cons '(mprog) (cdr expr))))    
+    (meval mexpr)))
+
 ;;; (LINEAR-DISPLA <thing-to-display>)
 ;;;
 ;;; Display text linearly. This function should be usable in any case
@@ -123,7 +129,7 @@
     (cond ((atom form)
 	   (dimension-atom form result))
 	  ((and (atom (car form)) (setq form (cons '(mprogn) form)) nil))
-	  ((or (<= (lbp (caar form)) (rbp lop)) (> (lbp rop) (rbp (caar form))))
+	  ((or (<= (lbp (caar form)) (rbp lop)) (>= (lbp rop) (rbp (caar form))))
 	   (dimension-paren form result))
 	  ((member 'array (car form) :test #'eq) (dimension-array form result))
 	  ((safe-get (caar form) 'dimension)
@@ -1320,7 +1326,7 @@
 	     (pop dmstr)))
 	  ((integerp (caar dmstr))
 	   ;; Why update OLDCOL and not OLDROW?  Should either update both
-	   ;; (requiring multiple value return) or neither (analagous to lambda
+	   ;; (requiring multiple value return) or neither (analogous to lambda
 	   ;; binding).
 	   (setq oldcol (draw-linear (reverse (cddar dmstr))
 				     (+ oldrow (cadar dmstr))

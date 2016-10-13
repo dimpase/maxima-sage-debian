@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info//include-maxima.texi.
+../../doc/info//include-maxima.texi.
 
 This is a Texinfo Maxima Manual
 
@@ -13,7 +13,7 @@ END-INFO-DIR-ENTRY
 
 File: maxima.info,  Node: Top,  Next: Introduction to Maxima,  Prev: (dir),  Up: (dir)
 
-Maxima 5.35.1 Manual
+Maxima 5.38.1 Manual
 ********************
 
 Maxima is a computer algebra system, implemented in Lisp.
@@ -81,55 +81,63 @@ Advanced facilities and programming
 * Debugging::                   Debugging Maxima programs.
 
 Additional packages
-* alt-display::                 Alternative display package.
-* asympa::                      Asymptotic analysis package.
-* augmented_lagrangian::        augmented_lagrangian package.
-* Bernstein::                   Bernstein polynomials.
-* bode::                        Bode gain and phase plots.
-* clebsch_gordan::              Clebsch-Gordan and Wigner coefficients
-* cobyla::                      Nonlinear optimization with inequality constraints.
-* contrib_ode::                 Additional routines for ODEs
-* descriptive::                 Descriptive statistics.
-* diag::                        Jordan matrices.
-* distrib::                     Probability distributions.
-* draw::                        A Maxima-Gnuplot interface.
-* drawdf::                      Direction fields with Gnuplot.
-* dynamics::                    3D visualization, animations and dynamical systems.
-* ezunits::                     Dimensional quantities.
-* f90::                         Maxima to fortran translator.
-* finance::                     Financial package.
-* fractals::                    Fractals.
-* ggf::                         Generating function of sequences.
-* graphs::                      Graph theory package.
-* grobner::                     Functions for working with Groebner bases.
-* impdiff::                     Implicit derivatives.
-* interpol::                    Interpolation package.
-* lapack::                      LAPACK functions for linear algebra.
-* lbfgs::                       L-BFGS unconstrained minimization package.
-* lindstedt::                   Lindstedt package.
-* linearalgebra::               Functions for linear algebra.
-* lsquares::                    Least squares.
-* makeOrders::                  Polynomial utility.
-* minpack::                     MINPACK functions for minimization and roots
-* mnewton::                     Newton's method.
-* numericalio::                 Reading and writing files.
-* opsubst::                     Substitutions utility.
-* orthopoly::                   Orthogonal polynomials.
-* romberg::                     Romberg method for numerical integration.
-* simplex::                     Linear programming.
-* simplification::              Simplification rules and functions.
-* solve_rec::                   Linear recurrences.
-* stats::                       Statistical inference package.
-* stirling::                    Stirling formula.
-* stringproc::                  String processing.
-* to_poly_solve::               to_poly_solve package.
-* unit::                        Units and dimensions package.
-* zeilberger::                  Functions for hypergeometric summation.
+* alt-display-pkg::                 Alternative display package.
+* asympa-pkg::                      Asymptotic analysis package.
+* augmented_lagrangian-pkg::        augmented_lagrangian package.
+* Bernstein-pkg::                   Bernstein polynomials.
+* bitwise-pkg::                     Manipulate bits of integers.
+* bode-pkg::                        Bode gain and phase plots.
+* celine-pkg::                      Sister Celine's method
+* clebsch_gordan-pkg::              Clebsch-Gordan and Wigner coefficients
+* cobyla-pkg::                      Nonlinear optimization with inequality constraints.
+* contrib_ode-pkg::                 Additional routines for ODEs
+* descriptive-pkg::                 Descriptive statistics.
+* diag-pkg::                        Jordan matrices.
+* distrib-pkg::                     Probability distributions.
+* draw-pkg::                        A Maxima-Gnuplot interface.
+* drawdf-pkg::                      Direction fields with Gnuplot.
+* dynamics-pkg::                    3D visualization, animations and dynamical systems.
+* engineering-format-pkg::          Display floats as a*10^b with b mod 3 = 0.
+* ezunits-pkg::                     Dimensional quantities.
+* f90-pkg::                         Maxima to fortran translator.
+* finance-pkg::                     Financial package.
+* fractals-pkg::                    Fractals.
+* ggf-pkg::                         Generating function of sequences.
+* graphs-pkg::                      Graph theory package.
+* grobner-pkg::                     Functions for working with Groebner bases.
+* impdiff-pkg::                     Implicit derivatives.
+* interpol-pkg::                    Interpolation package.
+* lapack-pkg::                      LAPACK functions for linear algebra.
+* lbfgs-pkg::                       L-BFGS unconstrained minimization package.
+* lindstedt-pkg::                   Lindstedt package.
+* linearalgebra-pkg::               Functions for linear algebra.
+* lsquares-pkg::                    Least squares.
+* makeOrders-pkg::                  Polynomial utility.
+* minpack-pkg::                     MINPACK functions for minimization and roots
+* mnewton-pkg::                     Newton's method.
+* numericalio-pkg::                 Reading and writing files.
+* operatingsystem-pkg::             Common operating system tasks (create/remove dirs+files,...).
+* opsubst-pkg::                     Substitutions utility.
+* orthopoly-pkg::                   Orthogonal polynomials.
+* ratpow-pkg::                      Determine the coefficients of polynoms.
+* romberg-pkg::                     Romberg method for numerical integration.
+* simplex-pkg::                     Linear programming.
+* simplification-pkg::              Simplification rules and functions.
+* solve_rec-pkg::                   Linear recurrences.
+* stats-pkg::                       Statistical inference package.
+* stirling-pkg::                    Stirling formula.
+* stringproc-pkg::                  String processing.
+* to_poly_solve-pkg::               to_poly_solve package.
+* unit-pkg::                        Units and dimensions package.
+* zeilberger-pkg::                  Functions for hypergeometric summation.
+
+Understanding maxima's output
+* Error and warning messages::  Error and warning messages
 
 Index
 * Function and Variable Index:: Index.
 
- --- The Detailed Node Listing ---
+ -- The Detailed Node Listing --
 
 Introduction
 * Introduction to Maxima::
@@ -337,6 +345,9 @@ augmented_lagrangian
 Bernstein
 * Functions and Variables for Bernstein::
 
+Bitwise
+* Functions and Variables for bitwise::
+
 bode
 * Functions and Variables for bode::
 
@@ -456,12 +467,20 @@ numericalio
 * Functions and Variables for plain-text input and output::
 * Functions and Variables for binary input and output::
 
+operatingsystem
+* Introduction to operatingsystem::
+* Directory operations::
+* Environment operations::
+
 opsubst
 * Functions and Variables for opsubst::
 
 orthopoly
 * Introduction to orthogonal polynomials::
 * Functions and Variables for orthogonal polynomials::
+
+ratpow
+* Functions and Variables for ratpow::
 
 romberg
 * Functions and Variables for romberg::
@@ -494,10 +513,11 @@ stirling
 * Functions and Variables for stirling::
 
 stringproc
-* Introduction to string processing::
-* Functions and Variables for input and output::
-* Functions and Variables for characters::
-* Functions and Variables for strings::
+* Introduction to String Processing::
+* Input and Output::
+* Characters::
+* String Processing::
+* Octets and Utilities for Cryptography::
 
 to_poly_solve
 * Functions and Variables for to_poly_solve::
@@ -509,6 +529,10 @@ unit
 zeilberger
 * Introduction to zeilberger::
 * Functions and Variables for zeilberger::
+
+Understanding maxima's output
+* Error messages::
+* Warning messages::
 
 
 File: maxima.info,  Node: Introduction to Maxima,  Next: Bug Detection and Reporting,  Prev: Top,  Up: Top
@@ -715,6 +739,14 @@ File: maxima.info,  Node: Functions and Variables for Bug Detection and Reportin
           individual test is shown if `display_all' is `true'.  The
           default is `false', so no timing information is shown.
 
+    `share_tests'
+          Load additional tests for the `share' directory.  If `true',
+          these additional tests are run as a part of the testsuite.  If
+          `false', no tests from the `share' directory are run.  If
+          `only', only the tests from the `share' directory are run.
+          Of course, the actual set of test that are run can be
+          controlled by the `tests' option. The default is `false'.
+
      For example `run_testsuite(display_known_bugs = true,
      tests=[rtest5])' runs just test `rtest5' and displays the test
      that are marked as known bugs.
@@ -746,6 +778,12 @@ File: maxima.info,  Node: Functions and Variables for Bug Detection and Reportin
      fail: 57 and 63.
 
 
+ -- Option variable: share_testsuite_files
+     `share_testsuite_files' is the set of tests from the `share'
+     directory that is run as a part of the test suite by
+     `run_testsuite'..
+
+
  -- Function: bug_report ()
      Prints out Maxima and Lisp version numbers, and gives a link to
      the Maxima project bug report web page.  The version information
@@ -770,30 +808,46 @@ File: maxima.info,  Node: Functions and Variables for Bug Detection and Reportin
 
           (%i1) build_info ();
           (%o1)
-          Maxima version: "5.26.0_16_gb72c64c_dirty"
-          Maxima build date: "2012-01-29 12:29:04"
-          Host type: "i686-pc-linux-gnu"
-          Lisp implementation type: "CMU Common Lisp"
-          Lisp implementation version: "CVS release-19a 19a-release-20040728 + minimal debian patches"
+          Maxima version: "5.36.1"
+          Maxima build date: "2015-06-02 11:26:48"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "GNU Common Lisp (GCL)"
+          Lisp implementation version: "GCL 2.6.12"
           (%i2) x : build_info ()$
           (%i3) x@version;
-          (%o3)               5.26.0_16_gb72c64c_dirty
+          (%o3)                               5.36.1
           (%i4) x@timestamp;
-          (%o4)                  2012-01-29 12:29:04
+          (%o4)                         2015-06-02 11:26:48
           (%i5) x@host;
-          (%o5)                   i686-pc-linux-gnu
+          (%o5)                      x86_64-unknown-linux-gnu
           (%i6) x@lisp_name;
-          (%o6)                    CMU Common Lisp
+          (%o6)                        GNU Common Lisp (GCL)
           (%i7) x@lisp_version;
-          (%o7)
-              CVS release-19a 19a-release-20040728 + minimal debian patches
+          (%o7)                             GCL 2.6.12
           (%i8) x;
           (%o8)
-          Maxima version: "5.26.0_16_gb72c64c_dirty"
-          Maxima build date: "2012-01-29 12:29:04"
-          Host type: "i686-pc-linux-gnu"
-          Lisp implementation type: "CMU Common Lisp"
-          Lisp implementation version: "CVS release-19a 19a-release-20040728 + minimal debian patches"
+          Maxima version: "5.36.1"
+          Maxima build date: "2015-06-02 11:26:48"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "GNU Common Lisp (GCL)"
+          Lisp implementation version: "GCL 2.6.12"
+
+     The Maxima version string can (here 5.36.1) can look very
+     different:
+
+          (%i1) build_info();
+          (%o1)
+          Maxima version: "branch_5_37_base_331_g8322940_dirty"
+          Maxima build date: "2016-01-01 15:37:35"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "CLISP"
+          Lisp implementation version: "2.49 (2010-07-07) (built 3605577779) (memory 3660647857)"
+
+     In that case, Maxima was not build from a released sourcecode, but
+     directly from the GIT-checkout of the sourcecode.  In the example,
+     the checkout is 331 commits after the latest GIT tag (usually a
+     Maxima (major) release (5.37 in our example)) and the abbreviated
+     commit hash of the last commit was "8322940".
 
 
 
@@ -865,7 +919,7 @@ File: maxima.info,  Node: Functions and Variables for Help,  Prev: Documentation
           (%o1) [%gamma, gamma, gammalim, gamma_expand, gamma_greek,
           gamma_incomplete, gamma_incomplete_generalized,
           gamma_incomplete_regularized, Gamma, log_gamma, makegamma,
-          prefer_gamma_incomplete,
+          prefer_gamma_incomplete, gamma-incomplete,
           gamma_incomplete_generalized_regularized]
 
 
@@ -992,18 +1046,17 @@ File: maxima.info,  Node: Functions and Variables for Help,  Prev: Documentation
      Examples:
 
           (%i1) example(append);
-          (%i2) append([x+y,0,-3.2],[2.5e+20,x])
+          (%i2) append([y+x,0,-3.2],[2.5e+20,x])
           (%o2)             [y + x, 0, - 3.2, 2.5e+20, x]
           (%o2)                         done
           (%i3) example("lambda");
-
-          (%i4) lambda([x,y,z],z^2+y^2+x^2)
+          (%i4) lambda([x,y,z],x^2+y^2+z^2)
                                               2    2    2
-          (%o4)            lambda([x, y, z], z  + y  + x )
+          (%o4)            lambda([x, y, z], x  + y  + z )
           (%i5) %(1,2,a)
                                         2
           (%o5)                        a  + 5
-          (%i6) a+2+1
+          (%i6) 1+2+a
           (%o6)                         a + 3
           (%o6)                         done
 
@@ -1270,7 +1323,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
      single character.  Because Maxima internally takes into account
      only the first char of the prefix, the prefixes `inchar',
      `outchar', and `linechar' should have a different first char.
-     Otherwise some commands like `kill(inlables)' do not work as
+     Otherwise some commands like `kill(inlabels)' do not work as
      expected.
 
      See also `labels'.
@@ -1282,7 +1335,6 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
           (input2) expand((a+b)^3);
                                3        2      2      3
           (%o2)               b  + 3 a b  + 3 a  b + a
-          (input3)
 
 
  -- System variable: infolists
@@ -1447,7 +1499,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
      single character.  Because Maxima internally takes into account
      only the first char of the prefix, the prefixes `inchar',
      `outchar', and `linechar' should have a different first char.
-     Otherwise some commands like `kill(inlables)' do not work as
+     Otherwise some commands like `kill(inlabels)' do not work as
      expected.
 
      Intermediate expressions might or might not be displayed.  See
@@ -1514,7 +1566,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
      single character.  Because Maxima internally takes into account
      only the first char of the prefix, the prefixes `inchar',
      `outchar' and `linechar' should have a different first char.
-     Otherwise some commands like `kill(inlables)' do not work as
+     Otherwise some commands like `kill(inlabels)' do not work as
      expected.
 
      See also `labels'.
@@ -1526,7 +1578,6 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
           (%i2) expand((a+b)^3);
                                3        2      2      3
           (output2)           b  + 3 a b  + 3 a  b + a
-          (%i3)
 
 
  -- Function: playback
@@ -1706,7 +1757,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
      it is not bound to a value, and not the user function `f'.  The
      values are removed from the variables.  `values' is the empty list.
 
-          (%i1) [a:99, b::a-90, c:a-b, d, f(x):= x^2];
+          (%i1) [a:99, b:: a-90, c:a-b, d, f(x):=x^2];
                                                      2
           (%o1)              [99, 9, 90, d, f(x) := x ]
           (%i2) values;
@@ -1774,7 +1825,7 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
                                             2
                                        x - x
 
-                                  .8414709848078965
+                                 0.8414709848078965
 
           (%o3)                         done
 
@@ -1800,7 +1851,7 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
                                    b     = x - x
                                     1, 2
 
-                            sin(1.0) = .8414709848078965
+                            sin(1.0) = 0.8414709848078965
 
           (%o3)                         done
 
@@ -1970,12 +2021,13 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
           +252*aa^5*bb^5+210*aa^6*bb^4+120*aa^7*bb^3+45*aa^8*bb^2+10*aa^9*\
           bb+aa^10
           (%i14) cholesky (A):= block ([n : length (A), L : copymatrix (A),
-            p : makelist (0, i, 1, length (A))], for i thru n do
-            for j : i thru n do
+            p : makelist (0, i, 1, length (A))],
+            for i thru n do for j : i thru n do
             (x : L[i, j], x : x - sum (L[j, k] * L[i, k], k, 1, i - 1),
             if i = j then p[i] : 1 / sqrt(x) else L[j, i] : x * p[i]),
             for i thru n do L[i, i] : 1 / p[i],
             for i thru n do for j : i + 1 thru n do L[i, j] : 0, L)$
+          define: warning: redefining the built-in function cholesky
           (%i15) grind (cholesky);
           cholesky(A):=block(
                    [n:length(A),L:copymatrix(A),
@@ -2015,12 +2067,13 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
 
      `ibase' may be assigned any integer between 2 and 36 (decimal),
      inclusive.  When `ibase' is greater than 10, the numerals comprise
-     the decimal numerals 0 through 9 plus letters of the alphabet A,
-     B, C, ..., as needed to make `ibase' digits in all.  Letters are
-     interpreted as digits only if the first digit is 0 through 9.
+     the decimal numerals 0 through 9 plus letters of the alphabet `A',
+     `B', `C', ..., as needed to make `ibase' digits in all.  Letters
+     are interpreted as digits only if the first digit is 0 through 9.
+
      Uppercase and lowercase letters are not distinguished.  The
      numerals for base 36, the largest acceptable base, comprise 0
-     through 9 and A through Z.
+     through 9 and `A' through `Z'.
 
      Whatever the value of `ibase', when an integer is terminated by a
      decimal point, it is interpreted in base 10.
@@ -2029,7 +2082,7 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
 
      Examples:
 
-     `ibase' less than 10.
+     `ibase' less than 10 (for example binary numbers).
 
           (%i1) ibase : 2 $
           (%i2) obase;
@@ -2038,7 +2091,8 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
           (%o3)                         65535
 
      `ibase' greater than 10.  Letters are interpreted as digits only
-     if the first digit is 0 through 9.
+     if the first digit is 0 through 9 which means that hexadecimal
+     numbers might need to be prepended by a 0.
 
           (%i1) ibase : 16 $
           (%i2) obase;
@@ -2208,9 +2262,9 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
 
           (%i1) obase : 2;
           (%o1)                          10
-          (%i2) 2^8 - 1;
+          (%i10) 2^8 - 1;
           (%o10)                      11111111
-          (%i3) obase : 8;
+          (%i11) obase : 8;
           (%o3)                          10
           (%i4) 8^8 - 1;
           (%o4)                       77777777
@@ -2379,38 +2433,6 @@ functions of complex expressions can usually be accomplished by using
 the `realpart', `imagpart', `rectform', `polarform', `abs', `carg'
 functions.
 
-Floating point numbers
-----------------------
-
-Maxima has two types of floating point number. The first is just called
-a "float" (but will be called a "machine float" for the rest of this
-section to avoid ambiguity). This is stored in the underlying lisp's
-DOUBLE-FLOAT type which will almost certainly be IEEE 754 double
-precision floating point. To type a literal floating point number, just
-type its decimal expansion (for example, `0.01') or type it with an
-explicit exponent (such as `1e-2' or `0.1e-1').
-
-   The second type of floating point number in Maxima is called a
-"bigfloat". Bigfloats are stored as a mantissa and exponent in the same
-way as machine floats but the exponent is an arbitrary precision
-integer, so they can represent arbitrarily large or small numbers. The
-user can also customise the precision of bigfloat arithmetic (which
-corresponds to choosing the range of the mantissa). See `fpprec' for
-more information. To type a literal bigfloat, use the exponent notation
-as above but with the character `b' in place of `e'. The example of
-`0.01' from above could be entered as a bigfloat with `1b-2' or
-`0.001b0'.
-
-   Calculations using machine floats can be significantly faster than
-using bigfloats since modern computer processors have dedicated
-hardware for them. This is particularly noticeable with compiled Maxima
-code. However, machine floats suffer from the problem of overflow,
-where a number can become too large for its exponent to be represented
-in the bits available. In interpreted code, the default behaviour is
-that a calculation that would cause a floating point overflow instead
-generates a bigfloat number. To configure this, see the
-`promote_float_to_bigfloat' variable.
-
 
 File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introduction to Numbers,  Up: Numbers
 
@@ -2469,8 +2491,11 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
 
 
  -- Function: evenp (<expr>)
-     Returns `true' if <expr> is an even integer.  `false' is returned
-     in all other cases.
+     Returns `true' if <expr> is a literal even integer, otherwise
+     `false'.
+
+     `evenp' returns `false' if <expr> is a symbol, even if <expr> is
+     declared `even'.
 
 
  -- Function: float (<expr>)
@@ -2530,8 +2555,8 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
      Returns `true' if <expr> is a literal numeric integer, otherwise
      `false'.
 
-     `integerp' returns `false' if its argument is a symbol, even if
-     the argument is declared integer.
+     `integerp' returns `false' if <expr> is a symbol, even if <expr>
+     is declared `integer'.
 
      Examples:
 
@@ -2582,10 +2607,10 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
      Returns `true' if <expr> is a literal integer, rational number,
      floating point number, or bigfloat, otherwise `false'.
 
-     `numberp' returns `false' if its argument is a symbol, even if the
-     argument is a symbolic number such as `%pi' or `%i', or declared
-     to be `even', `odd', `integer', `rational', `irrational', `real',
-     `imaginary', or `complex'.
+     `numberp' returns `false' if <expr> is a symbol, even if <expr> is
+     a symbolic number such as `%pi' or `%i', or declared to be `even',
+     `odd', `integer', `rational', `irrational', `real', `imaginary',
+     or `complex'.
 
      Examples:
 
@@ -2622,7 +2647,7 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
           (%o1)            [sqrt(2), sin(1), -----------]
                                              sqrt(3) + 1
           (%i2) [sqrt(2), sin(1), 1/(1+sqrt(3))],numer;
-          (%o2) [1.414213562373095, .8414709848078965, .3660254037844387]
+          (%o2) [1.414213562373095, 0.8414709848078965, 0.3660254037844387]
 
 
  -- Option variable: numer_pbranch
@@ -2639,19 +2664,18 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
      Examples:
 
           (%i1) (-2)^0.75;
-          (%o1) (-2)^0.75
-
+                                           0.75
+          (%o1)                       (- 2)
           (%i2) (-2)^0.75,numer_pbranch:true;
-          (%o2) 1.189207115002721*%i-1.189207115002721
-
+          (%o2)       1.189207115002721 %i - 1.189207115002721
           (%i3) (-2)^(3/4);
-          (%o3) (-1)^(3/4)*2^(3/4)
-
+                                         3/4  3/4
+          (%o3)                     (- 1)    2
           (%i4) (-2)^(3/4),numer;
-          (%o4) 1.681792830507429*(-1)^0.75
-
+                                                    0.75
+          (%o4)              1.681792830507429 (- 1)
           (%i5) (-2)^(3/4),numer,numer_pbranch:true;
-          (%o5) 1.189207115002721*%i-1.189207115002721
+          (%o5)       1.189207115002721 %i - 1.189207115002721
 
 
  -- Function: numerval (<x_1>, <expr_1>, ..., <var_n>, <expr_n>)
@@ -2665,24 +2689,11 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
 
 
  -- Function: oddp (<expr>)
-     is `true' if <expr> is an odd integer.  `false' is returned in all
-     other cases.
+     Returns `true' if <expr> is a literal odd integer, otherwise
+     `false'.
 
-
- -- Option variable: promote_float_to_bigfloat
-     Default value: `true'
-
-     When `promote_float_to_bigfloat' is true, the result of any
-     floating point calculation that would normally cause a floating
-     point overflow is replaced by a bigfloat number that represents the
-     result. Note that this automatic promotion only happens in
-     interpreted code: compiled code is not affected.
-
-     This automatic conversion is often convenient, but can be
-     unhelpful in some cases. For example, it can actually cause a loss
-     of precision if `fpprec' is currently smaller than the precision
-     in a floating point number. To disable this behaviour, set
-     `promote_float_to_bigfloat' to false.
+     `oddp' returns `false' if <expr> is a symbol, even if <expr> is
+     declared `odd'.
 
 
  -- Option variable: ratepsilon
@@ -2706,9 +2717,9 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
           (%o1)                           -
                                           2
           (%i2) rationalize (0.1);
-                                         1
-          (%o2)                          --
-                                         10
+                                  3602879701896397
+          (%o2)                   -----------------
+                                  36028797018963968
           (%i3) fpprec : 5$
           (%i4) rationalize (0.1b0);
                                        209715
@@ -2720,9 +2731,9 @@ File: maxima.info,  Node: Functions and Variables for Numbers,  Prev: Introducti
           (%o6)                ----------------------
                                2361183241434822606848
           (%i7) rationalize (sin (0.1*x + 5.6));
-                                        x    28
-          (%o7)                     sin(-- + --)
-                                        10   5
+                         3602879701896397 x   3152519739159347
+          (%o7)      sin(------------------ + ----------------)
+                         36028797018963968    562949953421312
 
 
  -- Function: ratnump (<expr>)
@@ -2772,26 +2783,23 @@ with strings.
    Examples:
 
      (%i1) s_1 : "This is a string.";
-     (%o1)               This is a string.
+     (%o1)                   This is a string.
      (%i2) s_2 : "Embedded \"double quotes\" and backslash \\ characters.";
      (%o2) Embedded "double quotes" and backslash \ characters.
      (%i3) s_3 : "Embedded line termination
-     in this string.";
      (%o3) Embedded line termination
      in this string.
-     (%i4) s_4 : "Ignore the \
-     line termination \
-     characters in \
-     this string.";
+     (%i4) in this string.";
      (%o4) Ignore the line termination characters in this string.
-     (%i5) stringdisp : false;
+     (%i5) s_4 : "Ignore the \
      (%o5)                         false
-     (%i6) s_1;
+     (%i6) line termination \
      (%o6)                   This is a string.
-     (%i7) stringdisp : true;
+     (%i7) characters in \
      (%o7)                         true
-     (%i8) s_1;
+     (%i8) this string.";
      (%o8)                  "This is a string."
+     (%i9) stringdisp : false;
 
 
 File: maxima.info,  Node: Functions and Variables for Strings,  Prev: Introduction to Strings,  Up: Strings
@@ -3047,6 +3055,7 @@ File: maxima.info,  Node: Lists,  Next: Arrays,  Prev: Constants,  Up: Data Type
 
 * Introduction to Lists::
 * Functions and Variables for Lists::
+* Performance considerations for Lists::
 
 
 File: maxima.info,  Node: Introduction to Lists,  Next: Functions and Variables for Lists,  Prev: Lists,  Up: Lists
@@ -3068,7 +3077,7 @@ infix notation `a+2'.  Maxima also has lists which are printed as
 for a list with 4 elements.  Internally this corresponds to a Lisp list
 of the form
 
-     ((MLIST) 1  2  7  ((MPLUS)  $X $Y ))
+     ((MLIST) 1 2 7 ((MPLUS) $X $Y))
 
 The flag which denotes the type field of the Maxima expression is a list
 itself, since after it has been through the simplifier the list would
@@ -3077,7 +3086,7 @@ become
      ((MLIST SIMP) 1 2 7 ((MPLUS SIMP) $X $Y))
 
 
-File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction to Lists,  Up: Lists
+File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance considerations for Lists,  Prev: Introduction to Lists,  Up: Lists
 
 5.4.2 Functions and Variables for Lists
 ---------------------------------------
@@ -3087,7 +3096,10 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      `[' and `]' mark the beginning and end, respectively, of a list.
 
      `[' and `]' also enclose the subscripts of a list, array, hash
-     array, or array function.
+     array, or array function. Note that other than for arrays
+     accessing the `n'th element of a list needs an amount of time that
+     is roughly proportional to  `n', *Note Performance considerations
+     for Lists::.
 
      Examples:
 
@@ -3122,6 +3134,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      expressions, e.g. `append (f(a,b), f(c,d,e));' yields
      `f(a,b,c,d,e)'.
 
+     See also `join'.
+
      Do `example(append);' for an example.
 
 
@@ -3148,12 +3162,12 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      [[y,1]])', there is no matching element, so `assoc' returns
      `false'.
 
-          (%i1)                 assoc(y, [[x, 1], [y, 2], [z, 3]])
-          (%o1)                                  2
-          (%i2)                 assoc(z, [[x, 1], [z, 2], [z, 3]])
-          (%o2)                                  2
-          (%i3)                         assoc(x, [[y, 1]])
-          (%o3)                                false
+          (%i1) assoc (y, [[x,1], [y,2],[z,3]]);
+          (%o1)                           2
+          (%i2) assoc (z, [[x,1], [z,2], [z,3]]);
+          (%o2)                           2
+          (%i3) assoc (x, [[y,1]]);
+          (%o3)                         false
 
 
  -- Function: cons
@@ -3170,9 +3184,9 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      operator as <expr_2> but with argument `cons(expr_1,
      args(expr_2))'.  Examples:
           (%i1) cons(a,[b,c,d]);
-          (%o1)                            [a, b, c, d]
+          (%o1)                     [a, b, c, d]
           (%i2) cons(a,f(b,c,d));
-          (%o2)                            f(a, b, c, d)
+          (%o2)                     f(a, b, c, d)
 
      In general, `cons' applied to a nonlist doesn't make sense. For
      instance, `cons(a,b^c)' results in an illegal expression, since
@@ -3183,10 +3197,10 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      Especially when `inflag' is true, `cons' applied to a nonlist
      sometimes gives a surprising result; for example
           (%i1) cons(a,-a), inflag : true;
-                                                  2
-          (%o1)                                - a
+                                           2
+          (%o1)                         - a
           (%i2) cons(a,-a), inflag : false;
-          (%o2)                                  0
+          (%o2)                           0
 
 
  -- Function: copylist (<list>)
@@ -3272,8 +3286,6 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      Arguments which are `equal' but not "=" are not removed.
 
           (%i1) [is (equal (0, 0)), is (equal (0, 0.0)), is (equal (0, 0b0))];
-          rat: replaced 0.0 by 0/1 = 0.0
-          `rat' replaced 0.0B0 by 0/1 = 0.0B0
           (%o1)                  [true, true, true]
           (%i2) [is (0 = 0), is (0 = 0.0), is (0 = 0b0)];
           (%o2)                 [true, false, false]
@@ -3303,9 +3315,9 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      <expr_2>)' returns an expression with same operator as <expr_2>
      but with argument `endcons(expr_1, args(expr_2))'. Examples:
           (%i1) endcons(a,[b,c,d]);
-          (%o1)                            [b, c, d, a]
+          (%o1)                     [b, c, d, a]
           (%i2) endcons(a,f(b,c,d));
-          (%o2)                            f(b, c, d, a)
+          (%o2)                     f(b, c, d, a)
 
      In general, `endcons' applied to a nonlist doesn't make sense. For
      instance, `endcons(a,b^c)' results in an illegal expression, since
@@ -3315,11 +3327,11 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      structure of an expression, otherwise `endcons' operates on the
      displayed form. Especially when `inflag' is true, `endcons' applied
      to a nonlist sometimes gives a surprising result; for example
-          (%i1) endcons(a,-a),inflag : true;
-                                                  2
-          (%o1)                                - a
-          (%i2) endcons(a,-a),inflag : false;
-          (%o2)                                  0
+          (%i1) endcons(a,-a), inflag : true;
+                                           2
+          (%o1)                         - a
+          (%i2) endcons(a,-a), inflag : false;
+          (%o2)                           0
 
 
  -- Function: fifth (<expr>)
@@ -3330,15 +3342,38 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
  -- Function: first (<expr>)
      Returns the first part of <expr> which may result in the first
      element of a list, the first row of a matrix, the first term of a
-     sum, etc.  Note that `first' and its related functions, `rest' and
-     `last', work on the form of <expr> which is displayed not the form
-     which is typed on input.  If the variable `inflag' is set to
-     `true' however, these functions will look at the internal form of
-     <expr>.  Note that the simplifier re-orders expressions.  Thus
-     `first(x+y)' will be `x' if `inflag' is `true' and `y' if `inflag'
-     is `false' (`first(y+x)' gives the same results).  The functions
-     `second' ...  `tenth' yield the second through the tenth part of
-     their input argument.
+     sum, etc.:
+          (%i1) matrix([1,2],[3,4]);
+                                             [ 1  2 ]
+          (%o1)                              [      ]
+                                             [ 3  4 ]
+          (%i2) first(%);
+          (%o2)                              [1,2]
+          (%i3) first(%);
+          (%o3)                              1
+          (%i4) first(a*b/c+d+e/x);
+                                             a b
+          (%o4)                              ---
+                                              c
+          (%i5) first(a=b/c+d+e/x);
+          (%o5)                              a
+     Note that `first' and its related functions, `rest' and `last',
+     work on the form of <expr> which is displayed not the form which
+     is typed on input.  If the variable `inflag' is set to `true'
+     however, these functions will look at the internal form of <expr>.
+     One reason why this may make a difference is that the simplifier
+     re-orders expressions:
+          (%i1) x+y;
+          (%o1)                              y+1
+          (%i2) first(x+y),inflag : true;
+          (%o2)                              x
+          (%i3) first(x+y),inflag : false;
+          (%o3)                              y
+
+     The functions `second' ...  `tenth' yield the second through the
+     tenth part of their input argument.
+
+     See also `part'.
 
 
  -- Function: fourth (<expr>)
@@ -3356,6 +3391,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      longer list.
 
      Maxima complains if <l> or <m> is not a list.
+
+     See also `append'.
 
      Examples:
 
@@ -3381,6 +3418,12 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      `length(a/(b*c));' gives 2 if `inflag' is `false' (Assuming
      `exptdispflag' is `true'), but 3 if `inflag' is `true' (the
      internal representation is essentially `a*b^-1*c^-1').
+
+     Determining a list's length typically needs an amount of time
+     proportional to the number of elements in the list. If the length
+     of a list is used inside a loop it therefore might drastically
+     increase the performance if the length is calculated outside the
+     loop instead.
 
 
  -- Option variable: listarith
@@ -3499,26 +3542,28 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
 
      Examples:
 
-          (%i1) ll : [];
-          (%o1)                                 []
-          (%i2) push(x,ll);
-          (%o2)                                 [x]
-          (%i3) push(x^2+y,ll);
-                                                  2
-          (%o3)                             [y + x , x]
-          (%i4) push("string",ll);
-                                                      2
-          (%o4)                         [string, y + x , x]
-          (%i5) pop(ll);
-          (%o5)                               string
-          (%i6) pop(ll);
-                                                   2
-          (%o6)                               y + x
-          (%i7) pop(ll);
-          (%o7)                                  x
+          (%i1) ll: [];
+          (%o1)                          []
+          (%i2) push (x, ll);
+          (%o2)                          [x]
+          (%i3) push (x^2+y, ll);
+                                           2
+          (%o3)                      [y + x , x]
+          (%i4) a: push ("string", ll);
+                                               2
+          (%o4)                  [string, y + x , x]
+          (%i5) pop (ll);
+          (%o5)                        string
+          (%i6) pop (ll);
+                                            2
+          (%o6)                        y + x
+          (%i7) pop (ll);
+          (%o7)                           x
           (%i8) ll;
-          (%o8)                                 []
-          (%i9)
+          (%o8)                          []
+          (%i9) a;
+                                               2
+          (%o9)                  [string, y + x , x]
 
 
  -- Function: rest
@@ -3631,8 +3676,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
           (%i4) infix (">>");
           (%o4)                          >>
           (%i5) a >> b := a[1] > b[1];
-          (%o5)                   a >> b := a  > b
-                                             1    1
+          (%o5)                  (a >> b) := a  > b
+                                              1    1
           (%i6) sort (L, ">>");
           (%o6)           [[4, w], [3, y], [2, z], [1, x]]
           (%i7) sort (L, lambda ([a, b], a[1] > b[1]));
@@ -3652,11 +3697,11 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      descending order.
 
           (%i1) L : [a, 2*b, -5, 7, 1 + %e, %pi];
-          (%o1)                    [a, 2 b, - 5, 7, %e + 1, %pi]
+          (%o1)             [a, 2 b, - 5, 7, %e + 1, %pi]
           (%i2) sort (L);
-          (%o2)                    [- 5, 7, %e + 1, %pi, a, 2 b]
+          (%o2)             [- 5, 7, %e + 1, %pi, a, 2 b]
           (%i3) sort (L, 'ordergreatp);
-          (%o3)                    [2 b, a, %pi, %e + 1, 7, - 5]
+          (%o3)             [2 b, a, %pi, %e + 1, 7, - 5]
 
      All Maxima atoms and expressions are comparable under `orderlessp'
      and `ordergreatp'.
@@ -3697,8 +3742,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
           (%o2) [minf, 0, sin(1), 1, 1.0, 1.0b0, 2, %e, 3, inf, %i,
                                                                %i + 1, 2 x]
           (%i3) sort (L, orderlessp);
-          (%o3) [0, 1, 1.0, 2, 3, %e, %i, %i + 1, inf, minf, sin(1),
-                                                                1.0b0, 2 x]
+          (%o3) [0, 1, 1.0, 2, 3, sin(1), 1.0b0, %e, %i, %i + 1, inf,
+                                                                 minf, 2 x]
 
 
  -- Function: sublist (<list>, <p>)
@@ -3759,6 +3804,72 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Prev: Introduction
      Returns the 3'rd item of expression or list <expr>.  See `first'
      for more details.
 
+
+
+File: maxima.info,  Node: Performance considerations for Lists,  Prev: Functions and Variables for Lists,  Up: Lists
+
+5.4.3 Performance considerations for Lists
+------------------------------------------
+
+Lists provide efficient ways of appending and removing elements.  They
+can be created without knowing their final dimensions.  Lisp provides
+efficient means of copying and handling lists.  Also nested lists do
+not need to be strictly rectangular.  These advantages over declared
+arrays come with the drawback that the amount of time needed for
+accessing a random element within a list is roughly proportional to the
+element's distance from its beginning.  Efficient traversal of lists is
+still possible, though, by using the list as a stack or a fifo:
+
+     (%i1) l:[Test,1,2,3,4];
+     (%o1)                  [Test, 1, 2, 3, 4]
+     (%i2) while l # [] do
+        disp(pop(l));
+                                   Test
+
+                                     1
+
+                                     2
+
+                                     3
+
+                                     4
+
+     (%o2)                         done
+   Another even faster example would be:
+     (%i1) l:[Test,1,2,3,4];
+     (%o1)                  [Test, 1, 2, 3, 4]
+     (%i2) for i in l do
+        disp(pop(l));
+                                   Test
+
+                                     1
+
+                                     2
+
+                                     3
+
+                                     4
+
+     (%o2)                         done
+
+   Beginning traversal with the last element of a list is possible after
+reversing the list using `reverse ()'.  If the elements of a long list
+need to be processed in a different order performance might be
+increased by converting the list into a declared array first.
+
+   It is also to note that the ending condition of `for' loops is
+tested for every iteration which means that the result of a `length'
+should be cached if it is used in the ending condition:
+
+     (%i1) l:makelist(i,i,1,100000)$
+     (%i2) lngth:length(l);
+     (%o2)                        100000
+     (%i3) x:1;
+     (%o3)                           1
+     (%i4) for i:1 thru lngth do
+         x:x+1$
+     (%i5) x;
+     (%o5)                        100001
 
 
 File: maxima.info,  Node: Arrays,  Next: Structures,  Prev: Lists,  Up: Data Types and Structures
@@ -4236,31 +4347,32 @@ File: maxima.info,  Node: Functions and Variables for Arrays,  Prev: Arrays,  Up
 
 
  -- Option variable: use_fast_arrays
-     If `true' then only two types of arrays are recognized:
+     Default value: `false'
 
-       1. The art-q array (t in Common Lisp) which may have several
-          dimensions indexed by integers, and may hold any Lisp or
-          Maxima object as an entry.  To construct such an array, enter
-          `a:make_array(any,3,4);' then `a' will have as value, an
-          array with twelve slots, and the indexing is zero based.
+     When `use_fast_arrays' is `true', undeclared arrays and arrays
+     declared by `array' are values instead of properties, and
+     undeclared arrays are implemented as Lisp hash tables.
 
-       2. The Hash_table array which is the default type of array
-          created if one does `b[x+1]:y^2' (and `b' is not already an
-          array, a list, or a matrix - if it were one of these an error
-          would be caused since `x+1' would not be a valid subscript
-          for an art-q array, a list or a matrix).  Its indices (also
-          known as keys) may be any object.  It only takes one key at a
-          time (`b[x+1,u]:y' would ignore the `u').  Referencing is
-          done by `b[x+1] ==> y^2'.  Of course the key may be a list,
-          e.g. `b[[x+1,u]]:y' would be valid.  This is incompatible
-          with the old Maxima hash arrays, but saves consing.
+     When `use_fast_arrays' is `false', undeclared arrays and arrays
+     declared by `array' are properties, and undeclared arrays are
+     implemented with Maxima's own hash table implementation.
 
-     An advantage of storing the arrays as values of the symbol is that
-     the usual conventions about local variables of a function apply to
-     arrays as well.  The Hash_table type also uses less consing and is
-     more efficient than the old type of Maxima hashar.  To obtain
-     consistent behaviour in translated and compiled code set
-     `translate_fast_arrays' to be `true'.
+     Arrays created by `make_array' are not affected by
+     `use_fast_arrays'.
+
+     See also `translate_fast_arrays'.
+
+
+ -- Option variable: translate_fast_arrays
+     Default value: `false'
+
+     When `translate_fast_arrays' is `true', the Maxima-to-Lisp
+     translator generates code that assumes arrays are values instead
+     of properties, as if `use_fast_arrays' were `true'.
+
+     When `translate_fast_arrays' is `false', the Maxima-to-Lisp
+     translator generates code that assumes arrays are properties, as
+     if `use_fast_arrays' were `false'.
 
 
 
@@ -4523,15 +4635,13 @@ quote mark `''.
      (%i5) declare (bar, noun);
      (%o5)                         done
      (%i6) bar (x) := x/17;
-                                          x
-     (%o6)                    ''bar(x) := --
-                                          17
+                                         x
+     (%o6)                     bar(x) := --
+                                         17
      (%i7) bar (52);
      (%o7)                        bar(52)
      (%i8) bar (52), nouns;
-                                    52
-     (%o8)                          --
-                                    17
+     (%o8)                        bar(52)
      (%i9) integrate (1/x, x, 1, 42);
      (%o9)                        log(42)
      (%i10) 'integrate (1/x, x, 1, 42);
@@ -4667,7 +4777,23 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      `inflag'.
 
      `args (<expr>)' is equivalent to `substpart ("[", <expr>, 0)'.
-     See also `substpart', and `op'.
+     See also `substpart', `apply', `funmake', and `op'.
+
+     How to convert a matrix to a nested list:
+          (%i1) M:matrix([1,2],[3,4]);
+                                      [ 1  2 ]
+          (%o1)                       [      ]
+                                      [ 3  4 ]
+          (%i2) args(M);
+          (%o2)                   [[1, 2], [3, 4]]
+
+     Since maxima internally treats a sum of `n' terms as a summation
+     command with `n' arguments args() can extract the list of terms in
+     a sum:
+          (%i1) a+b+c;
+          (%o1)                       c + b + a
+          (%i2) args(%);
+          (%o2)                       [c, b, a]
 
 
  -- Function: atom (<expr>)
@@ -4842,18 +4968,18 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      `%e^x' in `%e^(a x)'.
 
           (%i1) %e^(a*x);
-                                                 a x
-          (%o1)                                %e
+                                          a x
+          (%o1)                         %e
           (%i2) exptsubst;
-          (%o2)                                false
+          (%o2)                         false
           (%i3) subst(y, %e^x, %e^(a*x));
-                                                 a x
-          (%o3)                                %e
+                                          a x
+          (%o3)                         %e
           (%i4) exptsubst: not exptsubst;
-          (%o4)                                true
+          (%o4)                         true
           (%i5) subst(y, %e^x, %e^(a*x));
-                                                 a
-          (%o5)                                 y
+                                          a
+          (%o5)                          y
 
 
  -- Function: freeof (<x_1>, ..., <x_n>, <expr>)
@@ -5026,7 +5152,6 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
 
           (%t3)                          2 b
 
-
                                     2            2
           (%t4)                    b  + 2 a b + a
 
@@ -5047,15 +5172,6 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      declared as `constant' type via `declare', and `constantp' returns
      `true' for all variables declared as `constant'. The default is to
      omit constant variables from `listofvars' return value.
-
-     Example:
-
-          (%i1) lfreeof ([ a, x], x^2+b);
-          (%o1)                                false
-          lfreeof ([ b, x], x^2+b);
-          (%o2)                                false
-          lfreeof ([ a, y], x^2+b);
-          (%o3)                                true
 
 
  -- Option variable: listdummyvars
@@ -5096,6 +5212,15 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
  -- Function: lfreeof (<list>, <expr>)
      For each member <m> of <list>, calls `freeof (<m>, <expr>)'.  It
      returns `false' if any call to `freeof' does and `true' otherwise.
+
+     Example:
+
+          (%i1) lfreeof ([ a, x], x^2+b);
+          (%o1)                         false
+          (%i2) lfreeof ([ b, x], x^2+b);
+          (%o2)                         false
+          (%i3) lfreeof ([ a, y], x^2+b);
+          (%o3)                         true
 
 
  -- Function: lpart (<label>, <expr>, <n_1>, ..., <n_k>)
@@ -5227,20 +5352,20 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      (x^2, r, r+r[0]))' will work.
 
           (%i1) r+r[0];
-          (%o1)                               r + r
-                                                   0
+          (%o1)                        r + r
+                                            0
           (%i2) opsubst;
-          (%o2)                                true
+          (%o2)                         true
           (%i3) subst (x^2, r, r+r[0]);
-                                             2     2
-          (%o3)                             x  + (x )
-                                                     0
+                                      2     2
+          (%o3)                      x  + (x )
+                                              0
           (%i4) opsubst: not opsubst;
-          (%o4)                                false
+          (%o4)                         false
           (%i5) subst (x^2, r, r+r[0]);
-                                               2
-          (%o5)                               x  + r
-                                                    0
+                                        2
+          (%o5)                        x  + r
+                                             0
 
 
  -- Function: optimize (<expr>)
@@ -5322,8 +5447,8 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
 
           (%i1) stringdisp : true;
           (%o1)                         true
-          (%i2) sort([%pi, 3b0, 3.0, x, X, "foo", 3, a, 4, "bar", 4.0, 4b0]);
-          (%o2) [3, 3.0, 4, 4.0, 3.0b0, 4.0b0, %pi, "bar", "foo", a, x, X]
+          (%i2) sort ([%pi, 3b0, 3.0, x, X, "foo", 3, a, 4, "bar", 4.0, 4b0]);
+          (%o2) [3, 3.0, 4, 4.0, 3.0b0, 4.0b0, %pi, "bar", "foo", X, a, x]
 
      Effect of `ordergreat' and `orderless' functions.
 
@@ -5339,7 +5464,7 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      Effect of `mainvar', `constant', and `scalar' declarations.
 
           (%i1) sort ([aa, foo, bar, bb, baz, quux, cc, dd, A1, B1, C1]);
-          (%o1)   [aa, bar, baz, bb, cc, dd, foo, quux, A1, B1, C1]
+          (%o1)   [A1, B1, C1, aa, bar, baz, bb, cc, dd, foo, quux]
           (%i2) declare (aa, mainvar);
           (%o2)                         done
           (%i3) declare ([baz, quux], constant);
@@ -5347,17 +5472,17 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
           (%i4) declare ([A1, B1], scalar);
           (%o4)                         done
           (%i5) sort ([aa, foo, bar, bb, baz, quux, cc, dd, A1, B1, C1]);
-          (%o5)   [baz, quux, A1, B1, bar, bb, cc, dd, foo, C1, aa]
+          (%o5)   [baz, quux, A1, B1, C1, bar, bb, cc, dd, foo, aa]
 
      Ordering non-atomic expressions.
 
-          (%i1) sort([1, 2, n, f(1), f(2), f(2, 1), g(1), g(1, 2), g(n),
-                      f(n, 1)]);
+          (%i1) sort ([1, 2, n, f(1), f(2), f(2, 1), g(1), g(1, 2), g(n),
+                 f(n, 1)]);
           (%o1) [1, 2, f(1), g(1), g(1, 2), f(2), f(2, 1), n, g(n),
                                                                    f(n, 1)]
           (%i2) sort ([foo(1), X[1], X[k], foo(k), 1, k]);
-          (%o2)            [1, foo(1), X , k, foo(k), X ]
-                                        1              k
+          (%o2)            [1, X , foo(1), k, X , foo(k)]
+                                1              k
 
 
  -- Function: part (<expr>, <n_1>, ..., <n_k>)
@@ -5388,11 +5513,11 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      Examples:
 
           (%i1) part(z+2*y+a,2);
-          (%o1)                                 2 y
+          (%o1)                          2 y
           (%i2) part(z+2*y+a,[1,3]);
-          (%o2)                                z + a
+          (%o2)                         z + a
           (%i3) part(z+2*y+a,2,1);
-          (%o3)                                  2
+          (%o3)                           2
 
      `example (part)' displays additional examples.
 
@@ -5528,10 +5653,10 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      second example shows the result for the function `subst', which
      does a serial substitution.
 
-          (%i4) psubst ([a^2=b, b=a], sin(a^2) + sin(b));
-          (%o4)                           sin(b) + sin(a)
-          (%i5) subst ([a^2=b, b=a], sin(a^2) + sin(b));
-          (%o5)                              2 sin(a)
+          (%i1) psubst ([a^2=b, b=a], sin(a^2) + sin(b));
+          (%o1)                    sin(b) + sin(a)
+          (%i2) subst ([a^2=b, b=a], sin(a^2) + sin(b));
+          (%o2)                       2 sin(a)
 
 
  -- Function: rembox
@@ -5557,21 +5682,15 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
                                                 2
                                                h
           (%i2) dpart (dpart (expr, 1, 1), 2, 2);
-                                  """""""    a d - b c
-          (%o2)               sin("%pi x") + ---------
-                                  """""""      """"
-                                               " 2"
-                                               "h "
-                                               """"
+          dpart: fell off the end.
+           -- an error. To debug this try: debugmode(true);
           (%i3) expr2: lpart (BAR, lpart (FOO, %, 1), 2);
-                            FOO"""""""""""   BAR""""""""
-                            "    """"""" "   "a d - b c"
-          (%o3)             "sin("%pi x")" + "---------"
-                            "    """"""" "   "  """"   "
-                            """"""""""""""   "  " 2"   "
-                                             "  "h "   "
-                                             "  """"   "
-                                             """""""""""
+                                            BAR""""""""
+                             FOO"""""""""   "a d - b c"
+          (%o3)              "sin(%pi x)" + "---------"
+                             """"""""""""   "    2    "
+                                            "   h     "
+                                            """""""""""
           (%i4) rembox (expr2, unlabelled);
                                             BAR""""""""
                              FOO"""""""""   "a d - b c"
@@ -5580,22 +5699,17 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
                                             "   h     "
                                             """""""""""
           (%i5) rembox (expr2, FOO);
-                                            BAR""""""""
-                                 """""""    "a d - b c"
-          (%o5)              sin("%pi x") + "---------"
-                                 """""""    "  """"   "
-                                            "  " 2"   "
-                                            "  "h "   "
-                                            "  """"   "
-                                            """""""""""
+                                           BAR""""""""
+                                           "a d - b c"
+          (%o5)               sin(%pi x) + "---------"
+                                           "    2    "
+                                           "   h     "
+                                           """""""""""
           (%i6) rembox (expr2, BAR);
-                             FOO"""""""""""
-                             "    """"""" "   a d - b c
-          (%o6)              "sin("%pi x")" + ---------
-                             "    """"""" "     """"
-                             """"""""""""""     " 2"
-                                                "h "
-                                                """"
+                              FOO"""""""""   a d - b c
+          (%o6)               "sin(%pi x)" + ---------
+                              """"""""""""       2
+                                                h
           (%i7) rembox (expr2);
                                             a d - b c
           (%o7)                sin(%pi x) + ---------
@@ -5752,10 +5866,17 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
      The substitution is done in serial for a list of equations.
      Compare this with a parallel substitution:
 
-          (%i3) subst([a=b, b=c], a+b);
-          (%o3)                                 2 c
-          (%i4) sublis([a=b, b=c], a+b);
-          (%o4)                                c + b
+          (%i1) subst([a=b, b=c], a+b);
+          (%o1)                          2 c
+          (%i2) sublis([a=b, b=c], a+b);
+          (%o2)                         c + b
+
+     Single-character Operators like `+' and `-' have to be quoted in
+     order to be replaced by subst. It is to note, though, that `a+b-c'
+     might be expressed as `a+b+(-1*c)' internally.
+
+          (%i3) subst(["+"="-"],a+b-c);
+          (%o3)                                 c-b+a
 
      For further examples, do `example (subst)'.
 
@@ -5804,9 +5925,9 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
                                          3
           (%o4)               (3 y + 2 x)  + y + x + 1
           (%i5) expr: 1/x + y/x - 1/z;
-                                       1   y   1
-          (%o5)                      - - + - + -
-                                       z   x   x
+                                       1    y   1
+          (%o5)                     (- -) + - + -
+                                       z    x   x
           (%i6) substpart (xthru (piece), expr, [2, 3]);
                                       y + 1   1
           (%o6)                       ----- - -
@@ -5872,22 +5993,20 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
 
           (%i1) unorder();
           (%o1)                          []
-          (%i2) b*x+a^2;
+          (%i2) b*x + a^2;
                                              2
           (%o2)                       b x + a
-          (%i3) ordergreat(a);
+          (%i3) ordergreat (a);
           (%o3)                         done
-          (%i4) b*x+a^2;
+          (%i4) b*x + a^2;
+           %th(1) - %th(3);
                                        2
           (%o4)                       a  + b x
-          (%i5) %th(1)-%th(3);
+          (%i5) unorder();
                                         2    2
           (%o5)                        a  - a
-          (%i6) unorder();
+          (%i6) %th(2);
           (%o6)                          [a]
-          (%i7) %th(2);
-                                          2    2
-          (%o7)                      _101a  - a
 
 
  -- Function: verbify (<f>)
@@ -6277,10 +6396,10 @@ File: maxima.info,  Node: Arithmetic operators,  Next: Relational operators,  Pr
  -- Operator: .
      The dot operator, for matrix (non-commutative) multiplication.
      When `"."' is used in this way, spaces should be left on both
-     sides of it, e.g.  `A . B'.  This distinguishes it plainly from a
+     sides of it, e.g.  `A . B'  This distinguishes it plainly from a
      decimal point in a floating point number.
 
-     See also `dot', `dot0nscsimp', `dot0simp', `dot1simp', `dotassoc',
+     See also `Dot', `dot0nscsimp', `dot0simp', `dot1simp', `dotassoc',
      `dotconstrules', `dotdistrib', `dotexptsimp', `dotident', and
      `dotscrules'.
 
@@ -8220,14 +8339,14 @@ File: maxima.info,  Node: Functions and Variables for Simplification,  Prev: Sim
      Default value: 1000
 
      `maxnegex' is the largest negative exponent which will be expanded
-     by the `expand' command (see also `maxposex').
+     by the `expand' command, see also `maxposex'.
 
 
  -- Option variable: maxposex
      Default value: 1000
 
      `maxposex' is the largest exponent which will be expanded with the
-     `expand' command (see also `maxnegex').
+     `expand' command, see also `maxnegex'.
 
 
  -- Property: multiplicative
@@ -8682,7 +8801,7 @@ File: maxima.info,  Node: Functions for Numbers,  Next: Functions for Complex Nu
           (%o2)                       floor(x)
           (%i3) declare (n, integer)$
           (%i4) [ceiling (n), ceiling (abs (n)), ceiling (max (n, 6))];
-          (%o4)                [n, abs(n), max(n, 6)]
+          (%o4)                [n, abs(n), max(6, n)]
           (%i5) assume (x > 0, x < 1)$
           (%i6) ceiling (x);
           (%o6)                           1
@@ -8714,7 +8833,15 @@ File: maxima.info,  Node: Functions for Numbers,  Next: Functions for Complex Nu
               while r # 0 do (
                   uf : cons(q : 1/ceiling(1/r), uf),
                   r : r - q),
-              reverse(uf))$
+              reverse(uf));
+          (%o1) unitfrac(r) := block([uf : [], q],
+          if not ratnump(r) then error("unitfrac: argument must be a rational number"
+                                               1
+          ), while r # 0 do (uf : cons(q : ----------, uf), r : r - q),
+                                                   1
+                                           ceiling(-)
+                                                   r
+          reverse(uf))
           (%i2) unitfrac (9/10);
                                       1  1  1
           (%o2)                      [-, -, --]
@@ -8769,7 +8896,7 @@ File: maxima.info,  Node: Functions for Numbers,  Next: Functions for Complex Nu
           (%o2)                       floor(x)
           (%i3) declare (n, integer)$
           (%i4) [floor (n), floor (abs (n)), floor (min (n, 6))];
-          (%o4)                [n, abs(n), min(n, 6)]
+          (%o4)                [n, abs(n), min(6, n)]
           (%i5) assume (x > 0, x < 1)$
           (%i6) floor (x);
           (%o6)                           0
@@ -8881,8 +9008,34 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
      always decomposes its argument into a real and an imaginary part.
      If `x' and `y' represent real variables or expressions, the `cabs'
      function calculates the absolute value of `x + %i*y' as
-                                     2    2
-                               sqrt(y  + x )
+          (%i1) cabs (1);
+          (%o1)                           1
+          (%i2) cabs (1 + %i);
+          (%o2)                        sqrt(2)
+          (%i3) cabs (exp (%i));
+          (%o3)                           1
+          (%i4) cabs (exp (%pi * %i));
+          (%o4)                           1
+          (%i5) cabs (exp (3/2 * %pi * %i));
+          (%o5)                           1
+          (%i6) cabs (17 * exp (2 * %i));
+          (%o6)                          17
+
+     If `cabs' returns a noun form this most commonly is caused by some
+     properties of the variables involved not being known:
+          (%i1) cabs (a+%i*b);
+                                          2    2
+          (%o1)                     sqrt(b  + a )
+          (%i2) declare(a,real,b,real);
+          (%o2)                         done
+          (%i3) cabs (a+%i*b);
+                                          2    2
+          (%o3)                     sqrt(b  + a )
+          (%i4) assume(a>0,b>0);
+          (%o4)                    [a > 0, b > 0]
+          (%i5) cabs (a+%i*b);
+                                          2    2
+          (%o5)                     sqrt(b  + a )
 
      The `cabs' function can use known properties like symmetry
      properties of complex functions to help it calculate the absolute
@@ -8958,7 +9111,9 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
           (%o2)                          ---
                                           4
           (%i3) carg (exp (%i));
-          (%o3)                           1
+                                         sin(1)
+          (%o3)                     atan(------)
+                                         cos(1)
           (%i4) carg (exp (%pi * %i));
           (%o4)                          %pi
           (%i5) carg (exp (3/2 * %pi * %i));
@@ -8966,27 +9121,39 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
           (%o5)                         - ---
                                            2
           (%i6) carg (17 * exp (2 * %i));
-          (%o6)                           2
+                                      sin(2)
+          (%o6)                  atan(------) + %pi
+                                      cos(2)
+
+     If `carg' returns a noun form this most communly is caused by some
+     properties of the variables involved not being known:
+          (%i1) carg (a+%i*b);
+          (%o1)                      atan2(b, a)
+          (%i2) declare(a,real,b,real);
+          (%o2)                         done
+          (%i3) carg (a+%i*b);
+          (%o3)                      atan2(b, a)
+          (%i4) assume(a>0,b>0);
+          (%o4)                    [a > 0, b > 0]
+          (%i5) carg (a+%i*b);
+                                            b
+          (%o5)                        atan(-)
+                                            a
 
 
  -- Function: conjugate (<x>)
      Returns the complex conjugate of <x>.
 
           (%i1) declare ([aa, bb], real, cc, complex, ii, imaginary);
-
           (%o1)                         done
           (%i2) conjugate (aa + bb*%i);
-
           (%o2)                      aa - %i bb
           (%i3) conjugate (cc);
-
           (%o3)                     conjugate(cc)
           (%i4) conjugate (ii);
-
           (%o4)                         - ii
           (%i5) conjugate (xx + yy);
-
-          (%o5)             conjugate(yy) + conjugate(xx)
+          (%o5)                        yy + xx
 
 
  -- Function: imagpart (<expr>)
@@ -8999,13 +9166,13 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
      Example:
 
           (%i1) imagpart (a+b*%i);
-          (%o1)                                  b
+          (%o1)                           b
           (%i2) imagpart (1+sqrt(2)*%i);
-          (%o2)                               sqrt(2)
+          (%o2)                        sqrt(2)
           (%i3) imagpart (1);
-          (%o3)                                  0
+          (%o3)                           0
           (%i4) imagpart (sqrt(2)*%i);
-          (%o4)                               sqrt(2)
+          (%o4)                        sqrt(2)
 
 
  -- Function: polarform (<expr>)
@@ -9015,16 +9182,16 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
      Example:
 
           (%i1) polarform(a+b*%i);
-                                        2    2    %i atan2(b, a)
-          (%o1)                   sqrt(b  + a ) %e
+                                 2    2    %i atan2(b, a)
+          (%o1)            sqrt(b  + a ) %e
           (%i2) polarform(1+%i);
-                                                   %i %pi
-                                                   ------
-                                                     4
-          (%o2)                          sqrt(2) %e
+                                            %i %pi
+                                            ------
+                                              4
+          (%o2)                   sqrt(2) %e
           (%i3) polarform(1+2*%i);
-                                                 %i atan(2)
-          (%o3)                        sqrt(5) %e
+                                          %i atan(2)
+          (%o3)                 sqrt(5) %e
 
 
  -- Function: realpart (<expr>)
@@ -9035,13 +9202,13 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
      Example:
 
           (%i1) realpart (a+b*%i);
-          (%o1)                                  a
+          (%o1)                           a
           (%i2) realpart (1+sqrt(2)*%i);
-          (%o2)                                  1
+          (%o2)                           1
           (%i3) realpart (sqrt(2)*%i);
-          (%o3)                                  0
+          (%o3)                           0
           (%i4) realpart (1);
-          (%o4)                                  1
+          (%o4)                           1
 
 
  -- Function: rectform (<expr>)
@@ -9051,11 +9218,11 @@ File: maxima.info,  Node: Functions for Complex Numbers,  Next: Combinatorial Fu
      Example:
 
           (%i1) rectform(sqrt(2)*%e^(%i*%pi/4));
-          (%o1)                               %i + 1
+          (%o1)                        %i + 1
           (%i2) rectform(sqrt(b^2+a^2)*%e^(%i*atan2(b, a)));
-          (%o2)                              %i b + a
+          (%o2)                       %i b + a
           (%i3) rectform(sqrt(5)*%e^(%i*atan(2)));
-          (%o3)                              2 %i + 1
+          (%o3)                       2 %i + 1
 
 
 
@@ -9116,19 +9283,19 @@ File: maxima.info,  Node: Combinatorial Functions,  Next: Root Exponential and L
      Example:
 
           (%i1) sumsplitfact;
-          (%o1)                                true
+          (%o1)                         true
           (%i2) (n + 1)*(n + 1)*n!;
-                                                   2
-          (%o2)                             (n + 1)  n!
+                                            2
+          (%o2)                      (n + 1)  n!
           (%i3) factcomb (%);
-          (%o3)                         (n + 2)! - (n + 1)!
+          (%o3)                  (n + 2)! - (n + 1)!
           (%i4) sumsplitfact: not sumsplitfact;
-          (%o4)                                false
+          (%o4)                         false
           (%i5) (n + 1)*(n + 1)*n!;
-                                                    2
-          (%o5)                             (n + 1)  n!
+                                            2
+          (%o5)                      (n + 1)  n!
           (%i6) factcomb (%);
-          (%o6)                        n (n + 1)! + (n + 1)!
+          (%o6)                 n (n + 1)! + (n + 1)!
 
 
  -- Function: factorial
@@ -9172,18 +9339,18 @@ File: maxima.info,  Node: Combinatorial Functions,  Next: Root Exponential and L
      real and complex numbers is evaluated in float or bigfloat
      precision.
 
-          (%i1) factlim:10;
-          (%o1)                                 10
+          (%i1) factlim : 10;
+          (%o1)                          10
           (%i2) [0!, (7/2)!, 8!, 20!];
-                                      105 sqrt(%pi)
-          (%o2)                   [1, -------------, 40320, 20!]
-                                           16
-          (%i3) [4.77!, (1.0+%i)!];
-          (%o3)    [81.44668037931197,
-                    .3430658398165454 %i + .6529654964201665]
-          (%i4) [2.86b0!, (1.0b0+%i)!];
-          (%o4) [5.046635586910012b0,
-                 3.430658398165454b-1 %i + 6.529654964201667b-1]
+                               105 sqrt(%pi)
+          (%o2)            [1, -------------, 40320, 20!]
+                                    16
+          (%i3) [4,77!, (1.0+%i)!];
+          (%o3) [4, 77!, 0.3430658398165453 %i + 0.6529654964201667]
+          (%i4) [2.86b0!, 1.0b0+%i)!];
+          incorrect syntax: Missing ]
+          [2.86b0!, 1.0b0+%i)
+                           ^
 
      The factorial of a known constant, or general expression is not
      simplified.  Even so it may be possible to simplify the factorial
@@ -9192,34 +9359,33 @@ File: maxima.info,  Node: Combinatorial Functions,  Next: Root Exponential and L
           (%i1) [(%i + 1)!, %pi!, %e!, (cos(1) + sin(1))!];
           (%o1)      [(%i + 1)!, %pi!, %e!, (sin(1) + cos(1))!]
           (%i2) ev (%, numer, %enumer);
-          (%o2) [.3430658398165454 %i + .6529654964201665,
-                 7.188082728976031,
-                 4.260820476357003, 1.227580202486819]
+          (%o2) [0.3430658398165453 %i + 0.6529654964201667,
+                   7.188082728976031, 4.260820476357003, 1.227580202486819]
 
      Factorials are simplified, not evaluated.  Thus `x!' may be
      replaced even in a quoted expression.
 
           (%i1) '([0!, (7/2)!, 4.77!, 8!, 20!]);
                     105 sqrt(%pi)
-          (%o1) [1, -------------, 81.44668037931199, 40320,
+          (%o1) [1, -------------, 81.44668037931197, 40320,
                          16
                                                        2432902008176640000]
 
      Maxima knows the derivative of the factorial function.
 
           (%i1) diff(x!,x);
-          (%o1)                           x! psi (x + 1)
-                                                0
+          (%o1)                    x! psi (x + 1)
+                                         0
 
      The option variable `factorial_expand' controls expansion and
      simplification of expressions with the factorial function.
 
           (%i1) (n+1)!/n!,factorial_expand:true;
-          (%o1)                                n + 1
+          (%o1)                         n + 1
 
 
  -- Option variable: factlim
-     Default value: -1
+     Default value: 100000
 
      `factlim' specifies the highest factorial which is automatically
      expanded.  If it is -1 then all integers are expanded.
@@ -9260,26 +9426,26 @@ File: maxima.info,  Node: Combinatorial Functions,  Next: Root Exponential and L
      When `sumsplitfact' is `false', `minfactorial' is applied after a
      `factcomb'.
 
-          (%i1) sumsplitfact
-          (%o1)                                true
-          (%i2) n!/(2+n)!
-                                                n!
-          (%o2)                              --------
-                                             (n + 2)!
-          (%i3) factcomb(%)
-                                                n!
-          (%o3)                              --------
-                                             (n + 2)!
-          (%i4) sumsplitfact:not sumsplitfact
-          (%o4)                                false
-          (%i5) n!/(2+n)!
-                                                n!
-          (%o5)                              --------
-                                             (n + 2)!
-          (%i6) factcomb(%)
-                                                 1
-          (%o6)                           ---------------
-                                          (n + 1) (n + 2)
+          (%i1) sumsplitfact;
+          (%o1)                         true
+          (%i2) n!/(n+2)!;
+                                         n!
+          (%o2)                       --------
+                                      (n + 2)!
+          (%i3) factcomb(%);
+                                         n!
+          (%o3)                       --------
+                                      (n + 2)!
+          (%i4) sumsplitfact: not sumsplitfact ;
+          (%o4)                         false
+          (%i5) n!/(n+2)!;
+                                         n!
+          (%o5)                       --------
+                                      (n + 2)!
+          (%i6) factcomb(%);
+                                          1
+          (%o6)                    ---------------
+                                   (n + 1) (n + 2)
 
 
 
@@ -9314,29 +9480,29 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
      When `%emode' is `false', no special simplification of `%e^(%pi %i
      x)' is carried out.
 
-          (%i1) %emode
-          (%o1)                                true
-          (%i2) %e^(%pi*%i*1)
-          (%o2)                                 - 1
-          (%i3) %e^(%pi*%i*216/144)
-          (%o3)                                - %i
-          (%i4) %e^(%pi*%i*192/144)
-                                           sqrt(3) %i   1
-          (%o4)                          - ---------- - -
-                                               2        2
-          (%i5) %e^(%pi*%i*180/144)
-                                            %i         1
-          (%o5)                         - ------- - -------
-                                          sqrt(2)   sqrt(2)
-          (%i6) %e^(%pi*%i*120/144)
-                                           %i   sqrt(3)
-          (%o6)                            -- - -------
-                                           2       2
-          (%i7) %e^(%pi*%i*121/144)
-                                             121 %i %pi
-                                             ----------
-                                                144
-          (%o7)                            %e
+          (%i1) %emode;
+          (%o1)                         true
+          (%i2) %e^(%pi*%i*1);
+          (%o2)                          - 1
+          (%i3) %e^(%pi*%i*216/144);
+          (%o3)                         - %i
+          (%i4) %e^(%pi*%i*192/144);
+                                    sqrt(3) %i    1
+          (%o4)                  (- ----------) - -
+                                        2         2
+          (%i5) %e^(%pi*%i*180/144);
+                                     %i          1
+          (%o5)                 (- -------) - -------
+                                   sqrt(2)    sqrt(2)
+          (%i6) %e^(%pi*%i*120/144);
+                                    %i   sqrt(3)
+          (%o6)                     -- - -------
+                                    2       2
+          (%i7) %e^(%pi*%i*121/144);
+                                      121 %i %pi
+                                      ----------
+                                         144
+          (%o7)                     %e
 
 
  -- Option variable: %enumer
@@ -9350,25 +9516,25 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
 
      See also `ev' and `numer'.
 
-          (%i1) %enumer
-          (%o1)                                false
-          (%i2) numer
-          (%o2)                                false
-          (%i3) 2*%e
-          (%o3)                                2 %e
-          (%i4) %enumer:not %enumer
-          (%o4)                                true
-          (%i5) 2*%e
-          (%o5)                                2 %e
-          (%i6) numer:not numer
-          (%o6)                                true
-          (%i7) 2*%e
-          (%o7)                          5.43656365691809
-          (%i8) 2*%e^1
-          (%o8)                          5.43656365691809
-          (%i9) 2*%e^x
-                                                         x
-          (%o9)                       2 2.718281828459045
+          (%i1) %enumer;
+          (%o1)                         false
+          (%i2) numer;
+          (%o2)                         false
+          (%i3) 2*%e;
+          (%o3)                         2 %e
+          (%i4) %enumer: not %enumer;
+          (%o4)                         true
+          (%i5) 2*%e;
+          (%o5)                         2 %e
+          (%i6) numer: not numer;
+          (%o6)                         true
+          (%i7) 2*%e;
+          (%o7)                   5.43656365691809
+          (%i8) 2*%e^1;
+          (%o8)                   5.43656365691809
+          (%i9) 2*%e^x;
+                                                   x
+          (%o9)                 2 2.718281828459045
 
 
  -- Function: exp (<x>)
@@ -9386,15 +9552,15 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
      whenever `numer' is `true'.  See `%enumer'.
 
           (%i1) demoivre;
-          (%o1)                                false
+          (%o1)                         false
           (%i2) %e^(a + b*%i);
-                                              %i b + a
-          (%o2)                             %e
+                                       %i b + a
+          (%o2)                      %e
           (%i3) demoivre: not demoivre;
-          (%o3)                                true
+          (%o3)                         true
           (%i4) %e^(a + b*%i);
-                                       a
-          (%o4)                      %e  (%i sin(b) + cos(b))
+                                a
+          (%o4)               %e  (%i sin(b) + cos(b))
 
 
  -- Function: li [<s>] (<z>)
@@ -9432,28 +9598,28 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
           (%o3)                        li (7)
                                          2
           (%i4) li [2] (7), numer;
-          (%o4)        1.24827317833392 - 6.113257021832577 %i
+          (%o4)       1.248273182099423 - 6.113257028817991 %i
           (%i5) li [3] (7);
           (%o5)                        li (7)
                                          3
           (%i6) li [2] (7), numer;
-          (%o6)        1.24827317833392 - 6.113257021832577 %i
+          (%o6)       1.248273182099423 - 6.113257028817991 %i
           (%i7) L : makelist (i / 4.0, i, 0, 8);
           (%o7)   [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
           (%i8) map (lambda ([x], li [2] (x)), L);
-          (%o8) [0, .2676526384986274, .5822405249432515,
-          .9784693966661848, 1.64493407, 2.190177004178597
-           - .7010261407036192 %i, 2.374395264042415
-           - 1.273806203464065 %i, 2.448686757245154
-           - 1.758084846201883 %i, 2.467401098097648
-           - 2.177586087815347 %i]
+          (%o8) [0.0, 0.2676526390827326, 0.5822405264650125,
+          0.978469392930306, 1.644934066848226,
+          2.190177011441645 - 0.7010261415046585 %i,
+          2.37439527027248 - 1.2738062049196 %i,
+          2.448686765338205 - 1.758084848210787 %i,
+          2.467401100272339 - 2.177586090303601 %i]
           (%i9) map (lambda ([x], li [3] (x)), L);
-          (%o9) [0, .2584613953442624, 0.537213192678042,
-          .8444258046482203, 1.2020569, 1.642866878950322
-           - .07821473130035025 %i, 2.060877505514697
-           - .2582419849982037 %i, 2.433418896388322
-           - .4919260182322965 %i, 2.762071904015935
-           - .7546938285978846 %i]
+          (%o9) [0.0, 0.2584613953442624, 0.537213192678042,
+          0.8444258046482203, 1.2020569, 1.642866878950322
+           - 0.07821473130035025 %i, 2.060877505514697
+           - 0.2582419849982037 %i, 2.433418896388322
+           - 0.4919260182322965 %i, 2.762071904015935
+           - 0.7546938285978846 %i]
 
 
  -- Function: log (<x>)
@@ -9578,11 +9744,7 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
 
  -- Function: sqrt (<x>)
      The square root of <x>.  It is represented internally by
-     `<x>^(1/2)'.  See also `rootscontract'.
-
-     `radexpand' if `true' will cause nth roots of factors of a product
-     which are powers of n to be pulled outside of the radical, e.g.
-     `sqrt(16*x^2)' will become `4*x' only if `radexpand' is `true'.
+     `<x>^(1/2)'.  See also `rootscontract' and `radexpand'.
 
 
 
@@ -9815,26 +9977,24 @@ File: maxima.info,  Node: Functions and Variables for Trigonometric,  Prev: Intr
 
      Examples:
 
-          (%i1) halfangles:false;
-          (%o1)                                false
-          (%i2) sin(x/2);
-                                                  x
-          (%o2)                               sin(-)
-                                                  2
-          (%i3) halfangles:true;
-          (%o3)                                true
-          (%i4) sin(x/2);
-                                                              x
-                                                      floor(-----)
-                                                            2 %pi
-                                sqrt(1 - cos(x)) (- 1)
-          (%o4)                 ----------------------------------
-                                             sqrt(2)
+          (%i1) halfangles : false$
+          (%i2) sin (x / 2);
+                                           x
+          (%o2)                        sin(-)
+                                           2
+          (%i3) halfangles : true$
+          (%i4) sin (x / 2);
+                                      x
+                              floor(-----)
+                                    2 %pi
+                         (- 1)             sqrt(1 - cos(x))
+          (%o4)          ----------------------------------
+                                      sqrt(2)
           (%i5) assume(x>0, x<2*%pi)$
-          (%i6) sin(x/2);
-                                         sqrt(1 - cos(x))
-          (%o6)                          ----------------
-                                             sqrt(2)
+          (%i6) sin(x / 2);
+                                  sqrt(1 - cos(x))
+          (%o6)                   ----------------
+                                      sqrt(2)
 
 
  -- Package: ntrig
@@ -9899,8 +10059,8 @@ File: maxima.info,  Node: Functions and Variables for Trigonometric,  Prev: Intr
      Examples:
 
           (%i1) x+sin(3*x)/sin(x),trigexpand=true,expand;
-                                   2           2
-          (%o1)               - sin (x) + 3 cos (x) + x
+                                   2            2
+          (%o1)              (- sin (x)) + 3 cos (x) + x
           (%i2) trigexpand(sin(10*x+y));
           (%o2)          cos(10 x) sin(y) + sin(10 x) cos(y)
 
@@ -9992,10 +10152,10 @@ File: maxima.info,  Node: Functions and Variables for Trigonometric,  Prev: Intr
 
           (%i1) c : %pi/3 - a - b$
           (%i2) bc : sin(a)*sin(3*c)/sin(a+b);
-                                                    %pi
-                            sin(a) sin(3 (- b - a + ---))
-                                                     3
-          (%o2)             -----------------------------
+                                                     %pi
+                           sin(a) sin(3 ((- b) - a + ---))
+                                                      3
+          (%o2)            -------------------------------
                                      sin(b + a)
           (%i3) ba : bc, c=a, a=c;
                                                    %pi
@@ -10013,18 +10173,18 @@ File: maxima.info,  Node: Functions and Variables for Trigonometric,  Prev: Intr
                           2     %pi
                        sin (a - ---)
                                  3
-                                                 %pi
-           - (2 sin(a) sin(3 a) sin(3 (- b - a + ---)) cos(b)
-                                                  3
+                                                   %pi
+           - (2 sin(a) sin(3 a) sin(3 ((- b) - a + ---)) cos(b)
+                                                    3
                        %pi            %pi
            sin(b + a - ---))/(sin(a - ---) sin(b + a))
                         3              3
-                2       2              %pi
-             sin (a) sin (3 (- b - a + ---))
-                                        3
-           + -------------------------------
-                          2
-                       sin (b + a)
+                2       2                %pi
+             sin (a) sin (3 ((- b) - a + ---))
+                                          3
+           + ---------------------------------
+                           2
+                        sin (b + a)
           (%i5) trigrat (ac2);
           (%o5) - (sqrt(3) sin(4 b + 4 a) - cos(4 b + 4 a)
            - 2 sqrt(3) sin(4 b + 2 a) + 2 cos(4 b + 2 a)
@@ -10095,7 +10255,7 @@ File: maxima.info,  Node: Random Numbers,  Prev: Trigonometric Functions,  Up: M
           (%o5)                11804491615036831636390
           (%i6) s2: make_random_state (false)$
           (%i7) random (1.0);
-          (%o7)                   .2310127244107132
+          (%o7)                  0.2310127244107132
           (%i8) random (10.0);
           (%o8)                   4.394553645870825
           (%i9) random (100.0);
@@ -10103,7 +10263,7 @@ File: maxima.info,  Node: Random Numbers,  Prev: Trigonometric Functions,  Up: M
           (%i10) set_random_state (s2);
           (%o10)                        done
           (%i11) random (1.0);
-          (%o11)                  .2310127244107132
+          (%o11)                 0.2310127244107132
           (%i12) random (10.0);
           (%o12)                  4.394553645870825
           (%i13) random (100.0);
@@ -11416,18 +11576,20 @@ of points and pass them to the plotting package together with a set of
 commands.  That information can be passed to the external program
 either through a pipe or by calling the program with the name of a file
 where the data has been saved.  The data file is given the name
-`maxout.format', where `format' is the name of the plotting format
-being used (`gnuplot', `xmaxima', `mgnuplot' or `gnuplot_pipes').
+`maxout_xxx.format', where `xxx' is a number that is unique to every
+concurrently-running instance of maxima and `format' is the name of the
+plotting format being used (`gnuplot', `xmaxima', `mgnuplot' or
+`gnuplot_pipes').
 
    There are to save the plot in a graphic format file. In those cases,
-the file `maxout.format' created by Maxima includes commands that will
-make the external plotting program save the result in a graphic file.
-The default name for that graphic file is `maxplot.extension', where
-`extension' is the extension normally used for the kind of graphic file
-selected.
+the file `maxout_xxx.format' created by Maxima includes commands that
+will make the external plotting program save the result in a graphic
+file. The default name for that graphic file is `maxplot.extension',
+where `extension' is the extension normally used for the kind of
+graphic file selected.
 
-   The `maxout.format' and `maxplot.extension' files are created in the
-directory specified by the system variable `maxima_tempdir'. That
+   The `maxout_xxx.format' and `maxplot.extension' files are created in
+the directory specified by the system variable `maxima_tempdir'. That
 location can be changed by assigning to that variable (or to the
 environment variable MAXIMA_TEMPDIR) a string that represents a valid
 directory where Maxima can create new files. The output of the Maxima
@@ -11436,11 +11598,11 @@ including their complete path.
 
    If the format used is either `gnuplot' or `xmaxima', the external
 programs `gnuplot' or `xmaxima' can be run, giving it the file
-`maxout.format' as argument, in order to view again a plot previously
-created in Maxima. Thus, when a Maxima plotting command fails, the
-format can be set to `gnuplot' or `xmaxima' and the plain-text file
-`maxout.gnuplot' (or `maxout.xmaxima') can be inspected to look for the
-source of the problem.
+`maxout_xxx.format' as argument, in order to view again a plot
+previously created in Maxima. Thus, when a Maxima plotting command
+fails, the format can be set to `gnuplot' or `xmaxima' and the
+plain-text file `maxout_xxx.gnuplot' (or `maxout_xxx.xmaxima') can be
+inspected to look for the source of the problem.
 
    The additional package *note draw:: provides functions similar to
 the ones described in this section with some extra features. Note that
@@ -11467,15 +11629,15 @@ those programs, which can be selected with the option `plot_format'
 
      Used to launch the external program gnuplot, which must be
      installed in your system.  All plotting commands and data are
-     saved into the file `maxout.gnuplot'.
+     saved into the file `maxout_xxx.gnuplot'.
 
    * *gnuplot_pipes* (default on non-Windows platforms)
 
      This format is not available in Windows platforms.  It is similar
      to the `gnuplot' format except that the commands are sent to
      gnuplot through a pipe, while the data are saved into the file
-     `maxout.gnuplot_pipes'.  A single gnuplot process is kept open and
-     subsequent plot commands will be sent to the same process,
+     `maxout_xxx.gnuplot_pipes'.  A single gnuplot process is kept open
+     and subsequent plot commands will be sent to the same process,
      replacing previous plots, unless the gnuplot pipe is closed with
      the function `gnuplot_close'.  When this format is used, the
      function `gnuplot_replot' can be used to modify a plot that has
@@ -11484,7 +11646,7 @@ those programs, which can be selected with the option `plot_format'
      This format is only used to plot to the screen; whenever graphic
      files are created, the format is silently switched to `gnuplot' and
      the commands needed to create the graphic file are saved with the
-     data in file `maxout.gnuplot'.
+     data in file `maxout_xxx.gnuplot'.
 
    * *mgnuplot*
 
@@ -11505,8 +11667,8 @@ those programs, which can be selected with the option `plot_format'
      same socket used for the communication between Maxima and the
      Xmaxima console. When used from a terminal or from graphical
      interfaces different from Xmaxima, the commands and data are saved
-     in the file `maxout.xmaxima' and xmaxima is run with the name of
-     that file as argument.
+     in the file `maxout_xxx.xmaxima' and xmaxima is run with the name
+     of that file as argument.
 
      In previous versions this format used to be called `openmath'; that
      old name still works as a synonym for `xmaxima'.
@@ -11536,7 +11698,7 @@ File: maxima.info,  Node: Functions and Variables for Plotting,  Next: Plotting 
      option `legend' with a value of false, to remove the legend. By
      default, Gnuplot chooses and displays 3 contours. To increase the
      number of contours, it is necessary to use a custom
-     `gnuplot_preamble', as in the next example:
+     `gnuplot_preamble',  as in the next example:
 
           (%i1) contour_plot (u^3 + v^2, [u, -4, 4], [v, -4, 4],
                         [legend,false],
@@ -11577,7 +11739,7 @@ File: maxima.info,  Node: Functions and Variables for Plotting,  Next: Plotting 
      the gnuplot program when the plot format is `gnuplot'. Its default
      value is "-persist ~s", where "~s" will be replaced with the name
      of the file where the gnuplot commands have been written (usually
-     "maxout.gnuplot"). The option `-persist' tells gnuplot to exit
+     "maxout_xxx.gnuplot"). The option `-persist' tells gnuplot to exit
      after the commands in the file have been executed, without closing
      the window that displays the plot.
 
@@ -12275,18 +12437,18 @@ names. For instance, typing logx as an option is equivalent to writing
      terminal is `default' or when the Gnuplot terminal is set to
      `dumb' (see `gnuplot_term') and can have a true or false value.
 
-     If the terminal is `default', a file `maxout.gnuplot' (or other
-     name specified with `gnuplot_out_file') is created with the
+     If the terminal is `default', a file `maxout_xxx.gnuplot' (or
+     other name specified with `gnuplot_out_file') is created with the
      gnuplot commands necessary to generate the plot. Option
      `run_viewer' controls whether or not Gnuplot will be launched to
      execute those commands and show the plot.
 
      If the terminal is `default', gnuplot is run to execute the
-     commands in `maxout.gnuplot', producing another file `maxplot.txt'
-     (or other name specified with `gnuplot_out_file'). Option
-     `run_viewer' controls whether or not that file, with an ASCII
-     representation of the plot, will be shown in the Maxima or Xmaxima
-     console.
+     commands in `maxout_xxx.gnuplot', producing another file
+     `maxplot.txt' (or other name specified with `gnuplot_out_file').
+     Option `run_viewer' controls whether or not that file, with an
+     ASCII representation of the plot, will be shown in the Maxima or
+     Xmaxima console.
 
      The default value for this option is true, making the plots to be
      shown in either the console or a separate graphics window.
@@ -12475,10 +12637,10 @@ specific option.
 
         * *dumb*
 
-          Gnuplot output is saved to a file `maxout.gnuplot' using
+          Gnuplot output is saved to a file `maxout_xxx.gnuplot' using
           "ASCII art" approximation to graphics. If the option
           `gnuplot_out_file' is set to <filename>, the plot will be
-          saved there, instead of the default `maxout.gnuplot'. The
+          saved there, instead of the default `maxout_xxx.gnuplot'. The
           settings for the "dumb" terminal of Gnuplot are given by the
           value of option `gnuplot_dumb_term_command'. If option
           `run_viewer' is set to true and the plot_format is `gnuplot'
@@ -12965,6 +13127,10 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
      while processing <filename>, the global variables `_', `__', `%',
      and `%th' have whatever bindings they had when `load' was called.
 
+     It is also to note that structures will only be read back as
+     structures if they have been defined by `defstruct' before the
+     `load' command is called.
+
      See also `loadfile', `batch', `batchload', and `demo'.  `loadfile'
      processes Lisp files; `batch', `batchload', and `demo' process
      Maxima files.
@@ -13026,6 +13192,19 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
         * When `loadprint' is `false', never print a message.
 
 
+ -- Function: directory (<path>)
+     Returns a list of the files and directories found in <path> in the
+     file system.
+
+     <path> may contain wildcard characters (i.e., characters which
+     represent unspecified parts of the path), which include at least
+     the asterisk on most systems, and possibly other characters,
+     depending on the system.
+
+     `directory' relies on the Lisp function DIRECTORY, which may have
+     implementation-specific behavior.
+
+
  -- Function: pathname_directory (<pathname>)
  -- Function: pathname_name (<pathname>)
  -- Function: pathname_type (<pathname>)
@@ -13066,9 +13245,9 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
      or other objects.  If a name has no value or function associated
      with it, it is ignored.  `save' returns <filename>.
 
-     `save' stores data in the form of Lisp expressions.  The data
-     stored by `save' may be recovered by `load (<filename>)'.  See
-     `load'.
+     `save' stores data in the form of Lisp expressions.  If <filename>
+     ends in `.lisp' the data stored by `save' may be recovered by
+     `load (<filename>)'.  See `load'.
 
      The global flag `file_output_append' governs whether `save'
      appends or truncates the output file.  When `file_output_append'
@@ -13219,6 +13398,10 @@ File: maxima.info,  Node: Functions and Variables for TeX Output,  Next: Functio
 
 13.4 Functions and Variables for TeX Output
 ===========================================
+
+Note that the built-in TeX output functionality of wxMaxima makes no
+use of the functions described here but uses its own implementation
+instead.
 
  -- Function: tex
           tex (<expr>)
@@ -13435,7 +13618,7 @@ File: maxima.info,  Node: Functions and Variables for TeX Output,  Next: Functio
      is output; TeX environments associated with other operators are
      ignored.
 
-     `get_tex_environment' returns the TeX enviroment which is applied
+     `get_tex_environment' returns the TeX environment which is applied
      to the operator <op>; returns the default if no other environment
      has been assigned.
 
@@ -13693,7 +13876,10 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
           coeff (<expr>, <x>, <n>)
           coeff (<expr>, <x>)
      Returns the coefficient of `<x>^<n>' in <expr>, where <expr> is a
-     polynomial or a monomial term in <x>.
+     polynomial or a monomial term in <x>.  Other than `ratcoef'
+     `coeff' is a strictly syntactical operation and will only find
+     literal instances of `<x>^<n>' in the internal representation of
+     <expr>.
 
      `coeff(<expr>, <x>^<n>)' is equivalent to `coeff(<expr>, <x>,
      <n>)'.  `coeff(<expr>, <x>, 0)' returns the remainder of <expr>
@@ -13709,6 +13895,8 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
      function.
 
      `coeff' distributes over lists, matrices, and equations.
+
+     See also `ratcoef'.
 
      Examples:
 
@@ -13795,6 +13983,23 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
 
  -- Function: denom (<expr>)
      Returns the denominator of the rational expression <expr>.
+
+     See also `num'
+
+          (%i1) g1:(x+2)*(x+1)/((x+3)^2);
+                                   (x + 1) (x + 2)
+          (%o1)                    ---------------
+                                             2
+                                      (x + 3)
+          (%i2) denom(g1);
+                                             2
+          (%o2)                       (x + 3)
+          (%i3) g2:sin(x)/10*cos(x)/y;
+                                    cos(x) sin(x)
+          (%o3)                     -------------
+                                        10 y
+          (%i4) denom(g2);
+          (%o4)                         10 y
 
 
  -- Function: divide (<p_1>, <p_2>, <x_1>, ..., <x_n>)
@@ -14333,21 +14538,18 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
      Examples:
 
           (%i1) rat(x/2.0);
-
-          `rat' replaced 0.5 by 1/2 = 0.5
-                                                 x
-          (%o1)/R/                               -
-                                                 2
+          rat: replaced 0.5 by 1/2 = 0.5
+                                          x
+          (%o1)/R/                        -
+                                          2
           (%i2) rat(x/2.0), keepfloat;
-
-          (%o2)/R/                             0.5 x
+          (%o2)/R/                      0.5 x
 
      `solve' ignores `keepfloat':
 
-          (%i3) solve(1.0-x,x), keepfloat;
-
-          `rat' replaced 1.0 by 1/1 = 1.0
-          (%o3)                               [x = 1]
+          (%i1) solve(1.0-x,x), keepfloat;
+          rat: replaced 1.0 by 1/1 = 1.0
+          (%o1)                        [x = 1]
 
 
  -- Function: lopow (<expr>, <x>)
@@ -14438,6 +14640,22 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
 
      `num' evaluates its argument.
 
+     See also `denom'
+
+          (%i1) g1:(x+2)*(x+1)/((x+3)^2);
+                                   (x + 1) (x + 2)
+          (%o1)                    ---------------
+                                             2
+                                      (x + 3)
+          (%i2) num(g1);
+          (%o2)                    (x + 1) (x + 2)
+          (%i3) g2:sin(x)/10*cos(x)/y;
+                                    cos(x) sin(x)
+          (%o3)                     -------------
+                                        10 y
+          (%i4) num(g2);
+          (%o4)                     cos(x) sin(x)
+
 
  -- Function: polydecomp (<p>, <x>)
      Decomposes the polynomial <p> in the variable <x> into the
@@ -14467,28 +14685,26 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
      The following function composes `L = [e_1, ..., e_n]' as functions
      in `x'; it is the inverse of polydecomp:
 
-          compose (L, x) :=
+          (%i1) compose (L, x) :=
             block ([r : x], for e in L do r : subst (e, x, r), r) $
 
      Re-express above example using `compose':
 
-          (%i3) polydecomp (compose ([x^2 - a, x^3 - x - 1], x), x);
-                                  2       3
-          (%o3)                 [x  - a, x  - x - 1]
+          (%i1) polydecomp (compose ([x^2 - a, x^3 - x - 1], x), x);
+                                    2       3
+          (%o1)          [compose([x  - a, x  - x - 1], x)]
 
      Note that though `compose (polydecomp (<p>, <x>), <x>)' always
      returns <p> (unexpanded), `polydecomp (compose ([<p_1>, ...,
      <p_n>], <x>), <x>)' does not necessarily return `[<p_1>, ...,
      <p_n>]':
 
-          (%i4) polydecomp (compose ([x^2 + 2*x + 3, x^2], x), x);
-                                    2       2
-          (%o4)                   [x  + 2, x  + 1]
-          (%i5) polydecomp (compose ([x^2 + x + 1, x^2 + x + 1], x), x);
-                                2       2
-                               x  + 3  x  + 5
-          (%o5)               [------, ------, 2 x + 1]
-                                 4       2
+          (%i1) polydecomp (compose ([x^2 + 2*x + 3, x^2], x), x);
+                                     2             2
+          (%o1)           [compose([x  + 2 x + 3, x ], x)]
+          (%i2) polydecomp (compose ([x^2 + x + 1, x^2 + x + 1], x), x);
+                                  2           2
+          (%o2)        [compose([x  + x + 1, x  + x + 1], x)]
 
 
  -- Function: polymod
@@ -15633,7 +15849,7 @@ Mathematical Functions, Chapter 6.
 
 
  -- Function: gamma_incomplete (<a>, <z>)
-     The incomplete upper gamma function A&S 6.5.3:
+     The incomplete upper gamma function (A&S 6.5.3):
 
                                         inf
                                        /
@@ -15651,7 +15867,7 @@ Mathematical Functions, Chapter 6.
 
 
  -- Function: gamma_incomplete_regularized (<a>, <z>)
-     The regularized incomplete upper gamma function A&S 6.5.1:
+     The regularized incomplete upper gamma function (A&S 6.5.1):
 
           gamma_incomplete_regularized(a, z) =
                                                   gamma_incomplete(a, z)
@@ -15982,7 +16198,7 @@ Mathematical Functions, Chapter 6.
 
 
  -- Function: beta_incomplete_regularized (<a>, <b>, <z>)
-     The regularized incomplete beta function A&S 6.6.2, defined as
+     The regularized incomplete beta function (A&S 6.6.2), defined as
 
           beta_incomplete_regularized(a, b, z) =
                                                 beta_incomplete(a, b, z)
@@ -16301,7 +16517,9 @@ The Exponential Integral and related funtions are defined in Abramowitz
 and Stegun, Handbook of Mathematical Functions, Chapter 5
 
  -- Function: expintegral_e1 (<z>)
-     The Exponential Integral E1(z) (A&S 5.1.1)
+     The Exponential Integral E1(z) (A&S 5.1.1) defined as
+
+     integrate(exp(-t)/t, t, z, inf) with abs(arg z) < %pi.
 
 
  -- Function: expintegral_ei (<z>)
@@ -16313,31 +16531,56 @@ and Stegun, Handbook of Mathematical Functions, Chapter 5
 
 
  -- Function: expintegral_e (<n>,<z>)
-     The Exponential Integral En(z)  (A&S 5.1.4)
+     The Exponential Integral En(z)  (A&S 5.1.4) defined as
+
+     integrate(exp(-z*t)/t^n, t, 1, inf) with real(x) > 1 and n a
+     non-negative integer.
 
 
  -- Function: expintegral_si (<z>)
-     The Exponential Integral Si(z) (A&S 5.2.1)
+     The Exponential Integral Si(z) (A&S 5.2.1) defined as
+
+     integrate(sin(t)/t, t, 0, z)
 
 
  -- Function: expintegral_ci (<z>)
-     The Exponential Integral Ci(z) (A&S 5.2.2)
+     The Exponential Integral Ci(z) (A&S 5.2.2) defined as
+
+     %gamma + log(z) + integrate((cos(t) - 1)/t, t, 0, z)
+
+     with abs(arg z) < %pi
 
 
  -- Function: expintegral_shi (<z>)
-     The Exponential Integral Shi(z) (A&S 5.2.3)
+     The Exponential Integral Shi(z) (A&S 5.2.3) defined as
+
+     integrate(sinh(t)/t, t, 0, z)
 
 
  -- Function: expintegral_chi (<z>)
-     The Exponential Integral Chi(z) (A&S 5.2.4)
+     The Exponential Integral Chi(z) (A&S 5.2.4) defined as
+
+     %gamma + log(z) + integrate((cosh(t) - 1)/t, t, 0, z)
+
+     with abs(arg z) < %pi
 
 
  -- Option variable: expintrep
      Default value: false
 
-     Change the representation of the Exponential Integral to
-     gamma_incomplete, expintegral_e1, expintegral_ei,
-     expintegral_li, expintegral_trig, expintegral_hyp
+     Change the representation of one of the exponential integrals,
+     <expintegral_e(m, z)>, <expintegral_e1>, or <expintegral_ei> to an
+     equivalent form if possible.
+
+     Possible values for <expintrep> are <false>, <gamma_incomplete>,
+     <expintegral_e1>, <expintegral_ei>, <expintegral_li>,
+     <expintegral_trig>, or <expintegral_hyp>.
+
+     <false> means that the representation is not changed.  Other
+     values indicate the representation is to be changed to use the
+     function specified where <expintegral_trig> means
+     <expintegral_si>, <expintegral_ci>, and <expintegral_hyp> means
+     <expintegral_shi> or <expintegral_chi>.
 
 
  -- Option variable: expintexpand
@@ -16610,6 +16853,38 @@ File: maxima.info,  Node: Functions and Variables for Special Functions,  Prev: 
                                   a s %e    expintegral_e1(a s) - 1
           (%o15)                - ---------------------------------
                                                   a
+
+
+ -- Function: hypergeometric_simp (<e>)
+     `hypergeometric_simp' simplifies hypergeometric functions by
+     applying `hgfred' to the arguments of any hypergeometric functions
+     in the expression <e>.
+
+     Only instances of `hypergeometric' are affected; any `%f', `%w',
+     and `%m' in the expression <e> are not affected.  Any unsimplified
+     hypergeometric functions are returned unchanged (instead of
+     changing to `%f' as `hgfred' would).
+
+     `load(hypergeometric);' loads this function.
+
+     See also `hgfred'.
+
+     Examples:
+
+          (%i1) load (hypergeometric) $
+          (%i2) foo : [hypergeometric([1,1], [2], z), hypergeometric([1/2], [1], z)];
+          (%o2) [hypergeometric([1, 1], [2], z),
+                                                               1
+                                               hypergeometric([-], [1], z)]
+                                                               2
+          (%i3) hypergeometric_simp (foo);
+                           log(1 - z)              z    z/2
+          (%o3)         [- ----------, bessel_i(0, -) %e   ]
+                               z                   2
+          (%i4) bar : hypergeometric([n], [m], z + 1);
+          (%o4)            hypergeometric([n], [m], z + 1)
+          (%i5) hypergeometric_simp (bar);
+          (%o5)            hypergeometric([n], [m], z + 1)
 
 
  -- Function: hgfred (<a>, <b>, <t>)
@@ -17437,8 +17712,8 @@ File: maxima.info,  Node: Functions and Variables for Differentiation,  Prev: Di
 
  -- Function: derivdegree (<expr>, <y>, <x>)
      Returns the highest degree of the derivative of the dependent
-     variable <y> with respect to the independent variable <x> occuring
-     in <expr>.
+     variable <y> with respect to the independent variable <x>
+     occurring in <expr>.
 
      Example:
 
@@ -17704,7 +17979,7 @@ File: maxima.info,  Node: Functions and Variables for Differentiation,  Prev: Di
      That is, if <f> depends on <x> and <y>, `f (x, y)' must appear in
      <expr>.
 
-     See also `ilt', the inverse Laplace transform.
+     See also `ilt',, the inverse Laplace transform.
 
      Examples:
 
@@ -18273,8 +18548,8 @@ File: maxima.info,  Node: Functions and Variables for Integration,  Next: Introd
                  >      -------------------------------
                 /                    2
                 ====            3 %r4  - 2 %r4
-                                3    2
-                %r4 in rootsof(x  - x  + 1)
+                                  3      2
+                %r4 in rootsof(%r4  - %r4  + 1, %r4)
           (%o4) ----------------------------------------------------------
                          7
 
@@ -19838,7 +20113,7 @@ File: maxima.info,  Node: Functions and Variables for Equations,  Prev: Equation
      false' is assumed.)
 
      When `programmode' is `false', `solve', etc. create intermediate
-     expression labels `%t1', `t2', etc., and assign the solutions to
+     expression labels `%t1', `%t2', etc., and assign the solutions to
      them.
 
 
@@ -19952,8 +20227,8 @@ File: maxima.info,  Node: Functions and Variables for Equations,  Prev: Equation
      `rootscontract (sqrt(x)*y^(3/2))' yields `sqrt(x*y^3)'.
 
      When `radexpand' is `true' and `domain' is `real', `rootscontract'
-     converts `abs' into `sqrt', e.g., `rootscontract (abs(x)*sqrt(y))'
-     yields `sqrt(x^2*y)'.
+     converts `abs' into `sqrt',  e.g., `rootscontract
+     (abs(x)*sqrt(y))' yields `sqrt(x^2*y)'.
 
      There is an option `rootsconmode' affecting `rootscontract' as
      follows:
@@ -20496,7 +20771,10 @@ File: maxima.info,  Node: Functions and Variables for fast Fourier transform,  N
 
      `inverse_fft' returns a new object of the same type as <y>, which
      is not modified.  Results are always computed as floats or
-     expressions `a + b*%i' where `a' and `b' are floats.
+     expressions `a + b*%i' where `a' and `b' are floats.  If bigfloat
+     precision is needed the function `bf_inverse_fft' can be used
+     instead as a drop-in replacement of `inverse_fft' that is slower,
+     but supports bfloats.
 
      The inverse discrete Fourier transform is defined as follows.  Let
      `x' be the output of the inverse transform.  Then for `j' from 0
@@ -20557,7 +20835,12 @@ File: maxima.info,  Node: Functions and Variables for fast Fourier transform,  N
 
      `fft' returns a new object of the same type as <x>, which is not
      modified.  Results are always computed as floats or expressions `a
-     + b*%i' where `a' and `b' are floats.
+     + b*%i' where `a' and `b' are floats.  If bigfloat precision is
+     needed the function `bf_fft' can be used instead as a drop-in
+     replacement of `fft' that is slower, but supports bfloats. In
+     addition if it is known that the input consists of only real
+     values (no imaginary parts), `real_fft' can be used which is
+     potentially faster.
 
      The discrete Fourier transform is defined as follows.  Let `y' be
      the output of the transform.  Then for `k' from 0 through `n - 1',
@@ -20591,7 +20874,8 @@ File: maxima.info,  Node: Functions and Variables for fast Fourier transform,  N
      `load(fft)' loads this function.
 
      See also `inverse_fft' (inverse transform), `recttopolar', and
-     `polartorect'.
+     `polartorect'.. See `real_fft' for FFTs of a real-valued input,
+     and `bf_fft' and `bf_real_fft' for operations on bigfloat values.
 
      Examples:
 
@@ -20653,6 +20937,56 @@ File: maxima.info,  Node: Functions and Variables for fast Fourier transform,  N
                               k, 0, n/2) $
           (%i18) makelist (float (f (j)), j, 0, n - 1);
           (%o18)      [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+
+
+ -- Function: real_fft (<x>)
+     Computes the fast Fourier transform of a real-valued sequence <x>.
+     This is equivalent to performing `fft(x)', except that only the
+     first `N/2+1' results are returned, where `N' is the length of
+     <x>.  `N' must be power of two.
+
+     No check is made that <x> contains only real values.
+
+     The symmetry properites of the Fourier transform of real sequences
+     to reduce he complexity.  In particular the first and last output
+     values of `real_fft' are purely real.  For larger sequencyes,
+     `real_fft' may be computed more quickly than `fft'.
+
+     Since the output length is short, the normal `inverse_fft' cannot
+     be directly used.  Use `inverse_real_fft' to compute the inverse.
+
+
+ -- Function: inverse_real_fft (<y>)
+     Computes the inverse Fourier transfrom of <y>, which must have a
+     length of `N/2+1' where `N' is a power of two.  That is, the input
+     <x> is expected to be the output of `real_fft'.
+
+     No check is made to ensure that the input has the correct format.
+     (The first and last elements must be purely real.)
+
+
+ -- Function: bf_inverse_fft (<y>)
+     Computes the inverse complex fast Fourier transform.  This is the
+     bigfloat version of `inverse_fft' that converts the input to
+     bigfloats and returns a bigfloat result.
+
+
+ -- Function: bf_fft (<y>)
+     Computes the forward complex fast Fourier transform.  This is the
+     bigfloat version of `fft' that converts the input to bigfloats and
+     returns a bigfloat result.
+
+
+ -- Function: bf_real_fft (<x>)
+     Computes the forward fast Fourier transform of a real-valued input
+     returning a bigfloat result.  This is the bigfloat version of
+     `real_fft'.
+
+
+ -- Function: bf_inverse_real_fft (<y>)
+     Computes the inverse fast Fourier transfrom with a real-valued
+     bigfloat output.  This is the bigfloat version of
+     `inverse_real_fft'.
 
 
 
@@ -20791,7 +21125,8 @@ File: maxima.info,  Node: Functions for numerical solution of equations,  Next: 
 
      `load(newton1)' loads this function.
 
-     See also `realroots', `allroots', `find_root', and `mnewton'.
+     See also `realroots', `allroots', `find_root' and *note
+     mnewton-pkg::
 
      Examples:
 
@@ -21621,6 +21956,11 @@ File: maxima.info,  Node: Functions and Variables for Matrices and Linear Algebr
      not be able to find the roots of the polynomial; in that case some
      other functions in this package (except `innerproduct',
      `unitvector', `columnvector' and `gramschmidt') will not work.
+     Sometimes `solve' may find only a subset of the roots of the
+     polynomial.  This may happen when the factoring of the polynomial
+     contains polynomials of degree 5 or more. In such cases a warning
+     message is displayed and the only the roots found and their
+     corresponding multiplicities are returned.
 
      In some cases the eigenvalues found by `solve' may be complicated
      expressions.  (This may happen when `solve' returns a
@@ -21649,6 +21989,12 @@ File: maxima.info,  Node: Functions and Variables for Matrices and Linear Algebr
      or `eigenvectors' is referenced.  If `eigen.mac' is not already
      loaded, `load ("eigen")' loads it.  After loading, all functions
      and variables in the package are available.
+
+     Note that `eigenvectors' internally calls `eigenvalues' to obtain
+     eigenvalues. So, when `eigenvalues' returns a subset of all the
+     eigenvalues, the `eigenvectors' returns the corresponding subset
+     of the all the eigenvectors, with the same warning displayed as
+     `eigenvalues'.
 
      The flags that affect this function are:
 
@@ -22078,7 +22424,7 @@ File: maxima.info,  Node: Functions and Variables for Matrices and Linear Algebr
                                    [  %e    %e   ]
 
         * Matrix base to a matrix exponent.  This is not carried out
-          element by element.
+          element by element.  See also `matrixexp'.
 
           (%i9) x ^ y;
                                           [ %pi  %e ]
@@ -22129,6 +22475,18 @@ File: maxima.info,  Node: Functions and Variables for Matrices and Linear Algebr
                                       [ 1  0 ]
           (%o15)                      [      ]
                                       [ 0  1 ]
+
+
+ -- Function: matrixexp
+          matrixexp (<M>)
+          matrixexp (<M>, <n>)
+          matrixexp (<M>, <V>)
+     Calculates the matrix exponential e^(M*V) . Instead of the vector
+     <V> a number <n> can be specified as the second argument. If this
+     argument is omitted `matrixexp' replaces it by `1'.
+
+     The matrix exponential of a matrix <M> can be expressed as a power
+     series: e^M=sum(M^k/k!,0,inf)
 
 
  -- Function: matrixmap (<f>, <M>)
@@ -22794,8 +23152,8 @@ expressions which in the component representation would be unmanageable
 can sometimes be greatly simplified by using the special routines for
 symmetrical objects in `itensor'. In this way the structure of a large
 expression may be more transparent. On the other hand, because of the
-the special indicial representation in `itensor', in some cases the
-user may find difficulty with the specification of the metric, function
+special indicial representation in `itensor', in some cases the user
+may find difficulty with the specification of the metric, function
 definition, and the evaluation of differentiated "indexed" objects.
 
    The `itensor' package can carry out differentiation with respect to
@@ -22842,8 +23200,9 @@ the other set of indices is lost.
 remains fully compatible with the existing notation and can be used
 interchangeably. In this notation, contravariant indices are inserted
 in the appropriate positions in the covariant index list, but with a
-minus sign prepended.  Functions like `contract' and `ishow' are now
-aware of this new index notation and can process tensors appropriately.
+minus sign prepended.  Functions like `contract_Itensor' and `ishow'
+are now aware of this new index notation and can process tensors
+appropriately.
 
    In this new notation, the previous example yields a correct result:
 
@@ -24776,4 +25135,1357 @@ Schwarzschild solution) as an example. Many of the functions in
      (%t11)                         mcs        = ---
                                        4, 4, 1   2 a
      (%o11)                               done
+
+
+File: maxima.info,  Node: Functions and Variables for ctensor,  Prev: Introduction to ctensor,  Up: ctensor
+
+26.2 Functions and Variables for ctensor
+========================================
+
+26.2.1 Initialization and setup
+-------------------------------
+
+ -- Function: csetup ()
+     A function in the `ctensor' (component tensor) package which
+     initializes the package and allows the user to enter a metric
+     interactively. See `ctensor' for more details.
+
+
+ -- Function: cmetric
+          cmetric (<dis>)
+          cmetric ()
+     A function in the `ctensor' (component tensor) package that
+     computes the metric inverse and sets up the package for further
+     calculations.
+
+     If `cframe_flag' is `false', the function computes the inverse
+     metric `ug' from the (user-defined) matrix `lg'. The metric
+     determinant is also computed and stored in the variable `gdet'.
+     Furthermore, the package determines if the metric is diagonal and
+     sets the value of `diagmetric' accordingly. If the optional
+     argument <dis> is present and not equal to `false', the user is
+     prompted to see the metric inverse.
+
+     If `cframe_flag' is `true', the function expects that the values of
+     `fri' (the inverse frame matrix) and `lfg' (the frame metric) are
+     defined. From these, the frame matrix `fr' and the inverse frame
+     metric `ufg' are computed.
+
+
+ -- Function: ct_coordsys
+          ct_coordsys (<coordinate_system>, <extra_arg>)
+          ct_coordsys (<coordinate_system>)
+     Sets up a predefined coordinate system and metric. The argument
+     <coordinate_system> can be one of the following symbols:
+
+
+           SYMBOL             Dim Coordinates     Description/comments
+           ------------------------------------------------------------------
+           cartesian2d           2  [x,y]             Cartesian 2D coordinate
+                                                      system
+           polar                 2  [r,phi]           Polar coordinate system
+           elliptic              2  [u,v]             Elliptic coord. system
+           confocalelliptic      2  [u,v]             Confocal elliptic
+                                                      coordinates
+           bipolar               2  [u,v]             Bipolar coord. system
+           parabolic             2  [u,v]             Parabolic coord. system
+           cartesian3d           3  [x,y,z]           Cartesian 3D coordinate
+                                                      system
+           polarcylindrical      3  [r,theta,z]       Polar 2D with
+                                                      cylindrical z
+           ellipticcylindrical   3  [u,v,z]           Elliptic 2D with
+                                                      cylindrical z
+           confocalellipsoidal   3  [u,v,w]           Confocal ellipsoidal
+           bipolarcylindrical    3  [u,v,z]           Bipolar 2D with
+                                                      cylindrical z
+           paraboliccylindrical  3  [u,v,z]           Parabolic 2D with
+                                                      cylindrical z
+           paraboloidal          3  [u,v,phi]         Paraboloidal coords.
+           conical               3  [u,v,w]           Conical coordinates
+           toroidal              3  [phi,u,v]         Toroidal coordinates
+           spherical             3  [r,theta,phi]     Spherical coord. system
+           oblatespheroidal      3  [u,v,phi]         Oblate spheroidal
+                                                      coordinates
+           oblatespheroidalsqrt  3  [u,v,phi]
+           prolatespheroidal     3  [u,v,phi]         Prolate spheroidal
+                                                      coordinates
+           prolatespheroidalsqrt 3  [u,v,phi]
+           ellipsoidal           3  [r,theta,phi]     Ellipsoidal coordinates
+           cartesian4d           4  [x,y,z,t]         Cartesian 4D coordinate
+                                                      system
+           spherical4d           4  [r,theta,eta,phi] Spherical 4D coordinate
+                                                      system
+           exteriorschwarzschild 4  [t,r,theta,phi]   Schwarzschild metric
+           interiorschwarzschild 4  [t,z,u,v]         Interior Schwarzschild
+                                                      metric
+           kerr_newman           4  [t,r,theta,phi]   Charged axially
+                                                      symmetric metric
+
+     `coordinate_system' can also be a list of transformation functions,
+     followed by a list containing the coordinate variables. For
+     instance, you can specify a spherical metric as follows:
+
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) ct_coordsys([r*cos(theta)*cos(phi),r*cos(theta)*sin(phi),
+                r*sin(theta),[r,theta,phi]]);
+          (%o2)                                done
+          (%i3) lg:trigsimp(lg);
+                                     [ 1  0         0        ]
+                                     [                       ]
+                                     [     2                 ]
+          (%o3)                      [ 0  r         0        ]
+                                     [                       ]
+                                     [         2    2        ]
+                                     [ 0  0   r  cos (theta) ]
+          (%i4) ct_coords;
+          (%o4)                           [r, theta, phi]
+          (%i5) dim;
+          (%o5)                                  3
+
+     Transformation functions can also be used when `cframe_flag' is
+     `true':
+
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) cframe_flag:true;
+          (%o2)                                true
+          (%i3) ct_coordsys([r*cos(theta)*cos(phi),r*cos(theta)*sin(phi),
+                r*sin(theta),[r,theta,phi]]);
+          (%o3)                                done
+          (%i4) fri;
+          (%o4)
+           [cos(phi)cos(theta) -cos(phi) r sin(theta) -sin(phi) r cos(theta)]
+           [                                                                ]
+           [sin(phi)cos(theta) -sin(phi) r sin(theta)  cos(phi) r cos(theta)]
+           [                                                                ]
+           [    sin(theta)           r cos(theta)                0          ]
+
+          (%i5) cmetric();
+          (%o5)                                false
+          (%i6) lg:trigsimp(lg);
+                                     [ 1  0         0        ]
+                                     [                       ]
+                                     [     2                 ]
+          (%o6)                      [ 0  r         0        ]
+                                     [                       ]
+                                     [         2    2        ]
+                                     [ 0  0   r  cos (theta) ]
+
+     The optional argument <extra_arg> can be any one of the following:
+
+     `cylindrical' tells `ct_coordsys' to attach an additional
+     cylindrical coordinate.
+
+     `minkowski' tells `ct_coordsys' to attach an additional coordinate
+     with negative metric signature.
+
+     `all' tells `ct_coordsys' to call `cmetric' and `christof(false)'
+     after setting up the metric.
+
+     If the global variable `verbose' is set to `true', `ct_coordsys'
+     displays the values of `dim', `ct_coords', and either `lg' or
+     `lfg' and `fri', depending on the value of `cframe_flag'.
+
+
+ -- Function: init_ctensor ()
+     Initializes the `ctensor' package.
+
+     The `init_ctensor' function reinitializes the `ctensor' package.
+     It removes all arrays and matrices used by `ctensor', resets all
+     flags, resets `dim' to 4, and resets the frame metric to the
+     Lorentz-frame.
+
+
+26.2.2 The tensors of curved space
+----------------------------------
+
+The main purpose of the `ctensor' package is to compute the tensors of
+curved space(time), most notably the tensors used in general relativity.
+
+   When a metric base is used, `ctensor' can compute the following
+tensors:
+
+
+      lg  -- ug
+        \      \
+         lcs -- mcs -- ric -- uric
+                   \      \       \
+                    \      tracer - ein -- lein
+                     \
+                      riem -- lriem -- weyl
+                          \
+                           uriem
+
+   `ctensor' can also work using moving frames. When `cframe_flag' is
+set to `true', the following tensors can be calculated:
+
+
+      lfg -- ufg
+          \
+      fri -- fr -- lcs -- mcs -- lriem -- ric -- uric
+           \                       |  \      \       \
+            lg -- ug               |   weyl   tracer - ein -- lein
+                                   |\
+                                   | riem
+                                   |
+                                   \uriem
+
+ -- Function: christof (<dis>)
+     A function in the `ctensor' (component tensor) package.  It
+     computes the Christoffel symbols of both kinds.  The argument
+     <dis> determines which results are to be immediately displayed.
+     The Christoffel symbols of the first and second kinds are stored
+     in the arrays `lcs[i,j,k]' and `mcs[i,j,k]' respectively and
+     defined to be symmetric in the first two indices. If the argument
+     to `christof' is `lcs' or `mcs' then the unique non-zero values of
+     `lcs[i,j,k]' or `mcs[i,j,k]', respectively, will be displayed. If
+     the argument is `all' then the unique non-zero values of
+     `lcs[i,j,k]' and `mcs[i,j,k]' will be displayed.  If the argument
+     is `false' then the display of the elements will not occur. The
+     array elements `mcs[i,j,k]' are defined in such a manner that the
+     final index is contravariant.
+
+
+ -- Function: ricci (<dis>)
+     A function in the `ctensor' (component tensor) package. `ricci'
+     computes the covariant (symmetric) components `ric[i,j]' of the
+     Ricci tensor.  If the argument <dis> is `true', then the non-zero
+     components are displayed.
+
+
+ -- Function: uricci (<dis>)
+     This function first computes the covariant components `ric[i,j]'
+     of the Ricci tensor.  Then the mixed Ricci tensor is computed
+     using the contravariant metric tensor.  If the value of the
+     argument <dis> is `true', then these mixed components, `uric[i,j]'
+     (the index `i' is covariant and the index `j' is contravariant),
+     will be displayed directly.  Otherwise, `ricci(false)' will simply
+     compute the entries of the array `uric[i,j]' without displaying
+     the results.
+
+
+ -- Function: scurvature ()
+     Returns the scalar curvature (obtained by contracting the Ricci
+     tensor) of the Riemannian manifold with the given metric.
+
+
+ -- Function: einstein (<dis>)
+     A function in the `ctensor' (component tensor) package.
+     `einstein' computes the mixed Einstein tensor after the
+     Christoffel symbols and Ricci tensor have been obtained (with the
+     functions `christof' and `ricci').  If the argument <dis> is
+     `true', then the non-zero values of the mixed Einstein tensor
+     `ein[i,j]' will be displayed where `j' is the contravariant index.
+     The variable `rateinstein' will cause the rational simplification
+     on these components. If `ratfac' is `true' then the components will
+     also be factored.
+
+
+ -- Function: leinstein (<dis>)
+     Covariant Einstein-tensor. `leinstein' stores the values of the
+     covariant Einstein tensor in the array `lein'. The covariant
+     Einstein-tensor is computed from the mixed Einstein tensor `ein'
+     by multiplying it with the metric tensor. If the argument <dis> is
+     `true', then the non-zero values of the covariant Einstein tensor
+     are displayed.
+
+
+ -- Function: riemann (<dis>)
+     A function in the `ctensor' (component tensor) package.  `riemann'
+     computes the Riemann curvature tensor from the given metric and
+     the corresponding Christoffel symbols. The following index
+     conventions are used:
+
+                          l      _l       _l       _l   _m    _l   _m
+           R[i,j,k,l] =  R    = |      - |      + |    |   - |    |
+                          ijk     ij,k     ik,j     mk   ij    mj   ik
+
+     This notation is consistent with the notation used by the `itensor'
+     package and its `icurvature' function.  If the optional argument
+     <dis> is `true', the unique non-zero components `riem[i,j,k,l]'
+     will be displayed.  As with the Einstein tensor, various switches
+     set by the user control the simplification of the components of
+     the Riemann tensor.  If `ratriemann' is `true', then rational
+     simplification will be done. If `ratfac' is `true' then each of
+     the components will also be factored.
+
+     If the variable `cframe_flag' is `false', the Riemann tensor is
+     computed directly from the Christoffel-symbols. If `cframe_flag' is
+     `true', the covariant Riemann-tensor is computed first from the
+     frame field coefficients.
+
+
+ -- Function: lriemann (<dis>)
+     Covariant Riemann-tensor (`lriem[]').
+
+     Computes the covariant Riemann-tensor as the array `lriem'. If the
+     argument <dis> is `true', unique non-zero values are displayed.
+
+     If the variable `cframe_flag' is `true', the covariant Riemann
+     tensor is computed directly from the frame field coefficients.
+     Otherwise, the (3,1) Riemann tensor is computed first.
+
+     For information on index ordering, see `riemann'.
+
+
+ -- Function: uriemann (<dis>)
+     Computes the contravariant components of the Riemann curvature
+     tensor as array elements `uriem[i,j,k,l]'.  These are displayed if
+     <dis> is `true'.
+
+
+ -- Function: rinvariant ()
+     Forms the Kretchmann-invariant (`kinvariant') obtained by
+     contracting the tensors
+
+          lriem[i,j,k,l]*uriem[i,j,k,l].
+
+     This object is not automatically simplified since it can be very
+     large.
+
+
+ -- Function: weyl (<dis>)
+     Computes the Weyl conformal tensor.  If the argument <dis> is
+     `true', the non-zero components `weyl[i,j,k,l]' will be displayed
+     to the user.  Otherwise, these components will simply be computed
+     and stored.  If the switch `ratweyl' is set to `true', then the
+     components will be rationally simplified; if `ratfac' is `true'
+     then the results will be factored as well.
+
+
+26.2.3 Taylor series expansion
+------------------------------
+
+The `ctensor' package has the ability to truncate results by assuming
+that they are Taylor-series approximations. This behavior is controlled
+by the `ctayswitch' variable; when set to true, `ctensor' makes use
+internally of the function `ctaylor' when simplifying results.
+
+   The `ctaylor' function is invoked by the following `ctensor'
+functions:
+
+
+         Function     Comments
+         ---------------------------------
+         christof()   For mcs only
+         ricci()
+         uricci()
+         einstein()
+         riemann()
+         weyl()
+         checkdiv()
+
+ -- Function: ctaylor ()
+     The `ctaylor' function truncates its argument by converting it to
+     a Taylor-series using `taylor', and then calling `ratdisrep'. This
+     has the combined effect of dropping terms higher order in the
+     expansion variable `ctayvar'. The order of terms that should be
+     dropped is defined by `ctaypov'; the point around which the series
+     expansion is carried out is specified in `ctaypt'.
+
+     As an example, consider a simple metric that is a perturbation of
+     the Minkowski metric. Without further restrictions, even a diagonal
+     metric produces expressions for the Einstein tensor that are far
+     too complex:
+
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) ratfac:true;
+          (%o2)                                true
+          (%i3) derivabbrev:true;
+          (%o3)                                true
+          (%i4) ct_coords:[t,r,theta,phi];
+          (%o4)                         [t, r, theta, phi]
+          (%i5) lg:matrix([-1,0,0,0],[0,1,0,0],[0,0,r^2,0],
+                          [0,0,0,r^2*sin(theta)^2]);
+                                  [ - 1  0  0         0        ]
+                                  [                            ]
+                                  [  0   1  0         0        ]
+                                  [                            ]
+          (%o5)                   [          2                 ]
+                                  [  0   0  r         0        ]
+                                  [                            ]
+                                  [              2    2        ]
+                                  [  0   0  0   r  sin (theta) ]
+          (%i6) h:matrix([h11,0,0,0],[0,h22,0,0],[0,0,h33,0],[0,0,0,h44]);
+                                      [ h11   0    0    0  ]
+                                      [                    ]
+                                      [  0   h22   0    0  ]
+          (%o6)                       [                    ]
+                                      [  0    0   h33   0  ]
+                                      [                    ]
+                                      [  0    0    0   h44 ]
+          (%i7) depends(l,r);
+          (%o7)                               [l(r)]
+          (%i8) lg:lg+l*h;
+                [ h11 l - 1      0          0                 0            ]
+                [                                                          ]
+                [     0      h22 l + 1      0                 0            ]
+                [                                                          ]
+          (%o8) [                        2                                 ]
+                [     0          0      r  + h33 l            0            ]
+                [                                                          ]
+                [                                    2    2                ]
+                [     0          0          0       r  sin (theta) + h44 l ]
+          (%i9) cmetric(false);
+          (%o9)                                done
+          (%i10) einstein(false);
+          (%o10)                               done
+          (%i11) ntermst(ein);
+          [[1, 1], 62]
+          [[1, 2], 0]
+          [[1, 3], 0]
+          [[1, 4], 0]
+          [[2, 1], 0]
+          [[2, 2], 24]
+          [[2, 3], 0]
+          [[2, 4], 0]
+          [[3, 1], 0]
+          [[3, 2], 0]
+          [[3, 3], 46]
+          [[3, 4], 0]
+          [[4, 1], 0]
+          [[4, 2], 0]
+          [[4, 3], 0]
+          [[4, 4], 46]
+          (%o12)                               done
+
+     However, if we recompute this example as an approximation that is
+     linear in the variable `l', we get much simpler expressions:
+
+
+          (%i14) ctayswitch:true;
+          (%o14)                               true
+          (%i15) ctayvar:l;
+          (%o15)                                 l
+          (%i16) ctaypov:1;
+          (%o16)                                 1
+          (%i17) ctaypt:0;
+          (%o17)                                 0
+          (%i18) christof(false);
+          (%o18)                               done
+          (%i19) ricci(false);
+          (%o19)                               done
+          (%i20) einstein(false);
+          (%o20)                               done
+          (%i21) ntermst(ein);
+          [[1, 1], 6]
+          [[1, 2], 0]
+          [[1, 3], 0]
+          [[1, 4], 0]
+          [[2, 1], 0]
+          [[2, 2], 13]
+          [[2, 3], 2]
+          [[2, 4], 0]
+          [[3, 1], 0]
+          [[3, 2], 2]
+          [[3, 3], 9]
+          [[3, 4], 0]
+          [[4, 1], 0]
+          [[4, 2], 0]
+          [[4, 3], 0]
+          [[4, 4], 9]
+          (%o21)                               done
+          (%i22) ratsimp(ein[1,1]);
+                                   2      2  4               2     2
+          (%o22) - (((h11 h22 - h11 ) (l )  r  - 2 h33 l    r ) sin (theta)
+                                        r               r r
+
+                                      2               2      4    2
+                        - 2 h44 l    r  - h33 h44 (l ) )/(4 r  sin (theta))
+                                 r r                r
+
+     This capability can be useful, for instance, when working in the
+     weak field limit far from a gravitational source.
+
+
+26.2.4 Frame fields
+-------------------
+
+When the variable `cframe_flag' is set to true, the `ctensor' package
+performs its calculations using a moving frame.
+
+ -- Function: frame_bracket (<fr>, <fri>, <diagframe>)
+     The frame bracket (`fb[]').
+
+     Computes the frame bracket according to the following definition:
+
+             c          c         c        d     e
+          ifb   = ( ifri    - ifri    ) ifr   ifr
+             ab         d,e       e,d      a     b
+
+
+26.2.5 Algebraic classification
+-------------------------------
+
+A new feature (as of November, 2004) of `ctensor' is its ability to
+compute the Petrov classification of a 4-dimensional spacetime metric.
+For a demonstration of this capability, see the file
+`share/tensor/petrov.dem'.
+
+ -- Function: nptetrad ()
+     Computes a Newman-Penrose null tetrad (`np') and its raised-index
+     counterpart (`npi'). See `petrov' for an example.
+
+     The null tetrad is constructed on the assumption that a
+     four-dimensional orthonormal frame metric with metric signature
+     (-,+,+,+) is being used.  The components of the null tetrad are
+     related to the inverse frame matrix as follows:
+
+
+          np  = (fri  + fri ) / sqrt(2)
+            1       1      2
+
+          np  = (fri  - fri ) / sqrt(2)
+            2       1      2
+
+          np  = (fri  + %i fri ) / sqrt(2)
+            3       3         4
+
+          np  = (fri  - %i fri ) / sqrt(2)
+            4       3         4
+
+
+ -- Function: psi (<dis>)
+     Computes the five Newman-Penrose coefficients `psi[0]'...`psi[4]'.
+     If `dis' is set to `true', the coefficients are displayed.  See
+     `petrov' for an example.
+
+     These coefficients are computed from the Weyl-tensor in a
+     coordinate base.  If a frame base is used, the Weyl-tensor is
+     first converted to a coordinate base, which can be a
+     computationally expensive procedure. For this reason, in some
+     cases it may be more advantageous to use a coordinate base in the
+     first place before the Weyl tensor is computed. Note however, that
+     constructing a Newman-Penrose null tetrad requires a frame base.
+     Therefore, a meaningful computation sequence may begin with a
+     frame base, which is then used to compute `lg' (computed
+     automatically by `cmetric') and then `ug'. See `petrov' for an
+     example. At this point, you can switch back to a coordinate base
+     by setting `cframe_flag' to false before beginning to compute the
+     Christoffel symbols. Changing to a frame base at a later stage
+     could yield inconsistent results, as you may end up with a mixed
+     bag of tensors, some computed in a frame base, some in a
+     coordinate base, with no means to distinguish between the two.
+
+
+ -- Function: petrov ()
+     Computes the Petrov classification of the metric characterized by
+     `psi[0]'...`psi[4]'.
+
+     For example, the following demonstrates how to obtain the
+     Petrov-classification of the Kerr metric:
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) (cframe_flag:true,gcd:spmod,ctrgsimp:true,ratfac:true);
+          (%o2)                                true
+          (%i3) ct_coordsys(exteriorschwarzschild,all);
+          (%o3)                                done
+          (%i4) ug:invert(lg)$
+          (%i5) weyl(false);
+          (%o5)                                done
+          (%i6) nptetrad(true);
+          (%t6) np =
+
+          [ sqrt(r - 2 m)           sqrt(r)                                 ]
+          [---------------   ---------------------    0            0        ]
+          [sqrt(2) sqrt(r)   sqrt(2) sqrt(r - 2 m)                          ]
+          [                                                                 ]
+          [ sqrt(r - 2 m)            sqrt(r)                                ]
+          [---------------  - ---------------------   0            0        ]
+          [sqrt(2) sqrt(r)    sqrt(2) sqrt(r - 2 m)                         ]
+          [                                                                 ]
+          [                                          r      %i r sin(theta) ]
+          [       0                    0          -------   --------------- ]
+          [                                       sqrt(2)       sqrt(2)     ]
+          [                                                                 ]
+          [                                          r       %i r sin(theta)]
+          [       0                    0          -------  - ---------------]
+          [                                       sqrt(2)        sqrt(2)    ]
+
+                                       sqrt(r)         sqrt(r - 2 m)
+          (%t7) npi = matrix([- ---------------------,---------------, 0, 0],
+                                sqrt(2) sqrt(r - 2 m) sqrt(2) sqrt(r)
+
+                    sqrt(r)            sqrt(r - 2 m)
+          [- ---------------------, - ---------------, 0, 0],
+             sqrt(2) sqrt(r - 2 m)    sqrt(2) sqrt(r)
+
+                     1               %i
+          [0, 0, ---------, --------------------],
+                 sqrt(2) r  sqrt(2) r sin(theta)
+
+                     1                 %i
+          [0, 0, ---------, - --------------------])
+                 sqrt(2) r    sqrt(2) r sin(theta)
+
+          (%o7)                                done
+          (%i7) psi(true);
+          (%t8)                              psi  = 0
+                                                0
+
+          (%t9)                              psi  = 0
+                                                1
+
+                                                    m
+          (%t10)                             psi  = --
+                                                2    3
+                                                    r
+
+          (%t11)                             psi  = 0
+                                                3
+
+          (%t12)                             psi  = 0
+                                                4
+          (%o12)                               done
+          (%i12) petrov();
+          (%o12)                                 D
+
+     The Petrov classification function is based on the algorithm
+     published in "Classifying geometries in general relativity: III
+     Classification in practice" by Pollney, Skea, and d'Inverno,
+     Class. Quant. Grav. 17 2885-2902 (2000).  Except for some simple
+     test cases, the implementation is untested as of December 19,
+     2004, and is likely to contain errors.
+
+
+26.2.6 Torsion and nonmetricity
+-------------------------------
+
+`ctensor' has the ability to compute and include torsion and
+nonmetricity coefficients in the connection coefficients.
+
+   The torsion coefficients are calculated from a user-supplied tensor
+`tr', which should be a rank (2,1) tensor. From this, the torsion
+coefficients `kt' are computed according to the following formulae:
+
+
+                   m          m      m
+            - g  tr   - g   tr   - tr   g
+               im  kj    jm   ki     ij  km
+     kt   = -------------------------------
+       ijk                 2
+
+
+       k     km
+     kt   = g   kt
+       ij         ijm
+
+   Note that only the mixed-index tensor is calculated and stored in the
+array `kt'.
+
+   The nonmetricity coefficients are calculated from the user-supplied
+nonmetricity vector `nm'. From this, the nonmetricity coefficients
+`nmc' are computed as follows:
+
+
+                  k    k        km
+            -nm  D  - D  nm  + g   nm  g
+        k      i  j    i   j         m  ij
+     nmc  = ------------------------------
+        ij                2
+
+   where D stands for the Kronecker-delta.
+
+   When `ctorsion_flag' is set to `true', the values of `kt' are
+subtracted from the mixed-indexed connection coefficients computed by
+`christof' and stored in `mcs'. Similarly, if `cnonmet_flag' is set to
+`true', the values of `nmc' are subtracted from the mixed-indexed
+connection coefficients.
+
+   If necessary, `christof' calls the functions `contortion' and
+`nonmetricity' in order to compute `kt' and `nm'.
+
+ -- Function: contortion (<tr>)
+     Computes the (2,1) contortion coefficients from the torsion tensor
+     <tr>.
+
+
+ -- Function: nonmetricity (<nm>)
+     Computes the (2,1) nonmetricity coefficients from the nonmetricity
+     vector <nm>.
+
+
+26.2.7 Miscellaneous features
+-----------------------------
+
+ -- Function: ctransform (<M>)
+     A function in the `ctensor' (component tensor) package which will
+     perform a coordinate transformation upon an arbitrary square
+     symmetric matrix <M>. The user must input the functions which
+     define the transformation.  (Formerly called `transform'.)
+
+
+ -- Function: findde (<A>, <n>)
+     returns a list of the unique differential equations (expressions)
+     corresponding to the elements of the <n> dimensional square array
+     <A>. Presently, <n> may be 2 or 3. `deindex' is a global list
+     containing the indices of <A> corresponding to these unique
+     differential equations. For the Einstein tensor (`ein'), which is
+     a two dimensional array, if computed for the metric in the example
+     below, `findde' gives the following independent differential
+     equations:
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) derivabbrev:true;
+          (%o2)                                true
+          (%i3) dim:4;
+          (%o3)                                  4
+          (%i4) lg:matrix([a, 0, 0, 0], [ 0, x^2, 0, 0],
+                                        [0, 0, x^2*sin(y)^2, 0], [0,0,0,-d]);
+                                    [ a  0       0        0  ]
+                                    [                        ]
+                                    [     2                  ]
+                                    [ 0  x       0        0  ]
+          (%o4)                     [                        ]
+                                    [         2    2         ]
+                                    [ 0  0   x  sin (y)   0  ]
+                                    [                        ]
+                                    [ 0  0       0       - d ]
+          (%i5) depends([a,d],x);
+          (%o5)                            [a(x), d(x)]
+          (%i6) ct_coords:[x,y,z,t];
+          (%o6)                            [x, y, z, t]
+          (%i7) cmetric();
+          (%o7)                                done
+          (%i8) einstein(false);
+          (%o8)                                done
+          (%i9) findde(ein,2);
+                                                      2
+          (%o9) [d  x - a d + d, 2 a d d    x - a (d )  x - a  d d  x
+                  x                     x x         x        x    x
+
+                                                        2          2
+                                    + 2 a d d   - 2 a  d , a  x + a  - a]
+                                             x       x      x
+          (%i10) deindex;
+          (%o10)                     [[1, 1], [2, 2], [4, 4]]
+
+
+ -- Function: cograd ()
+     Computes the covariant gradient of a scalar function allowing the
+     user to choose the corresponding vector name as the example under
+     `contragrad' illustrates.
+
+
+ -- Function: contragrad ()
+     Computes the contravariant gradient of a scalar function allowing
+     the user to choose the corresponding vector name as the example
+     below for the Schwarzschild metric illustrates:
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) derivabbrev:true;
+          (%o2)                                true
+          (%i3) ct_coordsys(exteriorschwarzschild,all);
+          (%o3)                                done
+          (%i4) depends(f,r);
+          (%o4)                               [f(r)]
+          (%i5) cograd(f,g1);
+          (%o5)                                done
+          (%i6) listarray(g1);
+          (%o6)                            [0, f , 0, 0]
+                                                r
+          (%i7) contragrad(f,g2);
+          (%o7)                                done
+          (%i8) listarray(g2);
+                                         f  r - 2 f  m
+                                          r        r
+          (%o8)                      [0, -------------, 0, 0]
+                                               r
+
+
+ -- Function: dscalar ()
+     computes the tensor d'Alembertian of the scalar function once
+     dependencies have been declared upon the function. For example:
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) derivabbrev:true;
+          (%o2)                                true
+          (%i3) ct_coordsys(exteriorschwarzschild,all);
+          (%o3)                                done
+          (%i4) depends(p,r);
+          (%o4)                               [p(r)]
+          (%i5) factor(dscalar(p));
+                                    2
+                              p    r  - 2 m p    r + 2 p  r - 2 m p
+                               r r           r r        r          r
+          (%o5)               --------------------------------------
+                                                 2
+                                                r
+
+
+ -- Function: checkdiv ()
+     computes the covariant divergence of the mixed second rank tensor
+     (whose first index must be covariant) by printing the
+     corresponding n components of the vector field (the divergence)
+     where n = `dim'. If the argument to the function is `g' then the
+     divergence of the Einstein tensor will be formed and must be zero.
+     In addition, the divergence (vector) is given the array name `div'.
+
+
+ -- Function: cgeodesic (<dis>)
+     A function in the `ctensor' (component tensor) package.
+     `cgeodesic' computes the geodesic equations of motion for a given
+     metric.  They are stored in the array `geod[i]'.  If the argument
+     <dis> is `true' then these equations are displayed.
+
+
+ -- Function: bdvac (<f>)
+     generates the covariant components of the vacuum field equations of
+     the Brans- Dicke gravitational theory. The scalar field is
+     specified by the argument <f>, which should be a (quoted) function
+     name with functional dependencies, e.g., `'p(x)'.
+
+     The components of the second rank covariant field tensor are
+     represented by the array `bd'.
+
+
+ -- Function: invariant1 ()
+     generates the mixed Euler- Lagrange tensor (field equations) for
+     the invariant density of R^2. The field equations are the
+     components of an array named `inv1'.
+
+
+ -- Function: invariant2 ()
+     *** NOT YET IMPLEMENTED ***
+
+     generates the mixed Euler- Lagrange tensor (field equations) for
+     the invariant density of `ric[i,j]*uriem[i,j]'. The field
+     equations are the components of an array named `inv2'.
+
+
+ -- Function: bimetric ()
+     *** NOT YET IMPLEMENTED ***
+
+     generates the field equations of Rosen's bimetric theory. The field
+     equations are the components of an array named `rosen'.
+
+
+26.2.8 Utility functions
+------------------------
+
+ -- Function: diagmatrixp (<M>,<n>)
+     Returns `true' if the first <n> rows and <n> columns of <M> form a
+     diagonal matrix or (2D) array.
+
+
+ -- Function: symmetricp (<M>, <n>)
+     Returns `true' if <M> is a <n> by <n> symmetric matrix or
+     two-dimensional array, otherwise `false'.
+
+     If <n> is less than the size of <M>, `symmetricp' considers only
+     the <n> by <n> submatrix (respectively, subarray) comprising rows
+     1 through <n> and columns 1 through <n>.
+
+
+ -- Function: ntermst (<f>)
+     gives the user a quick picture of the "size" of the doubly
+     subscripted tensor (array) <f>.  It prints two element lists where
+     the second element corresponds to NTERMS of the components
+     specified by the first elements.  In this way, it is possible to
+     quickly find the non-zero expressions and attempt simplification.
+
+
+ -- Function: cdisplay (<ten>)
+     displays all the elements of the tensor <ten>, as represented by a
+     multidimensional array. Tensors of rank 0 and 1, as well as other
+     types of variables, are displayed as with `ldisplay'. Tensors of
+     rank 2 are displayed as 2-dimensional matrices, while tensors of
+     higher rank are displayed as a list of 2-dimensional matrices. For
+     instance, the Riemann-tensor of the Schwarzschild metric can be
+     viewed as:
+
+          (%i1) load(ctensor);
+          (%o1)       /share/tensor/ctensor.mac
+          (%i2) ratfac:true;
+          (%o2)                                true
+          (%i3) ct_coordsys(exteriorschwarzschild,all);
+          (%o3)                                done
+          (%i4) riemann(false);
+          (%o4)                                done
+          (%i5) cdisplay(riem);
+                    [ 0               0                   0           0     ]
+                    [                                                       ]
+                    [                              2                        ]
+                    [      3 m (r - 2 m)   m    2 m                         ]
+                    [ 0  - ------------- + -- - ----      0           0     ]
+                    [            4          3     4                         ]
+                    [           r          r     r                          ]
+                    [                                                       ]
+          riem    = [                                m (r - 2 m)            ]
+              1, 1  [ 0               0              -----------      0     ]
+                    [                                     4                 ]
+                    [                                    r                  ]
+                    [                                                       ]
+                    [                                           m (r - 2 m) ]
+                    [ 0               0                   0     ----------- ]
+                    [                                                4      ]
+                    [                                               r       ]
+
+                                          [    2 m (r - 2 m)       ]
+                                          [ 0  -------------  0  0 ]
+                                          [          4             ]
+                                          [         r              ]
+                               riem     = [                        ]
+                                   1, 2   [ 0        0        0  0 ]
+                                          [                        ]
+                                          [ 0        0        0  0 ]
+                                          [                        ]
+                                          [ 0        0        0  0 ]
+
+                                          [         m (r - 2 m)    ]
+                                          [ 0  0  - -----------  0 ]
+                                          [              4         ]
+                                          [             r          ]
+                               riem     = [                        ]
+                                   1, 3   [ 0  0        0        0 ]
+                                          [                        ]
+                                          [ 0  0        0        0 ]
+                                          [                        ]
+                                          [ 0  0        0        0 ]
+
+                                          [            m (r - 2 m) ]
+                                          [ 0  0  0  - ----------- ]
+                                          [                 4      ]
+                                          [                r       ]
+                               riem     = [                        ]
+                                   1, 4   [ 0  0  0        0       ]
+                                          [                        ]
+                                          [ 0  0  0        0       ]
+                                          [                        ]
+                                          [ 0  0  0        0       ]
+
+                                         [       0         0  0  0 ]
+                                         [                         ]
+                                         [       2 m               ]
+                                         [ - ------------  0  0  0 ]
+                              riem     = [    2                    ]
+                                  2, 1   [   r  (r - 2 m)          ]
+                                         [                         ]
+                                         [       0         0  0  0 ]
+                                         [                         ]
+                                         [       0         0  0  0 ]
+
+                       [     2 m                                         ]
+                       [ ------------  0        0               0        ]
+                       [  2                                              ]
+                       [ r  (r - 2 m)                                    ]
+                       [                                                 ]
+                       [      0        0        0               0        ]
+                       [                                                 ]
+            riem     = [                         m                       ]
+                2, 2   [      0        0  - ------------        0        ]
+                       [                     2                           ]
+                       [                    r  (r - 2 m)                 ]
+                       [                                                 ]
+                       [                                         m       ]
+                       [      0        0        0         - ------------ ]
+                       [                                     2           ]
+                       [                                    r  (r - 2 m) ]
+
+                                          [ 0  0       0        0 ]
+                                          [                       ]
+                                          [            m          ]
+                                          [ 0  0  ------------  0 ]
+                               riem     = [        2              ]
+                                   2, 3   [       r  (r - 2 m)    ]
+                                          [                       ]
+                                          [ 0  0       0        0 ]
+                                          [                       ]
+                                          [ 0  0       0        0 ]
+
+                                          [ 0  0  0       0       ]
+                                          [                       ]
+                                          [               m       ]
+                                          [ 0  0  0  ------------ ]
+                               riem     = [           2           ]
+                                   2, 4   [          r  (r - 2 m) ]
+                                          [                       ]
+                                          [ 0  0  0       0       ]
+                                          [                       ]
+                                          [ 0  0  0       0       ]
+
+                                                [ 0  0  0  0 ]
+                                                [            ]
+                                                [ 0  0  0  0 ]
+                                                [            ]
+                                     riem     = [ m          ]
+                                         3, 1   [ -  0  0  0 ]
+                                                [ r          ]
+                                                [            ]
+                                                [ 0  0  0  0 ]
+
+                                                [ 0  0  0  0 ]
+                                                [            ]
+                                                [ 0  0  0  0 ]
+                                                [            ]
+                                     riem     = [    m       ]
+                                         3, 2   [ 0  -  0  0 ]
+                                                [    r       ]
+                                                [            ]
+                                                [ 0  0  0  0 ]
+
+                                         [   m                      ]
+                                         [ - -   0   0       0      ]
+                                         [   r                      ]
+                                         [                          ]
+                                         [        m                 ]
+                                         [  0   - -  0       0      ]
+                              riem     = [        r                 ]
+                                  3, 3   [                          ]
+                                         [  0    0   0       0      ]
+                                         [                          ]
+                                         [              2 m - r     ]
+                                         [  0    0   0  ------- + 1 ]
+                                         [                 r        ]
+
+                                              [ 0  0  0    0   ]
+                                              [                ]
+                                              [ 0  0  0    0   ]
+                                              [                ]
+                                   riem     = [            2 m ]
+                                       3, 4   [ 0  0  0  - --- ]
+                                              [             r  ]
+                                              [                ]
+                                              [ 0  0  0    0   ]
+
+                                          [       0        0  0  0 ]
+                                          [                        ]
+                                          [       0        0  0  0 ]
+                                          [                        ]
+                               riem     = [       0        0  0  0 ]
+                                   4, 1   [                        ]
+                                          [      2                 ]
+                                          [ m sin (theta)          ]
+                                          [ -------------  0  0  0 ]
+                                          [       r                ]
+
+                                          [ 0        0        0  0 ]
+                                          [                        ]
+                                          [ 0        0        0  0 ]
+                                          [                        ]
+                               riem     = [ 0        0        0  0 ]
+                                   4, 2   [                        ]
+                                          [         2              ]
+                                          [    m sin (theta)       ]
+                                          [ 0  -------------  0  0 ]
+                                          [          r             ]
+
+                                        [ 0  0          0          0 ]
+                                        [                            ]
+                                        [ 0  0          0          0 ]
+                                        [                            ]
+                             riem     = [ 0  0          0          0 ]
+                                 4, 3   [                            ]
+                                        [                2           ]
+                                        [         2 m sin (theta)    ]
+                                        [ 0  0  - ---------------  0 ]
+                                        [                r           ]
+
+                     [        2                                             ]
+                     [   m sin (theta)                                      ]
+                     [ - -------------         0                0         0 ]
+                     [         r                                            ]
+                     [                                                      ]
+                     [                         2                            ]
+                     [                    m sin (theta)                     ]
+          riem     = [        0         - -------------         0         0 ]
+              4, 4   [                          r                           ]
+                     [                                                      ]
+                     [                                          2           ]
+                     [                                   2 m sin (theta)    ]
+                     [        0                0         ---------------  0 ]
+                     [                                          r           ]
+                     [                                                      ]
+                     [        0                0                0         0 ]
+
+          (%o5)                                done
+
+
+ -- Function: deleten (<L>, <n>)
+     Returns a new list consisting of <L> with the <n>'th element
+     deleted.
+
+
+26.2.9 Variables used by `ctensor'
+----------------------------------
+
+ -- Option variable: dim
+     Default value: 4
+
+     An option in the `ctensor' (component tensor) package.  `dim' is
+     the dimension of the manifold with the default 4. The command
+     `dim: n' will reset the dimension to any other value `n'.
+
+
+ -- Option variable: diagmetric
+     Default value: `false'
+
+     An option in the `ctensor' (component tensor) package.  If
+     `diagmetric' is `true' special routines compute all geometrical
+     objects (which contain the metric tensor explicitly) by taking
+     into consideration the diagonality of the metric. Reduced run
+     times will, of course, result. Note: this option is set
+     automatically by `csetup' if a diagonal metric is specified.
+
+
+ -- Option variable: ctrgsimp
+     Causes trigonometric simplifications to be used when tensors are
+     computed. Presently, `ctrgsimp' affects only computations
+     involving a moving frame.
+
+
+ -- Option variable: cframe_flag
+     Causes computations to be performed relative to a moving frame as
+     opposed to a holonomic metric. The frame is defined by the inverse
+     frame array `fri' and the frame metric `lfg'. For computations
+     using a Cartesian frame, `lfg' should be the unit matrix of the
+     appropriate dimension; for computations in a Lorentz frame, `lfg'
+     should have the appropriate signature.
+
+
+ -- Option variable: ctorsion_flag
+     Causes the contortion tensor to be included in the computation of
+     the connection coefficients. The contortion tensor itself is
+     computed by `contortion' from the user-supplied tensor `tr'.
+
+
+ -- Option variable: cnonmet_flag
+     Causes the nonmetricity coefficients to be included in the
+     computation of the connection coefficients. The nonmetricity
+     coefficients are computed from the user-supplied nonmetricity
+     vector `nm' by the function `nonmetricity'.
+
+
+ -- Option variable: ctayswitch
+     If set to `true', causes some `ctensor' computations to be carried
+     out using Taylor-series expansions. Presently, `christof', `ricci',
+     `uricci', `einstein', and `weyl' take into account this setting.
+
+
+ -- Option variable: ctayvar
+     Variable used for Taylor-series expansion if `ctayswitch' is set to
+     `true'.
+
+
+ -- Option variable: ctaypov
+     Maximum power used in Taylor-series expansion when `ctayswitch' is
+     set to `true'.
+
+
+ -- Option variable: ctaypt
+     Point around which Taylor-series expansion is carried out when
+     `ctayswitch' is set to `true'.
+
+
+ -- System variable: gdet
+     The determinant of the metric tensor `lg'. Computed by `cmetric'
+     when `cframe_flag' is set to `false'.
+
+
+ -- Option variable: ratchristof
+     Causes rational simplification to be applied by `christof'.
+
+
+ -- Option variable: rateinstein
+     Default value: `true'
+
+     If `true' rational simplification will be performed on the
+     non-zero components of Einstein tensors; if `ratfac' is `true'
+     then the components will also be factored.
+
+
+ -- Option variable: ratriemann
+     Default value: `true'
+
+     One of the switches which controls simplification of Riemann
+     tensors; if `true', then rational simplification will be done; if
+     `ratfac' is `true' then each of the components will also be
+     factored.
+
+
+ -- Option variable: ratweyl
+     Default value: `true'
+
+     If `true', this switch causes the `weyl' function to apply
+     rational simplification to the values of the Weyl tensor. If
+     `ratfac' is `true', then the components will also be factored.
+
+
+ -- Variable: lfg
+     The covariant frame metric. By default, it is initialized to the
+     4-dimensional Lorentz frame with signature (+,+,+,-). Used when
+     `cframe_flag' is `true'.
+
+
+ -- Variable: ufg
+     The inverse frame metric. Computed from `lfg' when `cmetric' is
+     called while `cframe_flag' is set to `true'.
+
+
+ -- Variable: riem
+     The (3,1) Riemann tensor. Computed when the function `riemann' is
+     invoked. For information about index ordering, see the description
+     of `riemann'.
+
+     If `cframe_flag' is `true', `riem' is computed from the covariant
+     Riemann-tensor `lriem'.
+
+
+ -- Variable: lriem
+     The covariant Riemann tensor. Computed by `lriemann'.
+
+
+ -- Variable: uriem
+     The contravariant Riemann tensor. Computed by `uriemann'.
+
+
+ -- Variable: ric
+     The mixed Ricci-tensor. Computed by `ricci'.
+
+
+ -- Variable: uric
+     The contravariant Ricci-tensor. Computed by `uricci'.
+
+
+ -- Variable: lg
+     The metric tensor. This tensor must be specified (as a `dim' by
+     `dim' matrix) before other computations can be performed.
+
+
+ -- Variable: ug
+     The inverse of the metric tensor. Computed by `cmetric'.
+
+
+ -- Variable: weyl
+     The Weyl tensor. Computed by `weyl'.
+
+
+ -- Variable: fb
+     Frame bracket coefficients, as computed by `frame_bracket'.
+
+
+ -- Variable: kinvariant
+     The Kretchmann invariant. Computed by `rinvariant'.
+
+
+ -- Variable: np
+     A Newman-Penrose null tetrad. Computed by `nptetrad'.
+
+
+ -- Variable: npi
+     The raised-index Newman-Penrose null tetrad. Computed by
+     `nptetrad'.  Defined as `ug.np'. The product `np.transpose(npi)'
+     is constant:
+
+          (%i39) trigsimp(np.transpose(npi));
+                                        [  0   - 1  0  0 ]
+                                        [                ]
+                                        [ - 1   0   0  0 ]
+          (%o39)                        [                ]
+                                        [  0    0   0  1 ]
+                                        [                ]
+                                        [  0    0   1  0 ]
+
+
+ -- Variable: tr
+     User-supplied rank-3 tensor representing torsion. Used by
+     `contortion'.
+
+
+ -- Variable: kt
+     The contortion tensor, computed from `tr' by `contortion'.
+
+
+ -- Variable: nm
+     User-supplied nonmetricity vector. Used by `nonmetricity'.
+
+
+ -- Variable: nmc
+     The nonmetricity coefficients, computed from `nm' by
+     `nonmetricity'.
+
+
+ -- System variable: tensorkill
+     Variable indicating if the tensor package has been initialized.
+     Set and used by `csetup', reset by `init_ctensor'.
+
+
+ -- Option variable: ct_coords
+     Default value: `[]'
+
+     An option in the `ctensor' (component tensor) package.
+     `ct_coords' contains a list of coordinates.  While normally
+     defined when the function `csetup' is called, one may redefine the
+     coordinates with the assignment `ct_coords: [j1, j2, ..., jn]'
+     where the j's are the new coordinate names.  See also `csetup'.
+
+
+26.2.10 Reserved names
+----------------------
+
+The following names are used internally by the `ctensor' package and
+should not be redefined:
+
+       Name         Description
+       ---------------------------------------------------------------------
+       _lg()        Evaluates to lfg if frame metric used, lg otherwise
+       _ug()        Evaluates to ufg if frame metric used, ug otherwise
+       cleanup()    Removes items drom the deindex list
+       contract4()  Used by psi()
+       filemet()    Used by csetup() when reading the metric from a file
+       findde1()    Used by findde()
+       findde2()    Used by findde()
+       findde3()    Used by findde()
+       kdelt()      Kronecker-delta (not generalized)
+       newmet()     Used by csetup() for setting up a metric interactively
+       setflags()   Used by init_ctensor()
+       readvalue()
+       resimp()
+       sermet()     Used by csetup() for entering a metric as Taylor-series
+       txyzsum()
+       tmetric()    Frame metric, used by cmetric() when cframe_flag:true
+       triemann()   Riemann-tensor in frame base, used when cframe_flag:true
+       tricci()     Ricci-tensor in frame base, used when cframe_flag:true
+       trrc()       Ricci rotation coefficients, used by christof()
+       yesp()
+
+26.2.11 Changes
+---------------
+
+In November, 2004, the `ctensor' package was extensively rewritten.
+Many functions and variables have been renamed in order to make the
+package compatible with the commercial version of Macsyma.
+
+       New Name     Old Name        Description
+       ---------------------------------------------------------------------
+       ctaylor()    DLGTAYLOR()     Taylor-series expansion of an expression
+       lgeod[]      EM              Geodesic equations
+       ein[]        G[]             Mixed Einstein-tensor
+       ric[]        LR[]            Mixed Ricci-tensor
+       ricci()      LRICCICOM()     Compute the mixed Ricci-tensor
+       ctaypov      MINP            Maximum power in Taylor-series expansion
+       cgeodesic()  MOTION          Compute geodesic equations
+       ct_coords    OMEGA           Metric coordinates
+       ctayvar      PARAM           Taylor-series expansion variable
+       lriem[]      R[]             Covariant Riemann-tensor
+       uriemann()   RAISERIEMANN()  Compute the contravariant Riemann-tensor
+       ratriemann   RATRIEMAN       Rational simplif. of the Riemann-tensor
+       uric[]       RICCI[]         Contravariant Ricci-tensor
+       uricci()     RICCICOM()      Compute the contravariant Ricci-tensor
+       cmetric()    SETMETRIC()     Set up the metric
+       ctaypt       TAYPT           Point for Taylor-series expansion
+       ctayswitch   TAYSWITCH       Taylor-series setting switch
+       csetup()     TSETUP()        Start interactive setup session
+       ctransform() TTRANSFORM()    Interactive coordinate transformation
+       uriem[]      UR[]            Contravariant Riemann-tensor
+       weyl[]       W[]             (3,1) Weyl-tensor
 

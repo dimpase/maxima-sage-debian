@@ -25,7 +25,7 @@
 
 (defmfun nformat (form &aux (p nil))
   (cond ((atom form)
-	 (cond ((and (realp form) (minusp form)) (list '(mminus) (- form)))
+	 (cond ((and (realp form) (minusp form) (not (float-inf-p form))) (list '(mminus) (- form)))
 	       ((eq t form) (if in-p t '$true))
 	       ((eq nil form) (if in-p nil '$false))
 	       ;; revision, extension by Richard Fateman 3/2013.
@@ -49,8 +49,16 @@
 	       ;; just display as a lisp symbol, number, or other atom.
 	       (t form)))
 	((atom (car form))  form) ;; probably an illegal form; just return it.
-	((null (cdar form)) form) ;; probably an illegal or unsimplified form; just return it.
-	
+ 
+    ;; Process FORM if it is simplified or has some other operator flag (e.g., TRUNC)
+    ;; (ignoring line number annotations). Otherwise, return FORM unchanged.
+    ((let ((foo (cdar form)))
+       (or (null foo) ;; no CAR flags at all
+           ;; only item in CAR is line number annotation
+           ;; (is it worth the trouble to find a faster way to test that?)
+           (and (eql (length foo) 1) (let ((bar (first foo))) (and (consp bar) (equal (last bar) '(src)))))))
+     form)
+
 	;; this next section is for the ordinary maxima objects that are tagged by
 	;; their main operator or CAAR,  e.g. ((mplus) a b) has CAAR mplus ...
 	((and (symbolp (caar form)) (setf p (get (caar form) 'formatter))) ;; find the formatter.  If there is one, call it.
@@ -58,9 +66,10 @@
 	(t form)))			; if there is no formatter. Just return form unchanged.
 
  
-(defun form-mplus (form &aux args trunc)
+(defun form-mplus (form &aux args trunc simplified)
   (setq args (mapcar #'nformat (cdr form)))
   (setq trunc (member 'trunc (cdar form) :test #'eq))
+  (setq simplified (member 'simp (cdar form) :test #'eq))
   (cons (if trunc '(mplus trunc) '(mplus))
 	(cond ((and (member 'ratsimp (cdar form) :test #'eq)
 		    (not (member 'simp (cdar form) :test #'eq)))
@@ -71,8 +80,8 @@
 	       (if (and (not (mmminusp (car args)))
 			(mmminusp (cadr args)))
 		   args
-		   (nreverse args)))
-	      (t (nreverse args)))))
+		   (if simplified (nreverse args) args)))
+	      (t (if simplified (nreverse args) args)))))
 
 (defun form-mtimes (form)
   (cond ((null (cdr form)) '((mtimes)))

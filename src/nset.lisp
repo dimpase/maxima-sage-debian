@@ -27,12 +27,14 @@
 ;; Parse {a, b, c} into set(a, b, c).
 
 (putopr "{" '$set)
+(setf (get '$set 'op) "{")
 
-(def-nud-equiv |$}| delim-err)
-(def-led-equiv |$}| erb-err)
+(setf (get '|$}| 'nud) 'delim-err)
+(setf (get '|$}| 'led) 'erb-err)
+
 (def-lbp     |$}| 5.)
 
-(def-nud-equiv	|${| parse-matchfix)
+(setf (get '|${| 'nud) 'parse-matchfix)
 (def-match	|${| |$}|)
 (def-lbp	|${| 200.)
 ;No RBP
@@ -807,7 +809,7 @@
 		   (dotimes (i n)
 		     (push (aref p i) acc))
 		   (setq acc (nreverse acc))
-		   (push '(mlist simp) acc)))
+		   (push '(mlist simp) (cdr acc))))
 		(t
 		 (aref p n)))))
 	(t (if lst `(($num_partitions simp) ,n ,lst) 
@@ -849,7 +851,7 @@
 		    (dotimes (i n)
 		      (push (aref p i) acc))
 		    (setq acc (nreverse acc))
-		    (push '(mlist simp) acc)))
+		    (push '(mlist simp) (cdr acc))))
 		 (t
 		  (aref p n)))))
 	(t (if lst `(($num_distinct_partitions simp) ,n ,lst) 
@@ -872,6 +874,7 @@
 (defun $kron_delta (&rest x) (simplifya `((%kron_delta) ,@x) t))
 (setf (get '%kron_delta 'real-valued) t) ;; conjugate(kron_delta(xxx)) --> kron_delta(xxx)
 (setf (get '%kron_delta 'integer-valued) t) ;; featurep(kron_delta(xxx), integer) --> true
+(mputprop '%kron_delta t '$scalar) ;; same effect as declare(kron_delta, scalar)
 
 (putprop '%kron_delta #'(lambda (yy) (declare (ignore yy)) (setq sign '$pz)) 'sign-function)
 

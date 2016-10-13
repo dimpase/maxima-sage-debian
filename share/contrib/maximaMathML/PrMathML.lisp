@@ -252,6 +252,14 @@
   (mPr_engine (cadr mexpress) 'mparen 'mparen)
   (tprinc "<mo>|</mo>"))
 
+(defun mPr-conjugate (mexpress)
+  (tprinc "<mover>")
+  (tprinc "<mrow>")
+  (mPr_engine (cadr mexpress) 'mparen 'mparen)
+  (tprinc "</mrow>")
+  (tprinc "<mo>&#xaf;</mo>") ;; macron
+  (tprinc "</mover>"))
+
 ;; a[1]^2 or a[x,y]^z
 (defun mPr-arr-power(b e)
   (tprinc "<msubsup>")
@@ -289,7 +297,7 @@
   (tprinc "</msub>") (row-end "</mrow>")
 )
 ;;      in mPr_engine ,whennever mexpress is an atom this function taking care 
-;;of it by getting a TeX symbol if it exsits. Also it handles some word wich
+;;of it by getting a TeX symbol if it exists. Also it handles some word which
 ;;has a reserved character for TeX
 
 ;; prints instead of returning value now
@@ -813,6 +821,8 @@
 
 (setup '(%abs (mPrprocess mPr-abs)))
 
+(setup '($conjugate (mPrprocess mPr-conjugate)))
+
 (setup '(mnctimes (mPrprocess mPr-infix) (mPr-lbp 110) (mPr-rbp 109)
             (chchr "&CenterDot;")))
 
@@ -1085,6 +1095,12 @@
 (setq $mPrautolabel nil) ;set autolabel mode off, can be set to be integer
 (setq $lamPrautolabel nil)      ;set LaTeX autolabel mode false
 
+;; The MathML presentation code has been loaded. Run each post-load hook. This
+;; let other libraries hook in to the MathML library easily (doing so needs
+;; SETUP and MPR_ENGINE to be defined).
+;;
+;; Each hook should be an idempotent thunk.
 
-
-
+(when (boundp '*mathml-presentation-hook*)
+  (dolist (hook (symbol-value '*mathml-presentation-hook*))
+    (funcall hook)))

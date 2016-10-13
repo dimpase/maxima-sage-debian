@@ -12,8 +12,7 @@
 (let ((version-num (+ (* 10000 system::*gcl-major-version*)
 		      (* 100 system::*gcl-minor-version*)
 		      system::*gcl-extra-version*)))
-  (when (and (> version-num 20603)
-             (string= (sys:getenv "WITH_SYS_PROCLAIM") "true"))
+  (when (> version-num 20603)
     (pushnew :gcl-working-proclaims *features*)))
 		      
 #+cmu
@@ -133,14 +132,16 @@
 				     (:file "maxima-package")
 				     #+ecl (:file "ecl-port")
 				     (:file "autoconf-variables")))
-	       (:module info :source-pathname ""
-			:components ((:file "nregex")
+	       (:module intl :source-pathname ""
+			:components (
 				     ;; Some versions of CMUCL already
 				     ;; have a compatible version of
 				     ;; INTL, so skip it if we have
 				     ;; it.
 				     #+#.(cl:if (cl:and (cl:member :cmu cl:*features*) (cl:find-package '#:intl))  '(or) '(and))
-				     (:file "intl")
+				     (:file "intl")))
+	       (:module info :source-pathname ""
+			:components ((:file "nregex")
 				     (:file "cl-info")))
 	       (:module sloop :source-pathname ""
 			:components ((:file "sloop")))
@@ -152,7 +153,8 @@
                         :components ((:file "generr")
 				     (:file "clmacs")))
                (:module compatibility-macros :source-pathname ""
-                        :components ((:file "commac"))) 
+                        :components (#+gcl (:file "gcl-compat")
+                                     (:file "commac")))
                (:module prerequisites :source-pathname ""
                         :components ((:file "mormac") 
                                      (:file "compat")))
@@ -173,7 +175,8 @@
                         :components ((:file "mrgmac") 
                                      (:file "rzmac")    
                                      (:file "strmac") 
-                                     (:file "displm")))
+                                     (:file "displm")
+                                     (:file "safe-recursion")))
                (:module rat-macros :source-pathname ""
                         :components ((:file "ratmac") 
                                      (:file "mhayat")))

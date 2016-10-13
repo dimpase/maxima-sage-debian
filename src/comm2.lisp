@@ -173,11 +173,41 @@
   (let* ((arg (simpcheck (cadr expr) simp-flag))
          (e (resimplify (caddr expr)))
          (eqn (if ($listp e)
-                  (cons '(mlist simp) (cdr ($sort e)))
+                  (if (= ($length e) 1) ($first e) (cons '(mlist simp) (cdr ($sort e))))
                   e)))
     (cond (($constantp arg) arg)
           ((alike1 eqn '((mlist))) arg)
+          ((at-not-dependent eqn arg))
           (t (eqtest (list '(%at) arg eqn) expr)))))
+
+;; Remove any variable from EQN if ARG is not dependent on it.
+(defun at-not-dependent (eqn arg)
+  (if (eq (caar eqn) 'mequal)
+    (setq eqn (list '(mlist) eqn)))
+  (multiple-value-bind (e0 e1) (at-not-dependent-find-vars eqn arg)
+    (if e0
+      (if e1
+        (let*
+          ((e1 (mapcar #'(lambda (x) (list '(mequal) x ($assoc x eqn))) e1))
+           (eqn1 (if (= (length e1) 1) (first e1) (cons '(mlist) e1))))
+          (list '(%at) arg eqn1))
+        arg))))
+
+;; Test dependence via derivative to account for declared dependencies.
+(defun at-not-dependent-find-vars (eqn arg)
+  (let ((e (mapcar #'second (rest eqn))))
+    (partition-by #'(lambda (x) (at-not-dependent-find-vars-1 x arg)) e)))
+
+(defun at-not-dependent-find-vars-1 (x arg)
+  (if ($mapatom x)
+    (eql (mfuncall '$diff arg x) 0)
+    ;; We might be called with something like -1*x as the variable.
+    ;; (That might or might not be a bug in itself, but let it go for the moment.)
+    ;; Try to extract a variable and test for dependence on that.
+    ;; If there are 2 or more variables, return NIL (i.e., not at-not-dependent).
+    (let ((v ($listofvars x)))
+      (if (eql ($length v) 1)
+        (at-not-dependent-find-vars-1 ($first v) arg)))))
 
 (defmfun $at (expr ateqs)
   (if (notloreq ateqs) (improper-arg-err ateqs '$at))
@@ -528,7 +558,7 @@
                              ((member signx '($pos $pz)) (div '$%pi -4)))))))
           ($logarc
            (logarc '%atan2 (list ($logarc y) ($logarc x))))
-          ((and $trigsign (eq t (mminusp* y)))
+          ((and $trigsign (eq t (mminusp y)))
            (neg (take '($atan2) (neg y) x)))
           ;; atan2(y,x) = atan(y/x) + pi sign(y) (1-sign(x))/2
           ((eq signx '$pos)
@@ -778,10 +808,10 @@
 	 (cond ((hash-table-p arra)
 		(let ((dim1 (gethash 'dim1 arra)))
 		  (return (list* '(mlist) '$hash_table (if dim1 1 t)
-				 (loop for u being the hash-keys in arra using (hash-value v)
+				 (loop for u being the hash-keys in arra
 				    unless (eq u 'dim1)
 				    collect
-				    (if (progn v dim1) ;;ignore v
+				    (if dim1
 					u
 					(cons '(mlist simp) u)))))))
 	       ((arrayp arra)

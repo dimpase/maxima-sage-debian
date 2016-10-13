@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/es.utf8//include-maxima.texi.
+/home/vttoth/dev/maxima/doc/info/es.utf8//include-maxima.texi.
 
 Este es el Manual de Maxima en versión Texinfo
 
@@ -4532,8 +4532,8 @@ File: maxima.info,  Node: Funciones y variables para integración,  Next: Introd
                  >      -------------------------------
                 /                    2
                 ====            3 %r4  - 2 %r4
-                                3    2
-                %r4 in rootsof(x  - x  + 1)
+                                  3      2
+                %r4 in rootsof(%r4  - %r4  + 1, %r4)
           (%o4) ----------------------------------------------------------
                          7
 
@@ -6727,6 +6727,9 @@ simbólico) de la transformada rápida de Fourier.
 
 File: maxima.info,  Node: Funciones y variables para la transformada rápida de Fourier,  Next: Funciones para la resolución numérica de ecuaciones,  Prev: Introducción a la transformada rápida de Fourier,  Up: Métodos numéricos
 
+22.2 Funciones y variables para la transformada rápida de Fourier
+=================================================================
+
  -- Función: polartorect (<magnitude_array>, <phase_array>)
      Transforma valores complejos de la forma `r %e^(%i t)' a la forma
      `a + b %i', siendo <r> el módulo y <t> la fase.  Ambos valores <r>
@@ -6937,7 +6940,7 @@ File: maxima.info,  Node: Funciones y variables para la transformada rápida de 
 
 File: maxima.info,  Node: Funciones para la resolución numérica de ecuaciones,  Next: Introducción a la resolución numérica de ecuaciones diferenciales,  Prev: Funciones y variables para la transformada rápida de Fourier,  Up: Métodos numéricos
 
-22.2 Funciones para la resolución numérica de ecuaciones
+22.3 Funciones para la resolución numérica de ecuaciones
 ========================================================
 
  -- Función: horner (<expr>, <x>)
@@ -7095,7 +7098,7 @@ File: maxima.info,  Node: Funciones para la resolución numérica de ecuaciones,
 
 File: maxima.info,  Node: Introducción a la resolución numérica de ecuaciones diferenciales,  Next: Funciones para la resolución numérica de ecuaciones diferenciales,  Prev: Funciones para la resolución numérica de ecuaciones,  Up: Métodos numéricos
 
-22.3 Introducción a la resolución numérica de ecuaciones diferenciales
+22.4 Introducción a la resolución numérica de ecuaciones diferenciales
 ======================================================================
 
 Las ecuaciones diferenciales ordinarias (EDO) que se resuelven con las

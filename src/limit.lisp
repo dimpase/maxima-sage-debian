@@ -36,6 +36,7 @@
 
 (defconstant +behavior-count+ 4)
 (defvar *behavior-count-now*)
+(defvar *getsignl-asksign-ok* nil)
 
 (load-macsyma-macros rzmac)
 
@@ -94,6 +95,13 @@
 	  ans))))
 
 (defmfun $limit (&rest args)
+  (let ((first-try (apply #'toplevel-$limit args)))
+    (if (and (consp first-try) (eq (caar first-try) '%limit))
+      (let ((*getsignl-asksign-ok* t))
+        (apply #'toplevel-$limit args))
+      first-try)))
+
+(defmfun toplevel-$limit (&rest args)
   (let ((limit-assumptions ())
 	(old-integer-info ())
 	($keepfloat t)
@@ -203,24 +211,22 @@
 		   ((eq d '$und) (return '$und))
 		   ((eq d 'retn) )
 		   (t (setq exp d)))
-		  (setq ans (limit-catch exp var val))));; and find limit from one side
+		  (setq ans (limit-catch exp var val));; and find limit from one side
 
-	      ;; try gruntz
-	      (if (and (not ans)
-		       (or (real-epsilonp val)		;; if direction of limit specified
-			   (real-infinityp val)))
-		  (setq ans (catch 'taylor-catch
-		              (let ((silent-taylor-flag t))
-		                (declare (special silent-taylor-flag))       
-				(gruntz1 exp var val)))))
+		  ;; try gruntz
+		  (if (not ans)
+		      (setq ans (catch 'taylor-catch
+				  (let ((silent-taylor-flag t))
+				    (declare (special silent-taylor-flag))       
+				    (gruntz1 exp var val)))))
 
-	      ;; try taylor series expansion if simple limit didn't work
-	      (if (and (null ans)		;; if no limit found and
-		       $tlimswitch		;; user says ok to use taylor and
-		       (not limit-using-taylor));; not already doing taylor
-		  (let ((limit-using-taylor t))
-		    (declare (special limit-using-taylor))
-		    (setq ans (limit-catch exp var val))))
+		  ;; try taylor series expansion if simple limit didn't work
+		  (if (and (null ans)		;; if no limit found and
+			   $tlimswitch		;; user says ok to use taylor and
+			   (not limit-using-taylor));; not already doing taylor
+		      (let ((limit-using-taylor t))
+			(declare (special limit-using-taylor))
+			(setq ans (limit-catch exp var val))))))
 
 	      (if ans
 		  (return (clean-limit-exp ans))
@@ -233,7 +239,7 @@
 
 (defmfun limit-list (exp1 &rest rest)
   (if (mbagp exp1)
-      `(,(car exp1) ,@(mapcar #'(lambda (x) (apply #'$limit `(,x ,@rest))) (cdr exp1)))
+      `(,(car exp1) ,@(mapcar #'(lambda (x) (apply #'toplevel-$limit `(,x ,@rest))) (cdr exp1)))
       ()))
 
 (defun limit-context (var val direction) ;Only works on entry!
@@ -285,15 +291,27 @@
 ;; preserve-direction.  Default is T, like it used to be.
 (defun both-side (exp var val &optional (preserve t))
   (let* ((preserve-direction preserve)
-         (la ($limit exp var val '$plus)) lb)
+         (la (toplevel-$limit exp var val '$plus)) lb)
     (when (eq la '$und) (return-from both-side '$und))
-    (setf lb ($limit exp var val '$minus))
-    (cond ((alike1 (ridofab la) (ridofab lb))  (ridofab la))
-          ((or (not (free la '%limit))
-               (not (free lb '%limit)))  ())
-          ;; inf + minf => infinity
-          ((and (infinityp la) (infinityp lb)) '$infinity)
-          (t '$und))))
+    (setf lb (toplevel-$limit exp var val '$minus))
+    (let ((ra (ridofab la))
+          (rb (ridofab lb)))
+      (cond ((eq t (meqp ra rb))
+             ra)
+            ((and (eq ra '$ind)
+                  (eq rb '$ind))
+             ; Maxima does not consider equal(ind,ind) to be true, but
+             ; if both one-sided limits are ind then we want to call
+             ; the two-sided limit ind (e.g., limit(sin(1/x),x,0)).
+             '$ind)
+            ((or (not (free la '%limit))
+                 (not (free lb '%limit)))
+             ())
+            ((and (infinityp la) (infinityp lb))
+             ; inf + minf => infinity
+             '$infinity)
+            (t
+             '$und)))))
 
 ;; Warning:  (CATCH NIL ...) will catch all throws.
 ;; NIL should not be used as a tag name.
@@ -321,11 +339,12 @@
 ;; or nil if sign unknown or complex
 (defun getsignl (z)
   (let ((z (ridofab z)))
-    (if (not (free z var)) (setq z ($limit z var val)))
-    (let ((sign ($csign z)))
-      (cond ((eq sign '$pos) 1)
-	    ((eq sign '$neg) -1)
-	    ((eq sign '$zero) 0)))))
+    (if (not (free z var)) (setq z (toplevel-$limit z var val)))
+    (let ((*complexsign* t))
+      (let ((sign (if *getsignl-asksign-ok* ($asksign z) ($sign z))))
+        (cond ((eq sign '$pos) 1)
+              ((eq sign '$neg) -1)
+              ((eq sign '$zero) 0))))))
 
 (defun restorelim (exp)
   (cond ((null exp) nil)
@@ -416,9 +435,20 @@ ignoring dummy variables and array indices."
     ;; If there's only one infinity, we replace it by a variable and take the
     ;; limit as that variable goes to infinity. Use $gensym in case we can't
     ;; compute the answer and the limit leaks out.
-    (1 (let ((limit (or (inf-typep exp) (epsilon-typep exp)))
-             (var ($gensym)))
-         ($limit (subst var limit exp) var limit)))
+    (1 (let* ((val (or (inf-typep exp) (epsilon-typep exp)))
+              (var ($gensym))
+              (expr (subst var val exp))
+              (limit (toplevel-$limit expr var val)))
+         (cond
+           ;; Now we look to see whether the computed limit is any simpler than
+           ;; what we shoved in (which we'll define as "doesn't contain EXPR as a
+           ;; subtree"). If so, return it.
+           ((not (subtree-p expr limit :test #'equal))
+            limit)
+
+           ;; Otherwise, return the original form: apparently, we can't compute
+           ;; the limit we needed, and it's uglier than what we started with.
+           (t exp))))
 
     ;; If more than one infinity, we have to be a bit more careful.
     (otherwise
@@ -1012,7 +1042,7 @@ ignoring dummy variables and array indices."
   (let ((ans ()))
     (setq n (stirling0 n)
 	  d (stirling0 d))
-    (setq ans ($limit (m// n d) var '$inf))
+    (setq ans (toplevel-$limit (m// n d) var '$inf))
     (cond ((and (atom ans)
 		(not (member ans '(und ind ) :test #'eq)))  ans)
 	  ((eq (caar ans) '%limit)  ())
@@ -1427,12 +1457,38 @@ ignoring dummy variables and array indices."
     (desetq (const . (n . d)) (remove-singularities n d))
     (setq const (m* const (m// nconst dconst)))
     (simpinf
-     (cond (ind (let ((ans (limit2 n d var val)))
-		  (if ans (m* const ans))))
-	   (t (let ((ans (limit
-			  ($multthru (sratsimp (m// n d)))
-			  var val 'think)))
-		(if ans (m* const ans))))))))
+     (let ((ans (if ind
+                    (limit2 n d var val)
+                    (limit-numden n d val))))
+
+       ;; When the limit function returns, it's possible that it will return NIL
+       ;; (gave up without finding a limit). It's also possible that it will
+       ;; return something containing UND. We treat that as a failure too.
+       (when (and ans (freeof '$und ans))
+         (m* const ans))))))
+
+;; Try to compute the limit of a quotient NUM/DEN, trying to massage the input
+;; into a convenient form for LIMIT on the way.
+(defun limit-numden (n d val)
+  (let ((expr (cond
+                ;; For general arguments, the best approach seems to be to use
+                ;; sratsimp to simplify the quotient as much as we can, then
+                ;; $multthru, which splits it up into a sum (presumably useful
+                ;; because limit(a+b) = limit(a) + limit(b) if the limits exist, and
+                ;; the right hand side might be easier to calculate)
+                ((not (mplusp n))
+                 ($multthru (sratsimp (m// n d))))
+
+                ;; If we've already got a sum in the numerator, it seems to be
+                ;; better not to recombine it. Call LIMIT on the whole lot, though,
+                ;; because terms with infinite limits might cancel to give a finite
+                ;; result.
+                (t
+                 (m+l (mapcar #'(lambda (x)
+                                  (sratsimp (m// x d)))
+                              (cdr n)))))))
+
+    (limit expr var val 'think)))
 
 ;; Heuristics for picking the right way to express a LHOSPITAL problem.
 (defun lhop-numden (num denom)
@@ -1478,7 +1534,7 @@ ignoring dummy variables and array indices."
 	((let ((scnum (involve num '(%asin %acos %atan))))
 	   ;; If the numerator contains an inverse trig and the
 	   ;; denominator or reciprocal of denominator is polynomial,
-	   ;; leave everthing as is.  If the inverse trig is moved to
+	   ;; leave everything as is.  If the inverse trig is moved to
 	   ;; the denominator, things get messy, even if the numerator
 	   ;; becomes a polynomial.  This is not perfect.
 	   (cond ((and scnum (or (polyinx denom var ())
@@ -1822,7 +1878,7 @@ ignoring dummy variables and array indices."
   (let ((new-val (cond ((eq val '$zeroa)  '$inf)
 		       ((eq val '$zerob)  '$minf))))
     (if new-val (let ((preserve-direction t))
-		  ($limit e var new-val)) (throw 'limit t))))
+		  (toplevel-$limit e var new-val)) (throw 'limit t))))
 
 (defun simplimtimes (exp)
   ;; The following test
@@ -1896,6 +1952,7 @@ ignoring dummy variables and array indices."
              (if (or (not sign) (eq sign 'complex))
                  0
                  (ecase (* zf sign)
+                   (0 0)
                    (1  '$zeroa)
                    (-1 '$zerob))))))
       ;; If num=1 (and so denom != 1), we have some form of infinity
@@ -2168,7 +2225,7 @@ ignoring dummy variables and array indices."
 	     (cond ((not (member lim-ans '($inf $minf $und $ind) :test #'eq))  0.)
 		   (t  1.))))
 	  (t
-	   ;; Make T1 and T2 be a list of terms that are multipled
+	   ;; Make T1 and T2 be a list of terms that are multiplied
 	   ;; together.
 	   (cond ((mtimesp t1)  (setq t1 (cdr t1)))
 		 (t (setq t1 (list t1))))
@@ -2184,7 +2241,7 @@ ignoring dummy variables and array indices."
 			  (eq (car ans) 'gen) (eq (car d) 'gen))  0.))
 	       (if (eq (car ans) 'var)  (setq ans (add-up-deg t1)))
 	       (if (eq (car d) 'var)  (setq d (add-up-deg t2)))
-	       ;; Cant just just compare dominating terms if there are
+	       ;; Can't just just compare dominating terms if there are
 	       ;; indeterm-inates present; e.g. X-X^2*LOG(1+1/X). So
 	       ;; check for this.
 	       (cond ((or (zero-lim t1)
@@ -2598,7 +2655,7 @@ ignoring dummy variables and array indices."
 ;;There is some confusion here. We need to be aware of Branch cuts etc....
 ;;when doing this section of code. It is not very carefully done so there
 ;;are bugs still lurking. Another misfortune is that LIMIT or its inferiors
-;;somtimes decides to change the limit VAL in midstream. This must be corrected
+;;sometimes decides to change the limit VAL in midstream. This must be corrected
 ;;since LIMIT's interaction with the data base environment must be maintained.
 ;;I'm not sure that this code can ever be called with VAL other than $INF but
 ;;there is a hook in the first important cond clause to cathc them anyway.
@@ -2687,17 +2744,17 @@ ignoring dummy variables and array indices."
 	  ((member arglim '($minf $infinity) :test #'eq)
 	   '$infinity)
 	  ((member arglim '($ind $und) :test #'eq) '$und)
-	  ((equal ($imagpart (cadr expr)) 0)
+	  ((equalp ($imagpart (cadr expr)) 0)
            ;; argument is real.
 	   (let* ((real-lim (ridofab arglim)))
-	     (if (=0 real-lim)
+	     (if (equalp real-lim 0)
 		 (cond ((eq arglim '$zeroa)  '$minf)
 		       ((eq arglim '$zerob)  '$infinity)
                        (t (let ((dir (behavior (cadr expr) var val)))
 			    (cond ((equal dir 1) '$minf)
 				  ((equal dir -1) '$infinity)
 				  (t (throw 'limit t))))))
-		 (cond ((equal arglim 1)
+		 (cond ((equalp arglim 1)
 			(let ((dir (behavior (cadr expr) var val)))
 			  (if (equal dir 1) '$zeroa 0)))
 		       (t
@@ -2990,8 +3047,8 @@ ignoring dummy variables and array indices."
 
 (defmfun $ldefint (exp var ll ul &aux $logabs ans a1 a2)
   (setq $logabs t ans (sinint exp var)
-	a1 ($limit ans var ul '$minus)
-	a2 ($limit ans var ll '$plus))
+	a1 (toplevel-$limit ans var ul '$minus)
+	a2 (toplevel-$limit ans var ll '$plus))
   (and (member a1 '($inf $minf $infinity $und $ind) :test #'eq)
        (setq a1 (nounlimit ans var ul)))
   (and (member a2 '($inf $minf $infinity $und $ind) :test #'eq)
@@ -3244,13 +3301,14 @@ ignoring dummy variables and array indices."
 
 (defun mrv-sign (exp var)
   (cond ((freeof var exp)
-	 (cond ((eq ($sign exp) '$zero)
-		0)
-	       ((eq ($sign exp) '$pos)
-		1)
-	       ((eq ($sign exp) '$neg)
-		-1)
-	       (t (tay-error " cannot determine mrv-sign" exp))))
+	 (let ((sign ($sign ($radcan exp))))
+	   (cond ((eq sign '$zero)
+		  0)
+		 ((eq sign '$pos)
+		  1)
+		 ((eq sign '$neg)
+		  -1)
+		 (t (tay-error " cannot determine mrv-sign" exp)))))
 	((eq exp var)
 	 1)
 	((mtimesp exp)

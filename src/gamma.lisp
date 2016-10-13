@@ -35,7 +35,7 @@
 ;;; Maxima User variable:
 ;;;
 ;;;   $factorial_expand    - Allows argument simplificaton for expressions like
-;;;                          factorial_double(n-1) and factorial_double(2*k+n)
+;;;                          double_factorial(n-1) and double_factorial(2*k+n)
 ;;;   $beta_expand         - Switch on further expansions for the Beta functions
 ;;;
 ;;;   $erf_representation  - When T erfc, erfi, erf_generalized, fresnel_s 
@@ -116,10 +116,12 @@
 (defun complex-float-numerical-eval-p (&rest args)
   (let ((flag nil))
     (dolist (ll args)
-      (when (not (complex-number-p ll 'float-or-rational-p)) 
-        (return-from complex-float-numerical-eval-p nil))
-      (when (or (floatp ($realpart ll)) (floatp ($imagpart ll)))
-        (setq flag t)))
+      (destructuring-bind (rll . ill) (trisplit ll)
+        (unless (and (float-or-rational-p rll)
+                     (float-or-rational-p ill))
+          (return-from complex-float-numerical-eval-p nil))
+        (when (or (floatp rll) (floatp ill))
+          (setq flag t))))
     (if (or $numer flag) t nil)))
 
 ;;; Test for numerically evaluation in bigfloat precision
@@ -363,7 +365,7 @@
 (defun conjugate-gamma-incomplete (args)
   (let ((a (first args)) (z (second args)))
     (cond ((off-negative-real-axisp z)
-           ;; Definitly not on the negative real axis for z. Mirror symmetry.
+           ;; Definitely not on the negative real axis for z. Mirror symmetry.
 	   (simplify
              (list
               '(%gamma_incomplete)
@@ -386,20 +388,20 @@
               ;; The derivative wrt a in terms of hypergeometric_regularized 2F2
               ;; function and the Generalized Incomplete Gamma function 
               ;; (functions.wolfram.com), only for a>0.
-              '((mplus)
+              `((mplus)
                  ((mtimes)
-                   ((mexpt) ((%gamma) a) 2)
-                   ((mexpt) z a)
+                   ((mexpt) ((%gamma) ,a) 2)
+                   ((mexpt) ,z ,a)
                    (($hypergeometric_regularized)
-                      ((mlist) a a)
-                      ((mlist) ((mplus) 1 a) ((mplus) 1 a))
-                      ((mtimes) -1 z)))
+                      ((mlist) ,a ,a)
+                      ((mlist) ((mplus) 1 ,a) ((mplus) 1 ,a))
+                      ((mtimes) -1 ,z)))
                  ((mtimes) -1
-                   ((%gamma_incomplete_generalized) a 0 z)
-                   ((%log) z))
+                   ((%gamma_incomplete_generalized) ,a 0 ,z)
+                   ((%log) ,z))
                  ((mtimes)
-                   ((%gamma) a)
-                   ((mqapply) (($psi array) 0) a))))
+                   ((%gamma) ,a)
+                   ((mqapply) (($psi array) 0) ,a))))
              (t
               ;; No derivative. Maxima generates a noun form.  
               nil)))
@@ -479,7 +481,7 @@
               
       ((eq z '$inf) 0)
       ((and (eq z '$minf) 
-	    (eq a 0))
+	    (eql a 0))
        '$infinity)
 
       ;; Check for numerical evaluation in Float or Bigfloat precision
@@ -818,7 +820,7 @@
 	(%gamma-incomplete a x)
       (cond (lower-incomplete-tail-p
 	     ;; %gamma-incomplete compute the lower incomplete gamma
-	     ;; function, so we need to substract that from gamma(a),
+	     ;; function, so we need to subtract that from gamma(a),
 	     ;; more or less.
 	     (cond (regularized
 		    (- 1 (* result factor)))
@@ -1153,7 +1155,7 @@
 (defun conjugate-gamma-incomplete-generalized (args)
   (let ((a (first args)) (z1 (second args)) (z2 (third args)))
     (cond ((and (off-negative-real-axisp z1) (off-negative-real-axisp z2))
-           ;; z1 and z2 definitly not on the negative real axis. 
+           ;; z1 and z2 definitely not on the negative real axis. 
            ;; Mirror symmetry.
 	   (simplify
              (list
@@ -1370,7 +1372,7 @@
 (defun conjugate-gamma-incomplete-regularized (args)
   (let ((a (first args)) (z (second args)))
     (cond ((off-negative-real-axisp z)
-           ;; z definitly not on the negative real axis. Mirror symmetry.
+           ;; z definitely not on the negative real axis. Mirror symmetry.
 	   (simplify
              (list
               '(%gamma_incomplete_regularized)
@@ -1415,6 +1417,7 @@
             ((mtimes) -1 ((mqapply) (($psi array) 0) a)))))
    ;; The derivative wrt z
    ((mtimes)
+      -1
       ((mexpt) $%e ((mtimes) -1 z))
       ((mexpt) z ((mplus) -1 a))
       ((mexpt) ((%gamma) a) -1)))
@@ -3981,7 +3984,8 @@
                 (eqtest 
                   (list '(%beta_incomplete_regularized) a b z) expr)))))
 
-      ((and (integer-representation-p b) (minusp b))
+      ((and (integer-representation-p b)
+            (if ($bfloatp b) (minusp (cadr b)) (minusp b)) )
        ;; Problem: for b a negative integer the Regularized Incomplete 
        ;; Beta function is defined to be zero. BUT: When we calculate
        ;; e.g. beta_incomplete(1.0,-2.0,1/2)/beta(1.0,-2.0) we get the 
@@ -3989,9 +3993,12 @@
        ;; for this case. How do we get a consistent behaviour?
        0)
 
-      ((and (integer-representation-p a) (minusp a))
+      ((and (integer-representation-p a)
+            (if ($bfloatp a) (minusp (cadr a)) (minusp a)) )
        (cond
+         ;; TODO: The following line does not work for bigfloats.
          ((and (integer-representation-p b) (<= b (- a)))
+         ;;       Does $beta_incomplete or simpbeta underflow in this case?
           (div ($beta_incomplete a b z)
                (simplify (list '($beta) a b))))
          (t 
@@ -4000,17 +4007,25 @@
       ;; Check for numerical evaluation in Float or Bigfloat precision
 
       ((complex-float-numerical-eval-p a b z)
-       (let ((*beta-incomplete-eps* (bigfloat:epsilon ($float 1.0))))
-         ($rectform 
-           (div (beta-incomplete ($float a) ($float b) ($float z))
-                (simplify (list '($beta) ($float a) ($float b)))))))
+       (let ((*beta-incomplete-eps* (bigfloat:epsilon ($float 1.0)))
+              beta ibeta )
+         (setq a ($float a) b ($float b))
+         (if (or (< ($abs (setq beta (simplify (list '($beta) a b)))) 1e-307) 
+                 (< ($abs (setq ibeta (beta-incomplete a b ($float z)))) 1e-307) )
+           ;; In case of underflow (see bug #2999) or precision loss use bigfloats 
+           ;; and emporarily give some extra precision but avoid fpprec dependency.
+           ;; Is this workaround correct for complex values?
+           (let ((fpprec 70))
+             ($float ($beta_incomplete_regularized ($bfloat a) ($bfloat b) z)) )
+           ($rectform (div ibeta beta)) )))
            
       ((complex-bigfloat-numerical-eval-p a b z)
        (let ((*beta-incomplete-eps*
                (bigfloat:epsilon (bigfloat:bigfloat 1.0))))
+         (setq a ($bfloat a) b ($bfloat b))
          ($rectform 
-           (div (beta-incomplete ($bfloat a) ($bfloat b) ($bfloat z))
-                (simplify (list '($beta) ($float a) ($float b)))))))
+           (div (beta-incomplete a b ($bfloat z))
+                (simplify (list '($beta) a b))))))
 
       ;; Check for argument simplifications and transformations
 

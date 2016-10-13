@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/de//include-maxima.de.texi.
+/home/vttoth/dev/maxima/doc/info/de//include-maxima.de.texi.
 
 Das ist ein Texinfo Maxima Manual
 
@@ -328,12 +328,12 @@ This package automatically loads package `draw'.
      `worldmap'.
 
           (%i1) load(worldmap)$
-          (%i2) c1: gr2d(geomap(Canada,United_States,
-                                Mexico,Cuba))$
+          (%i2) c1: gr2d(geomap([Canada,United_States,
+                                 Mexico,Cuba]))$
           (%i3) c2: gr2d(geomap(Africa))$
           (%i4) c3: gr2d(geomap(Oceania,China,Japan))$
-          (%i5) c4: gr2d(geomap(France,Portugal,Spain,
-                                Morocco,Western_Sahara))$
+          (%i5) c4: gr2d(geomap([France,Portugal,Spain,
+                                 Morocco,Western_Sahara]))$
           (%i6) draw(columns  = 2,
                      c1,c2,c3,c4)$
 
@@ -392,9 +392,8 @@ This package automatically loads package `draw'.
                (%i2) draw3d(geomap(World_coastlines,
                                    [conic_projection,0,0,0,1,90]))$
 
-     See also
-     `http://www.telefonica.net/web2/biomates/maxima/gpdraw/geomap' for
-     more elaborated examples.
+     See also `http://riotorto.users.sf.net/gnuplot/geomap' for more
+     elaborated examples.
 
 
 File: maxima.info,  Node: drawdf,  Next: dynamics,  Prev: draw,  Up: Top

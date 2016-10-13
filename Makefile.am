@@ -2,10 +2,10 @@ if ENABLE_GETTEXT
    LOCALE_DIR = locale
 endif
 
-SUBDIRS = admin src lisp-utils tests doc interfaces share demo plotting $(LOCALE_DIR)
+SUBDIRS = admin crosscompile-windows src lisp-utils tests doc interfaces share demo plotting $(LOCALE_DIR)
 
 EXTRA_DIST = \
-  common.mk maxima.iss.in \
+  common.mk maxima.iss.in x-mac.xml\
   README.lisps README.rpms README.i18n README.external \
   INSTALL.win32 INSTALL.lisp \
   configure.lisp  maxima-local.in xmaxima-local.in \
@@ -17,7 +17,7 @@ EXTRA_DIST = \
   ChangeLog-5.18 ChangeLog-5.19 ChangeLog-5.20 ChangeLog-5.21 ChangeLog-5.22 \
   ChangeLog-5.23 ChangeLog-5.24 ChangeLog-5.25 ChangeLog-5.26 ChangeLog-5.27 \
   ChangeLog-5.28 ChangeLog-5.29 ChangeLog-5.30 ChangeLog-5.31 ChangeLog-5.32 \
-  ChangeLog-5.33 ChangeLog-5.34
+  ChangeLog-5.33 ChangeLog-5.34 ChangeLog-5.35 ChangeLog-5.36.md
 
 include common.mk
 
@@ -42,32 +42,43 @@ rpm: $(distdir).tar.gz
 # windows installer rules
 if WIN32
 
-GNUPLOTDIR = /c/programs/gnuplot
-WXMAXIMADIR = /c/programs/wxMaxima
-
-
-# Windows installer.
-iss: extradocinstall gnuplot wxmaxima win32-lisp-runtime
+GNUPLOTDIR = "/c/programs/gnuplot"
+WXMAXIMADIR = "/c/programs/wxMaxima"
 
 # Install the gnuplot binary files
 gnuplot: 
 	mkdir -p $(prefix)/gnuplot
-	cp -rf $(GNUPLOTDIR)/bin $(prefix)/gnuplot
-	cp -rf $(GNUPLOTDIR)/share $(prefix)/gnuplot
-	cp -rf $(GNUPLOTDIR)/etc $(prefix)/gnuplot
-	cp -rf $(GNUPLOTDIR)/license $(prefix)/gnuplot
+	cp -rf $(GNUPLOTDIR) $(prefix)/
 
 # Install wxMaxima
 wxmaxima:
+	test -d "$(prefix)/bin" || mkdir -p "$(prefix)/bin"
 	cp -rf $(WXMAXIMADIR) $(prefix)/wxMaxima
 
+cclcopy:
+	test -d "$(prefix)/bin" || mkdir -p "$(prefix)/bin"
+	cp "$(OPENMCL_NAME)" "$(prefix)/bin/"
+
+sbclcopy:
+	test -d "$(prefix)/bin" || mkdir -p "$(prefix)/bin"
+	cp "$(SBCL_NAME)" "$(prefix)/bin/"
+
+RUNTIMECOPY = 
 # Install files for lisp runtime support
 if GCL
-GCCCOPY = gcccopy
+RUNTIMECOPY += gcccopy
+endif
+
+if OPENMCL
+RUNTIMECOPY += cclcopy
+endif
+
+if SBCL
+RUNTIMECOPY += sbclcopy
 endif
 
 # Install files for lisp runtime support
-win32-lisp-runtime: $(GCCCOPY)
+win32-lisp-runtime: $(RUNTIMECOPY)
 
 MINGW=/mingw
 if GCC331
@@ -144,4 +155,9 @@ gcccopy:
 
 endif # GCC331
 
+iss: win32-lisp-runtime wxmaxima gnuplot extradocinstall
+
 endif # WIN32
+
+mimedatadir = $(datarootdir)/mime/packages
+dist_mimedata_DATA = x-mac.xml

@@ -24,6 +24,7 @@
 ;;; jfa 02/07/04
 
 (defvar *maxima-prefix*)
+(defvar *maxima-topdir*)        ;; top-level installation or build directory
 (defvar *maxima-imagesdir*)
 (defvar *maxima-sharedir*)
 (defvar *maxima-srcdir*)
@@ -58,13 +59,14 @@ When one changes, the other does too."
 (defun shadow-string-assignment (var value)
   (cond
     ((stringp value)
-     (set (get var 'lisp-shadow) value)
+     (setf (symbol-value (get var 'lisp-shadow)) value)
      value)
     (t
       (merror (intl:gettext "assignment: must assign a string to ~:M; found: ~M") var value))))
 
 (defun print-directories ()
   (format t "maxima-prefix=~a~%" *maxima-prefix*)
+  (format t "maxima-topdir=~a~%" *maxima-topdir*)
   (format t "maxima-imagesdir=~a~%" *maxima-imagesdir*)
   (format t "maxima-sharedir=~a~%" *maxima-sharedir*)
   (format t "maxima-srcdir=~a~%" *maxima-srcdir*)
@@ -107,10 +109,6 @@ When one changes, the other does too."
 (defvar $file_search_tests nil
   "Directories to search for maxima test suite")
 
-(defun combine-path (&rest list)
-  "splice a '/' between the path components given as arguments"
-  (format nil "~{~A~^/~}" list))
-
 (defun maxima-parse-dirstring (str)
   (let ((sep "/"))
     (if (position (character "\\") str)
@@ -136,12 +134,13 @@ When one changes, the other does too."
 	  (setq libdir     (combine-path maxima-prefix-env "lib"))
 	  (setq libexecdir (combine-path maxima-prefix-env "libexec"))
 	  (setq datadir    (combine-path maxima-prefix-env "share"))
-	  (setq infodir    (combine-path maxima-prefix-env "info")))
+	  (setq infodir    (combine-path maxima-prefix-env #+(or cygwin windows win32 win64) "share" "info")))
 	(progn
 	  (setq libdir     (maxima-parse-dirstring *autoconf-libdir*))
 	  (setq libexecdir (maxima-parse-dirstring *autoconf-libexecdir*))
 	  (setq datadir    (maxima-parse-dirstring *autoconf-datadir*))
 	  (setq infodir    (maxima-parse-dirstring *autoconf-infodir*))))
+    (setq *maxima-topdir*    (combine-path datadir package-version))
     (setq *maxima-imagesdir* (combine-path libdir package-version binary-subdirectory))
     (setq *maxima-sharedir*  (combine-path datadir package-version "share"))
     (setq *maxima-srcdir*    (combine-path datadir package-version "src"))
@@ -158,6 +157,7 @@ When one changes, the other does too."
 			   (maxima-parse-dirstring *autoconf-prefix*)))
 	(binary-subdirectory (concatenate 'string "binary-" *maxima-lispname*)))
 
+    (setq *maxima-topdir*    maxima-prefix)
     (setq *maxima-imagesdir* (combine-path maxima-prefix "src" binary-subdirectory))
     (setq *maxima-sharedir*  (combine-path maxima-prefix "share"))
     (setq *maxima-srcdir*    (combine-path maxima-prefix "src"))
@@ -171,7 +171,7 @@ When one changes, the other does too."
 (defun default-userdir ()
   (let ((home-env (maxima-getenv "HOME"))
 	(base-dir "")
-	(maxima-dir (if (string= *autoconf-win32* "true")
+	(maxima-dir (if (string= *autoconf-windows* "true")
 			"maxima"
 			".maxima")))
     (setf base-dir
@@ -183,7 +183,7 @@ When one changes, the other does too."
 		  "c:\\user\\"
 		  home-env)
 	      ;; we have to make a guess
-	      (if (string= *autoconf-win32* "true")
+	      (if (string= *autoconf-windows* "true")
 		  "c:\\user\\"
 		  "/tmp")))
     (combine-path (maxima-parse-dirstring base-dir) maxima-dir)))
@@ -196,7 +196,7 @@ When one changes, the other does too."
 	      (if (string= home-env "c:\\")
 		  "c:\\user\\"
 		  home-env)
-	      (if (string= *autoconf-win32* "true")
+	      (if (string= *autoconf-windows* "true")
 		  "c:\\user\\"
 		  "/tmp")))
     (maxima-parse-dirstring base-dir)))
@@ -284,7 +284,7 @@ When one changes, the other does too."
 
     ; On Windows Vista gcc requires explicit include
     #+gcl
-    (when (string= *autoconf-win32* "true")
+    (when (string= *autoconf-windows* "true")
       (let ((mingw-gccver (maxima-getenv "mingw_gccver")))
 	(when mingw-gccver
 	  (setq compiler::*cc*
@@ -329,12 +329,14 @@ When one changes, the other does too."
 		(combine-path *maxima-userdir* lisp-patterns)
 		(combine-path *maxima-sharedir* lisp-patterns)
 		(combine-path *maxima-sharedir* share-subdirs lisp-patterns)
-		(combine-path *maxima-srcdir* lisp-patterns)))
+		(combine-path *maxima-srcdir* lisp-patterns)
+        (combine-path *maxima-topdir* lisp-patterns)))
     (setq $file_search_maxima
 	  (list '(mlist)
 		(combine-path *maxima-userdir* maxima-patterns)
 		(combine-path *maxima-sharedir* maxima-patterns)
-		(combine-path *maxima-sharedir* share-subdirs maxima-patterns)))
+		(combine-path *maxima-sharedir* share-subdirs maxima-patterns)
+        (combine-path *maxima-topdir* maxima-patterns)))
     (setq $file_search_demo
 	  (list '(mlist)
 		(combine-path *maxima-sharedir* demo-patterns)
@@ -509,7 +511,8 @@ When one changes, the other does too."
 			   :argument "<port>"
 			   :action #'(lambda (port-string)
 				       (start-client (parse-integer
-						      port-string)))
+						      port-string))
+                                       (setf input-stream *standard-input*))
 			   :help-string "Connect Maxima to server on <port>.")
 	   (make-cl-option :names '("-u" "--use-version")
 			   :argument "<version>"
@@ -581,12 +584,15 @@ When one changes, the other does too."
     (set-readtable-for-macsyma)
     (setf *read-default-float-format* 'lisp::double-float))
 
+  #+sbcl (setf *read-default-float-format* 'double-float)
+
   (initialize-real-and-run-time)
   (intl::setlocale)
   (set-locale-subdir)
   (adjust-character-encoding)
   (set-pathnames)
-  (cl-info::load-primary-index)   
+  (catch 'return-from-debugger
+    (cl-info::load-primary-index))
   (when (boundp '*maxima-prefix*)
     (push (pathname (concatenate 'string *maxima-prefix*
                                  (if *maxima-layout-autotools*
@@ -595,11 +601,23 @@ When one changes, the other does too."
           intl::*locale-directories*)))
 
 (defun adjust-character-encoding ()
+  #+cmu
+  (handler-bind ((error #'(lambda (c)
+			    ;; If there's a continue restart, restart
+			    ;; to set the filename encoding anyway.
+			    (if (find-restart 'cl:continue c)
+				(invoke-restart 'cl:continue)))))
+    ;; Set both the terminal external format and filename encoding to
+    ;; utf-8.  The handler-bind is needed in case the filename
+    ;; encoding was already set to something else; we forcibly change
+    ;; it to utf-8. (Is that right?)
+    (stream:set-system-external-format :utf-8 :utf-8))
+  #+clisp
   (ignore-errors
-    #+clisp (progn (setf custom:*default-file-encoding*
-                         (ext:make-encoding :input-error-action #\?))
-                   (setf custom:*terminal-encoding*
-                         custom:*default-file-encoding*))))
+    (progn (setf custom:*default-file-encoding*
+		 (ext:make-encoding :input-error-action #\?))
+	   (setf custom:*terminal-encoding*
+		 custom:*default-file-encoding*))))
 
 (import 'cl-user::run)
 
@@ -616,12 +634,20 @@ When one changes, the other does too."
   (throw 'to-maxima t))
 
 (defun maxima-read-eval-print-loop ()
-  (setf *debugger-hook* #'maxima-lisp-debugger-repl)
-  (loop
-     (catch 'to-maxima-repl
-       (format-prompt t "~%~A> " (package-name *package*))
-       (finish-output)
-       (format t "~{~&~S~}" (multiple-value-list (eval (read)))))))
+  (when *debugger-hook*
+    ; Only set a new debugger hook if *DEBUGGER-HOOK* has not been set to NIL
+    (setf *debugger-hook* #'maxima-lisp-debugger-repl))
+  (let ((eof (gensym)))
+    (loop
+      (catch 'to-maxima-repl
+        (format-prompt t "~%~A> " (package-name *package*))
+        (finish-output)
+        (let ((input (read *standard-input* nil eof)))
+          ; Return to Maxima on EOF
+          (when (eq input eof)
+            (fresh-line)
+            (to-maxima))
+          (format t "~{~&~S~}" (multiple-value-list (eval input))))))))
 
 (defun maxima-lisp-debugger-repl (condition me-or-my-encapsulation)
   (declare (ignore me-or-my-encapsulation))
@@ -679,9 +705,11 @@ When one changes, the other does too."
   "Return a pathname string such that subdirs is a subdirectory of maxima_objdir"
   (apply #'combine-path *maxima-objdir* subdirs))
 
-;; The directory part of *load-pathname*.  GCL doesn't seem to have a
-;; usable *LOAD-PATHNAME*, but it does have SYS:*LOAD-PATHNAME*.
 (defun maxima-load-pathname-directory ()
   "Return the directory part of *load-pathname*."
-  (make-pathname :directory (pathname-directory #-gcl *load-pathname*
-						#+gcl sys:*load-pathname*)))
+  (let ((path #-gcl *load-pathname*
+              ;; Accommodate standard and nonstandard definitions of *LOAD-PATHNAME* in GCL.
+              ;; This can go away someday when nonstandard GCL's (<= 2.6.12) are ancient history.
+              #+gcl (symbol-value (or (find-symbol "*LOAD-PATHNAME*" :sys) (find-symbol "*LOAD-PATHNAME*" :common-lisp)))))
+    (make-pathname :directory (pathname-directory path)
+                   :device (pathname-device path))))

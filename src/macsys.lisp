@@ -150,6 +150,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 
     (multiple-value-bind (.olduser .oldsystem .oldgcu .oldgcs)
 	(excl::get-internal-run-times)
+      (declare (ignore .olduser .oldsystem .oldgcs))
       (sys::gsgc-totalloc .oldspace t)
       (list (aref .oldspace 0) (aref .oldspace 2) .oldgcu)))) ;; report just two kinds of space,
 							      ;; cons-cells and other bytes,
@@ -227,7 +228,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 	(format t "~a" *general-display-prefix*)
 	(if (eq r eof) (return '$done))
 	(setq $__ (caddr r))
-	(unless $nolabels (set  c-tag $__))
+	(unless $nolabels (setf (symbol-value c-tag) $__))
 	(cond (batch-or-demo-flag
 	  (let (($display2d nil))
 	    (displa `((mlabel) ,c-tag , $__)))))
@@ -246,14 +247,14 @@ DESTINATION is an actual stream (rather than nil for a string)."
 			  internal-time-units-per-second))
 	(incf accumulated-time time-used)
 	(setq d-tag (makelabel $outchar))
-	(unless $nolabels (set d-tag $%))
+	(unless $nolabels (setf (symbol-value d-tag) $%))
 	(setq $_ $__)
 	(when $showtime	;; we don't distinguish showtime:all?? /RJF
 	  (format t (intl:gettext "Evaluation took ~,4F seconds (~,4F elapsed)")
 		  time-used etime-used )
-	  #+(or gcl ecl openmcl)
+	  #+(or gcl ecl)
 	  (format t "~%")
-	  #+(or cmu scl sbcl clisp)
+	  #+(or cmu scl sbcl clisp openmcl)
 	  (let ((total-bytes (- area-after area-before)))
 	    (cond ((> total-bytes (* 1024 1024))
 		   (format t (intl:gettext " using ~,3F MB.~%")
@@ -273,7 +274,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
           (putprop '$% (cons time-used 0) 'time)
 	  (putprop d-tag (cons time-used  0) 'time))
 	(if (eq (caar r) 'displayinput)
-	    (displa `((mlabel) ,d-tag ,$%))) ;; consistently misspelling label.
+	    (displa `((mlabel) ,d-tag ,$%)))
 	(when (eq batch-or-demo-flag ':demo)
           (princ (break-prompt))
           (force-output)
@@ -381,10 +382,6 @@ DESTINATION is an actual stream (rather than nil for a string)."
   (continue (make-echo-stream fileobj *standard-output*)
 	    (if demo-p ':demo ':batch)))
 
-(defmspec $grindef (form)
-  (eval `(grindef ,@(cdr form)))
-  '$done)
-
 (defun $demo (&rest arg-list)
   (let ((tem ($file_search (car arg-list) $file_search_demo)))
     (or tem (merror (intl:gettext "demo: could not find ~M in ~M.")
@@ -397,7 +394,9 @@ DESTINATION is an actual stream (rather than nil for a string)."
   (format t (intl:gettext "To report a bug, you must have a Sourceforge account.~%"))
   (format t (intl:gettext "Please include the following information with your bug report:~%"))
   (format t "-------------------------------------------------------------~%")
-  (displa ($build_info))
+  ; Display the 2D-formatted build information
+  (let (($display2d t))
+    (displa ($build_info)))
   (format t "-------------------------------------------------------------~%")
   (format t (intl:gettext "The above information is also reported by the function 'build_info()'.~%~%"))
   "")
@@ -427,8 +426,13 @@ DESTINATION is an actual stream (rather than nil for a string)."
             ,*autoconf-version*
             ,(format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d" year month day hour minute seconds)
             ,*autoconf-host*
-            ,(lisp-implementation-type)
-            ,(lisp-implementation-version)))))))
+            ,#+sbcl (ensure-readably-printable-string (lisp-implementation-type)) #-sbcl (lisp-implementation-type)
+            ,#+sbcl (ensure-readably-printable-string (lisp-implementation-version)) #-sbcl (lisp-implementation-version)))))))
+
+;; SBCL base strings aren't readably printable.
+;; Attempt a work-around. Yes, this is terribly ugly.
+#+sbcl (defun ensure-readably-printable-string (x)
+  (coerce x `(simple-array character (,(length x)))))
 
 (defun dimension-build-info (form result)
   (declare (special bkptht bkptdp lines break))
@@ -499,7 +503,6 @@ DESTINATION is an actual stream (rather than nil for a string)."
       #-clisp (lisp-implementation-version)
       #+clisp (subseq (lisp-implementation-version)
 	      0 (1+ (search ")" (lisp-implementation-version)))))
-  #+gcl (format t " (a.k.a. GCL)")
   (format t (intl:gettext "~%Distributed under the GNU Public License. See the file COPYING.~%"))
   (format t (intl:gettext "Dedicated to the memory of William Schelter.~%"))
   (format t (intl:gettext "The function bug_report() provides bug reporting information.~%")))
@@ -602,25 +605,35 @@ DESTINATION is an actual stream (rather than nil for a string)."
   ;; From what I can tell, GCL, ECL, and Clisp cannot redirect the output into an existing stream. Oh well.
   (let ((s (and (boundp '*socket-connection*) *socket-connection*))
 	shell shell-opt)
-    #+(or gcl ecl clisp lispworks)
+    #+(or gcl ecl lispworks)
     (declare (ignore s))
 
-    (cond ((string= *autoconf-win32* "true")
+    (cond ((string= *autoconf-windows* "true")
 	   (setf shell "cmd") (setf shell-opt "/c"))
 	  (t (setf shell "/bin/sh") (setf shell-opt "-c")))
 
-    #+gcl (lisp:system (apply '$sconcat args))
+    #+gcl (system::system (apply '$sconcat args))
     #+ecl (si:system (apply '$concat args))
-    #+clisp (ext:run-shell-command (apply '$sconcat args))
+    #+clisp (let ((output (ext:run-shell-command (apply '$sconcat args)
+                                                 :wait t :output :stream)))
+              (loop for line = (read-line output nil)
+                 while line do
+                   (format (or s t) "~a~%" line)))
     #+(or cmu scl) (ext:run-program shell (list shell-opt (apply '$sconcat args)) :output (or s t))
     #+allegro (excl:run-shell-command (apply '$sconcat args) :wait t :output (or s nil))
-    #+sbcl (sb-ext:run-program shell (list shell-opt (apply '$sconcat args)) :search t :output (or s t))
-    #+openmcl (ccl::run-program shell (list shell-opt (apply '$sconcat args)) :output (or s t))
+    #+sbcl (sb-ext:run-program shell
+			       #+(or win32 win64) (cons shell-opt (mapcar '$sconcat args))
+			       #-(or win32 win64) (list shell-opt (apply '$sconcat args))
+			       :search t :output (or s t))
+    #+openmcl (ccl::run-program shell
+				#+windows (cons shell-opt (mapcar '$sconcat args))
+				#-windows (list shell-opt (apply '$sconcat args))
+				:output (or s t))
     #+abcl (extensions::run-shell-command (apply '$sconcat args) :output (or s *standard-output*))
     #+lispworks (system:run-shell-command (apply '$sconcat args) :wait t)))
 
 (defun $room (&optional (arg nil arg-p))
-  (if arg-p
+  (if (and arg-p (member arg '(t nil) :test #'eq))
       (room arg)
       (room)))
 

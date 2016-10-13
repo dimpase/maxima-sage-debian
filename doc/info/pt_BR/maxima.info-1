@@ -5664,14 +5664,14 @@ File: maxima.info,  Node: Funções e Variáveis Definidas para Expressões,  Prev: 
           (%i1) lsum (x^i, i, [1, 2, 7]);
                                       7    2
           (%o1)                      x  + x  + x
-          (%i2) lsum (i^2, i, rootsof (x^3 - 1));
+          (%i2) lsum (i^2, i, rootsof (x^3 - 1, x));
                                ====
                                \      2
           (%o2)                 >    i
                                /
                                ====
                                              3
-                               i in rootsof(x  - 1)
+                               i in rootsof(x  - 1, x)
 
 
  -- Função: verbify (<f>)

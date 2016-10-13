@@ -673,7 +673,7 @@
       )
     )
     (
-      (eq (caar e) 'mtimes)           ; Leibnitz rule
+      (eq (caar e) 'mtimes)           ; Leibniz rule
                                       ; Lv(cadr e)*(cddr e)+(cadr e)*Lv(cddr e)
       (list
         '(mplus)
@@ -1571,6 +1571,7 @@
 		       t))
 	     ((eq (caar e) 'mequal)
 	      (list (car e) (sdiff (cadr e) x) (sdiff (caddr e) x)))
+		 ((mbagp e) (cons (car e) (sdiffmap (cdr e) x)))
 	     ((eq (caar e) '$matrix)
 	      (cons (car e)
 		    (mapcar 

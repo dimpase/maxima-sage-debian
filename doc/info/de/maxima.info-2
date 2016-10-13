@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/de//include-maxima.de.texi.
+/home/vttoth/dev/maxima/doc/info/de//include-maxima.de.texi.
 
 Das ist ein Texinfo Maxima Manual
 
@@ -8,6 +8,17 @@ Das ist ein Texinfo Maxima Manual
 START-INFO-DIR-ENTRY
 * Maxima: (maxima).     Ein Computer Algebra System.
 END-INFO-DIR-ENTRY
+
+
+File: maxima.info,  Node: Nutzerdefinierte Operatoren,  Prev: Zuweisungsoperatoren,  Up: Operatoren
+
+7.7 Nutzerdefinierte Operatoren
+===============================
+
+* Menu:
+
+* Einführung in nutzerdefinierte Operatoren::
+* Funktionen und Variablen für nutzerdefinierte Operatoren::
 
 
 File: maxima.info,  Node: Einführung in nutzerdefinierte Operatoren,  Next: Funktionen und Variablen für nutzerdefinierte Operatoren,  Prev: Nutzerdefinierte Operatoren,  Up: Nutzerdefinierte Operatoren

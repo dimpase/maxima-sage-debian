@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/de//include-maxima.de.texi.
+/home/vttoth/dev/maxima/doc/info/de//include-maxima.de.texi.
 
 Das ist ein Texinfo Maxima Manual
 
@@ -5636,6 +5636,12 @@ File: maxima.info,  Node: Funktionen und Variablen der Zahlentheorie,  Prev: Zah
      Die Anzahl der Pseudo-Primzahl-Tests nach Miller-Rabin in der
      Funktion `primep'.
 
+ -- Funktion: primes (<start>, <end>)
+     Gibt eine Liste mit allen Primzahlen von <start> bis <end> zurück.
+
+          (%i1) primes(3, 7);
+          (%o1)                     [3, 5, 7]
+
  -- Funktion: prev_prime (<n>)
      Gibt die größte Primzahl zurück, die kleiner als die Zahl <n> ist.
 
@@ -5732,6 +5738,91 @@ File: maxima.info,  Node: Funktionen und Variablen der Zahlentheorie,  Prev: Zah
 
      Siehe auch `zn_mult_table', `zn_power_table'.
 
+ -- Funktion: zn_characteristic_factors (<n>)
+     Gibt eine Liste mit den charakteristischen Faktoren des Totienten
+     von <n> zurück.
+
+     Mit Hilfe der charakteristischen Faktoren kann eine modulo <n>
+     multiplikative Gruppe als direktes Produkt zyklischer Untergruppen
+     dargestellt werden.
+
+     Ist die Gruppe selbst zyklisch, dann enthält die Liste nur den
+     Totienten und mit `zn_primroot' kann ein Generator berechnet
+     werden.  Zerfällt der Totient in mehrere charakteristische
+     Faktoren, können Generatoren der entsprechenden Untergruppen mit
+     `zn_factor_generators' ermittelt werden.
+
+     Jeder der `r' Faktoren in der Liste teilt die weiter rechts
+     stehenden Faktoren.  Fuer den letzten Faktor `f_r' gilt daher
+     `a^f_r = 1 (mod n)' für alle `a' teilerfremd zu <n>.  Dieser
+     Faktor ist auch als Carmichael Funktion bzw. Carmichael Lambda
+     bekannt.
+
+     Für `n > 2' ist `totient(n)/2^r' die Anzahl der quadratischen Reste
+     in der Gruppe und jeder dieser Reste hat `2^r' Wurzeln.
+
+     Siehe auch `totient', `zn_primroot', `zn_factor_generators'.
+
+     Beispiele:
+
+     Die multiplikative Gruppe modulo `14' ist zyklisch und ihre `6'
+     Elemente lassen sich durch eine Primitivwurzel erzeugen.
+
+          (%i1) [zn_characteristic_factors(14), phi: totient(14)];
+          (%o1)                              [[6], 6]
+          (%i2) [zn_factor_generators(14), g: zn_primroot(14)];
+          (%o2)                              [[3], 3]
+          (%i3) M14: makelist(power_mod(g,i,14), i,0,phi-1);
+          (%o3)                         [1, 3, 9, 13, 11, 5]
+
+     Die multiplikative Gruppe modulo `15' ist nicht zyklisch und ihre
+     `8' Elemente lassen sich mit Hilfe zweier Faktorgeneratoren
+     erzeugen.
+
+          (%i1) [[f1,f2]: zn_characteristic_factors(15), totient(15)];
+          (%o1)                             [[2, 4], 8]
+          (%i2) [[g1,g2]: zn_factor_generators(15), zn_primroot(15)];
+          (%o2)                           [[11, 7], false]
+          (%i3) UG1: makelist(power_mod(g1,i,15), i,0,f1-1);
+          (%o3)                               [1, 11]
+          (%i4) UG2: makelist(power_mod(g2,i,15), i,0,f2-1);
+          (%o4)                            [1, 7, 4, 13]
+          (%i5) M15: create_list(mod(i*j,15), i,UG1, j,UG2);
+          (%o5)                      [1, 7, 4, 13, 11, 2, 14, 8]
+
+     Für den letzten charakteristischen Faktor `4' gilt `a^4 = 1 (mod
+     15)' fuer alle `a' in `M15'.
+
+     `M15' hat `2' charakteristische Faktoren und daher die `8/2^2'
+     quadratischen Reste `1' und `4', und diese haben jeweils `2^2'
+     Wurzeln.
+
+          (%i6) zn_power_table(15);
+                                         [ 1   1  1   1 ]
+                                         [              ]
+                                         [ 2   4  8   1 ]
+                                         [              ]
+                                         [ 4   1  4   1 ]
+                                         [              ]
+                                         [ 7   4  13  1 ]
+          (%o6)                          [              ]
+                                         [ 8   4  2   1 ]
+                                         [              ]
+                                         [ 11  1  11  1 ]
+                                         [              ]
+                                         [ 13  4  7   1 ]
+                                         [              ]
+                                         [ 14  1  14  1 ]
+          (%i7) map(lambda([i], zn_nth_root(i,2,15)), [1,4]);
+          (%o7)                   [[1, 4, 11, 14], [2, 7, 8, 13]]
+
+ -- Funktion: zn_carmichael_lambda (<n>)
+     Gibt `1' zurück, wenn <n> gleich `1' ist und andernfalls den
+     größten charakteristischen Faktor des Totienten von <n>.
+
+     Für Erläuterungen und Beispiele siehe `zn_characteristic_factors'.
+
+
  -- Funktion: zn_determinant (<matrix>, <p>)
      verwendet die Technik der LR-Dekomposition, um die Determinante der
      Matrix <matrix> über (Z/<p>Z) zu berechnen, wobei <p> eine
@@ -5760,6 +5851,13 @@ File: maxima.info,  Node: Funktionen und Variablen der Zahlentheorie,  Prev: Zah
                                          [ 4  3  2 ]
           (%i4) zn_determinant(m, 5);
           (%o4)                               0
+
+ -- Funktion: zn_factor_generators (<n>)
+     Gibt eine Liste mit Faktorgeneratoren zurück, die zu den
+     charakteristischen Faktoren des Totienten von <n> passen.
+
+     Für Erläuterungen und Beispiele siehe `zn_characteristic_factors'.
+
 
  -- Funktion: zn_invert_by_lu (<matrix>, <p>)
      verwendet die Technik der LR-Dekomposition, um ein modulares
@@ -5847,28 +5945,222 @@ File: maxima.info,  Node: Funktionen und Variablen der Zahlentheorie,  Prev: Zah
           (%o8)                              37
 
  -- Funktion: zn_mult_table (<n>)
- -- Funktion: zn_mult_table (<n>, all)
-     Ohne das optionale Argument <all> zeigt `zn_mult_table(n)' eine
+ -- Funktion: zn_mult_table (<n>, <gcd>)
+     Ohne das optionale Argument <gcd> zeigt `zn_mult_table(n)' eine
      Multiplikationstabelle von allen Elementen in (Z/<n>Z)*, d.h. von
-     allen modulo <n> invertierbaren Elementen.
+     allen zu <n> teilerfremden Elementen.
 
-     Das optionale Argument <all> bewirkt, dass die Tabelle für alle
-     von Null verschiedenen Elemente gezeigt wird.
+     Das optionale zweite Argument <gcd> erlaubt es, eine bestimmte
+     Untermenge von (Z/<n>Z) auszuwählen.  Ist <gcd> eine natürliche
+     Zahl, enthält die Multiplikationstabelle alle Restklassen `x' mit
+     `gcd(x,n) = '<gcd>.  Zur besseren Lesbarkeit werden Zeilen- und
+     Spaltenköpfe hinzugefügt.  Falls notwendig, lassen sich diese mit
+     `submatrix(1, tabelle, 1)' wieder einfach entfernen.
+
+     Wird <gcd> auf `all' gesetzt, wird die Tabelle für sämtliche von
+     Null verschiedene Elemente in (Z/<n>Z) ausgegeben.
+
+     Das zweite Beispiel unten zeigt einen alternativen Weg, für
+     Untergruppen eine Multiplikationstabelle zu erzeugen.
 
      Siehe auch `zn_add_table', `zn_power_table'.
 
      Beispiele:
 
-          (%i1) zn_mult_table(4);
-                                          [ 1  3 ]
-          (%o1)                           [      ]
-                                          [ 3  1 ]
-          (%i2) zn_mult_table(4, all);
-                                         [ 1  2  3 ]
-                                         [         ]
-          (%o2)                          [ 2  0  2 ]
-                                         [         ]
-                                         [ 3  2  1 ]
+     Die Standardtabelle zeigt alle Elemente aus (Z/<n>Z)* und erlaubt,
+     grundlegende Eigenschaften von modularen Multiplikationsgruppen zu
+     zeigen und zu studieren. Z.B. stehen in der Hauptdiagonale
+     sämtliche quadratische Reste, jede Zeile und Spalte enthält alle
+     Elemente, die Tabelle ist symmetrisch, etc..
+
+     Wird <gcd> auf `all' gesetzt, wird die Tabelle für sämtliche von
+     Null verschiedene Elemente in (Z/<n>Z) ausgegeben.
+
+          (%i1) zn_mult_table(8);
+                                          [ 1  3  5  7 ]
+                                          [            ]
+                                          [ 3  1  7  5 ]
+          (%o1)                           [            ]
+                                          [ 5  7  1  3 ]
+                                          [            ]
+                                          [ 7  5  3  1 ]
+          (%i2) zn_mult_table(8, all);
+                                      [ 1  2  3  4  5  6  7 ]
+                                      [                     ]
+                                      [ 2  4  6  0  2  4  6 ]
+                                      [                     ]
+                                      [ 3  6  1  4  7  2  5 ]
+                                      [                     ]
+          (%o2)                       [ 4  0  4  0  4  0  4 ]
+                                      [                     ]
+                                      [ 5  2  7  4  1  6  3 ]
+                                      [                     ]
+                                      [ 6  4  2  0  6  4  2 ]
+                                      [                     ]
+                                      [ 7  6  5  4  3  2  1 ]
+
+     Ist <gcd> eine Zahl, wird zur besseren Lesbarkeit ein Zeilen- und
+     Spaltenkopf hinzugefügt.
+
+     Ist die mit <gcd> ausgewählte Teilmenge eine Gruppe, gibt es einen
+     alternativen Weg, die Multiplikationstabelle zu erzeugen.  Die
+     Isomorphie zu einer Gruppe mit `1' als Identität lässt sich nutzen,
+     um eine leicht lesbare Tabelle zu erhalten. Die Abbildung gelingt
+     mit dem CRT.
+
+     In der so erzeugten zweiten Version der Tabelle `T36_4' steht
+     genau wie bei `T9' die Identität, hier `28', in der linken oberen
+     Ecke.
+
+          (%i1) T36_4: zn_mult_table(36,4);
+                                  [ *   4   8   16  20  28  32 ]
+                                  [                            ]
+                                  [ 4   16  32  28  8   4   20 ]
+                                  [                            ]
+                                  [ 8   32  28  20  16  8   4  ]
+                                  [                            ]
+          (%o1)                   [ 16  28  20  4   32  16  8  ]
+                                  [                            ]
+                                  [ 20  8   16  32  4   20  28 ]
+                                  [                            ]
+                                  [ 28  4   8   16  20  28  32 ]
+                                  [                            ]
+                                  [ 32  20  4   8   28  32  16 ]
+          (%i2) T9: zn_mult_table(36/4);
+                                       [ 1  2  4  5  7  8 ]
+                                       [                  ]
+                                       [ 2  4  8  1  5  7 ]
+                                       [                  ]
+                                       [ 4  8  7  2  1  5 ]
+          (%o2)                        [                  ]
+                                       [ 5  1  2  7  8  4 ]
+                                       [                  ]
+                                       [ 7  5  1  8  4  2 ]
+                                       [                  ]
+                                       [ 8  7  5  4  2  1 ]
+          (%i3) T36_4: matrixmap(lambda([x], chinese([0,x],[4,9])), T9);
+                                    [ 28  20  4   32  16  8  ]
+                                    [                        ]
+                                    [ 20  4   8   28  32  16 ]
+                                    [                        ]
+                                    [ 4   8   16  20  28  32 ]
+          (%o3)                     [                        ]
+                                    [ 32  28  20  16  8   4  ]
+                                    [                        ]
+                                    [ 16  32  28  8   4   20 ]
+                                    [                        ]
+                                    [ 8   16  32  4   20  28 ]
+
+ -- Funktion: zn_nth_root (<x>, <n>, <m>)
+ -- Funktion: zn_nth_root (<x>, <n>, <m>, [[<p1>, <e1>], ..., [<pk>,
+          <ek>]])
+     Gibt eine Liste mit allen <n>-ten Wurzeln von <x> aus der
+     multiplikativen Untergruppe von (Z/<m>Z) zurück, in der sich <x>
+     befindet, oder `false', falls <x> keine <n>-te Potenz modulo <m>
+     oder kein Element einer multiplikativen Untergruppe von (Z/<m>Z)
+     ist.
+
+     <x> ist Element einer multiplikativen Untergruppe modulo <m>, wenn
+     der größte gemeinsame Teiler `g = gcd(x,m)' zu `m/g' teilerfremd
+     ist.
+
+     `zn_nth_root' basiert auf einem Algorithmus von Adleman, Manders
+     und Miller und Sätzen über modulare Multiplikationsgruppen von
+     Daniel Shanks.
+
+     Der Algorithmus benötigt eine Primfaktorzerlegung des Modulus <m>.
+     Es kann eventuell sinnvoll sein, diese Zerlegung vorab zu
+     berechnen und als viertes Argument zu übergeben. Die Form muss
+     dabei der Rückgabe von `ifactors(m)' mit der Standardeinstellung
+     `false' der Optionsvariable `factors_only' entsprechen.
+
+     Beispiele:
+
+     Eine Potenztabelle der multiplikativen Gruppe modulo `14' gefolgt
+     von einer Liste mit Listen von <n>-ten Wurzeln der `1', wobei <n>
+     von `1' bis `6' variiert.
+
+          (%i1) zn_power_table(14);
+                                   [ 1   1   1   1   1   1 ]
+                                   [                       ]
+                                   [ 3   9   13  11  5   1 ]
+                                   [                       ]
+                                   [ 5   11  13  9   3   1 ]
+          (%o1)                    [                       ]
+                                   [ 9   11  1   9   11  1 ]
+                                   [                       ]
+                                   [ 11  9   1   11  9   1 ]
+                                   [                       ]
+                                   [ 13  1   13  1   13  1 ]
+          (%i2) makelist(zn_nth_root(1,n,14), n,1,6);
+          (%o2)  [[1], [1, 13], [1, 9, 11], [1, 13], [1], [1, 3, 5, 9, 11, 13]]
+
+     Im folgenden Beispiel ist <x> nicht zu <m> teilerfremd, aber es
+     ist Element einer multiplikativen Untergruppe von (Z/<m>Z) und
+     jede <n>-te Wurzel ist aus der selben Untergruppe.
+
+     Die Restklasse `3' ist kein Element in irgend einer multiplikativen
+     Untergruppe von (Z/63Z) und wird daher nicht als dritte Wurzel von
+     `27' zurück gegeben.
+
+     Hier zeigt `zn_power_table' alle Reste `x' in (Z/63Z) mit
+     `gcd(x,63) = 9'. Diese Untergruppe ist isomorph zu (Z/7Z)* und
+     seine Identität `36' wird mit Hilfe des CRT berechnet.
+
+          (%i1) m: 7*9$
+
+          (%i2) zn_power_table(m,9);
+                                   [ 9   18  36  9   18  36 ]
+                                   [                        ]
+                                   [ 18  9   36  18  9   36 ]
+                                   [                        ]
+                                   [ 27  36  27  36  27  36 ]
+          (%o2)                    [                        ]
+                                   [ 36  36  36  36  36  36 ]
+                                   [                        ]
+                                   [ 45  9   27  18  54  36 ]
+                                   [                        ]
+                                   [ 54  18  27  9   45  36 ]
+          (%i3) zn_nth_root(27,3,m);
+          (%o3)                           [27, 45, 54]
+          (%i4) id7:1$  id63_9: chinese([id7,0],[7,9]);
+          (%o5)                                36
+
+     Im folgenden RSA-ähnlichen Beispiel, in dem der Modulus `N'
+     quadratfrei ist, d.h. in paarweise verschiedene Primfaktoren
+     zerfällt, ist jedes `x' von `0' bis `N-1' in einer multiplikativen
+     Untergruppe enthalten.
+
+     Zur Entschlüsselung wird die `e'-te Wurzel berechnet.  `e' ist
+     teilerfremd zu `N' und die `e'-te Wurzel ist deshalb eindeutig.
+     `zn_nth_root' wendet hier effektiv den als CRT-RSA bekannten
+     Algorithmus an.  (Man beachte, dass `flatten' Klammern entfernt
+     und keine Lösungen.)
+
+          (%i1) [p,q,e]: [5,7,17]$  N: p*q$
+
+          (%i3) xs: makelist(x,x,0,N-1)$
+
+          (%i4) ys: map(lambda([x],power_mod(x,e,N)),xs)$
+
+          (%i5) zs: flatten(map(lambda([y], zn_nth_root(y,e,N)), ys))$
+
+          (%i6) is(zs = xs);
+          (%o6)                             true
+
+     Im folgenden Beispiel ist die Faktorisierung des Modulus bekannt
+     und wird als viertes Argument übergeben.
+
+          (%i1) p: 2^107-1$  q: 2^127-1$  N: p*q$
+
+          (%i4) ibase: obase: 16$
+
+          (%i5) msg: 11223344556677889900aabbccddeeff$
+
+          (%i6) enc: power_mod(msg, 10001, N);
+          (%o6)    1a8db7892ae588bdc2be25dd5107a425001fe9c82161abc673241c8b383
+          (%i7) zn_nth_root(enc, 10001, N, [[p,1],[q,1]]);
+          (%o7)               [11223344556677889900aabbccddeeff]
 
  -- Funktion: zn_order (<x>, <n>)
  -- Funktion: zn_order (<x>, <n>, [[<p1>, <e1>], ..., [<pk>, <ek>]])
@@ -5921,38 +6213,98 @@ File: maxima.info,  Node: Funktionen und Variablen der Zahlentheorie,  Prev: Zah
           (%o5)        [22, 1, 44, 10, 5, 2, 22, 2, 8, 2, 1, 1, 20, 1]
 
  -- Funktion: zn_power_table (<n>)
- -- Funktion: zn_power_table (<n>, all)
-     Ohne das optionale Argument <all> zeigt `zn_power_table(n)' eine
+ -- Funktion: zn_power_table (<n>, <gcd>)
+ -- Funktion: zn_power_table (<n>, <gcd>, <max_exp>)
+     Ohne ein optionales Argument zeigt `zn_power_table(n)' eine
      Potenzierungstabelle von allen Elementen in (Z/<n>Z)*, d.h. von
-     allen modulo <n> invertierbaren Elementen.  Der Exponent variiert
-     dabei jeweils zwischen `1' und dem größten charakteristischen
-     Faktor des Totienten von <n>, so dass die Tabelle rechts mit einer
-     Spalte von Einsen endet.
+     allen zu <n> teilerfremden Elementen.  Der Exponent variiert dabei
+     jeweils zwischen `1' und dem größten charakteristischen Faktor des
+     Totienten von <n> (auch bekannt als Carmichael Funktion bzw.
+     Carmichael Lambda), so dass die Tabelle rechts mit einer Spalte
+     von Einsen endet.
 
-     Das optionale Argument <all> bewirkt, dass die Tabelle für alle
-     von Null verschiedenen Elemente gezeigt wird. In diesem Fall
-     variiert der Exponent zwischen `1' und `totient(n) + 1'.  Ist der
-     Modulus aus voneinander verschiedenen Primzahlen zusammen gesetzt,
-     stimmen dann die erste und letzte Spalte überein.
+     Das optionale zweite Argument <gcd> erlaubt es, eine bestimmte
+     Untermenge von (Z/<n>Z) auszuwählen.  Ist <gcd> eine natürliche
+     Zahl, werden Potenzen von allen Restklassen `x' mit `gcd(x,n) =
+     '<gcd> zurück gegeben, d.h. <gcd> ist standardmäßig `1'.  Wird
+     <gcd> auf `all' gesetzt, wird die Tabelle für sämtliche Elemente
+     in (Z/<n>Z) ausgegeben.
+
+     Wird das optionale dritte Argument <max_exp> angegeben, variiert
+     der Exponent zwischen `1' und <max_exp>.
 
      Siehe auch `zn_add_table', `zn_mult_table'.
 
      Beispiele:
 
-          (%i1) zn_power_table(6);
-                                          [ 1  1 ]
-          (%o1)                           [      ]
-                                          [ 5  1 ]
-          (%i2) zn_power_table(6, all);
-                                         [ 1  1  1 ]
-                                         [         ]
-                                         [ 2  4  2 ]
-                                         [         ]
-          (%o2)                          [ 3  3  3 ]
-                                         [         ]
-                                         [ 4  4  4 ]
-                                         [         ]
-                                         [ 5  1  5 ]
+     Die Standardeinstellung <gcd>` = 1' erlaubt es, grundlegende Sätze,
+     wie die von Fermat and Euler, zu zeigen und zu betrachten.
+
+     Das Argument <gcd> erlaubt es, bestimmte Teilmengen von (Z/<n>Z)
+     auszuwählen und multiplikative Untergruppen und Isomorphismen zu
+     untersuchen.
+
+     Z.B. sind die Gruppen `G10' und `G10_2' unter der Multiplikation
+     beide isomorph zu `G5'. `1' ist die Identität in `G5'.  So sind
+     `1' bzw. `6' die Identitäten in `G10' bzw. `G10_2'.  Entsprechende
+     Zuordnungen ergeben sich bei den Primitivwurzeln, n-ten Wurzeln,
+     etc..
+
+          (%i1) zn_power_table(10);
+                                        [ 1  1  1  1 ]
+                                        [            ]
+                                        [ 3  9  7  1 ]
+          (%o1)                         [            ]
+                                        [ 7  9  3  1 ]
+                                        [            ]
+                                        [ 9  1  9  1 ]
+          (%i2) zn_power_table(10,2);
+                                        [ 2  4  8  6 ]
+                                        [            ]
+                                        [ 4  6  4  6 ]
+          (%o2)                         [            ]
+                                        [ 6  6  6  6 ]
+                                        [            ]
+                                        [ 8  4  2  6 ]
+          (%i3) zn_power_table(10,5);
+          (%o3)                         [ 5  5  5  5 ]
+          (%i4) zn_power_table(10,10);
+          (%o4)                         [ 0  0  0  0 ]
+          (%i5) G5: [1,2,3,4];
+          (%o6)                          [1, 2, 3, 4]
+          (%i6) G10_2: map(lambda([x], chinese([0,x],[2,5])), G5);
+          (%o6)                          [6, 2, 8, 4]
+          (%i7) G10: map(lambda([x], power_mod(3, zn_log(x,2,5), 10)), G5);
+          (%o7)                          [1, 3, 7, 9]
+
+     Wird <gcd> auf `all' gesetzt, wird die Tabelle für sämtliche
+     Elemente in (Z/<n>Z) ausgegeben.
+
+     Das dritte Argument <max_exp> erlaubt, den höchsten Exponenten zu
+     wählen.  Die folgende Tabelle zeigt ein kleines RSA-Beispiel.
+
+          (%i1) N:2*5$ phi:totient(N)$ e:7$ d:inv_mod(e,phi)$
+
+          (%i5) zn_power_table(N, all, e*d);
+                 [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 ]
+                 [                                                               ]
+                 [ 1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1 ]
+                 [                                                               ]
+                 [ 2  4  8  6  2  4  8  6  2  4  8  6  2  4  8  6  2  4  8  6  2 ]
+                 [                                                               ]
+                 [ 3  9  7  1  3  9  7  1  3  9  7  1  3  9  7  1  3  9  7  1  3 ]
+                 [                                                               ]
+                 [ 4  6  4  6  4  6  4  6  4  6  4  6  4  6  4  6  4  6  4  6  4 ]
+          (%o5)  [                                                               ]
+                 [ 5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5 ]
+                 [                                                               ]
+                 [ 6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6 ]
+                 [                                                               ]
+                 [ 7  9  3  1  7  9  3  1  7  9  3  1  7  9  3  1  7  9  3  1  7 ]
+                 [                                                               ]
+                 [ 8  4  2  6  8  4  2  6  8  4  2  6  8  4  2  6  8  4  2  6  8 ]
+                 [                                                               ]
+                 [ 9  1  9  1  9  1  9  1  9  1  9  1  9  1  9  1  9  1  9  1  9 ]
 
  -- Funktion: zn_primroot (<n>)
  -- Funktion: zn_primroot (<n>, [[<p1>, <e1>], ..., [<pk>, <ek>]])
@@ -6685,381 +7037,6 @@ File: maxima.info,  Node: Bessel-Funktionen,  Next: Hankel-Funktionen,  Prev: Be
 
  -- Funktion: scaled_bessel_i1 (<z>)
      Entspricht `scaled_bessel_i(1,z)'.  Siehe `scaled_bessel_i'.
-
-
-File: maxima.info,  Node: Hankel-Funktionen,  Next: Airy-Funktionen,  Prev: Bessel-Funktionen,  Up: Bessel-Funktionen und verwandte Funktionen
-
-22.2.2 Hankel-Funktionen
-------------------------
-
- -- Funktion: hankel_1 (<v>, <z>)
-     Die Hankel-Funktion der ersten Art der Ordnung v mit dem Argument
-     z.  Siehe A & S 9.1.3.  `hankel_1' ist definiert als
-
-                H1 (z) = J (z) + %i Y (z)
-                  v       v          v
-
-     Die Hankel-Funktion `hankel_1' ist für das numerische und
-     symbolische Rechnen geeignet.
-
-     Maxima berechnet `hankel_1' numerisch für reelle und komplexe
-     Gleitkommazahlen als Argumente für v und z.  Mit der Funktion
-     `float' oder der Optionsvariablen `numer' kann die numerische
-     Auswertung erzwungen werden, wenn die Argumente Zahlen sind.  Die
-     numerische Berechnung für große Gleitkommazahlen ist nicht
-     implementiert.  In diesem Fall gibt Maxima eine Substantivform
-     zurück.
-
-     Hat die Optionsvariable `besselexpand' den Wert `true', werden
-     Hankel-Funktionen `hankel_1' mit einer halbzahligen Ordnung v als
-     Sinus- und Kosinusfunktionen entwickelt.
-
-     Maxima kennt die Ableitung der Hankel-Funktion `hankel_1' nach dem
-     zweiten Argument `z'.
-
-     Siehe auch die Funktion `hankel_2' sowie die Bessel-Funktionen in
-     *note Bessel-Funktionen::.
-
-     Beispiele:
-
-     Numerische Berechnung.
-
-          (%i1) hankel_1(1, 0.5);
-          (%o1)       .2422684576748738 - 1.471472392670243 %i
-          (%i2) hankel_1(1, 0.5+%i);
-          (%o2)      - .2558287994862166 %i - 0.239575601883016
-
-     Für eine komplex Ordnung kann Maxima keinen numerischen Wert
-     berechnet.  Das Ergebnis ist eine Substantivform.
-
-          (%i3) hankel_1(%i, 0.5+%i);
-          (%o3)                hankel_1(%i, %i + 0.5)
-
-     Entwicklung der Hankel-Funktion `hankel_1', wenn die
-     Optionsvariable `besselexpand' den Wert `true' hat.
-
-          (%i4) hankel_1(1/2, z), besselexpand:true;
-                         sqrt(2) sin(z) - sqrt(2) %i cos(z)
-          (%o4)          ----------------------------------
-                                 sqrt(%pi) sqrt(z)
-
-     Ableitung der Hankel-Funktion `hankel_1' nach dem Argument <z>.
-     Die Ableitung nach der Ordnung <v> ist nicht implementiert.
-     Maxima gibt eine Substantivform zurück.
-
-          (%i5)  diff(hankel_1(v,z), z);
-                       hankel_1(v - 1, z) - hankel_1(v + 1, z)
-          (%o5)        ---------------------------------------
-                                          2
-          (%i6)  diff(hankel_1(v,z), v);
-                                 d
-          (%o6)                  -- (hankel_1(v, z))
-                                 dv
-
- -- Funktion: hankel_2 (<v>, <z>)
-     Die Hankel-Funktion der zweiten Art der Ordnung v mit dem Argument
-     z.  Siehe A & S 9.1.4.  `hankel_2' ist definiert als
-
-                H2 (z) = J (z) - %i Y (z)
-                  v       v          v
-
-     Die Hankel-Funktion `hankel_2' ist für das numerische und
-     symbolische Rechnen geeignet.
-
-     Maxima berechnet `hankel_2' numerisch für reelle und komplexe
-     Gleitkommazahlen als Argumente für v und z.  Mit der Funktion
-     `float' oder der Optionsvariablen `numer' kann die numerische
-     Auswertung erzwungen werden, wenn die Argumente Zahlen sind.  Die
-     numerische Berechnung für große Gleitkommazahlen ist nicht
-     implementiert.  In diesem Fall gibt Maxima eine Substantivform
-     zurück.
-
-     Hat die Optionsvariable `besselexpand' den Wert `true', werden
-     Hankel-Funktionen `hankel_2' mit einer halbzahligen Ordnung v als
-     Sinus- und Kosinusfunktionen entwickelt.
-
-     Maxima kennt die Ableitung der Hankel-Funktion `hankel_2' nach dem
-     zweiten Argument `z'.
-
-     Für Beispiele siehe `hankel_1'.  Siehe auch die Bessel-Funktionen
-     in *note Bessel-Funktionen::.
-
-
-File: maxima.info,  Node: Airy-Funktionen,  Next: Struve-Funktionen,  Prev: Hankel-Funktionen,  Up: Bessel-Funktionen und verwandte Funktionen
-
-22.2.3 Airy-Funktionen
-----------------------
-
-Die Airy-Funktionen Ai(z) und Bi(z) sind definiert in Abramowitz und
-Stegun, Handbook of Mathematical Functions, Kapitel 10.4.  Die
-Funktionen `y = Ai(z)' und `y = Bi(z)' sind zwei linear unabhängige
-Lösungen der Airy-Differentialgleichung.
-
-            2
-           d y
-           --- - y z = 0
-             2
-           dz
-
- -- Funktion: airy_ai (<z>)
-     Die Airy-Funktion Ai(z) (A & S 10.4.2).
-
-     Die Airy-Funktion `airy_ai' ist für das symbolische und numerische
-     Rechnen geeignet.  Ist das Argument `z' eine reelle oder komplexe
-     Gleitkommazahl, wird `airy_ai' numerisch berechnet.  Mit der
-     Optionsvariablen `numer' oder der Funktion `float' kann die
-     numerische Berechnung erzwungen werden, wenn das Argument eine
-     ganze oder rationale Zahl ist.  Die numerische Berechnung für
-     große Gleitkommazahlen ist nicht implementiert.
-
-     Maxima kennt den speziellen Wert für das Argument `0'.
-
-     Ist das Argument eine Liste, Matrix oder Gleichung wird die
-     Funktion `airy_ai' auf die Elemente der Liste oder beide Seiten
-     der Gleichung angewendet.  Siehe auch `distribute_over'.
-
-     Die Ableitung `diff(airy_ai(z), z)' ist als `airy_dai(z)'
-     implementiert.  Siehe die Funktion `airy_dai'.
-
-     Weiterhin kennt Maxima das Integral der Airy-Funktion `airy_ai'.
-
-     Siehe auch die Funktionen `airy_bi' und `airy_dbi'.
-
-     Beispiele:
-
-     Numerische Berechnung für Gleitkommazahlen.  Für ganze und
-     rationale Zahlen wird eine Substantivform zurückgegeben.  Maxima
-     kennt den speziellen Wert für das Argument `0'.
-
-          (%i1) airy_ai([0.5, 1.0+%i]);
-          (%o1) [.2316936064808335, .06045830837183824
-                                                    - .1518895658771814 %i]
-          (%i2) airy_ai([1, 1/2]);
-                                                   1
-          (%o2)               [airy_ai(1), airy_ai(-)]
-                                                   2
-          (%i3) airy_ai(0);
-                                          1
-          (%o3)                     -------------
-                                     2/3       2
-                                    3    gamma(-)
-                                               3
-
-     Ableitungen und Integral der Airy-Funktion `airy_ai'.
-
-          (%i4) diff(airy_ai(z), z);
-          (%o4)                      airy_dai(z)
-          (%i5) diff(airy_ai(z), z, 2);
-          (%o5)                     z airy_ai(z)
-          (%i6) diff(airy_ai(z), z, 3);
-          (%o6)              z airy_dai(z) + airy_ai(z)
-          (%i7) integrate(airy_ai(z), z);
-                                             3
-                                1    2  4   z
-                hypergeometric([-], [-, -], --) z
-                                3    3  3   9
-          (%o7) ---------------------------------
-                           2/3       2
-                          3    gamma(-)
-                                     3
-                                                                      3
-                            1/6       2                  2    4  5   z    2
-                           3    gamma(-) hypergeometric([-], [-, -], --) z
-                                      3                  3    3  3   9
-                         - ------------------------------------------------
-                                                4 %pi
-
- -- Funktion: airy_dai (<z>)
-     Die Ableitung der Airy-Funktion `airy_ai'.
-
-     Die Ableitung der Airy-Funktion `airy_dai' ist für das symbolische
-     und numerische Rechnen geeignet.  Ist das Argument <z> eine reelle
-     oder komplexe Gleitkommazahl, wird `airy_dai' numerisch berechnet.
-     Mit der Optionsvariablen `numer' oder der Funktion `float' kann die
-     numerische Berechnung erzwungen werden, wenn das Argument eine
-     ganze oder rationale Zahl ist.  Die numerische Berechnung für
-     große Gleitkommazahlen ist nicht implementiert.
-
-     Maxima kennt den speziellen Wert für das Argument `0'.
-
-     Ist das Argument eine Liste, Matrix oder Gleichung wird die
-     Funktion `airy_dai' auf die Elemente der Liste oder beide Seiten
-     der Gleichung angewendet.  Siehe auch `distribute_over'.
-
-     Maxima kennt die Ableitung und das Integral der Funktion
-     `airy_dai'.
-
-     Siehe auch die Airy-Funktionen `airy_bi' und `airy_dbi'.
-
-     Für Beispiele siehe die Funktion `airy_ai'.
-
- -- Funktion: airy_bi (<z>)
-     Die Airy-Funktion Bi(z) (A & S 10.4.3).
-
-     Die Airy-Funktion `airy_bi' ist für das symbolische und numerische
-     Rechnen geeignet.  Ist das Argument `z' eine reelle oder komplexe
-     Gleitkommazahl, wird `airy_bi' numerisch berechnet.  Mit der
-     Optionsvariablen `numer' oder der Funktion `float' kann die
-     numerische Berechnung erzwungen werden, wenn das Argument eine
-     ganze oder rationale Zahl ist.  Die numerische Berechnung für
-     große Gleitkommazahlen ist nicht implementiert.
-
-     Maxima kennt den speziellen Wert für das Argument `0'.
-
-     Ist das Argument eine Liste, Matrix oder Gleichung wird die
-     Funktion `airy_bi' auf die Elemente der Liste oder beide Seiten
-     der Gleichung angewendet.  Siehe auch `distribute_over'.
-
-     Die Ableitung `diff(airy_bi(z), z)' ist als `airy_dbi(z)'
-     implementiert.  Siehe die Funktion `airy_dbi'.
-
-     Weiterhin kennt Maxima das Integral der Airy-Funktion `airy_bi'.
-
-     Siehe auch die Funktionen `airy_ai' und `airy_dai'.
-
-     Für Beispiele siehe die Funktion `airy_ai'.
-
- -- Funktion: airy_dbi (<z>)
-     Die Ableitung der Airy-Funktion `airy_bi'.
-
-     Die Ableitung der Airy-Funktion `airy_dbi' ist für das symbolische
-     und numerische Rechnen geeignet.  Ist das Argument <z> eine reelle
-     oder komplexe Gleitkommazahl, wird `airy_dbi' numerisch berechnet.
-     Mit der Optionsvariablen `numer' oder der Funktion `float' kann die
-     numerische Berechnung erzwungen werden, wenn das Argument eine
-     ganze oder rationale Zahl ist.  Die numerische Berechnung für
-     große Gleitkommazahlen ist nicht implementiert.
-
-     Maxima kennt den speziellen Wert für das Argument `0'.
-
-     Ist das Argument eine Liste, Matrix oder Gleichung wird die
-     Funktion `airy_dbi' auf die Elemente der Liste oder beide Seiten
-     der Gleichung angewendet.  Siehe auch `distribute_over'.
-
-     Maxima kennt die Ableitung und das Integral der Funktion
-     `airy_dbi'.
-
-     Siehe auch die Airy-Funktionen `airy_ai' und `airy_dai'.
-
-     Für Beispiele siehe die Funktion `airy_ai'.
-
-
-File: maxima.info,  Node: Struve-Funktionen,  Prev: Airy-Funktionen,  Up: Bessel-Funktionen und verwandte Funktionen
-
-22.2.4 Struve-Funktionen
-------------------------
-
- -- Funktion: struve_h (<v>, <z>)
-     Die Struve-Funktion H der Ordnung v mit dem Argument z.  Siehe
-     Abramowitz und Stegun, Handbook of Mathematical Functions, Kapitel
-     12.  Die Definition ist
-
-                                 inf
-                                 ====                  k  2 k
-                         z v + 1 \                (- 1)  z
-                H (z) = (-)       >    ----------------------------------
-                 v       2       /      2 k           3                3
-                                 ====  2    gamma(k + -) gamma(v + k + -)
-                                 k = 0                2                2
-
-     Die Struve-Funktion `struve_h' ist für das numerische und
-     symbolische Rechnen geeignet.  Im Unterschied zu den
-     Bessel-Funktionen ist jedoch die Implementation der Funktion
-     `struve_h' weniger vollständig.
-
-     Maxima berechnet `struve_h' numerisch für reelle und komplexe
-     Gleitkommazahlen als Argumente für v und z.  Mit der Funktion
-     `float' oder der Optionsvariablen `numer' kann die numerische
-     Auswertung erzwungen werden, wenn die Argumente Zahlen sind.  Die
-     numerische Berechnung für große Gleitkommazahlen ist nicht
-     implementiert.  In diesem Fall gibt Maxima eine Substantivform
-     zurück.
-
-     Hat die Optionsvariable `besselexpand' den Wert `true', wird die
-     Struve-Funktion `struve_h' mit einer halbzahligen Ordnung v als
-     Sinus- und Kosinusfunktionen entwickelt.
-
-     Maxima kennt die Ableitung der Struve-Funktion `struve_h' nach dem
-     Argument z.
-
-     Siehe auch die Struve-Funktion `struve_l'.
-
-     Beispiele:
-
-          (%i1) struve_h(1, 0.5);
-          (%o1)                  .05217374424234107
-          (%i2) struve_h(1, 0.5+%i);
-          (%o2)       0.233696520211436 %i - .1522134290663428
-          (%i3) struve_h(3/2,x), besselexpand: true;
-                                                     2
-                            2 x sin(x) + 2 cos(x) - x  - 2
-          (%o3)           - ------------------------------
-                                                   3/2
-                                sqrt(2) sqrt(%pi) x
-          (%i4) diff(struve_h(v, x), x);
-                             v
-                            x
-          (%o4) (------------------------- - struve_h(v + 1, x)
-                            v           3
-                 sqrt(%pi) 2  gamma(v + -)
-                                        2
-                                                    + struve_h(v - 1, x))/2
-
- -- Funktion: struve_l (<v>, <z>)
-     Die modifizierte Struve-Funktion L der Ordnung v mit dem Argument
-     z.  Siehe Abramowitz und Stegun, Handbook of Mathematical
-     Functions, Kapitel 12.  Die Definition ist
-
-                                 inf
-                                 ====                  2 k
-                         z v + 1 \                    z
-                L (z) = (-)       >    ----------------------------------
-                 v       2       /      2 k           3                3
-                                 ====  2    gamma(k + -) gamma(v + k + -)
-                                 k = 0                2                2
-
-     Die Struve-Funktion `struve_l' ist für das numerische und
-     symbolische Rechnen geeignet.  Im Unterschied zu den
-     Bessel-Funktionen ist jedoch die Implementation der Funktion
-     `struve_l' weniger vollständig.
-
-     Maxima berechnet `struve_l' numerisch für reelle und komplexe
-     Gleitkommazahlen als Argumente für v und z.  Mit der Funktion
-     `float' oder der Optionsvariablen `numer' kann die numerische
-     Auswertung erzwungen werden, wenn die Argumente Zahlen sind.  Die
-     numerische Berechnung für große Gleitkommazahlen ist nicht
-     implementiert.  In diesem Fall gibt Maxima eine Substantivform
-     zurück.
-
-     Hat die Optionsvariable `besselexpand' den Wert `true', wird die
-     Struve-Funktion `struve_l' mit einer halbzahligen Ordnung v als
-     Sinus- und Kosinusfunktionen entwickelt.
-
-     Maxima kennt die Ableitung der Struve-Funktion `struve_l' nach dem
-     Argument z.
-
-     Siehe auch die Struve-Funktion `struve_h'.
-
-     Beispiele:
-
-          (%i1) struve_l(1, 0.5);
-          (%o1)                  .05394218262352267
-          (%i2) struve_l(1, 0.5+%i);
-          (%o2)       .1912720461247995 %i - .1646185598117401
-          (%i3) struve_l(3/2,x), besselexpand: true;
-                                                     2
-                          2 x sinh(x) - 2 cosh(x) - x  + 2
-          (%o3)           --------------------------------
-                                                  3/2
-                               sqrt(2) sqrt(%pi) x
-          (%i4) diff(struve_l(v, x), x);
-                             v
-                            x
-          (%o4) (------------------------- + struve_l(v + 1, x)
-                            v           3
-                 sqrt(%pi) 2  gamma(v + -)
-                                        2
-                                                    + struve_l(v - 1, x))/2
 
 
 

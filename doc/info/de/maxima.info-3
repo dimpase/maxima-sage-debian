@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/de//include-maxima.de.texi.
+/home/vttoth/dev/maxima/doc/info/de//include-maxima.de.texi.
 
 Das ist ein Texinfo Maxima Manual
 
@@ -2077,14 +2077,14 @@ File: maxima.info,  Node: Summen und Produkte,  Next: Einführung in Reihen,  Pre
           (%i1) lsum (x^i, i, [1, 2, 7]);
                                       7    2
           (%o1)                      x  + x  + x
-          (%i2) lsum (i^2, i, rootsof (x^3 - 1));
+          (%i2) lsum (i^2, i, rootsof (x^3 - 1, x));
                                ====
                                \      2
           (%o2)                 >    i
                                /
                                ====
                                              3
-                               i in rootsof(x  - 1)
+                               i in rootsof(x  - 1, x)
 
  -- Funktion: niceindices (<expr>)
      Gibt den Indizes von Summen und Produkten im Ausdruck <expr> einen

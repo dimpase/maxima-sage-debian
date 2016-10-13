@@ -1,5 +1,5 @@
 This is maxima.info, produced by makeinfo version 4.13 from
-/home/robert/maxima/maxima-code/doc/info/de//include-maxima.de.texi.
+/home/vttoth/dev/maxima/doc/info/de//include-maxima.de.texi.
 
 Das ist ein Texinfo Maxima Manual
 
@@ -29,19 +29,14 @@ veröffentlichen.  Im Jahr 2000 initiierte Schelter das Maxima Projekt
 bei SourceForge, um DOE Macsyma, heute Maxima genannt, weiter zu
 entwickeln.
 
-
 Dieses Dokument ist eine Übersetzung des englischen Maxima Manuals in
 die deutsche Sprache.  Das Manual ist noch nicht vollständig übersetzt.
 Damit keine Inhalte fehlen, sind die nicht übersetzten Teile in der
 englischen Sprache eingefügt.  Dieses Manual ist nicht nur eine
 Übersetzung, sondern auch der Versuch, die Inhalte neu zu organisieren
-und zu überarbeiten.  Ziel ist, ein besser lesbares und
-übersichtlicheres Manual zu erhalten.  Diese Arbeit soll auch in das
-englische Original einfließen.  Die jeweils aktuelle Version des
-Manuals ist unter `http://crategus.users.sourceforge.net/maxima.html'
-verfügbar.
+und zu überarbeiten.
 
-Dr. Dieter Kaiser, 14.02.2011
+Dr. Dieter Kaiser
 
 
 * Menu:
@@ -139,7 +134,7 @@ Zusätzliche Pakete (Englisch)
 * solve_rec::                   Linear recurrences.
 * stats::                       Statistical inference package.
 * stirling::                    Stirling formula.
-* stringproc::                  String processing.
+* stringproc::                  Verarbeitung von Zeichenketten.
 * symmetries::
 * to_poly_solve::               to_poly_solve package.
 * unit::                        Units and dimensions package.
@@ -500,10 +495,11 @@ stirling
 * Functions and Variables for stirling::
 
 stringproc
-* Introduction to string processing::
-* Functions and Variables for input and output::
-* Functions and Variables for characters::
-* Functions and Variables for strings::
+* Einführung in die Verarbeitung von Zeichenketten::
+* Ein- und Ausgabe::
+* Schriftzeichen::
+* Verarbeitung von Zeichenketten::
+* Oktette und Werkzeuge für die Kryptographie::
 
 symmetries
 * Introduction to Symmetries::
@@ -890,31 +886,74 @@ File: maxima.info,  Node: Funktionen und Variablen für Programmfehler,  Prev: Ei
      Beispiel:
 
           (%i1) bug_report();
-          The Maxima bug database is available at
-              http://sourceforge.net/tracker/?atid=104933&group_id=4933
-          Submit bug reports by following the 'Add new' link on that page.
+
+          Please report bugs to:
+              http://sourceforge.net/p/maxima/bugs
+          To report a bug, you must have a Sourceforge account.
           Please include the following information with your bug report:
           -------------------------------------------------------------
-          Maxima version: 5.20post
-          Maxima build date: 19:59 5/10/2010
-          Host type: i686-pc-linux-gnu
-          Lisp implementation type: SBCL
-          Lisp implementation version: 1.0.29.11.debian
+          Maxima version: "5.36.1"
+          Maxima build date: "2015-06-02 11:26:48"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "GNU Common Lisp (GCL)"
+          Lisp implementation version: "GCL 2.6.12"
           -------------------------------------------------------------
-          The above information is also reported by the function 'build_info'
+          The above information is also reported by the function 'build_info()'.
 
  -- Funktion: build_info ()
      Zeigt die Maxima- und Lisp-Version der Installation.  `build_info'
-     gibt eine leere Zeichenkette `""' zurück.
+     gibt die Eigenschaften der Maxima-Version als Maxima structure
+     (definiert durch `defstruct') zurück.  Die Felder der Struktur
+     sind: `version', `timestamp', `host', `lisp_name' und
+     `lisp_version'.  Wenn die Ausgabe formatiert erfolgt (mit
+     `display2d:true;'), werden die Ergebnisse als kurze Tabelle
+     ausgegeben.
 
      Beispiel:
 
+          (%i1) build_info ();
+          (%o1)
+          Maxima version: "5.36.1"
+          Maxima build date: "2015-06-02 11:26:48"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "GNU Common Lisp (GCL)"
+          Lisp implementation version: "GCL 2.6.12"
+          (%i2) x : build_info ()$
+          (%i3) x@version;
+          (%o3)                               5.36.1
+          (%i4) x@timestamp;
+          (%o4)                         2015-06-02 11:26:48
+          (%i5) x@host;
+          (%o5)                      x86_64-unknown-linux-gnu
+          (%i6) x@lisp_name;
+          (%o6)                        GNU Common Lisp (GCL)
+          (%i7) x@lisp_version;
+          (%o7)                             GCL 2.6.12
+          (%i8) x;
+          (%o8)
+          Maxima version: "5.36.1"
+          Maxima build date: "2015-06-02 11:26:48"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "GNU Common Lisp (GCL)"
+          Lisp implementation version: "GCL 2.6.12"
+
+     Der Versionsstring (hier 5.36.1) kann auch folgendermassen
+     aussehen: branch_5_37_base_331_g8322940_dirty
+
           (%i1) build_info();
-          Maxima version: 5.20post
-          Maxima build date: 19:59 5/10/2010
-          Host type: i686-pc-linux-gnu
-          Lisp implementation type: SBCL
-          Lisp implementation version: 1.0.29.11.debian
+          (%o1)
+          Maxima version: "branch_5_37_base_331_g8322940_dirty"
+          Maxima build date: "2016-01-01 15:37:35"
+          Host type: "x86_64-unknown-linux-gnu"
+          Lisp implementation type: "CLISP"
+          Lisp implementation version: "2.49 (2010-07-07) (built 3605577779)
+               (memory 3660647857)"
+
+     In diesem Fall wurde Maxima nicht von einem Release sondern direkt
+     aus dem Git checkout des Sourcecodes compiliert.  Im obigen
+     Beispiel ist der Checkout 331 Commits nach dem letzten Git-Tag
+     (üblicherweise ein Maxima-Release (5.37 im obigen Beispiel)) und
+     der verkürzte Commit Hash des letzten Commits lautet "8322940".
 
 
 File: maxima.info,  Node: Hilfe,  Next: Kommandozeile,  Prev: Programmfehler,  Up: Top
@@ -7783,17 +7822,6 @@ File: maxima.info,  Node: Zuweisungsoperatoren,  Next: Nutzerdefinierte Operator
           (%o3)                          200
           (%i4) foo (100);
           (%o4)                         - 99
-
-
-File: maxima.info,  Node: Nutzerdefinierte Operatoren,  Prev: Zuweisungsoperatoren,  Up: Operatoren
-
-7.7 Nutzerdefinierte Operatoren
-===============================
-
-* Menu:
-
-* Einführung in nutzerdefinierte Operatoren::
-* Funktionen und Variablen für nutzerdefinierte Operatoren::
 
 
 
