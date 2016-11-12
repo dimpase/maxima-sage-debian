@@ -5,5 +5,5 @@ Abstract: This manual documents the maxima computer algebra system.
 Section: Science/Mathematics
 
 Format: HTML
-Index: /usr/share/doc/maxima-doc/html/maxima_toc.html
-Files: /usr/share/doc/maxima-doc/html/*.html
+Index: /usr/share/doc/maxima-sage-doc/html/maxima_toc.html
+Files: /usr/share/doc/maxima-sage-doc/html/*.html

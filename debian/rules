@@ -113,8 +113,6 @@ build-stamp:
 
 	touch build-stamp
 
-BOOK:=debian/maximabook-19-Sept-2004.pdf
-
 clean: #restore
 	dh_testdir
 	dh_testroot
@@ -169,81 +167,36 @@ install-stamp: build-stamp $(BOOK) $(INSTALLS)
 
 	$(MAKE) install DESTDIR=$$(pwd)/debian/tmp INSTALL="/usr/bin/install -D"
 
+	mv $$(pwd)/debian/tmp/usr/bin/maxima $$(pwd)/debian/tmp/usr/bin/maxima-sage
+
 	mkdir -p $$(pwd)/debian/tmp/usr/lib/ecl
 	cp $$(pwd)/src/binary-ecl/maxima.fas \
 		debian/tmp/usr/lib/ecl/
 
-	mkdir -p $$(pwd)/debian/tmp/usr/share/doc/maxima-doc
+	mkdir -p $$(pwd)/debian/tmp/usr/share/doc/maxima-sage-doc
 	cp -a debian/tmp/usr/share/maxima/$(MVERS)/doc/* \
-		$$(pwd)/debian/tmp/usr/share/doc/maxima-doc 
+		$$(pwd)/debian/tmp/usr/share/doc/maxima-sage-doc 
 	rm -rf debian/tmp/usr/share/maxima/$(MVERS)/doc
-	ln -snf ../../doc/maxima-doc debian/tmp/usr/share/maxima/$(MVERS)/doc
-
-	mkdir -p $$(pwd)/debian/tmp/usr/share/doc/xmaxima
-	cp -a debian/tmp/usr/share/maxima/$(MVERS)/xmaxima/* \
-		$$(pwd)/debian/tmp/usr/share/doc/xmaxima 
-	rm -rf debian/tmp/usr/share/maxima/$(MVERS)/xmaxima
-	ln -snf ../../doc/xmaxima debian/tmp/usr/share/maxima/$(MVERS)/xmaxima
-
-	mkdir -p debian/tmp/usr/share/emacs/site-lisp/maxima
-	cp -a debian/tmp/usr/share/maxima/$(MVERS)/emacs/* \
-		debian/tmp/usr/share/emacs/site-lisp/maxima
-	rm debian/tmp/usr/share/emacs/site-lisp/maxima/dbl.el
-	mkdir -p debian/tmp/usr/share/texmf/tex/latex
-	mv debian/tmp/usr/share/emacs/site-lisp/maxima/*sty \
-		debian/tmp/usr/share/texmf/tex/latex
-	rm -rf debian/tmp/usr/share/maxima/$(MVERS)/emacs
-	ln -snf ../../emacs/site-lisp/maxima debian/tmp/usr/share/maxima/$(MVERS)/emacs
-
-	for i in debian/tmp/usr/bin/xmaxima \
-		debian/tmp/usr/lib/maxima/$(MVERS)/mgnuplot ; do \
-		cat $$i | sed  -e 's,^#!/bin/sh,#!/usr/bin/wish,1' \
-			-e 's,^exec wish,#exec wish,1' \
-			-e 's,\$${prefix}/share,/usr/share,1' \
-                        -e 's,[Nn]etscape,sensible-browser,g' >tmp && chmod 755 tmp && \
-			mv tmp $$i ; done
-
-	mkdir -p debian/tmp/usr/share/applications
-	cp debian/xmaxima.desktop debian/tmp/usr/share/applications
-	mkdir -p debian/tmp/usr/share/pixmaps
-	ln -s /usr/share/doc/xmaxima/maxima-icon.png debian/tmp/usr/share/pixmaps/maxima-icon.png
-
-# GCL must be able to write to directory in which tests are run
-#	cd debian/tmp/usr/share/maxima/$(MVERS)/tests && patch -p1 <../../../../../../tests.lisp.patch
-#	cat debian/tmp/usr/share/maxima/$(MVERS)/tests/tests.lisp | sed "s,@MVERS@,$(MVERS),g" >tmp && \
-#		mv tmp debian/tmp/usr/share/maxima/$(MVERS)/tests/tests.lisp
-
-#	cd debian/tmp/usr/bin && patch -p1 <../../../xmaxima.patch
-#	cat debian/tmp/usr/bin/xmaxima | sed "s,@MVERS@,$(MVERS),g" >tmp && \
-#		chmod 755 tmp && mv tmp debian/tmp/usr/bin/xmaxima
-
-	cp $(BOOK) debian/tmp/usr/share/doc/maxima-doc
+	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima/$(MVERS)/doc
 
 	cd debian/tmp/usr/share/info && \
 		for i in $$(find -name "*.info"); do if ! grep -q START-INFO-DIR-ENTRY $$i ; then k=$$(basename $$i); k=$${k%.*}; awk '{if (!i) {i=1;printf("INFO-DIR-SECTION Maxima\nSTART-INFO-DIR-ENTRY\n* Maxima-%s: (%s).  A computer algebra system -- contributions.\nEND-INFO-DIR-ENTRY\n",k,k);}} {print}' k=$$k $$i >$$i.tmp; diff -u $$i $$i.tmp ; mv $$i.tmp $$i ; fi ; done
 
 	cat debian/tmp/usr/share/info/maxima.info | \
 		awk '/START-INFO-DIR-ENTRY/ {print "INFO-DIR-SECTION Maxima"}{print}' >debian/foo && \
-		mv debian/foo debian/tmp/usr/share/info/maxima.info
+		mv debian/foo debian/tmp/usr/share/info/maxima-sage.info
 
 	cat debian/tmp/usr/share/man/man1/maxima.1 | \
 		sed 's,^.TH MAXIMA 1L,.TH MAXIMA 1,1' >debian/foo && \
-		mv debian/foo debian/tmp/usr/share/man/man1/maxima.1
-
-#	cp -a debian/plotting debian/tips debian/tmp/usr/share/doc/maxima-doc/
-#	for i in $$(find debian/tmp/usr/share/doc/maxima-doc/plotting debian/tmp/usr/share/doc/maxima-doc/tips -name "*.uu") ; do \
-#		cat $$i | uudecode > $${i%.uu} && rm $$i ; done
-#
-#	for i in $$(find debian/tmp/usr/share/doc/maxima-doc/plotting debian/tmp/usr/share/doc/maxima-doc/tips -name "*.shtml") ; do \
-#		mv $$i $${i%.shtml}.html ; done
+		mv debian/foo debian/tmp/usr/share/man/man1/maxima-sage.1
 
 	for i in $$(find debian/tmp/usr/share/info -name "maxima-index.lisp") ; do \
-		mkdir -p debian/tmp/usr/share/doc/maxima/$$(basename $$(dirname $$i)) && \
+		mkdir -p debian/tmp/usr/share/doc/maxima-sage/$$(basename $$(dirname $$i)) && \
 		cat $$i | sed 's,^(load-info-hashtables,(clrhash cl-info::*info-tables*)\n(load-info-hashtables,1' >tmp &&\
 	        ! cmp $$i tmp && mv tmp $$i &&\
 		cat $$i | sed 's,#-gcl \*load-pathname\* #+gcl sys:\*load-pathname\*,"/usr/share/info/",1' >tmp &&\
 	        ! cmp $$i tmp && mv tmp $$i &&\
-                mv $$i debian/tmp/usr/share/doc/maxima/$$(basename $$(dirname $$i)) ; done
+                mv $$i debian/tmp/usr/share/doc/maxima-sage/$$(basename $$(dirname $$i)) ; done
 
 	chmod 755 ./debian/tmp/usr/share/maxima/$(MVERS)/share/contrib/lurkmathml/mathmltest
 
