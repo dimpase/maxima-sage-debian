@@ -1,9 +1,12 @@
-Source: maxima
+Source: maxima-sage
 Section: math
 Priority: optional
-Maintainer: Camm Maguire <camm@debian.org>
+Maintainer: Debian Science Team <debian-science-maintainers@lists.alioth.debian.org>
+Uploaders: Tobias Hansen <thansen@debian.org>
 Build-Depends: gcl ( >= 2.6.12-13 ), ecl, texinfo, libffi-dev, libgmp3-dev, libreadline-dev, locales, automake, debhelper ( >=9 ), autoconf2.13, gawk | awk, texlive-latex-recommended, sharutils, libxmu-dev, libxaw7-dev, tex-common
-Standards-Version: 3.9.5
+Standards-Version: 3.9.8
+Vcs-Browser: https://anonscm.debian.org/cgit/debian-science/packages/maxima-sage.git
+Vcs-Git: https://anonscm.debian.org/git/debian-science/packages/maxima-sage.git
 
 Package: maxima
 Architecture: any
