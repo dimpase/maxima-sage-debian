@@ -8,11 +8,11 @@ Standards-Version: 3.9.8
 Vcs-Browser: https://anonscm.debian.org/cgit/debian-science/packages/maxima-sage.git
 Vcs-Git: https://anonscm.debian.org/git/debian-science/packages/maxima-sage.git
 
-Package: maxima
+Package: maxima-sage
 Architecture: any
 Depends:  ${shlibs:Depends}, ${misc:Depends}
-Recommends: maxima-share, gnuplot-x11
-Suggests: texmacs, maxima-doc, xmaxima, maxima-emacs, wish
+Recommends: maxima-sage-share, gnuplot-x11
+Suggests: texmacs, maxima-sage-doc, wish
 Description: Computer algebra system -- base system
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -25,41 +25,10 @@ Description: Computer algebra system -- base system
  .
  This package contains the main executables and base system files.
 
-Package: maxima-src
-Architecture: all
-Depends: ${misc:Depends}
-Description: Computer algebra system -- source code
- Maxima is a fully symbolic computation program.  It is full featured
- doing symbolic manipulation of polynomials, matrices, rational
- functions, integration, Todd-coxeter methods for finite group
- analysis, graphing, multiple precision floating point computation.
- It has a symbolic source level debugger for maxima code.  Maxima is
- based on the original Macsyma developed at MIT in the 1970s.  It is
- quite reliable, and has good garbage collection, and no memory leaks.
- It comes with hundreds of self tests.
- .
- This package contains the lisp source code.
-
-Package: maxima-test
-Architecture: all
-Depends: maxima (>= ${binary:Version}), maxima-src (>= ${source:Version}), maxima-share (>= ${source:Version}), ${misc:Depends}
-Description: Computer algebra system -- test suite
- Maxima is a fully symbolic computation program.  It is full featured
- doing symbolic manipulation of polynomials, matrices, rational
- functions, integration, Todd-coxeter methods for finite group
- analysis, graphing, multiple precision floating point computation.
- It has a symbolic source level debugger for maxima code.  Maxima is
- based on the original Macsyma developed at MIT in the 1970s.  It is
- quite reliable, and has good garbage collection, and no memory leaks.
- It comes with hundreds of self tests.
- .
- This package contains a build integrity test suite.
-
-Package: maxima-doc
+Package: maxima-sage-doc
 Section: doc
 Architecture: all
 Depends: ${misc:Depends}
-Replaces: maxima (<< ${binary:Version})
 Description: Computer algebra system -- documentation
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -72,48 +41,9 @@ Description: Computer algebra system -- documentation
  .
  This package contains most of the documentation.
 
-Package: xmaxima
-Architecture: any
-Depends:  tk, maxima (>= ${binary:Version}), maxima-doc (>= ${source:Version}), maxima-test (>= ${source:Version}), ${misc:Depends}
-Recommends: mime-support, postscript-viewer, pdf-viewer
-Suggests: texmacs
-Replaces: maxima (<< ${binary:Version})
-Description: Computer algebra system -- x interface
- Maxima is a fully symbolic computation program.  It is full featured
- doing symbolic manipulation of polynomials, matrices, rational
- functions, integration, Todd-coxeter methods for finite group
- analysis, graphing, multiple precision floating point computation.
- It has a symbolic source level debugger for maxima code.  Maxima is
- based on the original Macsyma developed at MIT in the 1970s.  It is
- quite reliable, and has good garbage collection, and no memory leaks.
- It comes with hundreds of self tests.
- .
- This package contains an X Windows interface using the tcl/tk 
- libraries. 
-
-Package: maxima-emacs
-Depends:  maxima (>= ${binary:Version}), emacs24 | emacsen, emacsen-common (>= 1.4.14), texlive-base-bin, ${misc:Depends}, texlive-latex-recommended, maxima-doc (>= ${source:Version})
-Recommends: mime-support, postscript-viewer, pdf-viewer
+Package: maxima-sage-share
 Architecture: all
-Replaces: maxima (<< ${binary:Version})
-Description: Computer algebra system -- emacs interface
- Maxima is a fully symbolic computation program.  It is full featured
- doing symbolic manipulation of polynomials, matrices, rational
- functions, integration, Todd-coxeter methods for finite group
- analysis, graphing, multiple precision floating point computation.
- It has a symbolic source level debugger for maxima code.  Maxima is
- based on the original Macsyma developed at MIT in the 1970s.  It is
- quite reliable, and has good garbage collection, and no memory leaks.
- It comes with hundreds of self tests.
- .
- This package contains a tradition emacs interface, together with a
- newer imaxima interface supporting inline imaging and HTML export
- under a specialized imath mode.
-
-Package: maxima-share
-Architecture: all
-Depends:  maxima (>= ${binary:Version}), ${misc:Depends}
-Replaces: maxima (<< ${binary:Version})
+Depends:  maxima-sage (>= ${binary:Version}), ${misc:Depends}
 Description: Computer algebra system -- extra code
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -126,19 +56,3 @@ Description: Computer algebra system -- extra code
  .
  This package contains a set of contributed routines and add-on 
  packages.
-
-Package: maxima-ecl
-Architecture: any
-Depends:  ${shlibs:Depends}, ${misc:Depends}, maxima
-Description: Computer algebra system -- ecl runtime and fasl library
- Maxima is a fully symbolic computation program.  It is full featured
- doing symbolic manipulation of polynomials, matrices, rational
- functions, integration, Todd-coxeter methods for finite group
- analysis, graphing, multiple precision floating point computation.
- It has a symbolic source level debugger for maxima code.  Maxima is
- based on the original Macsyma developed at MIT in the 1970s.  It is
- quite reliable, and has good garbage collection, and no memory leaks.
- It comes with hundreds of self tests.
- .
- This package contains a maxima runtime compiled with ecl
- as well as well as a fasl library of maxima for ecl.
