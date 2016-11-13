@@ -1,6 +1,5 @@
-maxima-sage (5.35.1-1) UNRELEASED; urgency=medium
+maxima-sage (5.35.1-0sage1) unstable-sage; urgency=medium
 
-  * Create new source package maxima-sage with binary packages
-    coinstallable with maxima.
+  * Initial package.
 
- -- Tobias Hansen <thansen@debian.org>  Sat, 12 Nov 2016 22:40:31 +0000
+ -- Tobias Hansen <thansen@debian.org>  Sun, 13 Nov 2016 17:57:09 +0000
