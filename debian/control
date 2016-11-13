@@ -3,7 +3,7 @@ Section: math
 Priority: optional
 Maintainer: Debian Science Team <debian-science-maintainers@lists.alioth.debian.org>
 Uploaders: Tobias Hansen <thansen@debian.org>
-Build-Depends: gcl ( >= 2.6.12-13 ), ecl, texinfo, libffi-dev, libgmp3-dev, libreadline-dev, locales, automake, debhelper ( >=9 ), autoconf2.13, gawk | awk, texlive-latex-recommended, sharutils, libxmu-dev, libxaw7-dev, tex-common
+Build-Depends: ecl, texinfo, libffi-dev, libgmp3-dev, libreadline-dev, locales, automake, debhelper ( >=10 ), autoconf2.13, gawk | awk, texlive-latex-recommended, sharutils, libxmu-dev, libxaw7-dev, tex-common
 Standards-Version: 3.9.8
 Vcs-Browser: https://anonscm.debian.org/cgit/debian-science/packages/maxima-sage.git
 Vcs-Git: https://anonscm.debian.org/git/debian-science/packages/maxima-sage.git
@@ -13,6 +13,8 @@ Architecture: any
 Depends:  ${shlibs:Depends}, ${misc:Depends}
 Recommends: maxima-sage-share, gnuplot-x11
 Suggests: texmacs, maxima-sage-doc, wish
+Replaces: maxima (<< 5.35.2)
+Breaks: maxima (<< 5.35.2)
 Description: Computer algebra system -- base system
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -29,6 +31,8 @@ Package: maxima-sage-doc
 Section: doc
 Architecture: all
 Depends: ${misc:Depends}
+Replaces: maxima-doc (<< 5.35.2)
+Breaks: maxima-doc (<< 5.35.2)
 Description: Computer algebra system -- documentation
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -44,6 +48,8 @@ Description: Computer algebra system -- documentation
 Package: maxima-sage-share
 Architecture: all
 Depends:  maxima-sage (>= ${binary:Version}), ${misc:Depends}
+Replaces: maxima-share (<< 5.35.2)
+Breaks: maxima-share (<< 5.35.2)
 Description: Computer algebra system -- extra code
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational

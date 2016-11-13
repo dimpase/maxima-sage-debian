@@ -5,7 +5,7 @@ MVERS:=$(shell head -n 1 debian/changelog | cut -f2 -d\  | tr -d '()' | cut -f1 
 INSTALLS:=$(shell ls -1 debian/*.install.in | sed 's/\.in$$//g')
 
 %:
-	dh $@ --parallel
+	dh $@
 
 override_dh_auto_configure:
 	./configure --prefix=/usr --libdir=/usr/lib --enable-ecl git_found=false
