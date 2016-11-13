@@ -33,3 +33,13 @@ override_dh_install: $(INSTALLS)
 
 debian/%.install: debian/%.install.in
 	cat $< | sed "s,@MVERS@,$(MVERS),g" >$@
+
+override_dh_installchangelogs: debian/upstream-changelog/changelog
+	dh_installchangelogs debian/upstream-changelog/changelog
+
+debian/upstream-changelog/changelog:
+	mkdir -p debian/upstream-changelog
+	cp ChangeLog* debian/upstream-changelog/
+	mv debian/upstream-changelog/ChangeLog-5.9.2 debian/upstream-changelog/ChangeLog.5.09.2
+	mv debian/upstream-changelog/ChangeLog-5.9.3 debian/upstream-changelog/ChangeLog.5.09.3
+	cd debian/upstream-changelog/ && for c in $$(ls -r ChangeLog*); do echo $$c >> changelog && cat $$c >> changelog; done
