@@ -1,0 +1,20 @@
+There are several reasons why SageMath cannot use Debian's maxima package at the moment
+and this second package maxima-sage is needed:
+
+ 1. Version mismatch
+
+ SageMath 7.4 uses Maxima 5.35.1, while the maxima package in Debian is constantly updated to follow
+ new upstream versions. Currently the version of maxima in Debian is 5.38.1. It is not trivial
+ to update SageMath to a new Maxima version, as this ticket for the Maxima 5.38.1 update shows:
+
+ https://trac.sagemath.org/ticket/18920
+
+ 2. Lisp compiler
+
+ The maxima package in Debian uses only GCL as common lisp compiler, while SageMath uses ECL. SageMath
+ cannot use the GCL version, since the preferred interface to Maxima is via an ECL fasl library.
+ The possibility of adding an ECL version of Maxima to the maxima package was discussed in
+
+ https://bugs.debian.org/779804
+
+This maxima-sage package is coinstallable with the maxima packages in Debian.
