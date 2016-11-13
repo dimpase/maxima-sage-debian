@@ -27,6 +27,7 @@ override_dh_auto_install:
 	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima/$(MVERS)/doc
 	mkdir -p debian/tmp/usr/lib/ecl
 	cp src/binary-ecl/maxima.fas debian/tmp/usr/lib/ecl/
+	rm -f debian/tmp/usr/share/maxima/$(MVERS)/share/logic/COPYING
 
 override_dh_install: $(INSTALLS)
 	dh_install
