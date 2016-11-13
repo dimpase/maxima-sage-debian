@@ -1,8 +1,4 @@
-debian/tmp/usr/bin/maxima
-debian/tmp/usr/lib/maxima/@MVERS@/binary-gcl/maxima
+debian/tmp/usr/bin/maxima-sage
 debian/tmp/usr/lib/maxima/@MVERS@/binary-ecl/maxima
-debian/tmp/usr/lib/maxima/@MVERS@/mgnuplot
 debian/tmp/usr/lib/ecl/maxima.fas
-debian/tmp/usr/share/man/man1/maxima-sage.1
-debian/tmp/usr/share/maxima/@MVERS@/demo
-debian/tmp/usr/share/doc/maxima-sage
+debian/tmp/usr/share/doc/maxima-sage/info/maxima-index.lisp

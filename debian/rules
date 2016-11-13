@@ -1,12 +1,29 @@
 #!/usr/bin/make -f
 
 export EMACS=no
+MVERS:=$(shell head -n 1 debian/changelog | cut -f2 -d\  | tr -d '()' | cut -f1 -d-)
+INSTALLS:=$(shell ls -1 debian/*.install.in | sed 's/\.in$$//g')
 
 %:
 	dh $@ --parallel
 
 override_dh_auto_configure:
 	./configure --prefix=/usr --libdir=/usr/lib --enable-ecl git_found=false
+
+override_dh_auto_install:
+	dh_auto_install
+	mv debian/tmp/usr/bin/maxima debian/tmp/usr/bin/maxima-sage
+	mv debian/tmp/usr/share/man/man1/maxima.1 debian/tmp/usr/share/man/man1/maxima-sage.1
+	mkdir -p debian/tmp/usr/share/doc/maxima-sage/info
+	mv debian/tmp/usr/share/info/maxima-index.lisp debian/tmp/usr/share/doc/maxima-sage/info/maxima-index.lisp
+	mkdir -p debian/tmp/usr/share/doc
+	mv debian/tmp/usr/share/maxima/$(MVERS)/doc debian/tmp/usr/share/doc/maxima-sage-doc
+	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima/$(MVERS)/doc
+	mkdir -p debian/tmp/usr/lib/ecl
+	cp src/binary-ecl/maxima.fas debian/tmp/usr/lib/ecl/
+
+override_dh_install: $(INSTALLS)
+	dh_install
 
 debian/%.install: debian/%.install.in
 	cat $< | sed "s,@MVERS@,$(MVERS),g" >$@
