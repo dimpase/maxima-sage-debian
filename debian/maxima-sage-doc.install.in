@@ -1,5 +1,4 @@
 debian/tmp/usr/share/doc/maxima-sage-doc
-debian/tmp/usr/share/info
 debian/tmp/usr/share/maxima/@MVERS@/doc
 
 
