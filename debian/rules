@@ -16,6 +16,12 @@ override_dh_auto_install:
 	mv debian/tmp/usr/share/man/man1/maxima.1 debian/tmp/usr/share/man/man1/maxima-sage.1
 	mkdir -p debian/tmp/usr/share/doc/maxima-sage/info
 	mv debian/tmp/usr/share/info/maxima-index.lisp debian/tmp/usr/share/doc/maxima-sage/info/maxima-index.lisp
+	rm -f debian/tmp/usr/share/info/imaxima.info
+	rm -f debian/tmp/usr/share/info/xmaxima.info
+	mv debian/tmp/usr/share/info/maxima.info debian/tmp/usr/share/info/maxima-sage.info
+	mv debian/tmp/usr/share/info/maxima.info-1 debian/tmp/usr/share/info/maxima-sage.info-1
+	mv debian/tmp/usr/share/info/maxima.info-2 debian/tmp/usr/share/info/maxima-sage.info-2
+	mv debian/tmp/usr/share/info/maxima.info-3 debian/tmp/usr/share/info/maxima-sage.info-3
 	mkdir -p debian/tmp/usr/share/doc
 	mv debian/tmp/usr/share/maxima/$(MVERS)/doc debian/tmp/usr/share/doc/maxima-sage-doc
 	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima/$(MVERS)/doc
