@@ -28,7 +28,7 @@ Last-Update: <YYYY-MM-DD>
  
  ; ------------------ search help topics ------------------
  
-+(defvar maxima::*maxima-index-dir* "/usr/share/doc/maxima/info")
++(defvar maxima::*maxima-index-dir* "/usr/share/doc/maxima-sage/info")
 +
  (defun load-primary-index ()
    ;; Load the index, but make sure we use a sensible *read-base*.
