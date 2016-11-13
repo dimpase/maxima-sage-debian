@@ -44,3 +44,6 @@ debian/upstream-changelog/changelog:
 	mv debian/upstream-changelog/ChangeLog-5.9.2 debian/upstream-changelog/ChangeLog.5.09.2
 	mv debian/upstream-changelog/ChangeLog-5.9.3 debian/upstream-changelog/ChangeLog.5.09.3
 	cd debian/upstream-changelog/ && for c in $$(ls -r ChangeLog*); do echo $$c >> changelog && cat $$c >> changelog; done
+
+override_dh_compress:
+	dh_compress -Xmaxima-index.lisp -Xmaxima.info
