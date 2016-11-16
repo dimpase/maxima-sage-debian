@@ -22,6 +22,7 @@ override_dh_auto_install:
 	mkdir -p debian/tmp/usr/lib/ecl
 	cp src/binary-ecl/maxima.fas debian/tmp/usr/lib/ecl/
 	rm -f debian/tmp/usr/share/maxima/$(MVERS)/share/logic/COPYING
+	chmod 755 debian/tmp/usr/share/maxima/$(MVERS)/share/contrib/lurkmathml/mathmltest
 
 override_dh_install: $(INSTALLS)
 	dh_install
