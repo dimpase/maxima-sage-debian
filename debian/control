@@ -12,8 +12,8 @@ Vcs-Git: https://anonscm.debian.org/git/debian-science/packages/maxima-sage.git
 Package: maxima-sage
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: maxima-sage-share, gnuplot-x11
-Suggests: texmacs, maxima-sage-doc, wish
+Recommends: maxima-sage-share
+Suggests: maxima-sage-doc
 Replaces: maxima (<< 5.35.2)
 Breaks: maxima (<< 5.35.2)
 Description: Computer algebra system -- base system
