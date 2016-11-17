@@ -1,34 +1,293 @@
-This package was debianized by Camm Maguire <camm@enhanced.com> on
-Tue, 25 Apr 2000 14:54:56 -0400.
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Maxima
+Source: http://maxima.sourceforge.net/
 
-It was downloaded from http://www.sourceforge.net/projects/maxima
-
-Upstream Authors: Bill Schelter <wfs@fireant.ma.utexas.edu> (deceased)
-                  James Amundson <amundson@fnal.gov> (current maintainer)
-
+Files: *
 Copyright:
+ Massachusetts Institute of Technology
+ William F. Schelter
+ James Amundson
+ Jorge Barros de Abreu
+ Jay Belanger
+ David Billinghurst
+ Marco Ciampa
+ Douglas Crosher
+ Robert Dodier
+ Andreas Eder
+ Andrey Grozin
+ Yasuaki Honda
+ Stavros Macrakis
+ Camm Maguire
+ Volker van Nek
+ Mario Rodriguez Riotorto
+ Juan Pablo Romero Bernal
+ Dan Stanger
+ Viktor Toth
+ Raymond Toy
+ Jaime Villate
+ Andrej Vodopivec
+ Barton Willis
+ Cliff Yapp
+ Vadim V. Zhytnikov
+ Mike Clarkson
+ Steve Horne
+ Judah Milgram
+ Paulo Ney de Souza
+ Sergey Semerikov
+ Wolfgang Jenkner
+ Michel van den Bergh
+ Karl Berry
+ Salvador Bosch Pérez
+ Fedor Bezrukov
+ Fabrizio Caruso
+ Ari Constancio
+ Gosei Furuya
+ Juan Pablo Hierro Álvarez
+ Vadim Konovalov
+ Tim Moore
+ Guenther Nowak
+ Kostas Oikonomou
+ Edmond Orignac
+ Valerij Pipin
+ Jose Ramirez Labrador
+ Ole Rohne
+ Thomas A. Russ
+ Marek Rychlik
+License: GPL-2+
+Comment:
+ Maxima is dedicated to the memory of William F. Schelter. On 6 October
+ 1998 William F. Schelter was formally notified that he could distribute
+ DOE-MACSYMA upon terms of his choosing, in particular the GNU General
+ Public License: <http://www.ma.utexas.edu/users/wfs/maxima-doe-auth.gif>
+ Schelter proceed to distribute derived works under the GPL.
+ .
+ In the formal notification a request was made that a paragraph "should
+ be included in the GPL and should accompany other modifications,
+ enhancements or derivative works of your program." This paragraph is
+ transcribed below in honor of that request. Like the preamble it does
+ not form part of the license.
+ .
+ "Distribution of such derivative works is subject to the U.S. Export
+ Administration Regulations (Title 15 CFR 768-799), which implements the
+ Export Administration Act of 1979, as amended, and/or the International
+ Traffic in Arms Regulations, of 12-6-84, (Title 22 CFR 121-130), which
+ implements the Arms Export Control Act (22 U.S.C. 2728) and may require
+ license for export."
 
-Maxima is dedicated to the memory of William F. Schelter. On 6 October
-1998 William F. Schelter was formally notified that he could distribute
-DOE-MACSYMA upon terms of his choosing, in particular the GNU General
-Public License: <http://www.ma.utexas.edu/users/wfs/maxima-doe-auth.gif>
-Schelter proceed to distribute derived works under the GPL.
+Files: debian/*
+Copyright: Copyright (C) 2000-2016 Camm Maguire <camm@debian.org>
+                         2016 Tobias Hansen <thansen@debian.org>
+License: GPL-2+
 
-In the formal notification a request was made that a paragraph "should
-be included in the GPL and should accompany other modifications,
-enhancements or derivative works of your program." This paragraph is
-transcribed below in honor of that request. Like the preamble it does
-not form part of the license.
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License version 2 as
+ published by the Free Software Foundation; either version 2 of the
+ License, or (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 2 can be found in /usr/share/common-licenses/GPL-2
 
-"Distribution of such derivative works is subject to the U.S. Export
-Administration Regulations (Title 15 CFR 768-799), which implements the
-Export Administration Act of 1979, as amended, and/or the International
-Traffic in Arms Regulations, of 12-6-84, (Title 22 CFR 121-130), which
-implements the Arms Export Control Act (22 U.S.C. 2728) and may require
-license for export."
+Files: ./doc/intromax/intromax.html
+ ./doc/intromax/intromax.tex
+ ./share/contrib/coma/coma.mac
+ ./share/contrib/diffequations/extrabessel.lisp
+ ./share/contrib/diffequations/gauss.lisp
+ ./share/contrib/diffequations/kummer.lisp
+ ./share/contrib/diffequations/lazysolver.lisp
+ ./share/contrib/diffequations/odelin.lisp
+ ./share/contrib/diffequations/odeutils.lisp
+ ./share/contrib/diffequations/spherodialwave.lisp
+ ./share/contrib/diffequations/sqfr.lisp
+ ./share/contrib/diffequations/testodelin.lisp
+ ./share/contrib/integration/abs_integrate.mac
+ ./share/contrib/integration/hyperint.mac
+ ./share/contrib/odes/odes.mac
+ ./share/contrib/opsubst.lisp
+ ./share/contrib/stirling.mac
+ ./share/contrib/tocl.lisp
+ ./share/contrib/trigtools/trigtools.mac
+ ./share/finance/finance.mac
+ ./share/fourier_elim/fourier_elim.lisp
+ ./share/hypergeometric/abramowitz_id.mac
+ ./share/hypergeometric/hypergeometric.lisp
+ ./share/hypergeometric/hypergeometric_mac.mac
+ ./share/hypergeometric/nfloat.lisp
+ ./share/linearalgebra/eigens-by-jacobi.lisp
+ ./share/linearalgebra/linearalgebra.mac
+ ./share/linearalgebra/lu.lisp
+ ./share/linearalgebra/matrixexp.lisp
+ ./share/multiadditive/multiadditive.lisp
+ ./share/numericalio/encode-decode-float.lisp
+ ./share/numericalio/numericalio.lisp
+ ./share/orthopoly/orthopoly.lisp
+ ./share/pdiff/pdiff.lisp
+ ./share/solve_rat_ineq/solve_rat_ineq.mac
+ ./src/conjugate.lisp
+ ./src/expintegral.lisp
+ ./src/nset.lisp
+Copyright: 1988-2010, Richard H. Rand.
+  2000-2009, Barton Willis
+  2002-2003, Stavros Macrakis (macrakis@alum.mit.edu)
+  2005-2007, Robert Dodier
+  2008, Nicolas Guarin Zapata
+  2008 - 2010 Volker van Nek
+  A.Domarkas 2013
+  Wilhelm Haager 2009-2014
+License: GPL
+ On Debian systems, the complete text of the GNU General
+ Public License can be found in /usr/share/common-licenses/GPL-1
 
-Copyright (C) 1989, 1991 Free Software Foundation, Inc., 
-	      	    	 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
- 
-Maxima is under the GPL v2, the full text of which can be found in
-/usr/share/common-licenses/GPL-2.
+
+Files: ./share/algebra/solver/*
+ ./share/calculus/pade2.mac
+ ./share/contrib/impdiff.mac
+ ./share/contrib/makeOrders.mac
+ ./share/contrib/state/*
+Copyright: 1999, 2000 Dan Stanger
+License: LGPL-2+
+ On Debian systems, the complete text of the GNU Library General
+ Public License version 2 can be found in /usr/share/common-licenses/LGPL-2
+
+Files: ./doc/misc/grepforvariables.sh
+ ./doc/misc/processlisfiles.sh
+ ./doc/misc/x.awk
+ ./share/contrib/ggf.mac
+ ./share/contrib/lindstedt.mac
+ ./share/contrib/Eulix/Eulix.mac
+ ./share/logic/logic.dem
+ ./share/logic/logic.lisp
+ ./share/logic/logic.mac
+ ./share/lsquares/plsquares.mac
+ ./share/mnewton/mnewton.mac
+Copyright: 2001, Dan Stanger
+  2002, Cliff Yapp
+  2002, Dan Stanger
+  2003, Salvador Bosch Perez
+  2005, Thomas Baruchel
+  2008, --2009 Alexey Beshenov <al@beshenov.ru>.
+  Helmut Jarausch
+License: LGPL-2.1+
+ On Debian systems, the complete text of the GNU Lesser General
+ Public License version 2.1 can be found in /usr/share/common-licenses/LGPL-2.1
+
+Files: ./doc/info/de.utf8/texinfo.tex
+ ./doc/info/de/texinfo.tex
+ ./doc/info/es/texinfo.tex
+ ./doc/info/pt/texinfo.tex
+Copyright: 1985-1986, 1988, 1990-2011, Free Software Foundation, Inc.
+License: GPL-3+
+ On Debian systems, the complete text of the GNU General
+ Public License version 3 can be found in /usr/share/common-licenses/GPL-3
+
+Files: ./share/contrib/bitwise/bitwise.lisp
+ ./share/linearalgebra/mring.lisp
+ ./src/maxmin.lisp
+ ./src/nummod.lisp
+Copyright: 2004-2005, 2007, Barton Willis
+  2008, Volker van Nek
+License: LLGPL
+ This source code is licensed under the terms of the Lisp Lesser 
+ GNU Public License (LLGPL). The LLGPL consists of a preamble, published
+ by Franz Inc. (http://opensource.franz.com/preamble.html), and the GNU 
+ Library General Public License (LGPL), version 2, or (at your option)
+ any later version.  When the preamble conflicts with the LGPL, 
+ the preamble takes precedence.
+ .
+ On Debian systems, the complete text of the GNU Library General
+ Public License version 2 can be found in /usr/share/common-licenses/LGPL-2
+ .
+ Preamble:
+ .
+ The concept of the GNU Lesser General Public License version 2.1 ("LGPL") has 
+ been adopted to govern the use and distribution of above-mentioned application. 
+ However, the LGPL uses terminology that is more appropriate for a program 
+ written in C than one written in Lisp. Nevertheless, the LGPL can still be 
+ applied to a Lisp program if certain clarifications are made. This document 
+ details those clarifications. Accordingly, the license for the open-source Lisp 
+ applications consists of this document plus the LGPL. Wherever there is a 
+ conflict between this document and the LGPL, this document takes precedence 
+ over the LGPL.
+ .
+ A "Library" in Lisp is a collection of Lisp functions, data and foreign 
+ modules. The form of the Library can be Lisp source code (for processing by an 
+ interpreter) or object code (usually the result of compilation of source code 
+ or built with some other mechanisms). Foreign modules are object code in a form 
+ that can be linked into a Lisp executable. When we speak of functions we do so 
+ in the most general way to include, in addition, methods and unnamed functions. 
+ Lisp "data" is also a general term that includes the data structures resulting 
+ from defining Lisp classes. A Lisp application may include the same set of Lisp 
+ objects as does a Library, but this does not mean that the application is 
+ necessarily a "work based on the Library" it contains.
+ .
+ The Library consists of everything in the distribution file set before any 
+ modifications are made to the files. If any of the functions or classes in the 
+ Library are redefined in other files, then those redefinitions ARE considered a 
+ work based on the Library. If additional methods are added to generic functions 
+ in the Library, those additional methods are NOT considered a work based on the 
+ Library. If Library classes are subclassed, these subclasses are NOT considered 
+ a work based on the Library. If the Library is modified to explicitly call 
+ other functions that are neither part of Lisp itself nor an available add-on 
+ module to Lisp, then the functions called by the modified Library ARE 
+ considered a work based on the Library. The goal is to ensure that the Library 
+ will compile and run without getting undefined function errors.
+ .
+ It is permitted to add proprietary source code to the Library, but it must be 
+ done in a way such that the Library will still run without that proprietary 
+ code present. Section 5 of the LGPL distinguishes between the case of a library 
+ being dynamically linked at runtime and one being statically linked at build 
+ time. Section 5 of the LGPL states that the former results in an executable 
+ that is a "work that uses the Library." Section 5 of the LGPL states that the 
+ latter results in one that is a "derivative of the Library", which is therefore 
+ covered by the LGPL. Since Lisp only offers one choice, which is to link the 
+ Library into an executable at build time, we declare that, for the purpose 
+ applying the LGPL to the Library, an executable that results from linking a 
+ "work that uses the Library" with the Library is considered a "work that uses 
+ the Library" and is therefore NOT covered by the LGPL.
+ .
+ Because of this declaration, section 6 of LGPL is not applicable to the 
+ Library. However, in connection with each distribution of this executable, you 
+ must also deliver, in accordance with the terms and conditions of the LGPL, the 
+ source code of Library (or your derivative thereof) that is incorporated into 
+ this executable.
+
+Files: ./interfaces/emacs/misc/sshell.el
+ ./interfaces/emacs/misc/bookmode.el
+Copyright: 1985-1988, Free Software Foundation, Inc.
+           William F. Schelter
+License: GPL-1+
+ On Debian systems, the complete text of the GNU General
+ Public License version 1 can be found in /usr/share/common-licenses/GPL-1
+
+Files: ./src/intl.lisp
+Copyright: 1999-2010, Paul Foley (mycroft@actrix.gen.nz)
+License: BSD
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this Software to deal in the Software without restriction,
+ including without limitation the rights to use, copy, modify, merge,
+ publish, distribute, sublicense, and/or sell copies of the Software,
+ and to permit persons to whom the Software is furnished to do so,
+ provided that the above copyright notice and this permission notice
+ are included in all copies or substantial portions of the Software.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+ DAMAGE.
