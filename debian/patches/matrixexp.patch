@@ -1,3 +1,13 @@
+Description: Fix error in matrix exponentiation
+ This patch was written by SageMath but not yet committed into Maxima releases.
+ However, it is needed for SageMath to work correctly:
+ .
+ https://git.sagemath.org/sage.git/tree/build/pkgs/maxima/patches/matrixexp.patch
+Author: Peter Bruin <P.J.Bruin@math.leidenuniv.nl>
+Bug-Sage: http://trac.sagemath.org/ticket/13973
+Bug: https://sourceforge.net/p/maxima/bugs/2596/
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/share/linearalgebra/matrixexp.lisp
 +++ b/share/linearalgebra/matrixexp.lisp
 @@ -138,8 +138,8 @@

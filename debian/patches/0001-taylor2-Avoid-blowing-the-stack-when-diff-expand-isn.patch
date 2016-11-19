@@ -1,3 +1,16 @@
+Description: taylor2: Avoid blowing the stack when diff-expand isn't any help
+ If a result contains what we were trying to expand we should give up,
+ since we'll just end up recursively calling ourselves, which is bad.
+ .
+ This patch was written by upstream but not yet committed into their releases.
+ However, it is needed for SageMath to work correctly. See here
+ .
+ https://git.sagemath.org/sage.git/tree/build/pkgs/maxima/patches/0001-taylor2-Avoid-blowing-the-stack-when-diff-expand-isn.patch
+Author: Rupert Swarbrick <rswarbrick@gmail.com>
+Bug-Sage: https://trac.sagemath.org/sage_trac/ticket/13364
+Bug: https://sourceforge.net/p/maxima/bugs/2520/
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 diff --git a/src/hayat.lisp b/src/hayat.lisp
 index ae2c78c..4b9c547 100644
 --- a/src/hayat.lisp
