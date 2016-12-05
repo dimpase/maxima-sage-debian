@@ -1,3 +1,15 @@
+maxima-sage (5.35.1-2) unstable; urgency=medium
+
+  [ Ximin Luo ]
+  * Add patch headers for matrixexp.patch and
+    0001-taylor2-Avoid-blowing-the-stack-when-diff-expand-isn.patch.
+
+  [ Tobias Hansen ]
+  * Add license paragraph for interfaces/emacs/imaxima/breqn097a/*
+    to debian/copyright.
+
+ -- Tobias Hansen <thansen@debian.org>  Mon, 05 Dec 2016 20:16:15 +0000
+
 maxima-sage (5.35.1-1) unstable; urgency=medium
 
   * Initial package. (Closes: #844563)
