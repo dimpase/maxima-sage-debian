@@ -1,3 +1,9 @@
+maxima-sage (5.35.1-2~bpo8+1) jessie-backports; urgency=medium
+
+  * Rebuild for jessie-backports.
+
+ -- Andreas Tille <tille@debian.org>  Mon, 06 Mar 2017 14:12:18 +0100
+
 maxima-sage (5.35.1-2) unstable; urgency=medium
 
   [ Ximin Luo ]
