@@ -3,7 +3,7 @@ Section: math
 Priority: optional
 Maintainer: Debian Science Team <debian-science-maintainers@lists.alioth.debian.org>
 Uploaders: Tobias Hansen <thansen@debian.org>
-Build-Depends: ecl, texinfo, libffi-dev, libgmp3-dev, automake, debhelper ( >=10 ), texlive-latex-recommended, tex-common
+Build-Depends: ecl (>= 16.1.3), texinfo, libffi-dev, libgmp3-dev, automake, debhelper ( >=10 ), texlive-latex-recommended, tex-common
 Standards-Version: 3.9.8
 Homepage: http://maxima.sourceforge.net/
 Vcs-Browser: https://anonscm.debian.org/cgit/debian-science/packages/maxima-sage.git
