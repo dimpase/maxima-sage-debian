@@ -1,2 +1,2 @@
-version=2
-http://sf.net/maxima/maxima-([^-]*)\.tar.gz debian uupdate
+version=3
+opts=dversionmangle=s/\+(debian|dfsg|ds|deb)(\.?\d+)?$// http://sf.net/maxima/maxima-([^-]*)\.tar.gz
