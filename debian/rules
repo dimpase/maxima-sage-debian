@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 export EMACS=no
-MVERS:=$(shell head -n 1 debian/changelog | cut -f2 -d\  | tr -d '()' | cut -f1 -d-)
+MVERS:=$(shell dpkg-parsechangelog | sed -rne 's/^Version: ([0-9.]+)[-+].*$$/\1/p')
 INSTALLS:=$(shell ls -1 debian/*.install.in | sed 's/\.in$$//g')
 
 %:
@@ -12,17 +12,15 @@ override_dh_auto_configure:
 
 override_dh_auto_install:
 	dh_auto_install
-	mv debian/tmp/usr/bin/maxima debian/tmp/usr/bin/maxima-sage
-	mv debian/tmp/usr/share/man/man1/maxima.1 debian/tmp/usr/share/man/man1/maxima-sage.1
 	rm -f debian/tmp/usr/share/doc/maxima-sage/info/imaxima.info
 	rm -f debian/tmp/usr/share/doc/maxima-sage/info/xmaxima.info
 	mkdir -p debian/tmp/usr/share/doc
-	mv debian/tmp/usr/share/maxima/$(MVERS)/doc debian/tmp/usr/share/doc/maxima-sage-doc
-	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima/$(MVERS)/doc
+	mv debian/tmp/usr/share/maxima-sage/$(MVERS)/doc debian/tmp/usr/share/doc/maxima-sage-doc
+	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima-sage/$(MVERS)/doc
 	mkdir -p debian/tmp/usr/lib/ecl
 	cp src/binary-ecl/maxima.fas debian/tmp/usr/lib/ecl/
-	rm -f debian/tmp/usr/share/maxima/$(MVERS)/share/logic/COPYING
-	chmod 755 debian/tmp/usr/share/maxima/$(MVERS)/share/contrib/lurkmathml/mathmltest
+	rm -f debian/tmp/usr/share/maxima-sage/$(MVERS)/share/logic/COPYING
+	chmod 755 debian/tmp/usr/share/maxima-sage/$(MVERS)/share/contrib/lurkmathml/mathmltest
 
 override_dh_install: $(INSTALLS)
 	dh_install
