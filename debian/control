@@ -14,8 +14,6 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: maxima-sage-share
 Suggests: maxima-sage-doc
-Replaces: maxima (<< 5.35.2)
-Breaks: maxima (<< 5.35.2)
 Description: Computer algebra system -- base system
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -38,8 +36,6 @@ Package: maxima-sage-doc
 Section: doc
 Architecture: all
 Depends: ${misc:Depends}
-Replaces: maxima-doc (<< 5.35.2)
-Breaks: maxima-doc (<< 5.35.2)
 Description: Computer algebra system -- documentation
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
@@ -61,8 +57,6 @@ Description: Computer algebra system -- documentation
 Package: maxima-sage-share
 Architecture: all
 Depends: maxima-sage (>= ${binary:Version}), ${misc:Depends}
-Replaces: maxima-share (<< 5.35.2)
-Breaks: maxima-share (<< 5.35.2)
 Description: Computer algebra system -- extra code
  Maxima is a fully symbolic computation program.  It is full featured
  doing symbolic manipulation of polynomials, matrices, rational
