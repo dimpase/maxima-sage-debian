@@ -11,11 +11,9 @@ Bug-Sage: https://trac.sagemath.org/sage_trac/ticket/13364
 Bug: https://sourceforge.net/p/maxima/bugs/2520/
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
-diff --git a/src/hayat.lisp b/src/hayat.lisp
-index ae2c78c..4b9c547 100644
 --- a/src/hayat.lisp
 +++ b/src/hayat.lisp
-@@ -2181,6 +2181,23 @@
+@@ -2188,6 +2188,23 @@
        (or (alike1 (exp-pt (get-datum (datum-var (car l)))) (exp-pt (car l)))
  	  (return () ))))
  
@@ -39,7 +37,7 @@ index ae2c78c..4b9c547 100644
  (defun taylor2  (e)
   (let ((last-exp e))	    ;; lexp-non0 should be bound here when needed
    (cond ((assolike e tlist) (var-expand e 1 () ))
-@@ -2224,8 +2241,31 @@
+@@ -2231,8 +2248,31 @@
  		 ((null l) t)
  		 (or (free e (car l)) (return ()))))
  	 (newsym e))
@@ -73,7 +71,7 @@ index ae2c78c..4b9c547 100644
  
  (defun compatvarlist (a b c d)
     (cond ((null a) t)
-@@ -2960,7 +3000,21 @@
+@@ -2967,7 +3007,21 @@
         (and (or (member '$inf pt-list :test #'eq) (member '$minf pt-list :test #'eq))
  	    (unfam-sing-err)))
  
@@ -96,8 +94,6 @@ index ae2c78c..4b9c547 100644
    (check-inf-sing (mapcar (function caddr) l))
    (cond ((not l) exp)
  	(t
-diff --git a/tests/rtest_taylor.mac b/tests/rtest_taylor.mac
-index 1b26258..d2132c7 100644
 --- a/tests/rtest_taylor.mac
 +++ b/tests/rtest_taylor.mac
 @@ -539,3 +539,9 @@
@@ -110,6 +106,3 @@ index 1b26258..d2132c7 100644
 + */
 +errcatch(taylor (sin(x)/abs(sin(x)), x, 0, 0))$
 +[];
--- 
-1.7.10.4
-

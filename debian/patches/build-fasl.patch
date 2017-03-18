@@ -7,7 +7,7 @@ Origin: http://git.sagemath.org/sage.git/tree/build/pkgs/maxima/patches/build-fa
 
 --- a/src/maxima.system
 +++ b/src/maxima.system
-@@ -76,6 +76,11 @@
+@@ -75,6 +75,11 @@
  			     ;; Convert dir/foo.fas to dir/foo.o
  			     (make-pathname :type "o" :defaults p))
  			 files)))

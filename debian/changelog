@@ -1,6 +1,7 @@
 maxima-sage (5.39.0-1) UNRELEASED; urgency=medium
 
   * New upstream version.
+  * Remove stdin-illegal-seek.patch (applied upstream).
 
  -- Tobias Hansen <thansen@debian.org>  Sat, 18 Mar 2017 01:07:17 +0000
 
