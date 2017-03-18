@@ -8,7 +8,7 @@ INSTALLS:=$(shell ls -1 debian/*.install.in | sed 's/\.in$$//g')
 	dh $@
 
 override_dh_auto_configure:
-	./configure --prefix=/usr --libdir=/usr/lib --infodir=/usr/share/doc/maxima-sage/info --enable-ecl git_found=false
+	./configure --program-suffix=-sage --prefix=/usr --libdir=/usr/lib --infodir=/usr/share/doc/maxima-sage/info --enable-ecl git_found=false
 
 override_dh_auto_install:
 	dh_auto_install
@@ -26,6 +26,8 @@ override_dh_auto_install:
 
 override_dh_install: $(INSTALLS)
 	dh_install
+
+override_dh_auto_test:
 
 debian/%.install: debian/%.install.in
 	cat $< | sed "s,@MVERS@,$(MVERS),g" >$@
