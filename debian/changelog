@@ -1,10 +1,13 @@
-maxima-sage (5.39.0+ds-1) UNRELEASED; urgency=medium
+maxima-sage (5.39.0+ds-0sage1) unstable-sage; urgency=medium
 
   * New upstream version.
   * Remove stdin-illegal-seek.patch (applied upstream).
+  * Apply handle-multiple-ldflags.patch. (Closes: #847925)
+  * Install data files to /usr/share/maxima-sage instead of /usr/share/maxima
+    using new patch change_name_to_maxima-sage.patch.
   * Repack source to get rid of dos line endings conflicting with git.
 
- -- Tobias Hansen <thansen@debian.org>  Sat, 18 Mar 2017 01:07:17 +0000
+ -- Tobias Hansen <thansen@debian.org>  Sat, 18 Mar 2017 11:44:29 +0000
 
 maxima-sage (5.35.1-2) unstable; urgency=medium
 
