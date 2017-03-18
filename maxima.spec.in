@@ -4,6 +4,9 @@
 # This can be changed by modifying the variables below.
 %define enable_clisp 1
 %define clisp_flags --enable-clisp
+%define enable_ccl 0
+%define ccl_flags --disable-ccl
+# --with-ccl=lx86cl
 %define enable_cmucl 0
 %define cmucl_flags --disable-cmucl
 %define enable_sbcl 0
@@ -45,6 +48,7 @@ URL: http://maxima.sourceforge.net
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
 Requires: maxima-exec = %{version}
+Provides: maxima-doc
 
 %description
 
@@ -83,6 +87,16 @@ Requires: maxima = %{version}
 Provides: maxima-exec
 %description exec-clisp
 Maxima compiled with clisp.
+%endif
+
+%if %{enable_ccl}
+%package exec-ccl
+Summary: Maxima compiled with Clozure CL
+Group: Sciences/Mathematics
+Requires: maxima = %{version}
+Provides: maxima-exec
+%description exec-ccl
+Maxima compiled with Clozure Common Lisp.
 %endif
 
 %if %{enable_cmucl}
@@ -171,7 +185,7 @@ Maxima Brazilian Portuguese language support (UTF-8).
 
 %prep
 %setup -q
-%configure  %{?sbcl_flags:} %{?cmucl_flags:} %{?gcl_flags:} %{?clisp_flags:} \
+%configure  %{?sbcl_flags:} %{?cmucl_flags:} %{?gcl_flags:} %{?clisp_flags:} %{?ccl_flags:} \
 	    %{?lang_es_flags:} %{?lang_es_flags_utf:} \
 	    %{?lang_pt_flags:} %{?lang_pt_flags_utf:} \
 	    %{?lang_pt_br_flags:} %{?lang_pt_br_flags_utf:}
@@ -268,7 +282,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/maxima.1
 %{_bindir}/maxima
 %{_bindir}/rmaxima
-%doc AUTHORS COPYING INSTALL INSTALL.lisp NEWS 
+%exclude %{_datadir}/mime/packages/x-mac.xml
+%doc AUTHORS COPYING INSTALL INSTALL.lisp NEWS x-mac.xml
 %doc README README.lisps README.rpms README.external README.i18n
 
 %files xmaxima
@@ -281,6 +296,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/maxima/%{version}/binary-clisp
 %endif
 
+%if %{enable_ccl}
+%files exec-ccl
+%{_libdir}/maxima/%{version}/binary-openmcl
+%endif
+
 %if %{enable_cmucl}
 %files exec-cmucl
 %{_libdir}/maxima/%{version}/binary-cmucl
@@ -288,7 +308,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %if %{enable_sbcl}
 %files exec-sbcl
-/usr/lib/maxima/%{version}/binary-sbcl
+%{_libdir}/maxima/%{version}/binary-sbcl
 %endif
 
 %if %{enable_gcl}

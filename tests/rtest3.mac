@@ -365,3 +365,118 @@ b*matrix([''(rat(a))]);
 
 (reset (doallmxops, doscmxops), 0);
 0;
+
+/* SF bug #2936: stack overflow in integrate */
+
+kill (x, A, B, MU, SIGMA);
+done;
+
+trigsimp (gamma_incomplete (1, log (x)));
+gamma_incomplete (1, log (x));
+
+trigsimp ((%i*gamma_incomplete(1,(1-2*log(x))^2/4)*(1-2*log(x))^2)
+           /(2*log(x)-1)^2);
+%i*gamma_incomplete(1,(4*log(x)^2-4*log(x)+1)/4)$
+
+trigsimp (integrate (%e^((-log(x)^2)-1)*log(x),x));
+-(%e^-(3/4)*(2*gamma_incomplete(1,(4*log(x)^2-4*log(x)+1)/4)*abs(2*log(x)-1)
+            +2*gamma_incomplete(1/2,(4*log(x)^2-4*log(x)+1)/4)*log(x)
+            -gamma_incomplete(1/2,(4*log(x)^2-4*log(x)+1)/4)))
+ /(4*abs(2*log(x)-1))$
+
+/* throw away results of integrate, just make sure it runs without crashing */
+block ([foo, bar, ctxt],
+  foo : exp(-(log(x) - MU)*(log(x) - MU)/(2*SIGMA*SIGMA))/(x*SIGMA*sqrt(2*%pi)),
+  bar : (log(B) - log(x*SIGMA) + ((x-A)*(x-A)/(2*B*B) - (log(x) -MU)*(log(x) -MU)/(2*SIGMA*SIGMA))),
+  [foo, bar] : subst ([A=2, MU=3], [foo, bar]),
+  ctxt : newcontext (),
+  assume (SIGMA > 0, B > 0),
+  integrate (expand (foo*bar), x),
+  integrate (expand (foo*bar), x, 2, inf),
+  killcontext (ctxt),
+  0);
+0;
+
+/* mailing list 2015-09-07: How can I catch this error? "errcatch" doesn't do the trick. */
+
+/* result for this test will change if ever "quotient by zero" bug is fixed */
+errcatch (integrate(ev(ratsimp(1/(x^(5/2)+3*x^(1/3))),algebraic),x));
+[];
+
+(kill (foo, bar, baz), foo () := bar (), bar () := (errcatch (integrate(ev(ratsimp(1/(x^(5/2)+3*x^(1/3))),algebraic),x)), throw ('baz)), catch (foo ()));
+baz;
+
+/* result for this test will change if ever "quotient by zero" bug is fixed */
+errcatch (integrate (exp(2^(3/2)*x^2 - sqrt(2)*x^2), x));
+[];
+
+(kill (quux), bar () := (errcatch (integrate (exp(2^(3/2)*x^2 - sqrt(2)*x^2), x)), throw ('quux)), catch (foo ()));
+quux;
+
+/* result for this test will change if ever "quotient by zero" bug is fixed */
+errcatch (taylor(coth(x), x, %i*%pi, 0));
+[];
+
+(kill (mumble), bar () := (errcatch (taylor(coth(x), x, %i*%pi, 0)), throw ('mumble)), catch (foo ()));
+mumble;
+
+/* Verify that some special variables that were recently given DEFMVAR's are now resettable.
+ * If ever the default values of these variables are changed,
+ * some of the following tests will fail.
+ * In that case just update these tests to use the new default value.
+ */
+
+(kill(mydefaults),
+ mydefaults['verbose] : false,
+ mydefaults['exptsubst] : false,
+ mydefaults['partswitch] : false,
+ mydefaults['inflag] : false,
+ mydefaults['derivsubst] : false,
+ mydefaults['opsubst] : true,
+ mydefaults['demoivre] : false,
+ mydefaults['nointegrate] : false,
+ mydefaults['tlimswitch] : true,
+ mydefaults['limsubst] : false,
+ mydefaults['abconvtest] : false,
+ mydefaults['packagefile] : false,
+ mydefaults['factlim] : 100000,
+ mydefaults['cflength] : 1,
+ mydefaults['taylordepth] : 3,
+ mydefaults['maxtaydiff] : 4,
+ mydefaults['lhospitallim] : 4,
+ mydefaults['linel] : 79,
+ 0);
+0;
+
+(reset (),
+ every (lambda ([v], is(mydefaults[v] = ev(v))), flatten (rest (arrayinfo (mydefaults), 2))));
+true;
+
+(myflags : '[verbose, exptsubst, partswitch, inflag, derivsubst, opsubst, demoivre,
+             nointegrate, tlimswitch, limsubst, abconvtest, packagefile],
+ /* "not" causes an extra evaluation of its argument,
+  * so this next line won't work as expected if "not" ever becomes
+  * simplifying operator; update this test case as needed if that
+  * ever comes to pass.
+  */
+ myflags :: map ("not", myflags),
+ ev (myflags));
+[true, true, true, true, true, false, true, true, false, true, true, true];
+
+map (reset, myflags);
+[[verbose], [exptsubst], [partswitch], [inflag], [derivsubst], [opsubst], [demoivre],
+ [nointegrate], [tlimswitch], [limsubst], [abconvtest], [packagefile]];
+
+ev (myflags);
+[false, false, false, false, false, true, false, false, true, false, false, false];
+
+(myvals : '[factlim, cflength, taylordepth, maxtaydiff, lhospitallim, linel],
+ myvals :: makelist (99, v, myvals),
+ ev (myvals));
+[99, 99, 99, 99, 99, 99];
+
+map (reset, myvals);
+[[factlim], [cflength], [taylordepth], [maxtaydiff], [lhospitallim], [linel]];
+
+ev (myvals);
+[100000, 1, 3, 4, 4, 79];

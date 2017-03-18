@@ -242,7 +242,7 @@ pnz$
 0$
 
 sign(log(x));
-pn$
+pz$
 
 (forget(x >= 1),0);
 0$
@@ -733,7 +733,7 @@ complex;
 
 /* This does not work correctly. 
    The answer complex is not really wrong, but could be better.
-   To achive this we have first to improve the function rectform. */
+   To achieve this we have first to improve the function rectform. */
 
 csign((1+%i)*(1-%i));
 complex; /* shoule be pos */
@@ -1049,4 +1049,143 @@ errcatch(asksign(%i));
 
 errcatch(asksign(infinity));
 []$ /* sign of infinity is undefined. */
+
+/* Odd functions */
+
+(declare(o, oddfun),0);
+0$
+
+(assume(equal(q, 0)),0);
+0$
+
+sign(o(q));
+zero$
+
+(remove(o, oddfun),0);
+0$
+
+(forget(equal(q, 0)),0);
+0$
+
+/* Increasing and decreasing functions */
+
+(declare(i, increasing, d, decreasing),0);
+0$
+
+(assume(r > q),0);
+0$
+
+is(i(r) > i(q));
+true$
+
+is(d(r) < d(q));
+true$
+
+(remove(i, increasing, d, decreasing),0);
+0$
+
+(forget(r > q), 0);
+0$
+
+/* Increasing and decreasing odd functions */
+
+(declare(i, [oddfun, increasing], d, [oddfun, decreasing]),0);
+0$
+
+(assume(q < 0, r > 0),0);
+0$
+
+sign(i(q));
+neg$
+
+sign(i(r));
+pos$
+
+sign(d(q));
+pos$
+
+sign(d(r));
+neg$
+
+(remove(i, [oddfun, increasing], d, [oddfun, decreasing]),0);
+0$
+
+(forget(q < 0, r > 0),0);
+0$
+
+/* Bug #3109: is(sin(x) <= 1) returns "unknown", is(sin(x) <= 1.00001) returns "true" */
+(kill(all),0);
+0$
+is(sin(x) <= 1);
+true$
+is(cos(x) <= 1);
+true$
+is(sin(x) >= -1);
+true$
+is(cos(x) >= -1);
+true$
+sign(sin(x)+1);
+pz$
+sign(cos(x)+1);
+pz$
+sign(sin(x)-1);
+nz$
+sign(cos(x)-1);
+nz$
+
+/* Assumptions and queries involving multiple unknowns */
+assume(-2*x*y>10);
+[x*y<-5]$
+is(10*x*y<-50);
+true$
+assume(3*x*y>0);
+[inconsistent]$
+assume(notequal(2*a*b,10));
+[notequal(a*b,5)]$
+is(equal(10*a*b,50));
+false$
+(kill(all),0);
+0$
+
+/* Exponents in inequality assumptions and queries  */
+assume(x^3/y>=0);
+[x*y>=0]$
+sign(y^3/x);
+pz$
+(declare(e, even, o, odd), 0);
+0$
+assume(a^o>0);
+[a>0]$
+sign(-2*a^o);
+neg$
+assume(b^(e+1)<0);
+[b<0]$
+sign(-b^(e+1));
+pos$
+assume(c^m/d^n<=0);
+[c^m*d^n<=0]$
+assume(f^(1/3)*g^h<0);
+[f*g^h<0]$
+(kill(all),0);
+0$
+
+/* The csign of a product with a complex factor and a zero factor used
+ * to depend on the order of the factors: if the zero came first then
+ * the sign was zero, but if the complex came first then the sign was
+ * complex.
+ */
+
+(declare (a, complex), assume (equal (b, 0)), 0)$
+0;
+csign (a * b);
+zero;
+(remove (a, complex), forget (equal (b, 0)), 0)$
+0;
+
+(declare (b, complex), assume (equal (a, 0)), 0)$
+0;
+csign (a * b);
+zero;
+(remove (b, complex), forget (equal (a, 0)), 0)$
+0;
 

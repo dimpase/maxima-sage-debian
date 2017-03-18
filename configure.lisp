@@ -96,7 +96,8 @@
 		  acl-name
 		  openmcl-name
 		  sbcl-name
-		  ecl-name)
+		  ecl-name
+		  gcl-name)
   (let ((prefix (if maxima-directory 
 		    maxima-directory
 		    (default-directory-string)))
@@ -109,6 +110,7 @@
 	(openmcl (if openmcl-name openmcl-name "mcl"))
 	(sbcl (if sbcl-name sbcl-name "sbcl"))
 	(ecl (if ecl-name ecl-name "ecl"))
+	(gcl (if gcl-name gcl-name "gcl"))
 	(files (list "maxima-local.in" "src/maxima.in" "src/maxima.bat.in"
 		     "src/autoconf-variables.lisp.in"))
 	(substitutions))
@@ -137,6 +139,9 @@
 	  (setf ecl 
 		(read-with-default "Name of the ECL executable (optional)"
 				   ecl))
+	  (setf gcl
+		(read-with-default "Name of the GCL executable (optional)"
+				   gcl))
 	  (setf sbcl 
 		(read-with-default "Name of the SBCL executable (optional)"
 				   sbcl))))
@@ -150,6 +155,7 @@
 			      (cons "@POSIX_SHELL@" shell)
 			      (cons "@expanded_top_srcdir@" 
 				    (replace-substring prefix "\\" "\\\\"))
+			      (cons "@lisp_only_build@" "t")
 			      (cons "@DEFAULTLISP@" *maxima-lispname*)
 			      (cons "@CLISP_NAME@" clisp)
 			      (cons "@CMUCL_NAME@" cmucl)
@@ -157,6 +163,7 @@
 			      (cons "@ACL_NAME@" acl)
 			      (cons "@OPENMCL_NAME@" openmcl)
 			      (cons "@ECL_NAME@" ecl)
+			      (cons "@GCL_NAME@" gcl)
 			      (cons "@SBCL_NAME@" sbcl)))
     (if verbose
 	(mapc #'(lambda (pair) (format t "~a=~a~%" (first pair) (rest pair)))

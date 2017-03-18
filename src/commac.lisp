@@ -348,11 +348,20 @@ values")
     ;; we just need to make sure the exponent marker is
     ;; printed.
     (if *fortran-print*
-        (setq string (format nil "~e" symb))
+        (setq string (cond
+                       ;; Strings for non-finite numbers as specified for input in Fortran 2003 spec;
+                       ;; they apparently did not exist in earlier versions.
+                       ((float-nan-p symb) "NAN")
+                       ((float-inf-p symb) (if (< symb 0) "-INF" "INF"))
+                       (t (format nil "~e" symb))))
         (multiple-value-bind (form digits)
           (cond
             ((zerop a)
              (values "~,vf" 1))
+            ;; Work around for GCL bug #47404.
+            ;; Avoid numeric comparisons with NaN, which erroneously return T.
+            #+gcl ((or (float-inf-p symb) (float-nan-p symb))
+             (return-from exploden-format-float (format nil "~a" symb)))
             ((<= 0.001 a 1e7)
              (let*
                ((integer-log10 (floor (/ (log a) #.(log 10.0))))
@@ -360,6 +369,8 @@ values")
                (if (< scale effective-printprec)
                  (values "~,vf" (- effective-printprec scale))
                  (values "~,ve" (1- effective-printprec)))))
+            #-gcl ((or (float-inf-p symb) (float-nan-p symb))
+             (return-from exploden-format-float (format nil "~a" symb)))
             (t
               (values "~,ve" (1- effective-printprec))))
 
@@ -579,7 +590,7 @@ values")
   ;; Adding this extra EOF test, because the testsuite generates
   ;; unexpected end of input-stream with Windows XP and GCL 2.6.8.
   #+gcl
-  (when (eq (peek-char nil stream nil eof-option) eof-option)
+  (when (eql (peek-char nil stream nil eof-option) eof-option)
     (return-from tyi-raw eof-option))
 
   (let ((ch (read-char-no-hang stream nil eof-option)))
@@ -593,7 +604,7 @@ values")
 
 (defun tyi (&optional (stream *standard-input*) eof-option)
   (let ((ch (tyi-raw stream eof-option)))
-    (if (eq ch eof-option)
+    (if (eql ch eof-option)
       ch
       (backslash-check ch stream eof-option))))
 
@@ -606,12 +617,12 @@ values")
 
 (let ((previous-tyi #\a))
   (defun backslash-check (ch stream eof-option)
-    (if (eq previous-tyi #\\ )
+    (if (eql previous-tyi #\\ )
       (progn (setq previous-tyi #\a) ch)
       (setq previous-tyi
-	(if (eq ch #\\ )
+	(if (eql ch #\\ )
 	  (let ((next-char (peek-char nil stream nil eof-option)))
-	    (if (or (eq next-char #\newline) (eq next-char #\return))
+	    (if (or (eql next-char #\newline) (eql next-char #\return))
 	      (eat-continuations ch stream eof-option)
 	      ch))
 	  ch))))
@@ -619,33 +630,146 @@ values")
   ; Eat line continuations until we come to something which doesn't match, or we reach eof.
   (defun eat-continuations (ch stream eof-option)
     (setq ch (tyi-raw stream eof-option))
-    (do () ((not (or (eq ch #\newline) (eq ch #\return))))
+    (do () ((not (or (eql ch #\newline) (eql ch #\return))))
       (let ((next-char (peek-char nil stream nil eof-option)))
-	(if (and (eq ch #\return) (eq next-char #\newline))
+	(if (and (eql ch #\return) (eql next-char #\newline))
 	  (tyi-raw stream eof-option)))
       (setq ch (tyi-raw stream eof-option))
       (let ((next-char (peek-char nil stream nil eof-option)))
-	(if (and (eq ch #\\ ) (or (eq next-char #\return) (eq next-char #\newline)))
+	(if (and (eql ch #\\ ) (or (eql next-char #\return) (eql next-char #\newline)))
 	  (setq ch (tyi-raw stream eof-option))
 	  (return-from eat-continuations ch))))
     ch))
 
 (defvar ^w nil)
 
-(defun $timedate (&optional (time (get-universal-time)))
-  (multiple-value-bind
-    (second minute hour date month year day-of-week dst-p tz)
-    (decode-universal-time time)
-    (declare (ignore day-of-week))
-    (let
-      ((tz-offset (if dst-p (- 1 tz) (- tz))))
-      (multiple-value-bind
-        (tz-hours tz-hour-fraction)
-        (floor tz-offset)
+(defun $timedate (&optional (time (get-universal-time)) tz)
+  (cond
+    ((and (consp tz) (eq (caar tz) 'rat))
+     (setq tz (/ (second tz) (third tz))))
+    ((floatp tz)
+     (setq tz (rationalize tz))))
+  (if tz (setq tz (/ (round tz 1/60) 60)))
+  (let*
+    ((time-integer (mfuncall '$floor time))
+     (time-fraction (sub time time-integer))
+     (time-millis (mfuncall '$round (mul 1000 time-fraction))))
+    (when (= time-millis 1000)
+      (setq time-integer (1+ time-integer))
+      (setq time-millis 0))
+    (multiple-value-bind
+      (second minute hour date month year day-of-week dst-p tz)
+      ;; Some Lisps allow TZ to be null but CLHS doesn't explicitly allow it,
+      ;; so work around null TZ here.
+      (if tz (decode-universal-time time-integer (- tz))
+        (decode-universal-time time-integer))
+      (declare (ignore day-of-week))
+      ;; DECODE-UNIVERSAL-TIME might return a timezone offset
+      ;; which is a multiple of 1/3600 but not 1/60.
+      ;; We need a multiple of 1/60 because our formatted
+      ;; timezone offset has only minutes and seconds.
+      (if (/= (mod tz 1/60) 0)
+        ($timedate time-integer (/ (round (- tz) 1/60) 60))
         (let
-          ((tz-sign (if (< 0 tz-hours) #\+ #\-)))
-          (format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~a~2,'0d:~2,'0d"
-              year month date hour minute second tz-sign (abs tz-hours) (floor (* 60 tz-hour-fraction))))))))
+          ((tz-offset (if dst-p (- 1 tz) (- tz))))
+          (multiple-value-bind
+            (tz-hours tz-hour-fraction)
+            (truncate tz-offset)
+            (let
+              ((tz-sign (if (<= 0 tz-offset) #\+ #\-)))
+              (if (= time-millis 0)
+                (format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d~a~2,'0d:~2,'0d"
+                    year month date hour minute second tz-sign (abs tz-hours) (floor (* 60 (abs tz-hour-fraction))))
+                (format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d.~3,'0d~a~2,'0d:~2,'0d"
+                    year month date hour minute second time-millis tz-sign (abs tz-hours) (floor (* 60 (abs tz-hour-fraction))))))))))))
+
+;; Parse date/time strings in these formats (and only these):
+;;
+;;   YYYY-MM-DD([ T]hh:mm:ss)?([,.]n+)?([+-]hh:mm)?
+;;   YYYY-MM-DD([ T]hh:mm:ss)?([,.]n+)?([+-]hhmm)?
+;;   YYYY-MM-DD([ T]hh:mm:ss)?([,.]n+)?([+-]hh)?
+;;   YYYY-MM-DD([ T]hh:mm:ss)?([,.]n+)?[Z]?
+;;
+;; where (...)? indicates an optional group (occurs zero or one times)
+;; ...+ indicates one or more instances of ...,
+;; and [...] indicates literal character alternatives.
+;;
+;; Note that the nregex package doesn't handle optional groups or ...+.
+;; The notation above is only for describing the behavior of the parser.
+;;
+;; Trailing unparsed stuff causes the parser to fail (return NIL).
+
+(defun match-date-yyyy-mm-dd (s) (funcall #.(maxima-nregex::regex-compile "^([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])") s))
+(defun match-time-hh-mm-ss (s) (funcall #.(maxima-nregex::regex-compile "^[ T]([0-9][0-9]):([0-9][0-9]):([0-9][0-9])") s))
+(defun match-fraction-nnn (s) (funcall #.(maxima-nregex::regex-compile "^[,.]([0-9][0-9]*)") s))
+(defun match-tz-hh-mm (s) (funcall #.(maxima-nregex::regex-compile "^([+-])([0-9][0-9]):([0-9][0-9])$") s))
+(defun match-tz-hhmm (s) (funcall #.(maxima-nregex::regex-compile "^([+-])([0-9][0-9])([0-9][0-9])$") s))
+(defun match-tz-hh (s) (funcall #.(maxima-nregex::regex-compile "^([+-])([0-9][0-9])$") s))
+(defun match-tz-Z (s) (funcall #.(maxima-nregex::regex-compile "^Z$") s))
+
+(defun $parse_timedate (s)
+  (setq s (string-trim '(#\Space #\Tab #\Newline #\Return) s))
+  (let (year month day
+       (hours 0) (minutes 0) (seconds 0)
+       (seconds-fraction 0) seconds-fraction-numerator tz)
+    (if (match-date-yyyy-mm-dd s)
+      (progn 
+        (multiple-value-setq (year month day) (extract-groups-integers s))
+        (setq s (subseq s (second (aref maxima-nregex::*regex-groups* 0)))))
+      (return-from $parse_timedate nil))
+    (when (match-time-hh-mm-ss s)
+      (multiple-value-setq (hours minutes seconds) (extract-groups-integers s))
+      (setq s (subseq s (second (aref maxima-nregex::*regex-groups* 0)))))
+    (when (match-fraction-nnn s)
+      (multiple-value-setq (seconds-fraction-numerator) (extract-groups-integers s))
+      (let ((group1 (aref maxima-nregex::*regex-groups* 1)))
+        (setq seconds-fraction (div seconds-fraction-numerator (expt 10 (- (second group1) (first group1))))))
+      (setq s (subseq s (second (aref maxima-nregex::*regex-groups* 0)))))
+    (cond
+      ((match-tz-hh-mm s)
+       (multiple-value-bind (tz-sign tz-hours tz-minutes) (extract-groups-integers s)
+         (setq tz (* tz-sign (+ tz-hours (/ tz-minutes 60))))))
+      ((match-tz-hhmm s)
+       (multiple-value-bind (tz-sign tz-hours tz-minutes) (extract-groups-integers s)
+         (setq tz (* tz-sign (+ tz-hours (/ tz-minutes 60))))))
+      ((match-tz-hh s)
+       (multiple-value-bind (tz-sign tz-hours) (extract-groups-integers s)
+         (setq tz (* tz-sign tz-hours))))
+      ((match-tz-Z s)
+       (setq tz 0))
+      (t
+        (if (> (length s) 0)
+          (return-from $parse_timedate nil))))
+
+    (construct-universal-time year month day hours minutes seconds seconds-fraction (if tz (- tz)))))
+
+(defun extract-groups-integers (s)
+  (let ((groups (coerce (subseq maxima-nregex::*regex-groups* 1 maxima-nregex::*regex-groupings*) 'list)))
+    (values-list (mapcar #'parse-integer-or-sign
+                         (mapcar #'(lambda (ab) (subseq s (first ab) (second ab)))
+                                 groups)))))
+
+(defun parse-integer-or-sign (s)
+  (cond
+    ((string= s "+") 1)
+    ((string= s "-") -1)
+    (t (parse-integer s))))
+
+; Clisp (2.49) / Windows does have a problem with dates before 1970-01-01,
+; therefore add 400 years in that case and subtract 12622780800
+; (= parse_timedate("2300-01-01Z") (Lisp starts with 1900-01-01) in timezone
+; GMT) afterwards.
+; see discussion on mailing list circa 2015-04-21: "parse_timedate error"
+
+(if (and (string= (lisp-implementation-type) "CLISP") (string= *autoconf-windows* "true"))
+  ; Clisp/Windows case:
+  (defun construct-universal-time (year month day &optional (hours 0) (minutes 0) (seconds 0) (seconds-fraction 0) tz)
+    (add seconds-fraction (sub (encode-universal-time seconds minutes hours day month (add year 400) tz) 12622780800)))
+  ; other Lisp / OS versions:
+  (defun construct-universal-time (year month day &optional (hours 0) (minutes 0) (seconds 0) (seconds-fraction 0) tz)
+    (add seconds-fraction (encode-universal-time seconds minutes hours day month year tz)))
+)
+
 
 ;;Some systems make everything functionp including macros:
 (defun functionp (x)

@@ -33,25 +33,30 @@
 			       (p-lc poly))))))))
 
 (defmfun $resultant (a b mainvar)
-  (prog (varlist formflag $ratfac res ans genvar $keepfloat)
-     (setq varlist (list mainvar) $ratfac t ans 1)
-     (and ($ratp a)(setq formflag t)(setq a ($ratdisrep a)))
-     (and ($ratp b)(setq formflag t)(setq b ($ratdisrep b)))
-     (newvar a)
-     (newvar b)
-     (setq a (lmake2 (cadr (ratrep* a)) nil))
-     (setq b (lmake2 (cadr (ratrep* b)) nil))
-     (setq mainvar (caadr (ratrep* mainvar)))
-     (do ((l1 a (cdr l1))) ((null l1))
-       (do ((l2 b (cdr l2))) ((null l2))
-	 (setq res (result1 (caar l1) (caar l2) mainvar))
-	 (setq ans (ptimes ans (pexpt
-				(cond ((zerop (caddr res)) (car res))
-				      (t (ptimeschk (car res)
-						    (pexpt (makprod (cadr res) nil)
-							   (caddr res)))))
-				(* (cdar l1) (cdar l2)))))))
-     (return (cond (formflag (pdis* ans)) (t (pdis ans))))))
+  (let ((varlist (list mainvar)) (genvar nil)
+        ($ratfac t) ($keepfloat nil)
+        formflag res (ans 1))
+    (when ($ratp a) (setf a ($ratdisrep a) formflag t))
+    (when ($ratp b) (setf b ($ratdisrep b) formflag t))
+    (newvar a)
+    (newvar b)
+    (setq a (lmake2 (cadr (ratrep* a)) nil))
+    (setq b (lmake2 (cadr (ratrep* b)) nil))
+    (setq mainvar (caadr (ratrep* mainvar)))
+
+    (dolist (a-term a)
+      (dolist (b-term b)
+        (setq res (result1 (car a-term) (car b-term) mainvar))
+        (setq ans (ptimes ans
+                          (pexpt
+                           (if (zerop (third res))
+                               (first res)
+                               (ptimeschk (first res)
+                                          (pexpt (makprod (second res) nil)
+                                                 (third res))))
+                           (* (cdr a-term) (cdr b-term)))))))
+
+    (if formflag (pdis* ans) (pdis ans))))
 
 (defun result1 (p1 p2 var)
   (cond ((or (pcoefp p1) (pointergp var (car p1)))
@@ -88,7 +93,45 @@
 (defun presign (n p)
   (if (oddp n) (pminus p) p))
 
-;;computes resultant using subresultant p.r.s. TOMS Sept. 1978
+;; Computes resultant using subresultant PRS. See Brown, "The Subresultant PRS
+;; Algorithm" (TOMS Sept. 1978). This is Algorithm 1, as found on page 241.
+;;
+;; This routine will not work if the coefficients contain hidden copies of the
+;; main polynomial variable. For example, if P is x*sqrt(x^2-1) + 2 then, when
+;; encoded as a polynomial in x, it appears as x*c + 2 for some (opaque)
+;; c. While doing the PRS calculation, the SUBRESULT code will square c, causing
+;; extra x's to appear and making the degree of polynomials derived from P
+;; behave erratically. The code might error or, worse, return a wrong result.
+;;
+;; Write G[1] = P, G[2] = Q and write g[i] for the leading coefficient of
+;; G[i]. On the k'th iteration of the loop, we are computing G[k+2], which is
+;; given by the formula
+;;
+;;    G[k+2] = (-1)^(delta[k]+1) prem(G[k], G[k+1]) / (g[k] h[k]^delta[k])
+;;
+;; except we set the denominator to 1 when k=1. Here, h[2] = g[2]^delta[1] and,
+;; for i >= 3, satisfies the recurrence:
+;;
+;;    h[i] = g[i]^delta[i-1] h[i-1]^(1 - delta[i-1])
+;;
+;; Here, delta[i] = deg(G[i]) - deg(G[i+1]), which is non-negative.
+;;
+;; Dictionary between program variables and values computed by the algorithm:
+;;
+;;   - g is set to g[i-2]
+;;   - h is set to g[i-2]^d / "h^1-d"
+;;
+;;   Since d and h^1-d haven't yet been set on this iteration, they get their
+;;   previous values, which turn out to give:
+;;
+;;   - h is set to g[i-2]^delta[i-3] h[i-3]^[1-delta[i-3]] which, substituting
+;;     above, is h[i-2].
+;;
+;;   Continuing:
+;;
+;;   - degq is set to deg(G[i-1])
+;;   - d is set to delta[i-2]
+;;   - h^1-d is (confusingly!) set to h[i-2]^(delta[i-2] - 1).
 
 (defun subresult (p q)
   (loop for g = 1 then (p-lc p)

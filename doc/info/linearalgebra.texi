@@ -4,7 +4,7 @@
 @end menu
 
 @c -----------------------------------------------------------------------------
-@node Introduction to linearalgebra, Functions and Variables for linearalgebra, linearalgebra, linearalgebra
+@node Introduction to linearalgebra, Functions and Variables for linearalgebra, linearalgebra-pkg, linearalgebra-pkg
 @section Introduction to linearalgebra
 @c -----------------------------------------------------------------------------
 
@@ -125,7 +125,7 @@ Example:
 
 @c -----------------------------------------------------------------------------
 @need 800
-@node Functions and Variables for linearalgebra,  , Introduction to linearalgebra, linearalgebra
+@node Functions and Variables for linearalgebra,  , Introduction to linearalgebra, linearalgebra-pkg
 @section Functions and Variables for linearalgebra
 @c -----------------------------------------------------------------------------
 
@@ -205,57 +205,6 @@ If @var{M} is a matrix, return @code{span (v_1, ..., v_n)}, where the set
 @code{@{v_1, ..., v_n@}} is a basis for the column space of @var{M}.  The span 
 of the empty set is @code{@{0@}}.  Thus, when the column space has only
 one member, return @code{span ()}.
-
-@opencatbox
-@category{Package linearalgebra}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{copy}
-@deffn {Function} copy (@var{e})
-
-Return a copy of the Maxima expression @var{e}.  Although @var{e} can be any
-Maxima expression, the copy function is the most useful when @var{e} is either 
-a list or a matrix; consider:
-
-@c ===beg===
-@c m : [1,[2,3]]$
-@c mm : m$
-@c mm[2][1] : x$
-@c m;
-@c mm;
-@c ===end===
-@example 
-(%i1) m : [1,[2,3]]$
-(%i2) mm : m$
-(%i3) mm[2][1] : x$
-(%i4) m;
-(%o4)                      [1,[x,3]]
-(%i5) mm;
-(%o5)                      [1,[x,3]]
-@end example
-
-Let's try the same experiment, but this time let @var{mm} be a copy of @var{m}
-
-@c ===beg===
-@c m : [1,[2,3]]$
-@c mm : copy(m)$
-@c mm[2][1] : x$
-@c m;
-@c mm;
-@c ===end===
-@example
-(%i6) m : [1,[2,3]]$
-(%i7) mm : copy(m)$
-(%i8) mm[2][1] : x$
-(%i9) m;
-(%o9)                     [1,[2,3]]
-(%i10) mm;
-(%o10)                    [1,[x,3]]
-@end example
-
-This time, the assignment to @var{mm} does not change the value of @var{m}.
 
 @opencatbox
 @category{Package linearalgebra}
@@ -512,7 +461,7 @@ The first argument @var{M} should be a square matrix or a non-matrix.  When
 @var{M} can be a blocked Maxima matrix.  The matrix can be blocked to any
 (finite) depth.
 
-See also @code{zerofor}
+See also @mref{zerofor}
 
 @opencatbox
 @category{Package linearalgebra}
@@ -661,7 +610,7 @@ Return a list of the form @code{[@var{LU}, @var{perm}, @var{fld}]}, or
     the infinity norm condition number of @var{M}.  For all fields, the
     condition number might not be estimated; for such fields, @code{lu_factor}
     returns a two item list.  Both the lower and upper bounds can differ from
-    their true values by arbitrarily large factors.  (See also @code{mat_cond}.)
+    their true values by arbitrarily large factors.  (See also @mref{mat_cond}.)
    
   The argument @var{M} must be a square matrix.
 
@@ -719,7 +668,7 @@ the field needn't be Maxima expressions.  Members of the
 after computing the factorization, the matrix entries must be
 converted to Maxima expressions.
 
-See also  @code{get_lu_factors}.
+See also  @mref{get_lu_factors}.
 
 Examples:
 
@@ -822,7 +771,7 @@ a matrix and @var{p} evaluates to @code{true} for every matrix element.
 When @code{matrixp} is not given an optional argument, return @code{true} 
 if @code{e} is a matrix.  In all other cases, return @code{false}.
 
-See also @code{blockmatrixp}
+See also @mref{blockmatrixp}
 
 @opencatbox
 @category{Package linearalgebra} @category{Predicate functions}
@@ -879,7 +828,7 @@ unblocked matrix, but if each entry of @var{M} is a block matrix,
 
 If you use block matrices, most likely you'll want to set
 @code{matrix_element_mult} to @code{"."} and @code{matrix_element_transpose} to
-@code{'transpose}.  See also @code{mat_fullunblocker}.
+@code{'transpose}.  See also @mref{mat_fullunblocker}.
 
 Example:
 
@@ -1168,7 +1117,7 @@ non-matrix.  When @var{M} is a matrix, each entry of @var{M} can be a
 square matrix -- thus @var{M} can be a blocked Maxima matrix.  The
 matrix can be blocked to any (finite) depth.
 
-See also @code{identfor}
+See also @mref{identfor}
 
 @opencatbox
 @category{Package linearalgebra}

@@ -233,7 +233,7 @@
 (defun list-negp (l1)
   (dolist (i1 l1)
     (unless (zerop1 i1)
-      (return-from list-negp (eq -1 (signum1 i1))))))
+      (return-from list-negp (eql -1 (signum1 i1))))))
 
 (defun tlist-add (l1 l2) (mapcar #'clist-add l1 l2))
 
@@ -414,7 +414,7 @@
   (setq expr (totalspecdisrep expr))
   (let ((v (car (instanciate-variable-list (list var) expr '$series_coeffs 1))))
     (setq v ($ratdisrep v))
-    (labels ((mino (expr)			; find minumum power of v in expr (for mult)
+    (labels ((mino (expr)			; find minimum power of v in expr (for mult)
 	       (let ((op (and (listp expr)(caar expr))))
 		 (cond ((like expr v)   1)	; Trivial case: expr is V itself
 		       ((or ($atom expr)(freeof v expr)) 0)	; `constant' case

@@ -170,12 +170,12 @@ One extra decimal digit in actual representation for rounding purposes.")
 		    (cadr l) (caddr l)))
 	 (list '|0| '|.| '|0| '|b| '|0|))
 	(t ;; L IS ALWAYS POSITIVE FP NUMBER
-	 (let ((extradigs (floor (1+ (quotient (integer-length (caddr l)) #.(/ (log 10.0) (log 2.0))))))
-	       (*m 1)
-	       (*cancelled 0))
+	 (let* ((extradigs (floor (1+ (quotient (integer-length (caddr l)) #.(/ (log 10.0) (log 2.0))))))
+		    (fpprec (+ extradigs (decimalsin (- (caddar l) 2))))
+	        (*m 1)
+	        (*cancelled 0))
 	   (setq l
 		 (let ((*decfp t)
-		       (fpprec (+ extradigs (decimalsin (- (caddar l) 2))))
 		       (of (caddar l))
 		       (l (cdr l))
 		       (expon nil))
@@ -184,32 +184,22 @@ One extra decimal digit in actual representation for rounding purposes.")
 			       (fpquotient (intofp (car l)) (fpintexpt 2 (- expon) of))
 			       (fptimes* (intofp (car l)) (fpintexpt 2 expon of))))
 		   (incf fpprec (- extradigs))
-		   (list (fpround (car l)) (+ (- extradigs) *m (cadr l))))))
-	 (let ((*print-base* 10.)
-	       *print-radix*
-	       (l1 nil))
-	   (setq l1 (if (not $bftrunc)
-			(explodec (car l))
-			(do ((l (nreverse (explodec (car l))) (cdr l)))
-			    ((not (eq '|0| (car l))) (nreverse l)))))
-	   (nconc (ncons (car l1)) (ncons '|.|)
-		  (or (and (cdr l1)
-			   (cond ((or (zerop $fpprintprec)
-				      (not (< $fpprintprec $fpprec))
-				      (null (cddr l1)))
-				  (cdr l1))
-				 (t (setq l1 (cdr l1))
-				    (do ((i $fpprintprec (1- i)) (l2))
-					((or (< i 2) (null l1))
-					 (cond ((not $bftrunc) (nreverse l2))
-					       (t (do ((l3 l2 (cdr l3)))
-						      ((not (eq '|0| (car l3)))
-						       (nreverse l3))))))
-				      (setq l2 (cons (car l1) l2) l1 (cdr l1))))))
-		      (ncons '|0|))
-		  (ncons '|b|)
-		  (explodec (1- (cadr l))))))))
-
+		   (list (fpround (car l)) (+ (- extradigs) *m (cadr l)))))
+       (let ((*print-base* 10.)
+             *print-radix*
+             (l1 nil))
+         (setq l1 (let*
+                    ((effective-printprec (if (or (= $fpprintprec 0) (> $fpprintprec fpprec)) fpprec $fpprintprec))
+                     (integer-to-explode (round (car l) (expt 10 (- fpprec effective-printprec))))
+                     (exploded-integer (explodec integer-to-explode)))
+                    (if $bftrunc
+                      (do ((l (nreverse exploded-integer) (cdr l)))
+                        ((not (eq '|0| (car l))) (nreverse l)))
+                      exploded-integer)))
+         (nconc (ncons (car l1)) (ncons '|.|)
+                (or (cdr l1) (ncons '|0|))
+                (ncons '|b|)
+                (explodec (1- (cadr l)))))))))
 
 ;; NOTE: This is a modified version of FORMAT-EXP-AUX from CMUCL to
 ;; support printing of bfloats.
@@ -1103,7 +1093,7 @@ One extra decimal digit in actual representation for rounding purposes.")
   (prog (r s)
      (unless (signp ge (car x))
        (return (fpquotient (fpone) (fpexp (fpabs x)))))
-     (setq r (fpintpart x))
+     (setq r (fpintpart x :skip-exponent-check-p t))
      (return (cond ((< r 2)
 		    (fpexp1 x))
 		   (t
@@ -1737,7 +1727,7 @@ One extra decimal digit in actual representation for rounding purposes.")
   ;; '((BIGFLOAT ...) FOO BAR) instead of '(FOO BAR).
   ;; However FPROOT does return something like '(FOO BAR).
 
-  (if (eq (cadr a) 0)
+  (if (eql (cadr a) 0)
       '(0 0)
       (progn
 	(let* ((ofprec fpprec)
@@ -1823,6 +1813,7 @@ One extra decimal digit in actual representation for rounding purposes.")
 
 (defvar  *fpsincheck* nil)
 
+;; FL is a T for sin and NIL for cos.
 (defun fpsin (x fl)
   (prog (piby2 r sign res k *cancelled)
      (setq sign (cond (fl (signp g (car x)))
@@ -1840,7 +1831,7 @@ One extra decimal digit in actual representation for rounding purposes.")
 	   (prog (x)
 	    loop (setq x (cdr (bigfloatp xt)))
 	    (setq piby2 (fpquotient (fppi) (intofp 2)))
-	    (setq r (fpintpart (fpquotient x piby2)))
+	    (setq r (fpintpart (fpquotient x piby2) :skip-exponent-check-p t))
 	    (setq x (fpplus x (fptimes* (intofp (- r)) piby2)))
 	    (setq k *cancelled)
 	    (fpplus x (fpminus piby2))
@@ -1903,15 +1894,26 @@ One extra decimal digit in actual representation for rounding purposes.")
 ;; shift. The pair denotes the number MANTISSA * 2^(EXPONENT - FPPREC), of which
 ;; FPPREC bits are known.
 ;;
-;; If EXPONENT is large and positive then we might not have enough information
-;; to calculate the integer part. Specifically, we only have enough information
-;; if EXPONENT < FPPREC. If that isn't the case, we signal a Maxima error.
-(defun fpintpart (f)
-  (destructuring-bind (mantissa exponent) f
-    (if (< exponent fpprec)
-        (quotient mantissa (expt 2 (- fpprec exponent)))
-        (merror "~M doesn't have enough precision to compute its integer part"
-                `((bigfloat ,fpprec) ,mantissa ,exponent)))))
+;; If EXPONENT is large and positive then we might not have enough
+;; information to calculate the integer part. Specifically, we only
+;; have enough information if EXPONENT < FPPREC. If that isn't the
+;; case, we signal a Maxima error.  However, if SKIP-EXPONENT-CHECK-P
+;; is non-NIL, this check is skipped, and we compute the integer part
+;; as requested.
+;;
+;; For the bigfloat code here, skip-exponent-check-p should be true.
+;; For other uses (see commit 576c7508 and bug #2784), this should be
+;; nil, which is the default.
+(defun fpintpart (f &key skip-exponent-check-p)
+  (destructuring-bind (mantissa exponent)
+      f
+    (let ((m (- fpprec exponent)))
+	(if (plusp m)
+	    (quotient mantissa (expt 2 (- fpprec exponent)))
+	    (if (and (not skip-exponent-check-p) (< exponent fpprec))
+		(merror "~M doesn't have enough precision to compute its integer part"
+                `((bigfloat ,fpprec) ,mantissa ,exponent))
+		(* mantissa (expt 2 (- m))))))))
 
 (defun logbigfloat (a)
   (cond (($bfloatp (car a))

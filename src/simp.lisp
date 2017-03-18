@@ -109,12 +109,6 @@
 
 (defmvar derivsimp t "Hack in `simpderiv' for `rwg'")
 
-(defmvar $promote_float_to_bigfloat t
-  "This variable controls automatic bigfloat promotion. If it is true, then
-   floating point overflows are caught during simplification and the calculation
-   is continued using bigfloats. If it is false, the overflow is allowed to
-   propagate.")
-
 (defmvar $rootsepsilon #+gcl (float 1/10000000) #-gcl 1e-7)
 (defmvar $grindswitch nil)
 (defmvar $algepsilon 100000000)
@@ -512,7 +506,10 @@
 
 (defmfun freel (l var)
   (do ((l l (cdr l))) ((null l) t)
-    (cond ((not (free (car l) var)) (return nil)))))
+    (cond
+     ((atom l) (return (free l var)))	;; second element of a pair
+     ((not (free (car l) var)) (return nil)))))
+
 
 (defmfun freeargs (exp var)
   (cond ((alike1 exp var) nil)
@@ -540,14 +537,10 @@
 	       (t (cons (car x)
 			(mapcar #'(lambda (x) (simplifya x y)) (cdr x))))))
 	((eq (caar x) 'rat) (*red1 x))
-	((and (not dosimp) (member 'simp (cdar x) :test #'eq)) x)
+	;; Enforced resimplification: Reset dosimp and strip 'simp tags from x.
+	(dosimp (let ((dosimp nil)) (simplifya (unsimplify x) y)))
+	((member 'simp (cdar x) :test #'eq) x)
 	((eq (caar x) 'mrat) x)
-	((and (member (caar x) '(mplus mtimes mexpt) :test #'eq)
-	      (member (get (caar x) 'operators) '(simplus simpexpt simptimes) :test #'eq)
-	      (not (member 'array (cdar x) :test #'eq)))
-	 (cond ((eq (caar x) 'mplus) (simplus x 1 y))
-	       ((eq (caar x) 'mtimes) (simptimes x 1 y))
-	       (t (simpexpt x 1 y))))
 	((not (atom (caar x)))
 	 (cond ((or (eq (caaar x) 'lambda)
 		    (and (not (atom (caaar x))) (eq (caaaar x) 'lambda)))
@@ -658,6 +651,11 @@
 
 (defmfun resimplify (x) (let ((dosimp t)) (simplifya x nil)))
 
+(defun unsimplify (x)
+  (if (or (atom x) (specrepp x))
+      x
+      (cons (remove 'simp (car x) :count 1) (mapcar #'unsimplify (cdr x)))))
+
 (defun simpargs (x y)
   (if (or (eq (get (caar x) 'dimension) 'dimension-infix)
 	  (get (caar x) 'binary))
@@ -671,60 +669,6 @@
 					  (simpcheck u nil)))
 				  (cdr x)))))
 	  x))
-
-;; Try to evaluate FIRST-TRY. If there's a floating point overflow (or any old
-;; error if we're on a Lisp where they're harder to catch), evaluate
-;; ALTERNATIVE, which should try to do the same computation, but with bigfloats.
-;;
-;; The automatic bigfloat promotion is turned on iff $PROMOTE_FLOAT_TO_BIGFLOAT
-;; is true. If not, we are careful to raise a error here. This takes no work on
-;; platforms other than GCL and ECL but those two return a float infinity on
-;; overflow. Bleurgh.
-(defmacro bigfloat-alternative (first-try alternative)
-  #-(or gcl ecl)
-  `(if $promote_float_to_bigfloat
-       (handler-case ,first-try
-         (floating-point-overflow () ,alternative)
-         (type-error (e)
-           (if (member (type-error-expected-type e)
-                       '(double-float single-float))
-               ,alternative
-               (error e))))
-       ,first-try)
-
-  #+(or gcl ecl)
-  `(let ((result ,first-try))
-     (if (float-inf-p result)
-         (if $promote_float_to_bigfloat
-             ,alternative
-             (merror "Floating point overflow"))
-         result)))
-
-
-;; Try to evaluate (,cl-op ,arg1 ,arg2), but correctly handle floating point
-;; overflows. When one occurs, use bfloats to return a sensible answer.
-(defmacro cl-or-bfloat-binary-op (maxima-op cl-op arg1 arg2)
-  `(let ((a ,arg1) (b ,arg2))
-     (cond
-       ;; If one or more of the operands is a float, the result might produce a
-       ;; floating point overflow. In that case, catch it and switch to
-       ;; bigfloats. FLOATP works fine for real values, but we have to work a
-       ;; bit harder to catch the complex ones :-/
-       ((or (floatp a) (floatp b)
-            (and (complexp a)
-                 (or (typep a '(complex single-float))
-                     (typep a '(complex double-float))))
-            (and (complexp b)
-                 (or (typep b '(complex single-float))
-                     (typep b '(complex double-float)))))
-
-        (bigfloat-alternative (,cl-op a b)
-                              ($bfloat (list '(,maxima-op) a b))))
-
-       ;; Otherwise (assuming that the arguments were in fact numbers), we won't
-       ;; get any sort of floating point overflow and can just trust CL to do
-       ;; the right thing.
-       (t (,cl-op a b)))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; ADDK (X Y)                                                   27.09.2010/DK
@@ -766,8 +710,7 @@
 (defun addk (x y)
   (cond ((eql x 0) y)
 	((eql y 0) x)
-	((and (numberp x) (numberp y))
-         (cl-or-bfloat-binary-op mplus + x y))
+	((and (numberp x) (numberp y)) (+ x y))
 	((or ($bfloatp x) ($bfloatp y)) ($bfloat (list '(mplus) x y)))
 	(t (prog (g a b)
 	      (cond ((numberp x)
@@ -878,8 +821,7 @@
 (defun timesk (x y)     ; X and Y are assumed to be already reduced
   (cond ((equal x 1) y)
 	((equal y 1) x)
-	((and (numberp x) (numberp y))
-         (cl-or-bfloat-binary-op mtimes * x y))
+	((and (numberp x) (numberp y)) (* x y))
 	((or ($bfloatp x) ($bfloatp y)) ($bfloat (list '(mtimes) x y)))
 	((floatp x) (* x (fpcofrat y)))
 	((floatp y) (* y (fpcofrat x)))
@@ -921,7 +863,7 @@
 ;;;
 ;;;   FPCOFRAT1 computes the quotient of NU/D.
 ;;;
-;;; Exeptional situations:
+;;; Exceptional situations:
 ;;;   A Lisp error is generated, if the rational number does not fit into a
 ;;;   float number.
 ;;;-----------------------------------------------------------------------------
@@ -983,37 +925,37 @@
 ;;;   result - a simplified Maxima number
 ;;;
 ;;; Description:
-;;;   Computes A^B, where A is a float or an integer number and B is an integer
-;;;   number. The result is an integer, float, bigfloat or Maxima rational
-;;;   number.
+;;;   Computes A^B, where A is a float or an integer number and B is an 
+;;;   integer number. The result is an integer, float, or Maxima
+;;;   rational number.
 ;;;
 ;;; Examples:
 ;;;   (exptb 3 2)   -> 9
 ;;;   (exptb 3.0 2) -> 9.0
 ;;;   (exptb 3 -2)  -> ((RAT SiMP) 1 9)
 ;;;   (let (($float t)) (exptb 3 -2)) -> 0.1111111111111111
-;;;   (exptb 2.0 1000) -> 1.995063116880758b3010
 ;;;
 ;;; Affected by:
-;;;   The option variables $FLOAT and $PROMOTE_FLOAT_TO_BIGFLOAT. The latter
-;;;   variable controls the automatic promotion in the last example. If
-;;;   disabled, the example should throw a merror.
+;;;   The option variable $FLOAT.
 ;;;
 ;;; Notes:
 ;;;   EXPTB calls the Lisp functions EXP or EXPT to compute the result.
 ;;;-----------------------------------------------------------------------------
 
 (defun exptb (a b)
-  (bigfloat-alternative
-   (cond ((equal a %e-val)
-          ;; Make B a float so we'll get double-precision result.
-          (exp (float b)))
-         ((or (floatp a) (not (minusp b)))
-          (expt a b))
-         (t
-          (setq b (expt a (- b)))
-          (*red 1 b)))
-   ($bfloat `((mexpt) ,a ,b))))
+  (let ((result
+	 (cond ((equal a %e-val)
+		;; Make B a float so we'll get double-precision result.
+		(exp (float b)))
+	       ((or (floatp a) (not (minusp b)))
+		(expt a b))
+	       (t
+		(setq b (expt a (- b)))
+		(*red 1 b)))))
+    (if (float-inf-p result)	;; needed for gcl - no trap of overflow
+	(signal 'floating-point-overflow)
+      result)))
+    
 
 ;;;-----------------------------------------------------------------------------
 ;;; SIMPLUS (X W Z)                                                27.09.2010/DK
@@ -1510,7 +1452,7 @@
         ((and (member $logexpand '($all $super))
               (consp y)
               (member (caar y) '(%product $product)))
-         (let ((new-op (if (eq (getcharn (caar y) 1) #\%) '%sum '$sum)))
+         (let ((new-op (if (eql (getcharn (caar y) 1) #\%) '%sum '$sum)))
            (simplifya `((,new-op) ((%log) ,(cadr y)) ,@(cddr y)) t)))
         ((and $lognegint
               (maxima-integerp y)
@@ -1552,7 +1494,13 @@
   (cond ((and (integerp (cadr x)) (integerp (caddr x)) (not (zerop (caddr x))))
 	 (*red (cadr x) (caddr x)))
 	((and (numberp (cadr x)) (numberp (caddr x)) (not (zerop (caddr x))))
-         (cl-or-bfloat-binary-op mquotient / (cadr x) (caddr x)))
+	 (/ (cadr x) (caddr x)))
+	((and (floatp (cadr x)) (floatp (caddr x)) #-ieee-floating-point (not (zerop (caddr x))))
+	 (/ (cadr x) (caddr x)))
+	((and ($bfloatp (cadr x)) ($bfloatp (caddr x)) (not (equal bigfloatzero (caddr x))))
+	 ;; Call BIGFLOATP to ensure that arguments have same precision.
+	 ;; Otherwise FPQUOTIENT could return a spurious value.
+	 (bcons (fpquotient (cdr (bigfloatp (cadr x))) (cdr (bigfloatp (caddr x))))))
 	(t (setq y (simplifya (cadr x) z))
 	   (setq x (simplifya (list '(mexpt) (caddr x) -1) z))
 	   (if (equal y 1) x (simplifya (list '(mtimes) y x) t)))))
@@ -1749,12 +1697,12 @@
 			      (or (not (eq (caar w) 'mlist)) $listarith)
 			      (not (eq *inv* '$detout)))
 			 (stimex matrixflag w))
-			(t (setq res (tms w 1 res)) matrixflag)))
+			(t (setq res (tms (copy-tree w) 1 (copy-tree res))) matrixflag)))
 	    (go start))
 	   ((and (eq (caar w) '%sum) $sumexpand)
 	    (setq sumflag (sumtimes sumflag w))
 	    (go start)))
-     (setq res (tms w 1 res))
+     (setq res (tms (copy-tree w) 1 (copy-tree res)))
      (go start)
   end
      (cond ((mtimesp res) (setq res (testt res))))
@@ -2136,7 +2084,7 @@
 	 (exptb (float r1) (floor r2)))
 	((or $numer (and (floatp r2) (or (plusp (num1 r1)) $numer_pbranch)))
 	 (let (y  #+kcl(r1 r1) #+kcl(r2 r2))
-	   (cond ((mnegp (setq r1 (addk 0.0 r1)))
+	   (cond ((minusp (setq r1 (addk 0.0 r1)))
 		  (cond ((or $numer_pbranch (eq $domain '$complex))
 		         ;; for R1<0:
 		         ;; R1^R2 = (-R1)^R2*cos(pi*R2) + i*(-R1)^R2*sin(pi*R2)
@@ -2152,14 +2100,7 @@
 	         ((and (equal (setq y (* 2.0 r2)) (float (floor y)))
 	               (not (equal r1 %e-val)))
 		  (exptb (sqrt r1) (floor y)))
-                 ;; If bfloat conversion turned r1 or r2 into a bigfloat, we
-                 ;; can't call cl:exp or cl:log here, but we *can* safely
-                 ;; recurse (which will usually give a noun form that then gets
-                 ;; simplified)
-                 ((or ($bfloatp r1) ($bfloatp r2))
-                  (exptrl r1 r2))
-		 (t
-                  (exp (* r2 (log r1)))))))
+		 (t (exp (* r2 (log r1)))))))
 	((floatp r2) (list '(mexpt simp) r1 r2))
 	((integerp r2)
 	 (cond ((minusp r2)
@@ -2302,7 +2243,8 @@
             (go cont))
            ((atom gr) (go atgr))
            ((and (eq (caar gr) 'mabs)
-                 (evnump pot)
+                 (or (evnump pot)
+                     (mevenp pot))
                  (or (and (eq $domain '$real) (not (decl-complexp (cadr gr))))
                      (and (eq $domain '$complex) (decl-realp (cadr gr)))))
             (return (power (cadr gr) pot)))
@@ -2436,6 +2378,9 @@
             ;; Numerically evaluate if the power is a flonum.
             (when $%emode
               (let ((val (flonum-eval '%exp pot)))
+		(if (float-inf-p val)
+		    ;; needed for gcl - no trap of overflow
+		    (signal 'floating-point-overflow))
                 (when val
                   (return val)))
               ;; Numerically evaluate if the power is a (complex)
@@ -2931,7 +2876,7 @@
 	      ((= i 1) '$%i)
 	      ((= i 2) -1)
 	      (t (list '(mtimes simp) -1 '$%i))))
-      (power -1 (mul2 pot '((rat simp) 1 2)))))
+    (power -1 (mul2 pot '((rat simp) 1 2)))))
 
 (defun mnlogp (pot)
   (cond ((eq (caar pot) '%log) (simplifya (cadr pot) nil))
@@ -3160,9 +3105,11 @@
 	 (let ((u (car (last e))))
 	   (cond ((eq u a) (not (ordhack e))) (t (great u a)))))
 	((eq (caar e) '%del))
-	((prog2 (setq e (car (margs e)))
+	((prog2 (setq e (car (margs e)))	; use first arg of e
 	     (and (not (atom e)) (member (caar e) '(mplus mtimes) :test #'eq)))
-	 (let ((u (car (last e)))) (or (eq u a) (great u a))))
+	 (let ((u (car (last e))))		; and compare using 
+	   (cond ((eq u a) (not (ordhack e)))	; same procedure as above
+		 (t (great u a)))))
 	((eq e a))
 	(t (great e a))))
 
@@ -3545,9 +3492,9 @@
        (setq p1b (pexpon*// p1b egcd nil)
 	     p2b (pexpon*// p2b egcd nil)))
      b1   (cond ((< (pdegree p1b var) (pdegree p2b var))
-		 (exch p1b p2b)
-		 (exch coef1r coef2r)
-		 (exch coef1s coef2s)))
+		 (rotatef p1b p2b)
+		 (rotatef coef1r coef2r)
+		 (rotatef coef1s coef2s)))
      (when (zerop (pdegree p2b var))
        (unless (zerop (pdegree coef2r var))
 	 (setq coef2r (pexpon*// coef2r egcd t)))

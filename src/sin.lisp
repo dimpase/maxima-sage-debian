@@ -105,6 +105,17 @@
   (let ((ex (simplify ($factor x))))
     (if (not (alike1 ex x)) ex)))
 
+;; Like FIND-IF, but calls FUNC on elements of SEQ in turn until one returns
+;; non-NIL. At that point, return the result (rather than the input, which is
+;; what you'd get from FIND-IF)
+(defun map-find (func seq)
+  (catch 'map-find
+    (map nil
+         (lambda (x)
+           (let ((result (funcall func x)))
+             (when result (throw 'map-find result))))
+         seq)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Stage II of the Integrator
@@ -115,15 +126,11 @@
 (defun intform (expres &aux w)
   (cond ((freevar expres) nil)
         ((atom expres) nil)
-        
+
         ;; Map the function intform over the arguments of a sum or a product
 	((member (caar expres) '(mplus mtimes) :test #'eq)
-	 (let ((l (cdr expres)))
-	   (prog (y)
-	    loop (cond ((setq y (intform (car l))) (return y))
-		       ((not (setq l (cdr l))) (return nil))
-	           (t (go loop))))))
-        
+         (map-find #'intform (cdr expres)))
+
         ((or (eq (caar expres) '%log)
              (arcp (caar expres)))
          (cond
@@ -204,9 +211,6 @@
         
 	((and (eq (caar expres) '%derivative)
 	      (eq (caar exp) (caar expres))
-	      (or (atom (cadr exp))
-		  (not (eq (caaadr exp) 'mqapply))
-		  (merror (intl:gettext "integrate: invalid argument: ~M") exp))
 	      (checkderiv exp)))
         
         ;; Stop intform if we have not a power function.
@@ -237,10 +241,10 @@
         ;; Method 3: Substitution for a rational root
 	((and (setq w (m2-ratrootform (cadr expres))) ; e*(a*x+b) / (c*x+d)
 	      (denomfind (caddr expres))) ; expon is ratnum
-	 (cond ((setq w (prog2
-			  (setq *powerl* t)
-			  (ratroot exp var (cadr expres) w))) w)
-	   (t (inte exp var))))
+         (or (progn
+               (setq *powerl* t)
+               (ratroot exp var (cadr expres) w))
+             (inte exp var)))
         
         ;; Method 4: Binomial - Chebyschev
 	((not (integerp1 (caddr expres))) ; 2*exponent not integer
@@ -658,28 +662,71 @@
 
 	(t nil))))
 
-;; Integrals of elementary special functions
-;; This may not be the best place for this definition, but it is close 
+;; Define the antiderivatives of some elementary special functions.
+;; This may not be the best place for this definition, but it is close
 ;; to the original code.
+;; Antiderivatives that depend on the logabs flag are defined further below.
 (defprop %log  ((x) ((mplus) ((mtimes) x ((%log) x)) ((mtimes) -1 x))) integral)
 (defprop %sin  ((x) ((mtimes) -1 ((%cos) x))) integral)
 (defprop %cos  ((x) ((%sin) x)) integral)
-(defprop %tan  ((x) ((%log) ((%sec) x))) integral)
-(defprop %csc  ((x) ((mtimes) -1 ((%log) ((mplus) ((%csc) x) ((%cot) x))))) integral)
-(defprop %sec  ((x) ((%log) ((mplus) ((%sec) x) ((%tan) x)))) integral)
-(defprop %cot  ((x) ((%log) ((%sin) x))) integral)
-(defprop %sinh ((x) ((%cosh) x))  integral)
+(defprop %sinh ((x) ((%cosh) x)) integral)
 (defprop %cosh ((x) ((%sinh) x)) integral)
+;; No need to take logabs into account for tanh(x), because cosh(x) is positive.
 (defprop %tanh ((x) ((%log) ((%cosh) x))) integral)
-(defprop %coth ((x) ((%log) ((%sinh) x))) integral)
-(defprop %sech ((x) ((%atan) ((%sinh)x))) integral)
-(defprop %csch ((x) ((%log) ((%tanh) ((mtimes) ((rat simp) 1 2) x)))) integral)
+(defprop %sech ((x) ((%atan) ((%sinh) x))) integral)
+(defprop %asin ((x) ((mplus) ((mexpt) ((mplus) 1 ((mtimes) -1 ((mexpt) x 2))) ((rat) 1 2)) ((mtimes) x ((%asin) x)))) integral)
+(defprop %acos ((x) ((mplus) ((mtimes) -1 ((mexpt) ((mplus) 1 ((mtimes) -1 ((mexpt) x 2))) ((rat) 1 2))) ((mtimes) x ((%acos) x)))) integral)
+(defprop %atan ((x) ((mplus) ((mtimes) x ((%atan) x)) ((mtimes) ((rat) -1 2) ((%log) ((mplus) 1 ((mexpt) x 2)))))) integral)
+(defprop %acsc ((x) ((mplus) ((mtimes) ((rat) -1 2) ((%log) ((mplus) 1 ((mtimes) -1 ((mexpt) ((mplus) 1 ((mtimes) -1 ((mexpt) x -2))) ((rat) 1 2)))))) ((mtimes) ((rat) 1 2) ((%log) ((mplus) 1 ((mexpt) ((mplus) 1 ((mtimes) -1 ((mexpt) x -2))) ((rat) 1 2))))) ((mtimes) x ((%acsc) x)))) integral)
+(defprop %asec ((x) ((mplus) ((mtimes) ((rat) 1 2) ((%log) ((mplus) 1 ((mtimes) -1 ((mexpt) ((mplus) 1 ((mtimes) -1 ((mexpt) x -2))) ((rat) 1 2)))))) ((mtimes) ((rat) -1 2) ((%log) ((mplus) 1 ((mexpt) ((mplus) 1 ((mtimes) -1 ((mexpt) x -2))) ((rat) 1 2))))) ((mtimes) x ((%asec) x)))) integral)
+(defprop %acot ((x) ((mplus) ((mtimes) x ((%acot) x)) ((mtimes) ((rat) 1 2) ((%log) ((mplus) 1 ((mexpt) x 2)))))) integral)
+(defprop %asinh ((x) ((mplus) ((mtimes) -1 ((mexpt) ((mplus) 1 ((mexpt) x 2)) ((rat) 1 2))) ((mtimes) x ((%asinh) x)))) integral)
+(defprop %acosh ((x) ((mplus) ((mtimes) -1 ((mexpt) ((mplus) -1 ((mexpt) x 2)) ((rat) 1 2))) ((mtimes) x ((%acosh) x)))) integral)
+(defprop %atanh ((x) ((mplus) ((mtimes) x ((%atanh) x)) ((mtimes) ((rat) 1 2) ((%log) ((mplus) 1 ((mtimes) -1 ((mexpt) x 2))))))) integral)
+(defprop %acsch ((x) ((mplus) ((mtimes) ((rat) -1 2) ((%log) ((mplus) -1 ((mexpt) ((mplus) 1 ((mexpt) x -2)) ((rat) 1 2))))) ((mtimes) ((rat) 1 2) ((%log) ((mplus) 1 ((mexpt) ((mplus) 1 ((mexpt) x -2)) ((rat) 1 2))))) ((mtimes) x ((%acsch) x)))) integral)
+(defprop %asech ((x) ((mplus) ((mtimes) -1 ((%atan) ((mexpt) ((mplus) -1 ((mexpt) x -2)) ((rat) 1 2)))) ((mtimes) x ((%asech) x)))) integral)
+(defprop %acoth ((x) ((mplus) ((mtimes) x ((%acoth) x)) ((mtimes) ((rat) 1 2) ((%log) ((mplus) 1 ((mtimes) -1 ((mexpt) x 2))))))) integral)
 
-;; integrate(x^n,x) = if n # -1 then x^(n+1)/(n+1) else logmabs(x).
+;; Define a little helper function to be used in antiderivatives.
+;; Depending on the logabs flag, it either returns log(x) or log(abs(x)).
+(defun log-or-logabs (x)
+  (take '(%log) (if $logabs (take '(mabs) x) x)))
+
+;; Define the antiderivative of tan(x), taking logabs into account.
+(defun integrate-tan (x)
+  (log-or-logabs (take '(%sec) x)))
+(putprop '%tan `((x) ,#'integrate-tan) 'integral)
+
+;; ... the same for csc(x) ...
+(defun integrate-csc (x)
+  (mul -1 (log-or-logabs (add (take '(%csc) x) (take '(%cot) x)))))
+(putprop '%csc `((x) ,#'integrate-csc) 'integral)
+
+;; ... the same for sec(x) ...
+(defun integrate-sec (x)
+  (log-or-logabs (add (take '(%sec) x) (take '(%tan) x))))
+(putprop '%sec `((x) ,#'integrate-sec) 'integral)
+
+;; ... the same for cot(x) ...
+(defun integrate-cot (x)
+  (log-or-logabs (take '(%sin) x)))
+(putprop '%cot `((x) ,#'integrate-cot) 'integral)
+
+;; ... the same for coth(x) ...
+(defun integrate-coth (x)
+  (log-or-logabs (take '(%sinh) x)))
+(putprop '%coth `((x) ,#'integrate-coth) 'integral)
+
+;; ... the same for csch(x) ...
+(defun integrate-csch (x)
+  (log-or-logabs (take '(%tanh) (mul '((rat simp) 1 2) x))))
+(putprop '%csch `((x) ,#'integrate-csch) 'integral)
+
+;; integrate(x^n,x) = if n # -1 then x^(n+1)/(n+1) else log-or-logabs(x).
 (defun integrate-mexpt-1 (x n)
   (let ((n-is-minus-one ($askequal n -1)))
     (cond ((eq '$yes n-is-minus-one)
-	   (take '(%log) (if $logabs (take '(mabs) x) x)))
+	   (log-or-logabs x))
 	  (t
 	   (setq n (add n 1))
 	   (div (take '(mexpt) x n) n)))))
@@ -687,7 +734,7 @@
 ;; integrate(a^x,x) = a^x/log(a).
 (defun integrate-mexpt-2 (a x)
   (div (take '(mexpt) a x) (take '(%log) a)))
-  
+
 (putprop 'mexpt `((x n) ,#'integrate-mexpt-1 ,#'integrate-mexpt-2) 'integral)
 
 (defun rat10 (ex)
@@ -700,16 +747,7 @@
 	     (and (rat10 (cadr ex)) (rat10 (caddr ex)))))
 	((member (caar ex) '(mplus mtimes) :test #'eq)
 	 (do ((u (cdr ex) (cdr u))) ((null u) t)
-	     (if (not (rat10 (car u))) (return nil))))
-	(t
-	 (let ((examine (margs ex)))
-; Commenting out the if-clause, go in all cases through the list of arguments.
-;	   (if (atom (first examine))
-	       (do* ((element examine (rest element))
-		     (result (rat10 (first examine))
-			     (and result (rat10 (first element)))))
-		   ((or (null result) (null element)) result))))))
-;	     (rat10 (first examine)))))))
+	     (if (not (rat10 (car u))) (return nil))))))
 
 (defun integrate5 (ex var)
   (if (rat8 ex)
@@ -1641,6 +1679,9 @@
             (isinop exp var))
        (list '(%integrate) exp var))
 
+      ((zerop1 exp)	;; special case because 0 will not pass sum-of-intsp test
+       0)
+      
       ((let ((ans (simplify
                    (let ($opsubst varlist genvar stack)
 			 (integrator exp var)))))
@@ -1656,7 +1697,7 @@
 ;;
 ;; The logic, as I understand it (Rupert 01/2014):
 ;;
-;;   (1) If I integrate f(x) wrt x and get an atom other than x, either
+;;   (1) If I integrate f(x) wrt x and get an atom other than x or 0, either
 ;;       something's gone horribly wrong, or this is part of a larger
 ;;       expression. In the latter case, we can return T here because hopefully
 ;;       something else interesting will make the top-level return NIL.
@@ -1677,10 +1718,17 @@
 ;;
 ;;   (5) If the result is free of VAR, we're in a similar position to (1).
 ;;
-;;   (6) Otherwise something interested (and hopefully useful) has
+;;   (6) Otherwise something interesting (and hopefully useful) has
 ;;       happened. Return NIL to tell SININT to report it.
 (defun sum-of-intsp (ans)
-  (cond ((atom ans) (not (eq ans var)))
+  (cond ((atom ans)
+	 ;; Result of integration should never be a constant other than zero.
+	 ;; If the result of integration is zero, it is either because:
+	 ;; 1) a subroutine inside integration failed and returned nil,
+	 ;;    and (mul 0 nil) yielded 0, meaning that the result is wrong, or
+	 ;; 2) the original integrand was actually zero - this is handled
+	 ;;    with a separate special case in sinint
+	 (not (eq ans var)))
 	((mplusp ans) (every #'sum-of-intsp (cdr ans)))
 	((eq (caar ans) '%integrate) t)
 	((mtimesp ans)
@@ -1802,29 +1850,30 @@
 		   (find-first-trigarg exp))
 		 (cdr y)))))
 
+;; return constant factor that makes elements of alist match elements of blist
+;; or nil if no match found
+;; (we could replace this using rat package to divide alist and blist)
 (defun matchsum (alist blist)
   (prog (r s *c* *d*)
-     (setq s (m2 (car alist)
+     (setq s (m2 (car alist)	;; find coeff for first term of alist
 		 '((mtimes)
 		   ((coefftt) (a freevar))
 		   ((coefftt) (c true)))))
      (setq *c* (cdr (assoc 'c s :test #'eq)))
-     (cond ((not (setq r
-		       (m2 (cons '(mplus) blist)
-			   (list '(mplus)
-				 (cons '(mtimes)
-				       (cons '((coefftt) (b free1))
-					     (cond ((mtimesp *c*)
-						    (cdr *c*))
-						   (t (list *c*)))))
-				 '(d true)))))
+     (cond ((not (setq r	;; find coeff for first term of blist
+		       (m2 (car blist)
+                           (cons '(mtimes)
+                                 (cons '((coefftt) (b free1))
+                                       (cond ((mtimesp *c*)
+                                              (cdr *c*))
+                                             (t (list *c*))))))))
 	    (return nil)))
      (setq *d* (simplify (list '(mtimes)
 			     (subliss s 'a)
 			     (list '(mexpt)
 				   (subliss r 'b)
 				   -1))))
-     (cond ((m2 (cons '(mplus) alist)
+     (cond ((m2 (cons '(mplus) alist)	;; check that all terms match
 		(timesloop *d* blist))
 	    (return *d*))
 	   (t (return nil)))))
@@ -2318,15 +2367,19 @@
        (format t "~&Type 1a: (a^(c*(z^r)^p+d)^v : w = ~A~%" w))
 
      (mul -1
-          const
-          (inv (mul p r (power a (mul c v (power (power var r) p)))))
-          var
-          (power (power a (add d (mul c (power (power var r) p)))) v)
-          (take '(%gamma_incomplete)
-                (inv (mul p r))
-                (mul -1 c v (power (power var r) p) (take '(%log) a)))
-          (power (mul -1 c v (power (power var r) p) (take '(%log) a))
-                 (div -1 (mul p r)))))
+	  const
+	  ;; 1/(p*r*(a^(c*v*(var^r)^p)))
+	  (inv (mul p r (power a (mul c v (power (power var r) p)))))
+	  var
+	  ;; (a^(d+c*(var^r)^p))^v
+	  (power (power a (add d (mul c (power (power var r) p)))) v)
+	  ;; gamma_incomplete(1/(p*r), -c*v*(var^r)^p*log(a))
+	  (take '(%gamma_incomplete)
+		(inv (mul p r))
+		(mul -1 c v (power (power var r) p) (take '(%log) a)))
+	  ;; (-c*v*(var^r)^p*log(a))^(-1/(p*r))
+	  (power (mul -1 c v (power (power var r) p) (take '(%log) a))
+		 (div -1 (mul p r)))))
 
     ((m2-exp-type-2 (facsum-exponent expr))
      (a b d v r)
@@ -2405,7 +2458,7 @@
                  (div (power (mul -1 b ($log d)) (div 1 2)) var)))))))))
 
     ((and (m2-exp-type-4-1 expr)
-	  ($evenp (cdras 'n w))   ; only for n an even integer
+	  (poseven (cdras 'n w))  ; only for n a positive, even integer
 	  (symbolp (cdras 'a w))) ; a has to be a symbol
      (a b c d n)
      (let (($trigsign nil)) ; Do not simplify erfc(-x) !
