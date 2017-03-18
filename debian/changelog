@@ -1,7 +1,8 @@
-maxima-sage (5.39.0-1) UNRELEASED; urgency=medium
+maxima-sage (5.39.0+ds-1) UNRELEASED; urgency=medium
 
   * New upstream version.
   * Remove stdin-illegal-seek.patch (applied upstream).
+  * Repack source to get rid of dos line endings conflicting with git.
 
  -- Tobias Hansen <thansen@debian.org>  Sat, 18 Mar 2017 01:07:17 +0000
 
