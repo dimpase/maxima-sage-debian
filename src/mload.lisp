@@ -110,7 +110,7 @@
     (list '(mlist) "l" "lsp" "lisp"))
 
 (defmvar $file_type_maxima
-    (list '(mlist) "mac" "mc" "demo" "dem" "dm1" "dm2" "dm3" "dmt"))
+    (list '(mlist) "mac" "mc" "demo" "dem" "dm1" "dm2" "dm3" "dmt" "wxm"))
 
 (defun $file_type (fil)
   (let ((typ ($pathname_type fil)))
@@ -250,6 +250,7 @@
 	      (or (approx-alike (mop f) (mop g)) 
 		  (and (symbolp (mop f)) (symbolp (mop g))
 		       (approx-alike ($nounify (mop f)) ($nounify (mop g)))))
+	      (eq ($subvarp f) ($subvarp g))
 	      (approx-alike-list (margs f) (margs g))))
 	
 	(t nil)))
@@ -274,7 +275,7 @@
 
   (let ((result) (next-result) (next) (error-log) (all-differences nil) ($ratprint nil) (strm)
 	(*mread-prompt* "") (*read-base* 10.)
-	(expr) (num-problems 0) (tmp-output) (save-output) (i 0)
+	(expr) (num-problems 0) (problem-lineinfo) (problem-lineno) (tmp-output) (save-output) (i 0)
 	(start-run-time 0) (end-run-time 0)
 	(start-real-time 0) (end-real-time 0)
 	(test-start-run-time 0) (test-end-run-time 0)
@@ -299,6 +300,9 @@
 	  (setq start-run-time (get-internal-run-time))
 	  (while (not (eq 'eof (setq expr (mread strm 'eof))))
 	    (incf num-problems)
+        (setq problem-lineinfo (second (first expr)))
+        (setq problem-lineno (if (and (consp problem-lineinfo) (integerp (first problem-lineinfo)))
+                               (1+ (first problem-lineinfo))))
 	    (incf i)
 	    (setf tmp-output (make-string-output-stream))
 	    (setf save-output *standard-output*)
@@ -324,7 +328,8 @@
 		   (pass (or correct expected-error)))
 	      (when (or show-all (not pass) (and correct expected-error)
 			(and expected-error show-expected))
-		(format out (intl:gettext "~%********************** Problem ~A ***************") i)
+		(format out (intl:gettext "~%********************** Problem ~A~A***************")
+                    i (if problem-lineno (format nil " (line ~S) " problem-lineno) " "))
 		(format out (intl:gettext "~%Input:~%"))
 		(displa (third expr))
 		(format out (intl:gettext "~%~%Result:~%"))
@@ -334,7 +339,7 @@
 		  (format out (intl:gettext "~%Time:  ~,3F sec (~,3F elapsed)")
 			  (float (/ (- test-end-run-time test-start-run-time)
 				    internal-time-units-per-second))
-			  (float (/ (- test-end-run-time test-start-run-time)
+			  (float (/ (- test-end-real-time test-start-real-time)
 				    internal-time-units-per-second)))))
 	      (cond ((and correct expected-error)
 		     (format t (intl:gettext "~%... Which was correct, but was expected to be wrong due to a known bug in~% Maxima.~%")))
@@ -349,7 +354,8 @@
 		       (push i all-differences)
 		       (displa next-result)
 		       (cond ((and *collect-errors* error-log)
-			      (format error-log (intl:gettext "/* Problem ~A */~%") i)
+			      (format error-log (intl:gettext "/* Problem ~A~A*/~%")
+                                    i (if problem-lineno (format nil " (line ~S) " problem-lineno) " "))
 			      (mgrind (third expr) error-log)
 			      (list-variable-bindings (third expr) error-log)
 			      (format error-log ";~%")
@@ -402,20 +408,31 @@
 ;; name = foo or foo.type or dir/foo.type or dir/foo 
 ;; the empty parts are filled successively from defaults in templates in
 ;; the path.   A template may use multiple {a,b,c} constructions to indicate
-;; multiple possiblities.  eg foo.l{i,}sp or foo.{dem,dm1,dm2}
+;; multiple possibilities.  eg foo.l{i,}sp or foo.{dem,dm1,dm2}
 (defun $file_search (name &optional paths)
   (if (and (symbolp name)
 	   (member (char (symbol-name name) 0) '(#\$)))
       (setq name (subseq (print-invert-case name) 1)))
   (if (symbolp name)  (setf name (string name)))
-  (if (probe-file name) (return-from $file_search name))
+  (if (file-exists-p name) (return-from $file_search name))
   (or paths (setq paths ($append $file_search_lisp  $file_search_maxima
 				 $file_search_demo)))
   (atomchk paths '$file_search t)
   (new-file-search (string name) (cdr paths)))
 
+;; Returns T if NAME exists and it does not appear to be a directory.
+;; Note that Clisp throws an error from PROBE-FILE if NAME exists
+;; and is a directory; hence the use of IGNORE-ERRORS.
+
+(defun file-exists-p (name)
+  (let ((foo (ignore-errors (probe-file name))))
+    (if foo (not (apparently-a-directory-p foo)))))
+
+(defun apparently-a-directory-p (path)
+  (eq (pathname-name path) nil))
+
 (defun new-file-search (name template)
-  (cond ((probe-file name))
+  (cond ((file-exists-p name))
 	((atom template)
 	 (let ((lis (loop for w in (split-string template "{}")
 			  when (null (position #\, w))
@@ -432,7 +449,7 @@
 (defun new-file-search1 (name begin lis)
   (cond ((null lis)
 	 (let ((file (namestring ($filename_merge begin name))))
-	   (if (probe-file file) file nil)))
+	   (if (file-exists-p file) file nil)))
 	((atom (car lis))
 	 (new-file-search1 name
 			   (if begin
@@ -478,8 +495,13 @@
     (namestring file)))
 
   
-  
+;; The default set of tests for the test suite.  This is initialized
+;; by run_testsuite by loading tests/testsuite.lisp.
 (defmvar $testsuite_files nil)
+
+;; The set of tests for the functions in the share directory.  This is
+;; initialized by run_testsuite by loading share/share_testsuite.lisp.
+(defmvar $share_testsuite_files nil)
 
 (defvar *maxima-testsdir*)
 
@@ -516,10 +538,11 @@
 		  (t
 		   (cdr $testsuite_files))))))
 
-(defun run-testsuite (&key display_known_bugs display_all tests time)
+(defun run-testsuite (&key display_known_bugs display_all tests time share_tests debug)
   (declare (special $file_search_tests))
   (let ((test-file)
-	(expected-failures))
+	(expected-failures)
+	(test-file-path))
     ;; Allow only T and NIL for display_known_bugs and display_all
     (unless (member display_known_bugs '(t nil))
       (merror (intl:gettext "run_testsuite: display_known_bugs must be true or false; found: ~M") display_known_bugs))
@@ -527,79 +550,125 @@
       (merror (intl:gettext "run_testsuite: display_all must be true or false; found: ~M") display_all))
     (unless (member time '(t nil $all))
       (merror (intl:gettext "run_testsuite: time must be true, false, or all; found: ~M") time))
+
+    (unless (member share_tests '(t nil $only))
+      (merror (intl:gettext "run_testsuite: share_tests must be true, false or only: found ~M") share_tests))
     
     (setq *collect-errors* nil)
     (unless $testsuite_files
-      (let ((*read-base* 10.)) (load (concatenate 'string *maxima-testsdir* "/" "testsuite.lisp"))))
-    (let ((error-break-file)
-	  (testresult)
-	  (tests-to-run (intersect-tests (cond ((consp tests) tests)
-					       (tests (list '(mlist) tests)))))
-	  (test-count 0)
-	  (total-count 0)
-	  (error-count 0))
-      (flet
-	  ((testsuite ()
-	     (loop with errs = 'nil
-		   for testentry in tests-to-run
-		   do (if (atom testentry)
-			  (progn
-			    (setf test-file testentry)
-			    (setf expected-failures nil))
-			  (progn
-			    (setf test-file (second testentry))
-			    (setf expected-failures (cddr testentry))))
-		      (format t
-			      (intl:gettext "Running tests in ~a: ")
-			      (if (symbolp test-file)
-				  (subseq (print-invert-case test-file) 1)
-				  test-file))
-		      (or
-			(errset
-			  (progn
-			    (multiple-value-setq (testresult test-count)
-			      (test-batch ($file_search test-file $file_search_tests)
-					  expected-failures :show-expected display_known_bugs
-					  :show-all display_all :showtime time))
-			    (setf testresult (rest testresult))
-			    (incf total-count test-count)
-			    (when testresult
-			      (incf error-count (length (cdr testresult)))
-			      (setq errs (append errs (list testresult))))))
-			(progn
-			  (setq error-break-file (format nil "~a" test-file))
-			  (setq errs
-				(append errs
-					(list (list error-break-file "error break"))))
+      (let ((*read-base* 10.))
+	(when debug
+	  (format t "Loading testsuite.lisp~%"))
+	(load (concatenate 'string *maxima-testsdir* "/" "testsuite.lisp"))))
+    (when share_tests
+      (when debug
+	(format t "Loading share_testsuite.lisp~%"))
+      (load (concatenate 'string *maxima-sharedir* "/" "share_testsuite.lisp")))
+
+    (multiple-value-bind (desired-tests desired-search-path)
+	(ecase share_tests
+	  ((nil)
+	   ;; Do nothing
+	   (values $testsuite_files $file_search_tests))
+	  ((t)
+	   ;; Append the share files and concatenate the search paths
+	   ;; for tests and maxima so we can find both sets of tests.
+	   (values ($append $testsuite_files $share_testsuite_files)
+		   ;; Is there a better way to do this?
+		   (concatenate 'list
+				'((mlist))
+				(rest $file_search_tests)
+				(rest $file_search_maxima))))
+	  ($only
+	   ;; Only the share test files
+	   (values $share_testsuite_files $file_search_maxima)))
+      (let (($testsuite_files desired-tests)
+	    ($file_search_tests desired-search-path))
+	(when debug
+	  (let (($stringdisp t))
+	    (mformat t "$testsuite_files = ~M~%" $testsuite_files)
+	    (mformat t "$file_search_tests = ~M~%" $file_search_tests)))
+	(let ((error-break-file)
+	      (testresult)
+	      (tests-to-run (intersect-tests (cond ((consp tests) tests)
+						   (tests (list '(mlist) tests)))))
+	      (test-count 0)
+	      (total-count 0)
+	      (error-count 0))
+	  (when debug
+	    (let (($stringdisp t))
+	      (mformat t "tests-to-run = ~M~%" tests-to-run)))
+	  (flet
+	      ((testsuite ()
+		 (loop with errs = 'nil
+		       for testentry in tests-to-run
+		       do (if (atom testentry)
+			      (progn
+				(setf test-file testentry)
+				(setf expected-failures nil))
+			      (progn
+				(setf test-file (second testentry))
+				(setf expected-failures (cddr testentry))))
+		          (setf test-file-path ($file_search test-file $file_search_tests))
 			  (format t
-				  (intl:gettext "~%Caused an error break: ~a~%")
-				  test-file)))
-		   finally (cond
-			     ((null errs)
+				  (intl:gettext "Running tests in ~a: ")
+				  (if (symbolp test-file)
+				      (subseq (print-invert-case test-file) 1)
+				      test-file))
+			  (when debug
+			    (format t (intl:gettext "(~A) ") test-file-path))
+			  (or
+			    (errset
+			      (progn
+				(multiple-value-setq (testresult test-count)
+				  (test-batch test-file-path
+					      expected-failures :show-expected display_known_bugs
+					      :show-all display_all :showtime time))
+				(setf testresult (rest testresult))
+				(incf total-count test-count)
+				(when testresult
+				  (incf error-count (length (cdr testresult)))
+				  (setq errs (append errs (list testresult))))))
+			    (progn
+			      (setq error-break-file (format nil "~a" test-file))
+			      (setq errs
+				    (append errs
+					    (list (list error-break-file "error break"))))
 			      (format t
-				      (intl:gettext
-				       "~%~%No unexpected errors found out of ~:d tests.~%")
-				      total-count))
-			     (t
-			      (format t (intl:gettext "~%Error summary:~%"))
-			      (mapcar
-			       #'(lambda (x)
-				   (let ((s (if (> (length (rest x)) 1) "s" "")))
-				     (format t
-					     (intl:gettext
-					      "Error~a found in ~a, problem~a:~%~a~%")
-					     s
-					     (first x)
-					     s
-					     (sort (rest x) #'<))))
-			       errs)
-			      (format t
-				      (intl:gettext
-				       "~&~:d test~p failed out of ~:d total tests.~%")
-				      error-count
-				      error-count
-				      total-count))))))
-      (time (testsuite)))))
+				      (intl:gettext "~%Caused an error break: ~a")
+				      test-file)
+			      ;; If the test failed because we
+			      ;; couldn't find the file, make a noe of
+			      ;; that.
+			      (unless test-file-path
+				(format t (intl:gettext ": test file not found.")))
+			      (format t "~%")))
+		       finally (cond
+				 ((null errs)
+				  (format t
+					  (intl:gettext
+					   "~%~%No unexpected errors found out of ~:d tests.~%")
+					  total-count))
+				 (t
+				  (format t (intl:gettext "~%Error summary:~%"))
+				  (mapcar
+				   #'(lambda (x)
+				       (let ((s (if (> (length (rest x)) 1) "s" "")))
+					 (format t
+						 (intl:gettext
+						  "Error~a found in ~a, problem~a:~%~a~%")
+						 s
+						 (first x)
+						 s
+						 (sort (rest x) #'<))))
+				   errs)
+				  (format t
+					  (intl:gettext
+					   "~&~:d test~p failed out of ~:d total tests.~%")
+					  error-count
+					  error-count
+					  total-count))))))
+	    (time (testsuite)))))))
   '$done)
 
 ;; Convert a list of Maxima "keyword" arguments into the corresponding
@@ -617,7 +686,6 @@
   ;; Convert to a new list that looks like (:opt1 val1 :opt2 val2 ...)
   ;;
   (unless (listp options)
-    ;; UNREACHABLE MESSAGE: OPTIONS IS A &REST ARGUMENT TO $RUN_TESTSUITE SO IT MUST PASS LISTP
     (merror "Invalid Maxima keyword options: ~M" options))
   (when (every #'(lambda (o)
 		   ;; Make sure every option has the right form.
@@ -640,6 +708,14 @@
 		    (merror (intl:gettext "Unrecognized keyword: ~M") opt))))
 	    options)))
 
+;; Run the testsuite.  Options are
+;;  tests                List of tests to run
+;;  display_all          Display output from each test entry
+;;  display_known_bugs   Include tests that are known to fail.
+;;  time                 Display time to run each test entry
+;;  share_tests          Whether to include the share testsuite or not
+;;  debug                Set to enable some debugging prints.
 (defun $run_testsuite (&rest options)
   (apply #'run-testsuite
-	 (lispify-maxima-keyword-options options '($display_all $display_known_bugs $tests $time))))
+	 (lispify-maxima-keyword-options options '($display_all $display_known_bugs $tests $time
+						   $share_tests $debug))))

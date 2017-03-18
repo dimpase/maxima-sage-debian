@@ -6,7 +6,6 @@
 @c Translation : Dr. Dieter Kaiser
 @c Date        : 06.01.2011
 @c Revision    : 26.02.2011
-@c Revision    : 27.03.2012, 29.03.2012, 23.03.2013, 27.7.2013 VvN
 @c 
 @c This file is part of Maxima -- GPL CAS based on DOE-MACSYMA
 @c -----------------------------------------------------------------------------
@@ -661,6 +660,18 @@ Die Anzahl der Pseudo-Primzahl-Tests nach Miller-Rabin in der Funktion
 @mref{primep}.
 @end defvr
 
+@c --- 13.06.2015 VN -----------------------------------------------------------
+@anchor{primes}
+@deffn {Funktion} primes (@var{start}, @var{end})
+
+Gibt eine Liste mit allen Primzahlen von @var{start} bis @var{end} zur@"uck.
+
+@example
+(%i1) primes(3, 7);
+(%o1)                     [3, 5, 7]
+@end example
+@end deffn
+
 @c --- 27.11.2010 DK -----------------------------------------------------------
 @anchor{prev_prime}
 @deffn {Funktion} prev_prime (@var{n})
@@ -829,6 +840,100 @@ zeigt eine Additionstabelle von allen Elementen in (Z/@var{n}Z).
 Siehe auch @mref{zn_mult_table}, @mref{zn_power_table}.
 @end deffn
 
+@c -----------------------------------------------------------------------------
+@anchor{zn_characteristic_factors}
+@deffn {Funktion} zn_characteristic_factors (@var{n}) 
+
+Gibt eine Liste mit den charakteristischen Faktoren des Totienten von @var{n} zur@"uck.
+
+Mit Hilfe der charakteristischen Faktoren kann eine modulo @var{n} multiplikative Gruppe 
+als direktes Produkt zyklischer Untergruppen dargestellt werden. 
+
+Ist die Gruppe selbst zyklisch, dann enth@"alt die Liste nur den Totienten 
+und mit @code{zn_primroot} kann ein Generator berechnet werden. 
+Zerf@"allt der Totient in mehrere charakteristische Faktoren, 
+k@"onnen Generatoren der entsprechenden Untergruppen mit @code{zn_factor_generators} 
+ermittelt werden.
+
+Jeder der @code{r} Faktoren in der Liste teilt die weiter rechts stehenden Faktoren. 
+Fuer den letzten Faktor @code{f_r} gilt daher @code{a^f_r = 1 (mod n)} 
+f@"ur alle @code{a} teilerfremd zu @var{n}. 
+Dieser Faktor ist auch als Carmichael Funktion bzw. Carmichael Lambda bekannt.
+
+F@"ur @code{n > 2} ist @code{totient(n)/2^r} die Anzahl der quadratischen Reste 
+in der Gruppe und jeder dieser Reste hat @code{2^r} Wurzeln.
+
+Siehe auch @mref{totient}, @mref{zn_primroot}, @mref{zn_factor_generators}.
+
+Beispiele:
+
+Die multiplikative Gruppe modulo @code{14} ist zyklisch und ihre @code{6} Elemente 
+lassen sich durch eine Primitivwurzel erzeugen.
+
+@example
+(%i1) [zn_characteristic_factors(14), phi: totient(14)];
+(%o1)                              [[6], 6]
+(%i2) [zn_factor_generators(14), g: zn_primroot(14)];
+(%o2)                              [[3], 3]
+(%i3) M14: makelist(power_mod(g,i,14), i,0,phi-1);
+(%o3)                         [1, 3, 9, 13, 11, 5]
+@end example
+
+Die multiplikative Gruppe modulo @code{15} ist nicht zyklisch und ihre @code{8} Elemente 
+lassen sich mit Hilfe zweier Faktorgeneratoren erzeugen.
+
+@example
+(%i1) [[f1,f2]: zn_characteristic_factors(15), totient(15)];
+(%o1)                             [[2, 4], 8]
+(%i2) [[g1,g2]: zn_factor_generators(15), zn_primroot(15)];
+(%o2)                           [[11, 7], false]
+(%i3) UG1: makelist(power_mod(g1,i,15), i,0,f1-1);
+(%o3)                               [1, 11]
+(%i4) UG2: makelist(power_mod(g2,i,15), i,0,f2-1);
+(%o4)                            [1, 7, 4, 13]
+(%i5) M15: create_list(mod(i*j,15), i,UG1, j,UG2);
+(%o5)                      [1, 7, 4, 13, 11, 2, 14, 8]
+@end example
+
+F@"ur den letzten charakteristischen Faktor @code{4} gilt 
+@code{a^4 = 1 (mod 15)} fuer alle @code{a} in @code{M15}. 
+
+@code{M15} hat @code{2} charakteristische Faktoren und daher die @code{8/2^2} 
+quadratischen Reste @code{1} und @code{4}, und diese haben jeweils @code{2^2} Wurzeln.
+
+@example
+(%i6) zn_power_table(15);
+                               [ 1   1  1   1 ]
+                               [              ]
+                               [ 2   4  8   1 ]
+                               [              ]
+                               [ 4   1  4   1 ]
+                               [              ]
+                               [ 7   4  13  1 ]
+(%o6)                          [              ]
+                               [ 8   4  2   1 ]
+                               [              ]
+                               [ 11  1  11  1 ]
+                               [              ]
+                               [ 13  4  7   1 ]
+                               [              ]
+                               [ 14  1  14  1 ]
+(%i7) map(lambda([i], zn_nth_root(i,2,15)), [1,4]);
+(%o7)                   [[1, 4, 11, 14], [2, 7, 8, 13]]
+@end example
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{zn_carmichael_lambda}
+@deffn {Funktion} zn_carmichael_lambda (@var{n}) 
+
+Gibt @code{1} zur@"uck, wenn @var{n} gleich @code{1} ist und andernfalls 
+den gr@"o@ss{}ten charakteristischen Faktor des Totienten von @var{n}. 
+
+F@"ur Erl@"auterungen und Beispiele siehe @mref{zn_characteristic_factors}.
+
+@end deffn
+
 @c --- 27.07.2013 VvN ----------------------------------------------------------
 @anchor{zn_determinant}
 @deffn {Funktion} zn_determinant (@var{matrix}, @var{p}) 
@@ -861,6 +966,17 @@ Beispiel:
 (%i4) zn_determinant(m, 5);
 (%o4)                               0
 @end example
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{zn_factor_generators}
+@deffn {Funktion} zn_factor_generators (@var{n}) 
+
+Gibt eine Liste mit Faktorgeneratoren zur@"uck, die zu den charakteristischen 
+Faktoren des Totienten von @var{n} passen. 
+
+F@"ur Erl@"auterungen und Beispiele siehe @mref{zn_characteristic_factors}.
+
 @end deffn
 
 @c --- 27.07.2013 VvN ----------------------------------------------------------
@@ -960,33 +1076,236 @@ Primfaktors des Totienten ab.
 @end example
 @end deffn
 
-@c --- 27.07.2013 VvN ----------------------------------------------------------
+@c -----------------------------------------------------------------------------
 @anchor{zn_mult_table}
 @deffn {Funktion} zn_mult_table (@var{n}) 
-@deffnx {Funktion} zn_mult_table (@var{n}, all)
+@deffnx {Funktion} zn_mult_table (@var{n}, @var{gcd})
 
-Ohne das optionale Argument @var{all} zeigt @code{zn_mult_table(n)} 
+Ohne das optionale Argument @var{gcd} zeigt @code{zn_mult_table(n)} 
 eine Multiplikationstabelle von allen Elementen in (Z/@var{n}Z)*, 
-d.h. von allen modulo @var{n} invertierbaren Elementen.
+d.h. von allen zu @var{n} teilerfremden Elementen.
 
-Das optionale Argument @var{all} bewirkt, dass die Tabelle f@"ur alle von Null 
-verschiedenen Elemente gezeigt wird.
+Das optionale zweite Argument @var{gcd} erlaubt es, eine bestimmte Untermenge 
+von (Z/@var{n}Z) auszuw@"ahlen. 
+Ist @var{gcd} eine nat@"urliche Zahl, enth@"alt die Multiplikationstabelle 
+alle Restklassen @code{x} mit @code{gcd(x,n) = }@var{gcd}. 
+Zur besseren Lesbarkeit werden Zeilen- und Spaltenk@"opfe hinzugef@"ugt. 
+Falls notwendig, lassen sich diese mit @code{submatrix(1, tabelle, 1)} 
+wieder einfach entfernen. 
+
+Wird @var{gcd} auf @code{all} gesetzt, wird die Tabelle f@"ur s@"amtliche 
+von Null verschiedene Elemente in (Z/@var{n}Z) ausgegeben.
+
+Das zweite Beispiel unten zeigt einen alternativen Weg, f@"ur Untergruppen 
+eine Multiplikationstabelle zu erzeugen.
 
 Siehe auch @mref{zn_add_table}, @mref{zn_power_table}.
 
 Beispiele:
 
+Die Standardtabelle zeigt alle Elemente aus (Z/@var{n}Z)* und erlaubt, 
+grundlegende Eigenschaften von modularen Multiplikationsgruppen zu zeigen und 
+zu studieren. Z.B. stehen in der Hauptdiagonale s@"amtliche quadratische Reste, 
+jede Zeile und Spalte enth@"alt alle Elemente, die Tabelle ist symmetrisch, etc..
+
+Wird @var{gcd} auf @code{all} gesetzt, wird die Tabelle f@"ur s@"amtliche 
+von Null verschiedene Elemente in (Z/@var{n}Z) ausgegeben.
+
 @example
-(%i1) zn_mult_table(4);
-                                [ 1  3 ]
-(%o1)                           [      ]
-                                [ 3  1 ]
-(%i2) zn_mult_table(4, all);
-                               [ 1  2  3 ]
-                               [         ]
-(%o2)                          [ 2  0  2 ]
-                               [         ]
-                               [ 3  2  1 ]
+(%i1) zn_mult_table(8);
+                                [ 1  3  5  7 ]
+                                [            ]
+                                [ 3  1  7  5 ]
+(%o1)                           [            ]
+                                [ 5  7  1  3 ]
+                                [            ]
+                                [ 7  5  3  1 ]
+(%i2) zn_mult_table(8, all);
+                            [ 1  2  3  4  5  6  7 ]
+                            [                     ]
+                            [ 2  4  6  0  2  4  6 ]
+                            [                     ]
+                            [ 3  6  1  4  7  2  5 ]
+                            [                     ]
+(%o2)                       [ 4  0  4  0  4  0  4 ]
+                            [                     ]
+                            [ 5  2  7  4  1  6  3 ]
+                            [                     ]
+                            [ 6  4  2  0  6  4  2 ]
+                            [                     ]
+                            [ 7  6  5  4  3  2  1 ]
+@end example
+
+Ist @var{gcd} eine Zahl, wird zur besseren Lesbarkeit ein Zeilen- und Spaltenkopf 
+hinzugef@"ugt.
+
+Ist die mit @var{gcd} ausgew@"ahlte Teilmenge eine Gruppe, gibt es einen 
+alternativen Weg, die Multiplikationstabelle zu erzeugen.
+Die Isomorphie zu einer Gruppe mit @code{1} als Identit@"at l@"asst sich nutzen, 
+um eine leicht lesbare Tabelle zu erhalten. Die Abbildung gelingt mit dem CRT.
+
+In der so erzeugten zweiten Version der Tabelle @code{T36_4} steht genau wie 
+bei @code{T9} die Identit@"at, hier @code{28}, in der linken oberen Ecke. 
+
+
+@example
+(%i1) T36_4: zn_mult_table(36,4);
+                        [ *   4   8   16  20  28  32 ]
+                        [                            ]
+                        [ 4   16  32  28  8   4   20 ]
+                        [                            ]
+                        [ 8   32  28  20  16  8   4  ]
+                        [                            ]
+(%o1)                   [ 16  28  20  4   32  16  8  ]
+                        [                            ]
+                        [ 20  8   16  32  4   20  28 ]
+                        [                            ]
+                        [ 28  4   8   16  20  28  32 ]
+                        [                            ]
+                        [ 32  20  4   8   28  32  16 ]
+(%i2) T9: zn_mult_table(36/4);
+                             [ 1  2  4  5  7  8 ]
+                             [                  ]
+                             [ 2  4  8  1  5  7 ]
+                             [                  ]
+                             [ 4  8  7  2  1  5 ]
+(%o2)                        [                  ]
+                             [ 5  1  2  7  8  4 ]
+                             [                  ]
+                             [ 7  5  1  8  4  2 ]
+                             [                  ]
+                             [ 8  7  5  4  2  1 ]
+(%i3) T36_4: matrixmap(lambda([x], chinese([0,x],[4,9])), T9);
+                          [ 28  20  4   32  16  8  ]
+                          [                        ]
+                          [ 20  4   8   28  32  16 ]
+                          [                        ]
+                          [ 4   8   16  20  28  32 ]
+(%o3)                     [                        ]
+                          [ 32  28  20  16  8   4  ]
+                          [                        ]
+                          [ 16  32  28  8   4   20 ]
+                          [                        ]
+                          [ 8   16  32  4   20  28 ]
+@end example
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{zn_nth_root}
+@deffn {Funktion} zn_nth_root (@var{x}, @var{n}, @var{m}) 
+@deffnx {Funktion} zn_nth_root (@var{x}, @var{n}, @var{m}, [[@var{p1}, @var{e1}], @dots{}, [@var{pk}, @var{ek}]])
+
+Gibt eine Liste mit allen @var{n}-ten Wurzeln von @var{x} aus der multiplikativen 
+Untergruppe von (Z/@var{m}Z) zur@"uck, in der sich @var{x} befindet, 
+oder @code{false}, falls @var{x} keine @var{n}-te Potenz modulo @var{m} oder 
+kein Element einer multiplikativen Untergruppe von (Z/@var{m}Z) ist.
+
+@var{x} ist Element einer multiplikativen Untergruppe modulo @var{m}, wenn der 
+gr@"o@ss{}te gemeinsame Teiler @code{g = gcd(x,m)} zu @code{m/g} teilerfremd ist.
+
+@code{zn_nth_root} basiert auf einem Algorithmus von Adleman, Manders und Miller 
+und S@"atzen @"uber modulare Multiplikationsgruppen von Daniel Shanks.
+
+Der Algorithmus ben@"otigt eine Primfaktorzerlegung des Modulus @var{m}. 
+Es kann eventuell sinnvoll sein, diese Zerlegung vorab zu berechnen und 
+als viertes Argument zu @"ubergeben. Die Form muss dabei der R@"uckgabe von 
+@code{ifactors(m)} mit der Standardeinstellung @code{false} der 
+Optionsvariable @code{factors_only} entsprechen. 
+
+Beispiele:
+
+Eine Potenztabelle der multiplikativen Gruppe modulo @code{14} 
+gefolgt von einer Liste mit Listen von @var{n}-ten Wurzeln der @code{1}, 
+wobei @var{n} von @code{1} bis @code{6} variiert.
+
+@example
+(%i1) zn_power_table(14);
+                         [ 1   1   1   1   1   1 ]
+                         [                       ]
+                         [ 3   9   13  11  5   1 ]
+                         [                       ]
+                         [ 5   11  13  9   3   1 ]
+(%o1)                    [                       ]
+                         [ 9   11  1   9   11  1 ]
+                         [                       ]
+                         [ 11  9   1   11  9   1 ]
+                         [                       ]
+                         [ 13  1   13  1   13  1 ]
+(%i2) makelist(zn_nth_root(1,n,14), n,1,6);
+(%o2)  [[1], [1, 13], [1, 9, 11], [1, 13], [1], [1, 3, 5, 9, 11, 13]]
+@end example
+
+Im folgenden Beispiel ist @var{x} nicht zu @var{m} teilerfremd, 
+aber es ist Element einer multiplikativen Untergruppe von (Z/@var{m}Z) 
+und jede @var{n}-te Wurzel ist aus der selben Untergruppe. 
+
+Die Restklasse @code{3} ist kein Element in irgend einer multiplikativen 
+Untergruppe von (Z/63Z) und wird daher nicht als dritte Wurzel von @code{27} 
+zur@"uck gegeben.
+
+Hier zeigt @code{zn_power_table} alle Reste @code{x} in (Z/63Z) 
+mit @code{gcd(x,63) = 9}. Diese Untergruppe ist isomorph zu (Z/7Z)* 
+und seine Identit@"at @code{36} wird mit Hilfe des CRT berechnet.
+
+@example
+(%i1) m: 7*9$
+
+(%i2) zn_power_table(m,9);
+                         [ 9   18  36  9   18  36 ]
+                         [                        ]
+                         [ 18  9   36  18  9   36 ]
+                         [                        ]
+                         [ 27  36  27  36  27  36 ]
+(%o2)                    [                        ]
+                         [ 36  36  36  36  36  36 ]
+                         [                        ]
+                         [ 45  9   27  18  54  36 ]
+                         [                        ]
+                         [ 54  18  27  9   45  36 ]
+(%i3) zn_nth_root(27,3,m);
+(%o3)                           [27, 45, 54]
+(%i4) id7:1$  id63_9: chinese([id7,0],[7,9]);
+(%o5)                                36
+@end example
+
+Im folgenden RSA-@"ahnlichen Beispiel, in dem der Modulus @code{N} quadratfrei ist, 
+d.h. in paarweise verschiedene Primfaktoren zerf@"allt, 
+ist jedes @code{x} von @code{0} bis @code{N-1}
+in einer multiplikativen Untergruppe enthalten.
+
+Zur Entschl@"usselung wird die @code{e}-te Wurzel berechnet. 
+@code{e} ist teilerfremd zu @code{N} und die @code{e}-te Wurzel ist deshalb 
+eindeutig. @code{zn_nth_root} wendet hier effektiv den als CRT-RSA 
+bekannten Algorithmus an.
+(Man beachte, dass @code{flatten} Klammern entfernt und keine L@"osungen.)
+
+@example
+(%i1) [p,q,e]: [5,7,17]$  N: p*q$
+
+(%i3) xs: makelist(x,x,0,N-1)$
+
+(%i4) ys: map(lambda([x],power_mod(x,e,N)),xs)$
+
+(%i5) zs: flatten(map(lambda([y], zn_nth_root(y,e,N)), ys))$
+
+(%i6) is(zs = xs);
+(%o6)                             true
+@end example
+
+Im folgenden Beispiel ist die Faktorisierung des Modulus bekannt und wird 
+als viertes Argument @"ubergeben.
+
+@example
+(%i1) p: 2^107-1$  q: 2^127-1$  N: p*q$
+
+(%i4) ibase: obase: 16$
+
+(%i5) msg: 11223344556677889900aabbccddeeff$
+
+(%i6) enc: power_mod(msg, 10001, N);
+(%o6)    1a8db7892ae588bdc2be25dd5107a425001fe9c82161abc673241c8b383
+(%i7) zn_nth_root(enc, 10001, N, [[p,1],[q,1]]);
+(%o7)               [11223344556677889900aabbccddeeff]
 @end example
 @end deffn
 
@@ -1047,43 +1366,104 @@ entsprechen.
 @end example
 @end deffn
 
-@c --- 27.07.2013 VvN ----------------------------------------------------------
+@c -----------------------------------------------------------------------------
 @anchor{zn_power_table}
 @deffn {Funktion} zn_power_table (@var{n}) 
-@deffnx {Funktion} zn_power_table (@var{n}, all)
+@deffnx {Funktion} zn_power_table (@var{n}, @var{gcd})
+@deffnx {Funktion} zn_power_table (@var{n}, @var{gcd}, @var{max_exp})
 
-Ohne das optionale Argument @var{all} zeigt @code{zn_power_table(n)} 
+Ohne ein optionales Argument zeigt @code{zn_power_table(n)} 
 eine Potenzierungstabelle von allen Elementen in (Z/@var{n}Z)*, 
-d.h. von allen modulo @var{n} invertierbaren Elementen. 
+d.h. von allen zu @var{n} teilerfremden Elementen. 
 Der Exponent variiert dabei jeweils zwischen @code{1} und 
-dem gr@"o@ss{}ten charakteristischen Faktor des Totienten von @var{n}, 
+dem gr@"o@ss{}ten charakteristischen Faktor des Totienten von @var{n}
+(auch bekannt als Carmichael Funktion bzw. Carmichael Lambda), 
 so dass die Tabelle rechts mit einer Spalte von Einsen endet.
 
-Das optionale Argument @var{all} bewirkt, dass die Tabelle f@"ur alle von Null 
-verschiedenen Elemente gezeigt wird. In diesem Fall 
-variiert der Exponent zwischen @code{1} und @code{totient(n) + 1}. 
-Ist der Modulus aus voneinander verschiedenen Primzahlen zusammen gesetzt, stimmen dann 
-die erste und letzte Spalte @"uberein.
+Das optionale zweite Argument @var{gcd} erlaubt es, eine bestimmte Untermenge 
+von (Z/@var{n}Z) auszuw@"ahlen. 
+Ist @var{gcd} eine nat@"urliche Zahl, werden Potenzen von allen Restklassen 
+@code{x} mit @code{gcd(x,n) = }@var{gcd} zur@"uck gegeben, 
+d.h. @var{gcd} ist standardm@"a@ss{}ig @code{1}.
+Wird @var{gcd} auf @code{all} gesetzt, wird die Tabelle f@"ur s@"amtliche 
+Elemente in (Z/@var{n}Z) ausgegeben.
+
+Wird das optionale dritte Argument @var{max_exp} angegeben, variiert der 
+Exponent zwischen @code{1} und @var{max_exp}.
 
 Siehe auch @mref{zn_add_table}, @mref{zn_mult_table}.
 
 Beispiele:
 
+Die Standardeinstellung @var{gcd}@code{ = 1} erlaubt es, grundlegende S@"atze, 
+wie die von Fermat and Euler, zu zeigen und zu betrachten.
+
+Das Argument @var{gcd} erlaubt es, bestimmte Teilmengen von (Z/@var{n}Z) 
+auszuw@"ahlen und multiplikative Untergruppen und Isomorphismen zu untersuchen. 
+
+Z.B. sind die Gruppen @code{G10} und @code{G10_2} unter der Multiplikation 
+beide isomorph zu @code{G5}. @code{1} ist die Identit@"at in @code{G5}. 
+So sind @code{1} bzw. @code{6} die Identit@"aten in @code{G10} bzw. @code{G10_2}. 
+Entsprechende Zuordnungen ergeben sich bei den Primitivwurzeln, n-ten Wurzeln, etc..
+
 @example
-(%i1) zn_power_table(6);
-                                [ 1  1 ]
-(%o1)                           [      ]
-                                [ 5  1 ]
-(%i2) zn_power_table(6, all);
-                               [ 1  1  1 ]
-                               [         ]
-                               [ 2  4  2 ]
-                               [         ]
-(%o2)                          [ 3  3  3 ]
-                               [         ]
-                               [ 4  4  4 ]
-                               [         ]
-                               [ 5  1  5 ]
+(%i1) zn_power_table(10);
+                              [ 1  1  1  1 ]
+                              [            ]
+                              [ 3  9  7  1 ]
+(%o1)                         [            ]
+                              [ 7  9  3  1 ]
+                              [            ]
+                              [ 9  1  9  1 ]
+(%i2) zn_power_table(10,2);
+                              [ 2  4  8  6 ]
+                              [            ]
+                              [ 4  6  4  6 ]
+(%o2)                         [            ]
+                              [ 6  6  6  6 ]
+                              [            ]
+                              [ 8  4  2  6 ]
+(%i3) zn_power_table(10,5);
+(%o3)                         [ 5  5  5  5 ]
+(%i4) zn_power_table(10,10);
+(%o4)                         [ 0  0  0  0 ]
+(%i5) G5: [1,2,3,4];
+(%o6)                          [1, 2, 3, 4]
+(%i6) G10_2: map(lambda([x], chinese([0,x],[2,5])), G5);
+(%o6)                          [6, 2, 8, 4]
+(%i7) G10: map(lambda([x], power_mod(3, zn_log(x,2,5), 10)), G5);
+(%o7)                          [1, 3, 7, 9]
+@end example
+
+Wird @var{gcd} auf @code{all} gesetzt, wird die Tabelle f@"ur s@"amtliche 
+Elemente in (Z/@var{n}Z) ausgegeben.
+
+Das dritte Argument @var{max_exp} erlaubt, den h@"ochsten Exponenten zu w@"ahlen.  
+Die folgende Tabelle zeigt ein kleines RSA-Beispiel.
+
+@example
+(%i1) N:2*5$ phi:totient(N)$ e:7$ d:inv_mod(e,phi)$
+
+(%i5) zn_power_table(N, all, e*d);
+       [ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 ]
+       [                                                               ]
+       [ 1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1 ]
+       [                                                               ]
+       [ 2  4  8  6  2  4  8  6  2  4  8  6  2  4  8  6  2  4  8  6  2 ]
+       [                                                               ]
+       [ 3  9  7  1  3  9  7  1  3  9  7  1  3  9  7  1  3  9  7  1  3 ]
+       [                                                               ]
+       [ 4  6  4  6  4  6  4  6  4  6  4  6  4  6  4  6  4  6  4  6  4 ]
+(%o5)  [                                                               ]
+       [ 5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5 ]
+       [                                                               ]
+       [ 6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6  6 ]
+       [                                                               ]
+       [ 7  9  3  1  7  9  3  1  7  9  3  1  7  9  3  1  7  9  3  1  7 ]
+       [                                                               ]
+       [ 8  4  2  6  8  4  2  6  8  4  2  6  8  4  2  6  8  4  2  6  8 ]
+       [                                                               ]
+       [ 9  1  9  1  9  1  9  1  9  1  9  1  9  1  9  1  9  1  9  1  9 ]
 @end example
 @end deffn
 

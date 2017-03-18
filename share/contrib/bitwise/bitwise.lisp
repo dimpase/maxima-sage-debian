@@ -44,6 +44,12 @@
 (macsyma-module bitwise)
 
 
+(eval-when
+  #+gcl (compile eval)
+  #-gcl (:compile-toplevel :execute)
+    (defvar old-ibase *read-base*)
+    (setq *read-base* 10.) )
+
 
 ;; I'm not sure if we should add the property 'integer-valued to these functions
 ;; if we allow bit_not(bit_not(x)) --> x, bit_and(x) --> x, etc. for any expression x
@@ -146,7 +152,7 @@
       ;;(and (= 1 (length args)) (maxima-integerp (car args))); if we require bit_and(di) --> di
       (return-from simp-bit-and (car args)))
     
-  ;; return unevaluated if no previous return-from occured
+  ;; return unevaluated if no previous return-from occurred
    `(($bit_and simp) ,@args)))
 
 
@@ -258,7 +264,7 @@
     (if (= 1 (length args))
       (return-from simp-bit-xor (car args)))
     
-  ;; return unevaluated if no previous return-from occured
+  ;; return unevaluated if no previous return-from occurred
    `(($bit_xor simp) ,@args)))
 
 
@@ -330,7 +336,7 @@
     (if (= 1 (length args))
       (return-from simp-bit-or (car args)))
     
-  ;; return unevaluated if no previous return-from occured
+  ;; return unevaluated if no previous return-from occurred
    `(($bit_or simp) ,@args)))
 
 
@@ -433,3 +439,8 @@
         (t
          `(($bit_length simp) ,a)) ))                 ;; return unevaluated
 
+
+(eval-when
+  #+gcl (compile eval)
+  #-gcl (:compile-toplevel :execute)
+    (setq *read-base* old-ibase) )

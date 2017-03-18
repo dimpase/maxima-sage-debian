@@ -388,6 +388,46 @@ solve('diff(y,x),'diff(y,x));
 eigenvalues(matrix([3,1,0,0],[-4,-1,0,0],[7,1,2,1],[-17,-6,-1,0]));
 [[1],[4]];
 
+/* Bug #2183 */
+eigenvalues(matrix([0,0,0,1,0,1,1,1,0,1],[1,1,0,0,1,0,1,0,1,0],[1,1,1,1,0,0,0,1,0,1],[0,1,1,0,0,1,1,1,1,0],[0,0,1,0,1,0,1,0,1,0],[0,1,0,0,0,0,0,1,0,0],[1,1,0,0,0,0,0,0,1,1],[1,0,1,1,1,0,1,0,0,0],[0,1,1,0,0,1,0,1,0,1],[1,0,0,1,1,0,0,1,0,0]));
+[[0],[1]];
+
+eigenvalues(matrix([0,0,0,0,0,0,0,0,0,0,0],[0,-5276*A/5,18*A,18*A,18*A,0,0,0,0,0,0],[0,18*A,-4648*A/5,18*A,18*A,18*A,0,0,0,0,0],[0,18*A,18*A,-804*A,18*A,18*A,18*A,0,0,0,0],[0,18*A,18*A,18*A,-3392*A/5,18*A,18*A,18*A,0,0,0],[0,0,18*A,18*A,18*A,-3392*A/5,18*A,18*A,18*A,0,0],[0,0,0,18*A,18*A,18*A,-3392*A/5,18*A,18*A,18*A,0],[0,0,0,0,18*A,18*A,18*A,-3392*A/5,18*A,18*A,18*A],[0,0,0,0,0,18*A,18*A,18*A,-804*A,18*A,18*A],[0,0,0,0,0,0,18*A,18*A,18*A,-4648*A/5,18*A],[0,0,0,0,0,0,0,18*A,18*A,18*A,-5276*A/5]));
+[[0],[1]];
+
+is(equal(eigenvalues(matrix([2,0,-1,0,0,0,-1,0,0,0,0,0,0],[0,2,0,-1,-1,0,0,0,0,0,0,0,0],
+    [-1,0,3,-1,0,0,0,0,0,0,0,0,-1],[0,-1,-1,2,0,0,0,0,0,0,0,0,0],
+    [0,-1,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,-1,0,0,0,0,0],
+    [-1,0,0,0,0,0,2,0,0,0,0,-1,0],[0,0,0,0,0,-1,0,1,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,2,-1,-1,0],
+    [0,0,0,0,0,0,0,0,0,-1,1,0,0],[0,0,0,0,0,0,-1,0,0,-1,0,2,0],
+    [0,0,-1,0,0,0,0,0,0,0,0,0,1])),
+[[2,-(sqrt(5)-3)/2,(sqrt(5)+3)/2,-(sqrt(5)-5)/2,(sqrt(5)+5)/2,0],
+[1,1,1,1,1,3]]));
+true;
+
+is(equal(eigenvectors(matrix([2,0,-1,0,0,0,-1,0,0,0,0,0,0],[0,2,0,-1,-1,0,0,0,0,0,0,0,0],
+    [-1,0,3,-1,0,0,0,0,0,0,0,0,-1],[0,-1,-1,2,0,0,0,0,0,0,0,0,0],
+    [0,-1,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,-1,0,0,0,0,0],
+    [-1,0,0,0,0,0,2,0,0,0,0,-1,0],[0,0,0,0,0,-1,0,1,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,2,-1,-1,0],
+    [0,0,0,0,0,0,0,0,0,-1,1,0,0],[0,0,0,0,0,0,-1,0,0,-1,0,2,0],
+    [0,0,-1,0,0,0,0,0,0,0,0,0,1])),
+[[[2,-(sqrt(5)-3)/2,(sqrt(5)+3)/2,-(sqrt(5)-5)/2,(sqrt(5)+5)/2,0],
+        [1,1,1,1,1,3]],
+       [[[0,0,0,0,0,1,0,-1,0,0,0,0,0]],
+        [[1,-1,1,0,-(sqrt(5)+1)/2,0,(sqrt(5)-1)/2,0,0,-(sqrt(5)-1)/2,-1,0,
+          (sqrt(5)+1)/2]],
+        [[1,-1,1,0,(sqrt(5)-1)/2,0,-(sqrt(5)+1)/2,0,0,(sqrt(5)+1)/2,-1,0,
+          -(sqrt(5)-1)/2]],
+        [[1,1,1,sqrt(5)+1,-(sqrt(5)+3)/2,0,(sqrt(5)-3)/2,0,0,(sqrt(5)-3)/2,1,
+          1-sqrt(5),-(sqrt(5)+3)/2]],
+        [[1,1,1,1-sqrt(5),(sqrt(5)-3)/2,0,-(sqrt(5)+3)/2,0,0,-(sqrt(5)+3)/2,1,
+          sqrt(5)+1,(sqrt(5)-3)/2]],
+        [[1,1,1,1,1,0,1,0,0,1,1,1,1],[0,0,0,0,0,1,0,1,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,1,0,0,0,0]]]]));
+    true;
+    
 /* Bug 1369669 */
 trigexpand(csc(3*x));
 csc(x)^3*sec(x)^3/(3*csc(x)^2*sec(x)-sec(x)^3);
@@ -912,7 +952,7 @@ ev (Y1, numer);
 0.14334756890537, 0.14189705460416, 0.98981326044662, 
 6.952316038379697, 7.023866335396166, 1.010291577169605, 
 0.14237172979226, 0.14383695943619, 0.15415067982726, 
-0.14831179749879, 0.14552316969849, - 7.363980242224349, 
+0.1483117974987926, 0.1455231699304894, - 7.363980242224349, 
 50.3574714369117, - 687.6815220686585];
 
 makelist (foo(float(1/7)), foo, F1);
@@ -929,7 +969,7 @@ makelist (foo(float(1/7)), foo, F1);
 0.14334756890537, 0.14189705460416, 0.98981326044662, 
 6.952316038379697, 7.023866335396166, 1.010291577169605, 
 0.14237172979226, 0.14383695943619, 0.15415067982726, 
-0.14831179749879, 0.14552316969849, - 7.363980242224349, 
+0.1483117974987926, 0.1455231699304894, - 7.363980242224349, 
 50.3574714369117, - 687.6815220686585];
 
 /* (2) FUNCTIONS OF 2 ARGUMENTS
@@ -1036,6 +1076,25 @@ elliptic_pi (float (1/2), float (1/3), float (1/4));
  
 (reset (float_approx_equal_tolerance), 0);
 0;
+
+/* disallow bigfloat conversion for floating point infinity and not-a-number.
+ * SF bug [ 2013654 ] bfloat(NaN) => finite number
+ */
+
+(foo : ?most\-positive\-double\-float,
+ bar : ?most\-negative\-double\-float,
+ block ([ratepsilon : 0], [bfloat (foo), bfloat (bar)]));
+/* might need to replace the expected result w/ a rat-ified value to ensure equality ... */
+[1.797693134862316b308, - 1.797693134862316b308];
+
+errcatch (bfloat (2*foo));
+[];
+
+errcatch (bfloat (2*bar));
+[];
+
+errcatch (bfloat (2*foo + 3*bar));
+[];
 
 /* Test that sinh(-x) for large x doesn't crash */
 sinh(-100b0)+sinh(100b0);
@@ -1273,3 +1332,98 @@ false;
  eigenvalues (X));
  *
  */
+
+/* SF bug #2913: trigrat crashes with variable name "e" */
+
+trigrat(c^x * sin(x));
+%i*abs(c)^x*sin(x)*sin(atan2(0, c)*x) + abs(c)^x*sin(x)*cos(atan2(0, c)*x);
+
+trigrat(d^x * sin(x));
+%i*abs(d)^x*sin(x)*sin(atan2(0, d)*x) + abs(d)^x*sin(x)*cos(atan2(0, d)*x);
+
+trigrat(e^x * sin(x));
+%i*abs(e)^x*sin(x)*sin(atan2(0, e)*x) + abs(e)^x*sin(x)*cos(atan2(0, e)*x);
+
+trigrat(f^x * sin(x));
+%i*abs(f)^x*sin(x)*sin(atan2(0, f)*x) + abs(f)^x*sin(x)*cos(atan2(0, f)*x);
+
+(check_eigenvectors (M) := block ([vals, vecs, mults, eqns],
+  [[vals, mults], vecs] : eigenvectors (M),
+  eqns : [lsum (m, m, mults) = length (M),
+          expand (apply ("*", map (lambda ([v, m], v^m), vals, mults)) = determinant (M)),
+          length (vecs) = length (vals),
+          every (lambda ([mults1, vecs1], length (vecs1) <= mults1), mults, vecs),
+          every (lambda ([val, vecs1], every (lambda ([vec], expand (transpose (M . vec) = val * matrix (vec))), vecs1)), vals, vecs)],
+  if apply ("and", eqns)
+  then true
+  else [M, eqns]),
+ 0);
+0;
+
+/* SF bug #3008: "Eigenvectors are missing" */
+
+eigenvectors (matrix([1, 1, 0], [0, 1, 0], [0, 0, 2]));
+[[[1, 2], [2, 1]], [[[1, 0, 0]], [[0, 0, 1]]]];
+
+check_eigenvectors (matrix([1, 1, 0], [0, 1, 0], [0, 0, 2]));
+true;
+
+/* SF bug #3085: "missed eigenvectors" */
+
+eigenvectors (matrix([3,1,0,0,0], [1,3,0,0,0], [0,0,2,1,1], [0,0,1,2,1], [0,0,1,1,2]));
+[[[2, 1, 4], [1, 2, 2]],
+ [[[1, - 1, 0, 0, 0]],
+  [[0, 0, 1, 0, - 1], [0, 0, 0, 1, - 1]],
+  [[1, 1, 0, 0, 0], [0, 0, 1, 1, 1]]]];
+
+check_eigenvectors (matrix([3,1,0,0,0], [1,3,0,0,0], [0,0,2,1,1], [0,0,1,2,1], [0,0,1,1,2]));
+true;
+
+/* SF bug #3149: "eigenvectors does not show eigenvectors with eigenvalue zero" */
+
+eigenvectors (matrix([2,3,1],[4,4,2],[-4,-8,-2]));
+[[[2, 0], [2, 1]], [[[1, 1, - 3]], [[1, 0, - 2]]]];
+
+check_eigenvectors (matrix([2,3,1],[4,4,2],[-4,-8,-2]));
+true;
+
+/* mailing list 2016-05-13: "Eigenvectors problem from a teacher" */
+
+eigenvectors (matrix ([-1,1,0,1], [1,-1,1,0], [0,1,-1,1], [1,0,1,-1]));
+[[[1, - 1, - 3], [1, 2, 1]],
+ [[[1, 1, 1, 1]], [[1, 0, - 1, 0], [0, 1, 0, - 1]], [[1, - 1, 1, - 1]]]];
+
+check_eigenvectors (matrix ([-1,1,0,1], [1,-1,1,0], [0,1,-1,1], [1,0,1,-1]));
+true;
+
+/* examples from reference manual */
+
+eigenvectors (matrix ([11, -1], [1, 7]));
+[[[9 - sqrt(3), sqrt(3) + 9], [1, 1]],
+ [[[1, sqrt(3) + 2]], [[1, 2 - sqrt(3)]]]];
+
+check_eigenvectors (matrix ([11, -1], [1, 7]));
+true;
+
+eigenvectors (matrix ([0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]));
+[[[0, 2], [2, 2]],
+ [[[1, 0, 0, 0]], [[0, 0, 1, 0], [0, 0, 0, 1]]]];
+
+check_eigenvectors (matrix ([0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]));
+true;
+
+/* Test changevar for summation */
+changevar(sum(a[N-1-r]*x^r, r, 0, N-1), s = N-1-r, s, r);
+sum(a[s]*x^(N-1-s), s, 0, N-1);
+
+/* SF bug report #3170: "Error in simtran" */
+
+(A:matrix([-2,1,1],[1,-2,1],[1,1,-2]),
+ simtran(A))$
+[[[-3,0],[2,1]],
+ [[[1/sqrt(2),0,-1/sqrt(2)],[0,1/sqrt(2),-1/sqrt(2)]],
+  [[1/sqrt(3),1/sqrt(3),1/sqrt(3)]]]]$
+
+leftmatrix . A . rightmatrix $
+matrix([-3,0,0],[0,-3,0],[0,0,0])$
+

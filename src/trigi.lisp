@@ -95,8 +95,8 @@
 (defun domain-error (x f)
   (merror (intl:gettext "~A: argument ~:M isn't in the domain of ~A.") f (complexify x) f))
 
-;; Build a hash table 'cl-flonum-op' that maps Maxima function names 
-;; to their CL equivalents. 
+;; Build hash tables '*flonum-op*' and '*big-float-op*' that map Maxima
+;; function names to their corresponding Lisp functions.
 
 (defvar *flonum-op* (make-hash-table :size 64)
   "Hash table mapping a maxima function to a corresponding Lisp
@@ -351,7 +351,7 @@
 (setf (get '%atanh 'reflection-rule) #'odd-function-reflect)
 (setf (get '%asech 'reflection-rule) #'even-function-reflect)
 (setf (get '%acsch 'reflection-rule) #'odd-function-reflect)
-(setf (get '%acoth 'reflection-rule) #'even-function-reflect)
+(setf (get '%acoth 'reflection-rule) #'odd-function-reflect)
 
 ;; When b is nil, do not apply the reflection rule. For trigonometric like
 ;; functions, b is $trigsign.  This function uses 'great' to decide when to
@@ -382,19 +382,17 @@
 ;; When z is a Maxima complex float or when 'numer' is true and z is a
 ;; Maxima complex number, evaluate (op z) by applying the mapping from
 ;; the Maxima operator 'op' to the operator in the hash table
-;; 'flonum-op'. When z isn't a Maxima complex number, return
+;; '*flonum-op*'. When z isn't a Maxima complex number, return
 ;; nil.
+
 (defun flonum-eval (op z)
-  (let ((flonum-op (gethash op *flonum-op*)))
-    (when (and flonum-op (complex-number-p z 'float-or-rational-p))
+  (let ((op (gethash op *flonum-op*)))
+    (when (and op (complex-number-p z 'float-or-rational-p))
       (let ((x ($realpart z)) (y ($imagpart z)))
 	(when (or $numer (floatp x) (floatp y))
 	  (setq x ($float x))
 	  (setq y ($float y))
-          (bigfloat-alternative
-           (complexify
-            (funcall flonum-op (if (zerop y) x (complex x y))))
-           (big-float-eval op z)))))))
+	  (complexify (funcall op (if (zerop y) x (complex x y)))))))))
 
 ;; For now, big float evaluation of trig-like functions for complex
 ;; big floats uses rectform.  I suspect that for some functions (not
@@ -409,19 +407,17 @@
     (let ((x ($realpart z))
 	  (y ($imagpart z))
 	  (bop (gethash op *big-float-op*)))
-      (macrolet ((afloatp (u)
-                   `(or (floatp ,u) ($bfloatp ,u))))
-        ;; If bop is non-NIL, we want to try that first.  If bop
-        ;; declines (by returning NIL), we silently give up and use the
-        ;; rectform version.
-        (cond ((and (afloatp x) (like 0 y))
-               (or (and bop (funcall bop ($bfloat x)))
-                   ($bfloat `((,op simp) ,x))))
-              ((or (afloatp x) (afloatp y))
-               (or (and bop (funcall bop ($bfloat x) ($bfloat y)))
-                   (let ((z (add ($bfloat x) (mul '$%i ($bfloat y)))))
-                     (setq z ($rectform `((,op simp) ,z)))
-                     ($bfloat z)))))))))
+      ;; If bop is non-NIL, we want to try that first.  If bop
+      ;; declines (by returning NIL), we silently give up and use the
+      ;; rectform version.
+      (cond ((and ($bfloatp x) (like 0 y))
+	     (or (and bop (funcall bop x))
+		 ($bfloat `((,op simp) ,x))))
+	    ((or ($bfloatp x) ($bfloatp y))
+	     (or (and bop (funcall bop ($bfloat x) ($bfloat y)))
+		 (let ((z (add ($bfloat x) (mul '$%i ($bfloat y)))))
+		   (setq z ($rectform `((,op simp) ,z)))
+		   ($bfloat z))))))))
 	 
 ;; For complex big float evaluation, it's important to check the 
 ;; simp flag -- otherwise Maxima can get stuck in an infinite loop:
@@ -616,19 +612,15 @@
 	     (merror (intl:gettext "tan: ~M isn't in the domain of tan.") x))
 	    (cos-of-coeff-pi
 	     (div sin-of-coeff-pi cos-of-coeff-pi))))
-       
-     ;; Need period of 2*%pi to continue
-     ((not (mevenp (car coeff))) nil)
- 
-     ;; This expression sets x to the coeff of %pi (mod 2) as a side
-     ;; effect and then, if this is an integer, returns tan of the
-     ;; rest.
-     ((integerp (setq x (mmod (cdr coeff) 2)))
+
+     ;; This expression sets x to the coeff of %pi (mod 1) as a side
+     ;; effect and then, if this is zero, returns tan of the
+     ;; rest, because tan has periodicity %pi.
+     ((zerop1 (setq x (mmod (cdr coeff) 1)))
       (cons-exp '%tan zl-rem))
  
-     ;; Similarly, if x = 1/2 or 3/2 then return -cot(x).
-     ((or (alike1 1//2 x)
-	  (alike1 '((rat) 3 2) x))
+     ;; Similarly, if x = 1/2 then return -cot(x).
+     ((alike1 1//2 x)
         (neg (cons-exp '%cot zl-rem))))))
 
 (defmfun simp-%csc (form y z)

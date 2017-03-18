@@ -6,4 +6,10 @@ abs_integrate.info: abs_integrate.texi
 	makeinfo $<
 
 integration-index.lisp: abs_integrate.info
-	perl ../../../doc/info/build_index.pl $< > $@
+	perl  $(top_srcdir)/doc/info/build_index.pl $< > $@
+
+info_TEXINFOS = abs_integrate.texi
+
+AM_MAKEINFOHTMLFLAGS = --no-split
+
+EXTRA_DIST = integration-index.lisp

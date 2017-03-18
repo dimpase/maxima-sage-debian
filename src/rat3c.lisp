@@ -198,7 +198,7 @@
   (if (> egcd 1)
       (setq u (pexpon*// u egcd nil)
 	    v (pexpon*// v egcd nil)))
-  (if (> (p-le v) (p-le u)) (exch u v))
+  (if (> (p-le v) (p-le u)) (rotatef u v))
   (setq s (case $gcd
 	    ($red (redgcd u v))
 	    ($subres (subresgcd u v))
@@ -378,7 +378,7 @@
 (defun ucontent (p)			;CONTENT OF UNIV. POLY
   (cond ((pcoefp p) (abs p))
 	(t (setq p (mapcar #'abs (coefl (cdr p))))
-	   (let ((m (apply #'min p)))
+	   (let ((m (reduce #'min p)))
 	     (oldcontent2 (delete m p :test #'equal) m)))))
 
 ;;***	PGCDU CORRESPONDS TO BROWN'S ALGORITHM U

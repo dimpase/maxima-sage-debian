@@ -31,7 +31,6 @@
 ;; Let's have version numbers 1,2,3,...
 
 (eval-when (:load-toplevel :execute)
-  (mfuncall '$declare '$integervalued '$feature)
   ($put '$nummod 3 '$version))
 
 (defmacro opcons (op &rest args)
@@ -218,11 +217,15 @@
 			 (opcons '$floor o-sum)))
 	   (add i-sum o-sum)))
 
-	;; handle 0 < e < 1 implies floor(e) = 0 and
-	;; -1 < e < 0 implies floor(e) = -1.
+	;; handle 0 <= e < 1 implies floor(e) = 0 and
+	;; -1 <= e < 0 implies floor(e) = -1.
 
-	((and (equal ($compare 0 e) "<") (equal ($compare e 1) "<")) 0)
-	((and (equal ($compare -1 e) "<") (equal ($compare e 0) "<")) -1)
+	((and (member ($compare 0 e) '("<" "<=") :test #'equal)
+	      (equal ($compare e 1) "<"))
+	 0)
+	((and (member ($compare -1 e) '("<" "<=") :test #'equal)
+	      (equal ($compare e 0) "<"))
+	 -1)
 	(t `(($floor simp) ,e))))
 
 (defun floor-integral (x)
@@ -237,6 +240,25 @@
 (putprop '$ceiling `((x) ,#'ceiling-integral) 'integral)
 
 (defprop $ceiling simp-ceiling operators)
+
+(defprop $floor simplim%floor simplim%function)
+
+(defun simplim%floor (expr var val)
+  (let* ((arg (cadr expr))
+	 (b (behavior arg var val))
+	 (arglimab (limit arg var val 'think)) ; with $zeroa $zerob
+	 (arglim (ridofab arglimab)))
+    (cond ((and (= b -1)
+		(maxima-integerp arglim))
+	   (m- arglim 1))
+	  ((and (= b 1)
+		(maxima-integerp arglim))
+	   arglim)
+	  ((and (mnump arglim)
+		(not (maxima-integerp arglim)))
+	   (simplify (list '($floor) arglim)))
+	  (t
+	   (throw 'limit nil)))))
 
 (defprop $ceiling tex-matchfix tex)
 (defprop $ceiling (("\\left \\lceil " ) " \\right \\rceil") texsym)
@@ -274,12 +296,36 @@
 			 (opcons '$ceiling o-sum)))
 	   (add i-sum o-sum)))
 
-	;; handle 0 < e < 1 implies ceiling(e) = 1 and
-	;; -1 < e < 0 implies ceiling(e) = 0.
+	;; handle 0 < e <= 1 implies ceiling(e) = 1 and
+	;; -1 < e <= 0 implies ceiling(e) = 0.
 
-	((and (equal ($compare 0 e) "<") (equal ($compare e 1) "<")) 1)
-	((and (equal ($compare -1 e) "<") (equal ($compare e 0) "<")) 0)
+	((and (equal ($compare 0 e) "<")
+	      (member ($compare e 1) '("<" "<=") :test #'equal))
+	 1)
+	((and (equal ($compare -1 e) "<")
+	      (member ($compare e 0) '("<" "<=") :test #'equal))
+	 0)
 	(t `(($ceiling simp) ,e))))
+
+(defprop $ceiling simplim%ceiling simplim%function)
+
+(defun simplim%ceiling (expr var val)
+  (let* ((arg (cadr expr))
+	 (b (behavior arg var val))
+	 (arglimab (limit arg var val 'think)) ; with $zeroa $zerob
+	 (arglim (ridofab arglimab)))
+    (cond ((and (= b -1)
+		(maxima-integerp arglim))
+	   arglim)
+	  ((and (= b 1)
+		(maxima-integerp arglim))
+	   (m+ arglim 1))
+	  ((and (mnump arglim)
+		(not (maxima-integerp arglim)))
+	   (simplify (list '($ceiling) arglim)))
+	  (t
+	   (throw 'limit nil)))))
+
 
 (defprop $mod simp-nummod operators)
 (defprop $mod tex-infix tex)
@@ -337,6 +383,25 @@
 		 ((and (eq sgn '$zero) ($featurep ub '$even)) ub)
 		 ((apply-reflection-simp yy e t))
 		 (t `((,yy simp) ,e)))))))
+
+(defprop %round simplim%round simplim%function)
+
+(defun simplim%round (expr var val)
+  (let* ((arg (cadr expr))
+	 (b (behavior arg var val))
+	 (arglimab (limit arg var val 'think)) ; with $zeroa $zerob
+	 (arglim (ridofab arglimab)))
+    (cond ((and (= b -1)
+		(maxima-integerp (m+ 1//2 arglim)))
+	   (m- arglim 1//2))
+	  ((and (= b 1)
+		(maxima-integerp (m+ 1//2 arglim)))
+	   (m+ arglim 1//2))
+	  ((and (mnump arglim)
+		(not (maxima-integerp (m+ 1//2 arglim))))
+	   (simplify (list '(%round) arglim)))
+	  (t
+	   (throw 'limit nil)))))
  
 ;; Round a number towards zero.
 

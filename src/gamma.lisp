@@ -35,7 +35,7 @@
 ;;; Maxima User variable:
 ;;;
 ;;;   $factorial_expand    - Allows argument simplificaton for expressions like
-;;;                          factorial_double(n-1) and factorial_double(2*k+n)
+;;;                          double_factorial(n-1) and double_factorial(2*k+n)
 ;;;   $beta_expand         - Switch on further expansions for the Beta functions
 ;;;
 ;;;   $erf_representation  - When T erfc, erfi, erf_generalized, fresnel_s 
@@ -114,13 +114,29 @@
 ;;; Test for numerically evaluation in complex float precision
 
 (defun complex-float-numerical-eval-p (&rest args)
-  (let ((flag nil))
-    (dolist (ll args)
-      (when (not (complex-number-p ll 'float-or-rational-p)) 
-        (return-from complex-float-numerical-eval-p nil))
-      (when (or (floatp ($realpart ll)) (floatp ($imagpart ll)))
-        (setq flag t)))
-    (if (or $numer flag) t nil)))
+  "Determine if ARGS consists of numerical values by determining if
+  the real and imaginary parts of each arg are nuemrical (but not
+  bigfloats).  A non-NIL result is returned if at least one of args is
+  a floating-point value or if numer is true.  If the result is
+  non-NIL, it is a list of the arguments reduced via rectform"
+  (let (flag values)
+    (flet ((unrat (x)
+	     (if (ratnump x)
+		 (/ (second x) (third x))
+		 x)))
+      (dolist (ll args)
+	(destructuring-bind (rll . ill)
+	    (trisplit ll)
+	  (unless (and (float-or-rational-p rll)
+		       (float-or-rational-p ill))
+	    (return-from complex-float-numerical-eval-p nil))
+	  ;; Always save the result from trisplit.  But for backward
+	  ;; compatibility, only set the flag if any item is a float.
+	  (push (add rll (mul ill '$%i)) values)
+	  (setf flag (or flag (or (floatp rll) (floatp ill)))))))
+    (when (or $numer flag)
+      ;; Return the values in the same order as the args!
+      (nreverse values))))
 
 ;;; Test for numerically evaluation in bigfloat precision
 
@@ -129,19 +145,34 @@
     (dolist (ll args)
       (when (not (bigfloat-or-number-p ll)) 
         (return-from bigfloat-numerical-eval-p nil))
-      (when ($bfloatp ll) (setq flag t)))
+      (when ($bfloatp ll)
+	(setq flag t)))
     (if (or $numer flag) t nil)))
 
 ;;; Test for numerically evaluation in complex bigfloat precision
 
 (defun complex-bigfloat-numerical-eval-p (&rest args)
-  (let ((flag nil))
+  "Determine if ARGS consists of numerical values by determining if
+  the real and imaginary parts of each arg are nuemrical (including
+  bigfloats). A non-NIL result is returned if at least one of args is
+  a floating-point value or if numer is true. If the result is
+  non-NIL, it is a list of the arguments reduced via rectform."
+
+  (let (flag values)
     (dolist (ll args)
-      (when (not (complex-number-p ll 'bigfloat-or-number-p)) 
-        (return-from complex-bigfloat-numerical-eval-p nil))
-      (when (or ($bfloatp ($realpart ll)) ($bfloatp ($imagpart ll)))
-        (setq flag t)))
-    (if (or $numer flag) t nil)))
+      (destructuring-bind (rll . ill)
+	  (trisplit ll)
+        (unless (and (bigfloat-or-number-p rll)
+                     (bigfloat-or-number-p ill))
+          (return-from complex-bigfloat-numerical-eval-p nil))
+	;; Always save the result from trisplit.  But for backward
+	;; compatibility, only set the flag if any item is a bfloat.
+	(push (add rll (mul ill '$%i)) values)
+	(when (or ($bfloatp rll) ($bfloatp ill))
+          (setf flag t))))
+    (when (or $numer flag)
+      ;; Return the values in the same order as the args!
+      (nreverse values))))
 
 ;;; Test for numerical evaluation in any precision, real or complex.
 (defun numerical-eval-p (&rest args)
@@ -363,7 +394,7 @@
 (defun conjugate-gamma-incomplete (args)
   (let ((a (first args)) (z (second args)))
     (cond ((off-negative-real-axisp z)
-           ;; Definitly not on the negative real axis for z. Mirror symmetry.
+           ;; Definitely not on the negative real axis for z. Mirror symmetry.
 	   (simplify
              (list
               '(%gamma_incomplete)
@@ -386,20 +417,20 @@
               ;; The derivative wrt a in terms of hypergeometric_regularized 2F2
               ;; function and the Generalized Incomplete Gamma function 
               ;; (functions.wolfram.com), only for a>0.
-              '((mplus)
+              `((mplus)
                  ((mtimes)
-                   ((mexpt) ((%gamma) a) 2)
-                   ((mexpt) z a)
+                   ((mexpt) ((%gamma) ,a) 2)
+                   ((mexpt) ,z ,a)
                    (($hypergeometric_regularized)
-                      ((mlist) a a)
-                      ((mlist) ((mplus) 1 a) ((mplus) 1 a))
-                      ((mtimes) -1 z)))
+                      ((mlist) ,a ,a)
+                      ((mlist) ((mplus) 1 ,a) ((mplus) 1 ,a))
+                      ((mtimes) -1 ,z)))
                  ((mtimes) -1
-                   ((%gamma_incomplete_generalized) a 0 z)
-                   ((%log) z))
+                   ((%gamma_incomplete_generalized) ,a 0 ,z)
+                   ((%log) ,z))
                  ((mtimes)
-                   ((%gamma) a)
-                   ((mqapply) (($psi array) 0) a))))
+                   ((%gamma) ,a)
+                   ((mqapply) (($psi array) 0) ,a))))
              (t
               ;; No derivative. Maxima generates a noun form.  
               nil)))
@@ -445,7 +476,6 @@
      (let ((sgn ($sign ($realpart a))))
        (cond ((zerop1 a) '$inf)
              ((member sgn '($neg $nz)) '$infinity)
-             ((eq sgn '($pos)) ($gamma a))
              ;; Call the simplifier of the function.
              (t (simplify (list '(%gamma_incomplete) a z))))))
     (t
@@ -479,7 +509,7 @@
               
       ((eq z '$inf) 0)
       ((and (eq z '$minf) 
-	    (eq a 0))
+	    (eql a 0))
        '$infinity)
 
       ;; Check for numerical evaluation in Float or Bigfloat precision
@@ -781,6 +811,8 @@
 ;;; Maxima returns the numercial result for gamma_incomplete_regularized
 
 (defun gamma-incomplete (a x &optional (regularized nil))
+  (setq x (+ x (cond ((complexp x) #C(0.0 0.0)) ((realp x) 0.0))))
+
   (let ((factor
 	 ;; Compute the factor needed to scale the series or continued
 	 ;; fraction.  This is x^a*exp(-x) or x^a*exp(-x)/gamma(a)
@@ -818,7 +850,7 @@
 	(%gamma-incomplete a x)
       (cond (lower-incomplete-tail-p
 	     ;; %gamma-incomplete compute the lower incomplete gamma
-	     ;; function, so we need to substract that from gamma(a),
+	     ;; function, so we need to subtract that from gamma(a),
 	     ;; more or less.
 	     (cond (regularized
 		    (- 1 (* result factor)))
@@ -1153,7 +1185,7 @@
 (defun conjugate-gamma-incomplete-generalized (args)
   (let ((a (first args)) (z1 (second args)) (z2 (third args)))
     (cond ((and (off-negative-real-axisp z1) (off-negative-real-axisp z2))
-           ;; z1 and z2 definitly not on the negative real axis. 
+           ;; z1 and z2 definitely not on the negative real axis. 
            ;; Mirror symmetry.
 	   (simplify
              (list
@@ -1370,7 +1402,7 @@
 (defun conjugate-gamma-incomplete-regularized (args)
   (let ((a (first args)) (z (second args)))
     (cond ((off-negative-real-axisp z)
-           ;; z definitly not on the negative real axis. Mirror symmetry.
+           ;; z definitely not on the negative real axis. Mirror symmetry.
 	   (simplify
              (list
               '(%gamma_incomplete_regularized)
@@ -1415,6 +1447,7 @@
             ((mtimes) -1 ((mqapply) (($psi array) 0) a)))))
    ;; The derivative wrt z
    ((mtimes)
+      -1
       ((mexpt) $%e ((mtimes) -1 z))
       ((mexpt) z ((mplus) -1 a))
       ((mexpt) ((%gamma) a) -1)))
@@ -1956,25 +1989,13 @@
 ;; bfloats, and complex-bfloat-erf is for complex bfloats.  Care is
 ;; taken to return real results for real arguments and imaginary
 ;; results for imaginary arguments
-;;
-;; Pure imaginary z with Im(z) < 0 causes trouble for Lisp implementations
-;; which recognize signed zero, so just avoid Im(z) < 0 altogether.
-
 (defun complex-erf (z)
-  (if (< (imagpart z) 0.0)
-    (conjugate (complex-erf-upper-half-plane (conjugate z)))
-    (complex-erf-upper-half-plane z)))
-
-(defun complex-erf-upper-half-plane (z)
   (let ((result
           (*
-	    (if (< (realpart z) 0.0) ;; only test needed in upper half plane
+	    (if (or (< (realpart z) 0.0) (and (= (realpart z) 0.0) (< (imagpart z) 0.0)))
 		-1
 	      1)
             (- 1.0 
-              ;; GAMMA-INCOMPLETE returns conjugate when z is pure imaginary
-              ;; with Im(z) < 0 and Lisp implementation recognizes signed zero.
-              ;; Good thing we are in the upper half plane.
               (* (/ (sqrt (float pi))) (gamma-incomplete 0.5 (* z z)))))))
     (cond
       ((= (imagpart z) 0.0)
@@ -2295,6 +2316,19 @@
       ;; Handle infinities at this place.
       ((eq z '$inf) 0)
       ((eq z '$minf) 2)
+      ((eq z '$infinity)	;; parallel to code in simplim%erf-%tanh
+       (destructuring-let (((rpart . ipart) (trisplit (cadr expr)))
+			   (ans ()) (rlim ()))
+			  (setq rlim (limit rpart var val 'think))
+			  (setq ans
+				(limit (m* rpart (m^t ipart -1)) var val 'think))
+			  (setq ans ($asksign (m+ `((mabs) ,ans) -1)))
+			  (cond ((or (eq ans '$pos) (eq ans '$zero))
+				 (cond ((eq rlim '$inf) 0)
+				       ((eq rlim '$minf) 2)
+				       (t '$und)))
+				(t '$und))))
+      ((eq z '$ind) '$ind)
       (t
        ;; All other cases are handled by the simplifier of the function.
        (simplify (list '(%erfc) z))))))
@@ -2778,7 +2812,7 @@
 (defun bf-inverse-erfc (z)
   (cond ((zerop z)
 	 (maxima::merror
-	  (intl:gettext "bf-inverse-erf: inverse_erf(~M) is undefined")
+	  (intl:gettext "bf-inverse-erfc: inverse_erfc(~M) is undefined")
 	  z))
 	((= z 1)
 	 (float 0 z))
@@ -3981,7 +4015,8 @@
                 (eqtest 
                   (list '(%beta_incomplete_regularized) a b z) expr)))))
 
-      ((and (integer-representation-p b) (minusp b))
+      ((and (integer-representation-p b)
+            (if ($bfloatp b) (minusp (cadr b)) (minusp b)) )
        ;; Problem: for b a negative integer the Regularized Incomplete 
        ;; Beta function is defined to be zero. BUT: When we calculate
        ;; e.g. beta_incomplete(1.0,-2.0,1/2)/beta(1.0,-2.0) we get the 
@@ -3989,9 +4024,12 @@
        ;; for this case. How do we get a consistent behaviour?
        0)
 
-      ((and (integer-representation-p a) (minusp a))
+      ((and (integer-representation-p a)
+            (if ($bfloatp a) (minusp (cadr a)) (minusp a)) )
        (cond
+         ;; TODO: The following line does not work for bigfloats.
          ((and (integer-representation-p b) (<= b (- a)))
+         ;;       Does $beta_incomplete or simpbeta underflow in this case?
           (div ($beta_incomplete a b z)
                (simplify (list '($beta) a b))))
          (t 
@@ -4000,17 +4038,25 @@
       ;; Check for numerical evaluation in Float or Bigfloat precision
 
       ((complex-float-numerical-eval-p a b z)
-       (let ((*beta-incomplete-eps* (bigfloat:epsilon ($float 1.0))))
-         ($rectform 
-           (div (beta-incomplete ($float a) ($float b) ($float z))
-                (simplify (list '($beta) ($float a) ($float b)))))))
+       (let ((*beta-incomplete-eps* (bigfloat:epsilon ($float 1.0)))
+              beta ibeta )
+         (setq a ($float a) b ($float b))
+         (if (or (< ($abs (setq beta (simplify (list '($beta) a b)))) 1e-307) 
+                 (< ($abs (setq ibeta (beta-incomplete a b ($float z)))) 1e-307) )
+           ;; In case of underflow (see bug #2999) or precision loss use bigfloats 
+           ;; and emporarily give some extra precision but avoid fpprec dependency.
+           ;; Is this workaround correct for complex values?
+           (let ((fpprec 70))
+             ($float ($beta_incomplete_regularized ($bfloat a) ($bfloat b) z)) )
+           ($rectform (div ibeta beta)) )))
            
       ((complex-bigfloat-numerical-eval-p a b z)
        (let ((*beta-incomplete-eps*
                (bigfloat:epsilon (bigfloat:bigfloat 1.0))))
+         (setq a ($bfloat a) b ($bfloat b))
          ($rectform 
-           (div (beta-incomplete ($bfloat a) ($bfloat b) ($bfloat z))
-                (simplify (list '($beta) ($float a) ($float b)))))))
+           (div (beta-incomplete a b ($bfloat z))
+                (simplify (list '($beta) a b))))))
 
       ;; Check for argument simplifications and transformations
 

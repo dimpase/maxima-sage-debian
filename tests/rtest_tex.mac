@@ -28,6 +28,7 @@ with_stdout ("tmp-rtest-1.tex",
     tex (riffraff),
     tex (riff_raff),
     tex ([inf, minf, true, false, done]),
+    map (tex, [inf, minf, true, false, done]),
     tex (%pi + %e + %i + %gamma),
     tex ('gamma(x)),
     tex ([alpha, beta, verbify (gamma), delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu]),
@@ -388,6 +389,27 @@ with_stdout (s,
     
     tex (sqrt (u)),
     tex (z - bessel_j (0, sqrt (1/(1 - u)))),
+
+    print ("Typesetting exponents."),
+
+    tex(sin(x)^2),
+    tex(f(x)^2),
+
+    tex(sin(x)^n),
+    tex(f(x)^n),
+
+    tex(sin(x)^-2),
+    tex(f(x)^-2),
+
+    simp:false,
+    tex(sin(x)^-2),
+    tex(f(x)^-2),
+    simp:true,
+
+    tex('integrate(f(x),x,0,inf)^4),
+    tex('sum(f(x),x,0,n)^4),
+    tex('integrate(f(x)^n,x,0,inf)^4),
+    tex('sum(f(x)^x,x,0,n)^4),
 
     print ("The end!"),
     print ("\\end{document}"));

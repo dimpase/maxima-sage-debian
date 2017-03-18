@@ -30,8 +30,13 @@ To build Maxima:
     Press carriage return to accept the default values.
 
     The configure process can be automated through the use
-    of optional arguments to configure.
-    See the file configure.lisp for details.
+    of keyword arguments to configure.  For example,
+
+      (configure :interactive nil)
+
+    will use the default values for all options and will not
+    prompt for any input.
+    See the file configure.lisp for more details.
 
 (4) Quit Lisp,
     
@@ -45,6 +50,13 @@ To build Maxima:
     binary-gcl/numerical
     binary-gcl/numerical/slatec
 
+(4.2) GCL only: Create an empty sys-proclaim.lisp file, restart Lisp and do:
+
+    (load "generate-sys-proclaim.lisp")
+
+    Delete the directory binary-gcl and repeat step (4.1) before continuing to
+    step (5).
+
 Maxima builds with defsystem. The file maxima-build.lisp is provided
 for rudimentary guidance in using defsystem. Experts should feel free
 to subsitute their knowledge of defsystem for the following steps.
@@ -56,10 +68,6 @@ to subsitute their knowledge of defsystem for the following steps.
 (6) Compile the Lisp source code:
 
     (maxima-compile)
-
-    Clisp only: Clisp complains about SETQ applied to a symbol in
-    a locked package when compiling src/cpoly.lisp.
-    When Clisp asks you if you want to allow it, enter "continue" (without quote marks).
 
 (7) Quit Lisp, and restart Lisp.
 
@@ -78,7 +86,7 @@ to subsitute their knowledge of defsystem for the following steps.
     specify a start-up function, specify USER::RUN.
 
     There is a function MAXIMA-DUMP in src/maxima-build.lisp to dump an image.
-    At present it works for Clisp, SBCL, GCL, CMUCL, Scieneer, and Allegro.
+    At present it works for Clisp, SBCL, GCL, CMUCL, Scieneer, Allegro and CCL.
     Reinhard Oldenburg writes, in reference to Lispworks:
     "(maxima-dump) works when threading is disabled."
     Some Lisp implementations (SBCL, GCL, CMUCL, Scieneer, maybe others)

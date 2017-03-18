@@ -26,7 +26,7 @@
 		       $rules $props $ratvars
 		       varlist genvar
 		       $gensumnum checkfactors $features featurel
-		       $weightlevels tellratlist $dontfactor
+		       tellratlist $dontfactor
 		       dispflag savefile $%% $error
 		       opers *ratweights $ratweights
 		       $stringdisp $lispdisp
@@ -209,6 +209,7 @@
   ;; Should really get the truename of FILE.
   (if printp (format t (intl:gettext "loadfile: loading ~A.~%") file))
   (let* ((path (pathname file))
+	 (*package* (find-package :maxima))
 	 ($load_pathname path)
 	 (*read-base* 10.)
 	 (tem (errset #-sbcl (load (pathname file)) #+sbcl (with-compilation-unit nil (load (pathname file))))))
@@ -331,7 +332,7 @@
 	      (mapc #'kill1 (cdr $infolists))
 	      (setq $ratvars '((mlist simp)) varlist nil genvar nil
 		    checkfactors nil greatorder nil lessorder nil $gensumnum 0
-		    $weightlevels '((mlist)) *ratweights nil $ratweights
+		    *ratweights nil $ratweights
 		    '((mlist simp))
 		    tellratlist nil $dontfactor '((mlist)) $setcheck nil)
 	      (killallcontexts))
@@ -347,6 +348,14 @@
 			    (not (> (cadr x) (caddr x))))))
 	      (let (($linenum (caddr x))) (remlabels (- (caddr x) (cadr x)))))
 	     ((setq z (mgetl (caar x) '(hashar array))) (remarrelem z x))
+	     ((and ($subvarp x)
+		   (boundp (caar x))
+		   (hash-table-p (setq z (symbol-value (caar x)))))
+	      ; Evaluate the subscripts (as is done in ARRSTORE)
+	      (let ((indices (mevalargs (cdr x))))
+		(if (gethash 'dim1 z)
+		  (remhash (car indices) z)
+		  (remhash indices z))))
          ((eq (caar x) '$@) (mrecord-kill x))
 	     ((and (eq (caar x) '$allbut)
 		   (not (dolist (u (cdr x))
@@ -536,7 +545,7 @@
 	((nonsymchk y '$alias))
         ((eq x y) y) ; x is already the alias of y
 ; Not needed. We return the alias immediately if we already have one.
-;	((not (eq (getcharn x 1) #\$))
+;	((not (eql (getcharn x 1) #\$))
 ;	 (merror "-ed symbols may not be aliased. ~M" x))
 	((get x 'reversealias)
 	 (if (not (eq x y))
@@ -762,14 +771,14 @@
 (defmspec $errcatch (form)
   (let ((errcatch (cons bindlist loclist)) ret)
     (if (null (setq ret (let (*mdebug*)
-			  (errset (mevaln (cdr form)) lisperrprint))))
+			  (errset (rat-error-to-merror (mevaln (cdr form))) lisperrprint))))
 	(errlfun1 errcatch))
     (cons '(mlist) ret)))
 
 (defmspec $catch (form)
   (let ((mcatch (cons bindlist loclist)))
     (prog1
-	(catch 'mcatch (mevaln (cdr form)))
+	(catch 'mcatch (rat-error-to-merror (mevaln (cdr form))))
       (errlfun1 mcatch))))
 
 (defmfun $throw (exp)
@@ -795,18 +804,9 @@
 
 
 (defmfun $quit ()
-  nil
   (princ *maxima-epilog*)
-  #+kcl (lisp::bye)
-  #+(or cmu scl) (ext:quit)
-  #+sbcl (sb-ext:quit)
-  #+clisp (ext:quit)
-  #+(or openmcl mcl) (ccl::quit)
-  #+gcl (quit)
-  #+abcl (cl-user::quit)
-  #+ecl (si:quit)
-  #+excl "don't know quit function"
-  #+lispworks (lispworks:quit))
+  (bye)
+  (mtell (intl:gettext "quit: No known quit function for this Lisp.~%")))
 
 ;; File-processing stuff.
 
@@ -857,7 +857,6 @@
 
 (mapc #'(lambda (x) (putprop (car x) (cadr x) 'assign))
       '(($debugmode debugmode1)
-	($ttyintfun ttyintfunsetup)
 	($fpprec fpprec1) ($poislim poislim1)
 	($default_let_rule_package let-rule-setter)
 	($current_let_rule_package let-rule-setter)

@@ -217,16 +217,21 @@
 ;; Maxima functions in (Z/nZ)*
 ;; 
 ;; zn_order, zn_primroot_p, zn_primroot, zn_log, 
-;; chinese,
+;; chinese, zn_characteristic_factors, zn_factor_generators, zn_nth_root,
 ;; zn_add_table, zn_mult_table, zn_power_table 
 ;;
-;; 2012 - 2014, Volker van Nek  
+;; 2012 - 2015, Volker van Nek  
 ;;
 
 ;; Maxima option variables:
 (defmvar $zn_primroot_limit 1000 "Upper bound for `zn_primroot'." fixnum)
 (defmvar $zn_primroot_verbose nil "Print message when `zn_primroot_limit' is reached." boolean)
 (defmvar $zn_primroot_pretest nil "`zn_primroot' pretests whether (Z/nZ)* is cyclic." boolean)
+
+
+(defun zn-quo (n d p)
+  (declare (inline))
+  (mod (* n (inv-mod d p)) p) )
 
 
 ;; compute the order of x in (Z/nZ)*
@@ -255,20 +260,31 @@
            (gf-merror (intl:gettext 
              "Third argument to `zn_order' must be of the form [[p1, e1], ..., [pk, ek]]." )))
          (setq fs-phi (totient-with-factors n)) )
-      (zn_order x 
+      (zn-order x 
                 n
                 (car fs-phi) ;; phi
                 (cdr fs-phi)) ))) ;; factors of phi with multiplicity
 ;;
 (defun zn_order (x n phi fs-phi)
-  (let ((s phi) p e)
-    (dolist (f fs-phi s)
-      (setq p (car f) e (cadr f))
-      (setq s (truncate s (expt p e)))
-      (do ((z (power-mod x s n)))
+  (format t "`zn_order' is deprecated. ~%Please use `zn-order' instead.~%" )
+  (zn-order x n phi fs-phi) )
+;;
+;; compute order of x as a divisor of the known group order
+;;
+(defun zn-order (x n ord fs-ord)
+  (let (p e z)
+    (dolist (f fs-ord ord)
+      (setq p (car f) e (cadr f)
+            ord (truncate ord (expt p e))
+            z (power-mod x ord n) )
+            ;; ord(z) = p^i, i from [0,e]
+            ;; replace p^e in ord by p^i : x^(ord*p^i/p^e) = 1
+      (do () 
           ((= z 1))
-        (setq z (power-mod z p n))
-        (setq s (* s p)) )) ))
+        (setq ord (* ord p))
+        (when (= e 1) (return))
+        (decf e)
+        (setq z (power-mod z p n)) ))))
 
 
 ;; compute totient (euler-phi) of n and its factors in one function
@@ -416,7 +432,7 @@
       (list '($chinese) (cons '(mlist simp) rems) mods) )
     ((notevery #'integerp (setq mods (cdr mods)))
       (list '($chinese) (cons '(mlist simp) rems) (cons '(mlist simp) mods)) )
-    ((eql return-lcm? t)
+    ((eql return-lcm? '$lcm)
       (cons '(mlist simp) (chinese rems mods)) )
     (t
       (car (chinese rems mods)) )))
@@ -497,26 +513,35 @@
           (zn-dlog a g n 
                    (car fs-phi)         ;; phi
                    (cdr fs-phi) ) ))))) ;; factors with multiplicity
-
-;; Pohlig and Hellman reduction:
-(defun zn-dlog (a g n ord fs-ord) ;; g is generator of order ord mod n
-  (let (p e ord/p om x dx dlog (dlogs nil) (g-inv (inv-mod g n)))
+;;
+;; Pohlig-Hellman-reduction:
+;;
+;;   Solve g^x = a mod n. 
+;;   Assume, that a is an element of (Z/nZ)* and g is a generator.
+;;
+(defun zn-dlog (a g n ord fs-ord)
+  (let (p e ord/p om xp xk mods dlogs (g-inv (inv-mod g n)))
     (dolist (f fs-ord)
       (setq p (car f) e (cadr f) 
             ord/p (truncate ord p) 
-            om (power-mod g ord/p n)  ;; om is generator of prime order p mod n
-            x 0 )
-      (do ((b a) (k 1) (pk 1)) (())
-        (setq dlog (dlog-rho (power-mod b ord/p n) om p n)
-              dx (* dlog pk) )
-        (incf x dx)
-        (when (= k e) (return))
+            om (power-mod g ord/p n) ;; om is a generator of prime order p
+            xp 0 )
+      ;; Let op = ord/p^e, gp = g^op (mod n), ap = a^op (mod n) and 
+      ;;     xp = x (mod p^e).
+      ;; gp is of order p^e and therefore 
+      ;;   (*) gp^xp = ap (mod n).
+      (do ((b a) (k 0) (pk 1) (acc g-inv) (e1 (1- e))) (()) ;; Solve (*) by solving e logs ..
+        (setq xk (dlog-rho (power-mod b ord/p n) om p n))   ;;   .. in subgroups of order p.
+        (incf xp (* xk pk))
+        (incf k)
+        (when (= k e) (return)) ;; => xp = x_0+x_1*p+x_2*p^2+...+x_{e-1}*p^{e-1} < p^e
         (setq ord/p (truncate ord/p p)
-              k (1+ k) 
-              pk (* pk p)
-              b (mod (* b (power-mod g-inv dx n)) n) ))
-      (setq dlogs (cons x dlogs)) )
-    (car (chinese (nreverse dlogs) (mapcar #'(lambda (z) (apply #'expt z)) fs-ord))) ))
+              pk (* pk p) )
+        (when (/= xk 0) (setq b (mod (* b (power-mod acc xk n)) n)))
+        (when (/= k e1) (setq acc (power-mod acc p n))) )
+      (push (expt p e) mods)
+      (push xp dlogs) )
+    (car (chinese dlogs mods)) )) ;; Find x (mod ord) with x = xp (mod p^e) for all p,e.
 
 ;; baby-steps-giant-steps:
 
@@ -574,7 +599,7 @@
             (setq bb b yy y zz z) ))
         (setq dy (mod (- y yy) p) dz (mod (- zz z) p)) ;; g^dy = a^dz = g^(x*dz)
         (when (= 1 (gcd dz p))
-          (return (mod (* dy (inv-mod dz p)) p)) )     ;; x = dy/dz mod p (since g is generator of order p)
+          (return (zn-quo dy dz p)) ) ;; x = dy/dz mod p (since g is generator of order p)
         (setq y 0
               z 0
               b 1
@@ -599,9 +624,17 @@
 ;; characteristic factors:
 
 (defmfun $zn_characteristic_factors (m)
-  (unless (integerp m)
-    (gf-merror (intl:gettext "`zn_characteristic_factors': Argument must be an integer.")) )
+  (unless (and (integerp m) (> m 1)) ;; according to Shanks no result for m = 1
+    (gf-merror (intl:gettext 
+      "`zn_characteristic_factors': Argument must be an integer greater than 1." )))
   (cons '(mlist simp) (zn-characteristic-factors m)) )
+
+(defmfun $zn_carmichael_lambda (m)
+  (cond 
+    ((integerp m)
+      (if (= m 1) 1 (zn-characteristic-factors m t)) )
+    (t (gf-merror (intl:gettext 
+         "`zn_carmichael_lambda': Argument must be a positive integer." )))))
 
 ;; D. Shanks - Solved and unsolved problems in number theory, 2. ed
 ;; definition 29 and 30 (p. 92 - 94)
@@ -610,7 +643,7 @@
 ;; => Z104* is isomorphic to M2 x M2 x M12
 ;;    the direct product of modulo multiplication groups of order 2 resp. 12
 ;;
-(defun zn-characteristic-factors (m) 
+(defun zn-characteristic-factors (m &optional lambda-only) ;; m > 1
   (let* (($intfaclim) 
          (pe-list (get-factor-list m)) ;; def. 29 part A
          (shanks-phi                   ;;         part D
@@ -627,6 +660,7 @@
         (if (= q p) 
           (push qd left)
           (setq p q f (* f (expt q d))) ))
+      (when lambda-only (return-from zn-characteristic-factors f))
       (push f fs) )))
 
 ;; definition 29 parts B,C (p. 92)
@@ -648,40 +682,186 @@
         (t (> (cadr a) (cadr b))) ))
 
 
-;; nth roots in (Z/nZ)*
+;; factor generators:
 
+(defmfun $zn_factor_generators (m) 
+  (unless (and (integerp m) (> m 1))
+    (gf-merror (intl:gettext 
+      "`zn_factor_generators': Argument must be an integer greater or equal 2." )))
+  (cons '(mlist simp) (zn-factor-generators m)) )
+;;
+;; D. Shanks - Solved and unsolved problems in number theory, 2. ed
+;; Theorem 44, page 94
+;;
+;; zn_factor_generators(104);                     --> [79,27,89]
+;; zn_characteristic_factors(104);                --> [2,2,12]
+;; map(lambda([g], zn_order(g,104)), [79,27,89]); --> [2,2,12]
+;;
+;; Every element in Z104* can be expressed as 
+;;   79^i * 27^j * 89^k (mod m) where 0 <= i,j < 2 and 0 <= k < 12
+;;
+;; The proof of theorem 44 contains the construction of the factor generators.
+;;
+(defun zn-factor-generators (m) ;; m > 1
+  (let* (($intfaclim) 
+         (fs (sort (get-factor-list m) #'< :key #'car))
+         (pe (car fs))
+         (p (car pe)) (e (cadr pe))
+         (a (expt p e)) 
+         phi fs-phi ga gs ords fs-ords pegs )
+    ;; lemma 1, page 98 :
+                                                       ;; (Z/mZ)* is cyclic when m = 
+    (when (= m 2)                                      ;; 2
+      (return-from zn-factor-generators (list 1)) )     
+    (when (or (< m 8)                                  ;; 3,4,5,6,7
+              (and (> p 2) (null (cdr fs)))            ;;   p^k, p#2
+              (and (= 2 p) (= 1 e) (null (cddr fs))) ) ;; 2*p^k, p#2
+      (setq phi (totient-by-fs-n fs)
+            fs-phi (sort (mapcar #'car (get-factor-list phi)) #'<)
+            ga (zn-primroot m phi fs-phi) )
+      (return-from zn-factor-generators (list ga)) )
+    (setq fs (cdr fs))
+    (cond 
+      ((= 2 p)
+        (unless (and (= e 1) (cdr fs)) ;; phi(2*m) = phi(m) if m#1 is odd
+          (push (1- a) gs) ) ;; a = 2^e
+        (when (> e 1) (setq ords (list 2) fs-ords (list '((2 1)))))
+        (when (> e 2) 
+          (push 3 gs) (push (expt 2 (- e 2)) ords) (push `((2 ,(- e 2))) fs-ords) ))
+    ;; lemma 2, page 100 :
+      (t 
+        (setq phi (* (1- p) (expt p (1- e)))
+              fs-phi (sort (get-factor-list (1- p)) #'< :key #'car) )
+        (when (> e 1) (setq fs-phi (nconc fs-phi (list `(,p ,(1- e))))))
+        (setq ga (zn-primroot a phi (mapcar #'car fs-phi)) ;; factors only
+              gs (list ga)
+              ords (list phi)
+              fs-ords (list fs-phi) )))
+    ;; 
+    (do (b gb c h ia) 
+        ((null fs))
+      (setq pe (car fs) fs (cdr fs)
+            p (car pe) e (cadr pe)
+            phi (* (1- p) (expt p (1- e)))
+            fs-phi (sort (get-factor-list (1- p)) #'< :key #'car) )
+      (when (> e 1) (setq fs-phi (nconc fs-phi (list `(,p ,(1- e))))))
+      (setq b (expt p e)
+            gb (zn-primroot b phi (mapcar #'car fs-phi))
+            c (mod (* (inv-mod b a) (- 1 gb)) a) ;; CRT: h = gb mod b
+            h (+ (* b c) gb)                     ;; CRT: h =  1 mod a
+            ia (inv-mod a b)
+            gs (mapcar #'(lambda (g) (+ (* a (mod (* ia (- 1 g)) b)) g)) gs)
+            gs (cons h gs)
+            ords (cons phi ords)
+            fs-ords (cons fs-phi fs-ords)
+            a (* a b) ))
+    ;; lemma 3, page 101 :
+    (setq pegs 
+      (mapcar #'(lambda (g ord f)
+                (mapcar #'(lambda (pe) 
+                          (append pe 
+                            (list (power-mod g (truncate ord (apply #'expt pe)) m)) ))
+                        f ))
+              gs ords fs-ords ))
+    (setq pegs (sort (apply #'append pegs) #'zn-pe>))
+    (do ((todo pegs (nreverse left)) 
+         (q 0 0) (fg 1 1) (left nil nil)
+          g fgs )
+        ((null todo) fgs)
+      (dolist (peg todo)
+        (setq p (car peg) g (caddr peg)) 
+        (if (= p q) 
+          (push peg left)
+          (setq q p fg (mod (* fg g) m)) ))
+      (push fg fgs) )))
+
+
+;; r-th roots --------------------------------------------------------------- ;;
+;;
+;; If the residue class a is an r-th power modulo n and contained in a multiplication 
+;; subgroup of (Z/nZ), return all r-th roots from this subgroup and false otherwise.
+;;
 (defmfun $zn_nth_root (a r n &optional fs-n)
   (unless (and (integerp a) (integerp r) (integerp n)) 
-    (gf-merror (intl:gettext "`zn_nth_root' needs three integer arguments. Found ~m, ~m, ~m.") a r n) )
+    (gf-merror (intl:gettext 
+      "`zn_nth_root' needs three integer arguments. Found ~m, ~m, ~m." ) a r n))
   (unless (and (> r 0) (> n 0)) 
-    (gf-merror (intl:gettext "`zn_nth_root': Second and third argument must be a positive integers. Found ~m, ~m.") r n) )
+    (gf-merror (intl:gettext 
+      "`zn_nth_root': Second and third arg must be pos integers. Found ~m, ~m." ) r n))
   (when fs-n
     (if (and ($listp fs-n) ($listp (cadr fs-n)))
       (setq fs-n (mapcar #'cdr (cdr fs-n))) ;; Lispify fs-n
       (gf-merror (intl:gettext 
-        "Optional fourth argument to `zn_nth_root' must be of the form [[p1, e1], ..., [pk, ek]]." ))))
+        "`zn_nth_root': The opt fourth arg must be of the form [[p1, e1], ..., [pk, ek]]." ))))
   (let ((rts (zn-nrt a r n fs-n)))
     (when rts (cons '(mlist simp) rts)) ))
 
 (defun zn-nrt (a r n &optional fs-n)
-  (when (= 1 (gcd a n))
-    (let (p q qs rt rts rems)
-      (unless fs-n (setq fs-n (let (($intfaclim)) (get-factor-list n))))
-      (dolist (pe fs-n)
-        (setq p (car pe)
-              q (apply #'expt pe)
-              rt (zq-nrt a r p q) )
-        (unless rt (return-from zn-nrt nil))
-        (push q qs)
-        (push rt rts) )
-      (when (= 1 (length fs-n)) (return-from zn-nrt rt)) ;; n is a prime power
+  (let (g n/g c p q aq ro ord qs rt rts rems res)
+    (unless fs-n (setq fs-n (let (($intfaclim)) (get-factor-list n))))
+    (setq a (mod a n))
+    (cond 
+      ((every #'onep (mapcar #'second fs-n)) ;; RSA-like case (n is squarefree)
+        (when (= a 0) (return-from zn-nrt (list 0))) ) ;; n = 1: exit here 
+      ((/= (gcd a n) 1)
+        ;; Handle residue classes not coprime to n (n is not squarefree):
+        ;; Use Theorems 49 and 50 from 
+        ;;   Shanks - Solved and Unsolved Problems in Number Theory
+        (setq g (gcd a n) n/g (truncate n g))
+        (when (/= (gcd g n/g) 1)     ;; a is not contained in any mult. subgroup (Th. 50):
+          (return-from zn-nrt nil) ) ;;   exit here
+        (when (= a 0) (return-from zn-nrt (list 0)))
+        ;; g = gcd(a,n). Now assume gcd(g,n/g) = 1.
+        ;; There are totient(n/g) multiples of g, i*g, with gcd(i,n/g) = 1, 
+        ;;   which form a modulo multiplication subgroup of (Z/nZ),
+        ;;   isomorphic to (Z/mZ)*, where m = n/g.
+        ;; a is one of these multiples of g.
+        ;; Find the r-th roots of a resp. mod(a,m) in (Z/mZ)* and then 
+        ;;   by using CRT all corresponding r-th roots of a in (Z/nZ).
+        (setq a (mod a n/g)
+              rts (zn-nrt a r n/g)
+              c (inv-mod g n/g) ;; CRT-coeff
+              ;; isomorphic mapping (Th. 49):
+              ;;   (use CRT with x = 0 mod g and x = rt mod n/g)
+              res (mapcar #'(lambda (rt) (* g (mod (* c rt) n/g))) rts) )
+        (return-from zn-nrt (sort res #'<)) ))
+    ;;
+    ;; for every prime power factor of n  
+    ;;   reduce a and r if possible and call zq-nrt:
+    (dolist (pe fs-n)
+      (setq p (car pe)
+            q (apply #'expt pe)
+            aq (mod a q)
+            ord (* (1- p) (truncate q p)) )
+      (cond 
+        ((> r ord)
+          (setq ro (mod r ord))
+          (when (= ro 0) (setq ro ord)) )
+        (t (setq ro r)) )
+      (cond
+        ((= aq 0) 
+          (if (or (= p q) (= ro 1))
+            (setq rt (list 0))
+            (return-from zn-nrt nil) ))
+        ((= ro 1) 
+          (setq rt (list aq)) )
+        (t 
+          (setq rt (zq-nrt aq ro p q))
+          (unless rt (return-from zn-nrt nil)) ))
+      (push q qs)
+      (push rt rts) )
+    ;; CRT in case n splits into more than one factor:
+    (if (= 1 (length fs-n)) 
+      (setq res rt) ;; n is a prime power
       (setq qs (nreverse qs)
-            rems (zn-distrib-lists (nreverse rts)) )
-      (sort (mapcar #'(lambda (rs) (car (chinese rs qs))) rems) #'<) )))
+            rems (zn-distrib-lists (nreverse rts))
+            res (mapcar #'(lambda (rs) (car (chinese rs qs))) rems) ))
+    (sort res #'<) ))
 
 ;; return all possible combinations containing one entry per list:
 ;; (zn-distrib-lists '((1 2 3) (4) (5 6)))
 ;; --> ((1 4 5) (1 4 6) (2 4 5) (2 4 6) (3 4 5) (3 4 6))
+;;
 (defun zn-distrib-lists (ll)
   (let ((res (car ll)) tmp e)
     (dolist (l (cdr ll) res)
@@ -692,11 +872,18 @@
           (push (nconc e (list n)) tmp) ))
       (setq res (nreverse tmp)) )))
 
-;; e.g. r=x*x*y*z, then a^(1/r) = (((a^(1/x))^(1/x))^(1/y))^(1/z)
+;; handle composite r (which are not coprime to totient(q)):
+;;   e.g. r=x*x*y*z, then a^(1/r) = (((a^(1/x))^(1/x))^(1/y))^(1/z)
+;;
 (defun zq-nrt (a r p q) ;; prime power q = p^e
+  ;; assume a < q, r <= q
   (let (rts)
     (cond 
-      ((or (= 1 r) (primep r)) (setq rts (zq-amm a r p q)))
+      ((or (= 1 r) (primep r)) 
+        (setq rts (zq-amm a r p q)) )
+      ((and (= (gcd r (1- p)) 1) (or (= p q) (= (gcd r p) 1))) ;; r is coprime to totient(q):
+        (let ((ord (* (1- p) (truncate q p))))
+          (setq rts (list (power-mod a (inv-mod r ord) q))) )) ;;   unique solution
       (t 
         (let* (($intfaclim) (rs (get-factor-list r)))
           (setq rs (sort rs #'< :key #'car))
@@ -708,110 +895,128 @@
           (setq rts (zq-amm a (car rs) p q))
           (dolist (r (cdr rs))
             (setq rts (apply #'nconc (mapcar #'(lambda (a) (zq-amm a r p q)) rts))) ))))
-    (if (and (= 0 (mod q 4)) (= 0 (mod r 2))) ;; this case needs a postprocess 
-      (nconc (mapcar #'(lambda (rt) (- q rt)) rts) rts)
-      rts ) ))
+    (if (and (= p 2) (> q 2) (evenp r)) ;; this case needs a postprocess (see below)
+      (nconc (mapcar #'(lambda (rt) (- q rt)) rts) rts) ;; add negative solutions
+      rts )))
 
-;; inspired by Bach,Shallit 7.3.2
-(defun zq-amm (a r p q) ;; r,p prime, q prime power
-  (setq a (mod a q))
+;; Computing r-th roots modulo a prime power p^n, where r is a prime
+;;
+;;   inspired by 
+;;     Bach,Shallit - Algorithmic Number Theory, Theorem 7.3.2
+;;   and 
+;;     Shanks - Solved and Unsolved Problems in Number Theory, Th. 46, Lemma 1 to Th. 44
+;;
+;;   The algorithm AMM (Adleman, Manders, Miller) is essentially based on   
+;;   properties of cyclic groups and with the exception of q = 2^n, n > 2 
+;;   it can be applied to any multiplicative group (Z/qZ)* where q = p^n.
+;;
+;;   Doing so, the order q-1 of Fq* in Th. 7.3.2 has to be replaced by the 
+;;   group order totient(q) of (Z/qZ)*.
+;;
+;;   But how to include q = 8,16,32,... ?   
+;;   r > 2: r is prime. There exists a unique solution for all a in (Z/qZ)*.
+;;   r = 2 (the square root case): 
+;;   - (Z/qZ)* has k = 2 characteristic factors [2,q/4] with [-1,3] as possible 
+;;       factor generators (see Shanks, Lemma 1 to Th. 44). 
+;;       I.e. 3 is of order q/4 and 3^2 = 9 of order q/8.
+;;   - (Z/qZ)* has totient/2^k = q/8 quadratic residues with 2^k = 4 roots each 
+;;       (see Shanks, Th. 46). 
+;;   - It follows that the subgroup <3> generated by 3 contains all quadratic 
+;;       residues of (Z/qZ)* (which must be all the powers of 9 located in <3>). 
+;;   - We apply the algorithm AMM for cyclic groups to <3> and compute two 
+;;       square roots x,y. 
+;;   - The numbers -x and -y, obviously roots as well, both lie in (-1)*<3> 
+;;       and therefore they differ from x,y and complete the set of 4 roots.
+;;
+(defun zq-amm (a r p q) ;; r,p prime, q = p^n
+  ;; assume a < q, r <= q
   (cond 
     ((= 1 r) (list a))
     ((= 2 q) (when (= 1 a) (list 1)))
     ((= 4 q) (when (or (= 1 a) (and (= 3 a) (oddp r))) (list a)))
-    (t 
-      (let ((ord (* (1- p) (truncate q p))) 
-            k n e u u1 s m re1 re ar au om om1 g gr b c r-inv br bu ab alpha beta rt )
-      (when (= 2 r) 
-        (if (= 2 p)
-          (when (/= 1 (mod a 8)) (return-from zq-amm nil))
-          (cond
-            ((/= 1 ($jacobi (mod a p) p))
-              (return-from zq-amm nil) )
-            ((= 2 (mod ord 4)) 
-              (setq rt (power-mod a (ash (+ ord 2) -2) q)) 
-              (return-from zq-amm `(,rt ,(- q rt))) )
-            ((and (= p q) (= 5 (mod p 8))) 
-              (let* ((x (ash a 1))
-                     (y (power-mod x (ash (- p 5) -3) p)) 
-                     (i (mod (* x y y) p)) 
-                     (rt (mod (* a y (1- i)) p)) )
-                (return-from zq-amm `(,rt ,(- p rt))) )))))
-      (when (= 2 p) ;; q = 8,16,32,..  
-        (setq ord (ash ord -1)) ) ;; max element order
-      (multiple-value-setq (s m) (truncate ord r))
-      (when (and (= 0 m) (/= 1 (power-mod a s q))) (return-from zq-amm nil))
-      ;; r = 3, first 2 cases:
-      (when (= 3 r) 
+    (t
+      (let ((ord (* (1- p) (truncate q p))) ;; group order: totient(q)
+             rt s m e u )
+        (when (= 2 r)
+          (if (= 2 p)
+            (when (/= 1 (mod a 8)) (return-from zq-amm nil)) ;; a must be a power of 9
+            (cond
+              ((/= 1 ($jacobi (mod a p) p))
+                (return-from zq-amm nil) )
+              ((= 2 (mod ord 4))
+                (setq rt (power-mod a (ash (+ ord 2) -2) q)) 
+                (return-from zq-amm `(,rt ,(- q rt))) )
+              ((and (= p q) (= 5 (mod p 8)))
+                (let* ((x (ash a 1))
+                       (y (power-mod x (ash (- p 5) -3) p)) 
+                       (i (mod (* x y y) p)) 
+                       (rt (mod (* a y (1- i)) p)) )
+                  (return-from zq-amm `(,rt ,(- p rt))) )))))
+        (when (= 2 p) ;; q = 8,16,32,..
+          (setq ord (ash ord -1)) ) ;; factor generator 3 is of order ord/2
+        (multiple-value-setq (s m) (truncate ord r))
+        (when (and (= 0 m) (/= 1 (power-mod a s q))) (return-from zq-amm nil))
+        ;; r = 3, first 2 cases:
+        (when (= 3 r) 
+          (cond 
+            ((= 1 (setq m (mod ord 3))) ;; unique solution
+              (return-from zq-amm 
+                `(,(power-mod a (truncate (1+ (ash ord 1)) 3) q)) ))
+            ((= 2 m)                    ;; unique solution
+              (return-from zq-amm 
+                `(,(power-mod a (truncate (1+ ord) 3) q)) ))))
+        ;; compute u,e with ord = u*r^e and r,u coprime:
+        (setq u ord e 0)
+        (do ((u1 u)) (())
+          (multiple-value-setq (u1 m) (truncate u1 r))
+          (when (/= 0 m) (return))
+          (setq u u1 e (1+ e)) )
         (cond 
-          ((= 1 (setq m (mod ord 3))) ;; unique solution
-            (return-from zq-amm 
-              `(,(power-mod a (truncate (1+ (ash ord 1)) 3) q)) ))
-          ((= 2 m)                    ;; unique solution
-            (return-from zq-amm 
-              `(,(power-mod a (truncate (1+ ord) 3) q)) ))))
-      (setq u ord e 0 u1 u m 0)
-      (do () (())
-        (multiple-value-setq (u1 m) (truncate u1 r))
-        (cond 
-          ((= 0 m) (setq u u1 e (1+ e)))
-          (t (setq re1 (expt r e)         ;; ord = u*r^e
-                   r-inv (inv-mod r u) )  ;; r,u coprime
-             (return) )))
-      (cond 
-        ((= 0 e) 
-          (setq rt (power-mod a r-inv q)) ;; unique solution, see Bach,Shallit 7.3.1
-          (list rt) )
-        (t ;; a is r-th power
-          (setq n 2)
-          (do () ((and (= 1 (gcd n q)) (/= 1 (power-mod n s q)))) ;; n is no r-th power
-            (setq n ($next_prime n)) )
-          (setq g (power-mod n u q) gr g
-                re (truncate re1 r)
-                om (power-mod g re q) ) ;; r-th root of unity
-          (cond
-            ((or (/= 3 r) (= 0 (setq m (mod ord 9))))
-              (setq ar (power-mod a u q) b ar
-                    au (power-mod a re1 q) )
-              ;; compute k with g^-k = ar :
-              (setq k 0)
-              (do ((i 1 (1+ i)) (ri 1))
-                  ((= i e))
-                (setq gr (power-mod gr r q)
-                      re (truncate re r)
-                      om1 (power-mod b re q)
-                      ri (* ri r) )
-                (cond 
-                  ((or (< r 512) (= 2 p)) ;; required if p = 2 and r = 2 (maybe nonresidue), optional in other cases
-                    (setq c 0) ;; brute-force:
-                    (do () ((or (= 1 om1) (= c r))
-                             (when (= c r) (return-from zq-amm nil)) )
-                      (incf c)
-                      (setq om1 (mod (* om om1) q)) ))
-                  (t ;; baby-giant (r < 65536) or pollard-rho:
-                    (setq c (dlog-rho (inv-mod om1 q) om r q)) ))
-                (when (/= 0 c)
-                  (incf k (* c ri))
-                  (setq b (mod (* b (power-mod gr c q)) q))  ))
-              ;;
-              (setq k (mod (neg (truncate k r)) re1) ;; g is of order r^e
-                    br (power-mod g k q)             ;; br^r = g^-k = ar
-                    bu (power-mod au r-inv q)        ;; bu^r = au
-                    ab (cdr (zn-gcdex1 u re1))
-                    alpha (car ab)
-                    beta (cadr ab) )
-              (if (< alpha 0) (incf alpha ord) (incf beta ord))
-              (setq rt (mod (* (power-mod br alpha q) (power-mod bu beta q)) q)) )
-            ;; r = 3, remaining cases:
-            ((= 3 m)
-              (setq rt (power-mod a (truncate (+ (ash ord 1) 3) 9) q)) )
-            ((= 6 m)
-              (setq rt (power-mod a (truncate (+ ord 3) 9) q)) ))
-          (do ((i 1 (1+ i)) (j 1) (res (list rt)))
-              ((= i r) res)
-            (setq j (mod (* j om) q))
-            (push (mod (* rt j) q) res) )))))))
+          ((= 0 e) 
+            (setq rt (power-mod a (inv-mod r u) q)) ;; unique solution, see Bach,Shallit 7.3.1
+            (list rt) )
+          (t ;; a is an r-th power
+            (let (g re om)
+              ;; find generator of order r^e:
+              (if (= p 2) ;; p = 2: then r = 2 (other r: e = 0)
+                (setq g 3)
+                (do ((n 2 ($next_prime n))) 
+                    ((and (= 1 (gcd n q)) (/= 1 (power-mod n s q))) ;; n is no r-th power
+                      (setq g (power-mod n u q)) )))
+              (setq re (expt r e) 
+                    om (power-mod g (truncate re r) q) ) ;; r-th root of unity
+              (cond
+                ((or (/= 3 r) (= 0 (setq m (mod ord 9))))
+                  (let (ar au br bu k ab alpha beta)
+                    ;; map a from Zq* to C_{r^e} x C_u:
+                    (setq ar (power-mod a u q)    ;; in C_{r^e}
+                          au (power-mod a re q) ) ;; in C_u
+                    ;; compute direct factors of rt:
+                    ;;  (the loop in algorithm AMM is effectively a Pohlig-Hellman-reduction, equivalent to zn-dlog)
+                    (setq k (zn-dlog ar g q re `((,r ,e)))    ;; g^k = ar, where r|k
+                          br (power-mod g (truncate k r) q)   ;; br^r = g^k (factor of rt in C_{r^e})
+                          bu (power-mod au (inv-mod r u) q) ) ;; bu^r = au  (factor of rt in C_u)
+                    ;; mapping from C_{r^e} x C_u back to Zq*:
+                    (setq ab (cdr (zn-gcdex1 u re))
+                          alpha (car ab)
+                          beta (cadr ab) )
+                    (if (< alpha 0) (incf alpha ord) (incf beta ord))
+                    (setq rt (mod (* (power-mod br alpha q) (power-mod bu beta q)) q)) ))
+                ;; r = 3, remaining cases:
+                ((= 3 m)
+                  (setq rt (power-mod a (truncate (+ (ash ord 1) 3) 9) q)) )
+                ((= 6 m)
+                  (setq rt (power-mod a (truncate (+ ord 3) 9) q)) ))
+              ;; mult with r-th roots of unity:
+              (do ((i 1 (1+ i)) (j 1) (res (list rt)))
+                  ((= i r) res)
+                (setq j (mod (* j om) q))
+                (push (mod (* rt j) q) res) ))))))))
+;;
+;; -------------------------------------------------------------------------- ;;
 
+
+;; Two variants of gcdex:
 
 ;; returns gcd as first entry:
 ;; (zn-gcdex1 12 45) --> (3 4 -1), so 4*12 + -1*45 = 3
@@ -849,51 +1054,61 @@
   (do ((i 0 (1+ i)) res)
       ((= i n) 
         (cons '($matrix simp) (nreverse res)) )
-    (push (mfuncall '$makelist `(mod (+ ,i $j) ,n) '$j 0 (1- n)) res) ))
+    (push (mfuncall '$makelist `((mod) (+ ,i $j) ,n) '$j 0 (1- n)) res) ))
 
-(defmfun $zn_mult_table (n &optional all?)
+;; multiplication table modulo n
+;;
+;;  The optional g allows to choose subsets of (Z/nZ). Show i with gcd(i,n) = g resp. all i#0.
+;;  If n # 1 add row and column headings for better readability.
+;;
+(defmfun $zn_mult_table (n &optional g)
   (zn-table-errchk n "zn_mult_table")
-  (cond
-    ((or (primep n) ;; field
-         (equal all? '$all) )
-      (do ((i 1 (1+ i)) res)
-          ((= i n) (cons '($matrix simp) (nreverse res)))
-        (push 
-           (mfuncall '$makelist `(mod (* ,i $j) ,n) '$j 1 (1- n))
-           res )))
-    (t ;; units only
-      (let (units res)
-        (do ((i 1 (1+ i)))
-            ((= i n) 
-              (setq units (cons '(mlist simp) (nreverse units))) ) 
-          (when (= 1 (gcd i n)) (push i units)) )
-        (dolist (i (cdr units) (cons '($matrix simp) (nreverse res)))
-          (push 
-            (mfuncall '$makelist `(mod (* ,i $j) ,n) '$j units)
-            res ))))))
-
-(defmfun $zn_power_table (&rest args)
-  (zn-table-errchk (car args) "zn_power_table")
-  (let ((n (car args)) all? cols (x (cadr args)) (y (caddr args)))
-    (when x
-      (cond 
-        ((integerp x) (setq cols x))
-        ((equal x '$all) (setq all? t))
-        (t (gf-merror (intl:gettext 
-             "Second argument to `zn_power_table' must be `all' or a small fixnum." )))))
-    (when y
-      (cond 
-        ((and (integerp x) (equal y '$all)) (setq all? t))
-        ((and (equal x '$all) (integerp y)) (setq cols y))
-        (t (format t "The third argument to `zn_power_table' is not usable and was ignored.~%") )))
-    (unless cols
-      (setq cols (car (last (zn-characteristic-factors n))))
-      (when all? (incf cols)) )
-    (do ((i 1 (1+ i)) res)
+  (let ((i0 1) all header choice res)
+    (cond 
+      ((not g) (setq g 1))
+      ((equal g '$all) (setq all t))
+      ((not (fixnump g))
+        (gf-merror (intl:gettext 
+          "`zn_mult_table': The opt second arg must be `all' or a small fixnum." )))
+      (t
+        (when (= n g) (setq i0 0))
+        (push 1 choice) ;; creates the headers
+        (setq header t) ))
+    (do ((i i0 (1+ i)))
         ((= i n) 
-          (cons '($matrix simp) (nreverse res)) )
-      (when (or all? (= 1 (gcd i n))) 
-        (push (mfuncall '$makelist `(power-mod ,i $j ,n) '$j 1 cols) res) ))))
+          (setq choice (cons '(mlist simp) (nreverse choice))) ) 
+      (when (or all (= g (gcd i n))) (push i choice)) )
+    (when (and header (= (length choice) 2))
+      (return-from $zn_mult_table) )
+    (dolist (i (cdr choice))
+      (push (mfuncall '$makelist `((mod) (* ,i $j) ,n) '$j choice) res) )
+    (setq res (nreverse res))
+    (when header (rplaca (cdar res) "*"))
+    (cons '($matrix simp) res) ))
+
+;; power table modulo n
+;;
+;;  The optional g allows to choose subsets of (Z/nZ). Show i with gcd(i,n) = g resp. all i.
+;;
+(defmfun $zn_power_table (n &optional g e)
+  (zn-table-errchk n "zn_power_table")
+  (let (all)
+    (cond 
+      ((not g) (setq g 1))
+      ((equal g '$all) (setq all t))
+      ((not (fixnump g))
+        (gf-merror (intl:gettext 
+          "`zn_power_table': The opt second arg must be `all' or a small fixnum." ))))
+    (cond 
+      ((not e) (setq e (zn-characteristic-factors n t)))
+      ((not (fixnump e))
+        (gf-merror (intl:gettext 
+          "`zn_power_table': The opt third arg must be a small fixnum." ))))
+    (do ((i 0 (1+ i)) res)
+        ((= i n) 
+          (when res (cons '($matrix simp) (nreverse res))) )
+      (when (or all (= g (gcd i n))) 
+        (push (mfuncall '$makelist `((power-mod) ,i $j ,n) '$j 1 e) res) ))))
 
 
 ;; $zn_invert_by_lu (m p) 
@@ -937,6 +1152,8 @@
 (defvar *gf-fsx-base-p* nil "*gf-fsx* in  base p") 
 (defvar *gf-x^p-powers* nil "x^p^i, i=0,..,n-1") 
 
+(defvar *f2-red* 0 "reduction polynomial") ;; used by ef coeff arith over binary fields
+
 (declaim (fixnum *gf-exp* *ef-exp*))
 
 ;; extension:
@@ -961,7 +1178,17 @@
 
 (defmvar $gf_rat nil "Return values are rational expressions?" boolean)
 
-(defmvar $gf_symmetric nil "A symmetric modulus should be used?" boolean)
+(defmvar $gf_symmetric nil "A symmetric modulus should be used?" boolean) ;; deprecated
+(defmvar $gf_balanced nil "A balanced modulus should be used?" boolean)   ;; there is ec_balanced in elliptic_curves.lisp
+
+(putprop '$gf_symmetric 'gf-balanced-info 'assign)
+
+(defun gf-balanced-info (assign-var arg) 
+  (declare (ignore assign-var))
+  (setq $gf_balanced arg)
+  (format t "`gf_symmetric' is deprecated and replaced by `gf_balanced'.~%The value is bound to `gf_balanced'.") )
+  ;; temporarily print this message
+
 
 (defmvar $gf_coeff_limit 256 
   "`gf_coeff_limit' limits the coeffs when searching for irreducible and primitive polynomials." fixnum)
@@ -1109,6 +1336,7 @@
     ((= 0 c) (gf-merror (intl:gettext "ef coefficient inversion: Quotient by zero")))
     ($ef_coeff_inv (mfuncall '$ef_coeff_inv c))
     (*gf-logs?* (ef-cinv-by-table c))
+    ((= 2 *gf-char*) (f2-inv c))
     (t (let ((*ef-arith?*))
          (gf-x2n (gf-inv (gf-n2x c) *gf-red*)) ))))
 
@@ -1116,6 +1344,7 @@
   (cond 
     ($ef_coeff_exp (mfuncall '$ef_coeff_exp c n))
     (*gf-logs?* (ef-cpow-by-table c n))
+    ((= 2 *gf-char*) (f2-pow c n))
     (t (let ((*ef-arith?*)) 
          (gf-x2n (gf-pow (gf-n2x c) n *gf-red*)) ))))
 
@@ -1125,6 +1354,7 @@
     ((plusp c)
       (cond 
         ((< c *gf-ord*) c) 
+        ((= 2 *gf-char*) (f2-red c))
         (t (let ((*ef-arith?*))
              (gf-x2n (gf-nred (gf-n2x c) *gf-red*)) ))))
     (t 
@@ -1135,6 +1365,7 @@
   (cond 
     ($ef_coeff_mult (mfuncall '$ef_coeff_mult a b))
     (*gf-logs?* (ef-ctimes-by-table a b))
+    ((= 2 *gf-char*) (f2-times a b))
     (t (let ((*ef-arith?*)) 
          (gf-x2n (gf-times (gf-n2x a) (gf-n2x b) *gf-red*)) ))))
 
@@ -1208,6 +1439,78 @@
     ((null x) nil)
     (t (svref *gf-powers* 
          (mod (* n (the fixnum (svref $gf_logs (gf-x2n x)))) *gf-ord*) )) ))
+
+
+;; ef coefficient arith for binary base fields:
+
+(defun f2-red (a)
+  (declare (optimize (speed 3) (safety 0)))
+  (let* ((red *f2-red*)
+         (ilen (integer-length red))
+         (e 0) )
+       (declare (fixnum e ilen))
+    (do () ((= a 0) 0)
+      (setq e (- (integer-length a) ilen))
+      (when (< e 0) (return a))
+      (setq a (logxor a (ash red e))) )))
+
+(defun f2-times (a b)
+  (declare (optimize (speed 3) (safety 0)))
+  (let* ((ilen (integer-length b))
+         (a1 (ash a (1- ilen)))
+         (ab a1) )
+    (do ((i (- ilen 2) (1- i)) (k 0)) 
+        ((< i 0) (f2-red ab))
+        (declare (fixnum i k))
+      (decf k)
+      (when (logbitp i b) 
+        (setq a1 (ash a1 k)
+              ab (logxor ab a1)
+              k 0 )))))
+
+(defun f2-pow (a n) ;; assume n >= 0
+  (declare (optimize (speed 3) (safety 0)) 
+           (integer n) )
+  (cond 
+    ((= n 0) 1)
+    ((= a 0) 0) 
+    (t (do (res) (())
+         (when (oddp n)
+           (setq res (if res (f2-times a res) a)) 
+           (when (= 1 n)
+             (return-from f2-pow res) ))
+         (setq n (ash n -1) 
+               a (f2-times a a)) ))))
+
+(defun f2-inv (b) 
+  (declare (optimize (speed 3) (safety 0)))
+  (when (= b 0) 
+    (gf-merror (intl:gettext "f2 arithmetic: Quotient by zero")) )
+  (let ((b1 1) (a *f2-red*) (a1 0) q r)
+    (do ()
+        ((= b 0) a1)
+      (multiple-value-setq (q r) (f2-divide a b)) 
+      (psetf a b b r) 
+      (psetf a1 b1 b1 (logxor (f2-times q b1) a1)) )))
+
+(defun f2-divide (a b)
+  (declare (optimize (speed 3) (safety 0)))
+  (cond 
+    ((= b 0)
+      (gf-merror (intl:gettext "f2 arithmetic: Quotient by zero")) )
+    ((= a 0) (values 0 0))
+    (t 
+      (let ((ilen (integer-length b))
+            (e 0) 
+            (q 0) )
+           (declare (fixnum e ilen))
+        (do () ((= a 0) (values q 0))
+          (setq e (- (integer-length a) ilen))
+          (when (< e 0) (return (values q a)))
+          (setq q (logxor q (ash 1 e)))
+          (setq a (logxor a (ash b e))) )))))
+
+;; -------------------------------------------------------------------------- ;;
 
 
 #-gcl (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -1359,6 +1662,8 @@
     (unless *gf-red* ;; find irreducible reduction poly:
       (setq *gf-red* (if (= 1 *gf-exp*) (list 1 1) (gf-irr p *gf-exp*))
             *gf-irred?* t ))
+    
+    (when (= *gf-char* 2) (setq *f2-red* (gf-x2n *gf-red*)))
     
     (setq *gf-card* (expt p *gf-exp*)) ;; cardinality #(F)
 
@@ -1550,7 +1855,7 @@
         $ef_coeff_mult nil $ef_coeff_add nil $ef_coeff_inv nil $ef_coeff_exp nil
         *gf-rat-header* nil *gf-char* 0 
         *gf-exp* 1 *gf-ord* 0 *gf-card* 0 ;; *gf-exp* = 1 when gf_set_data has no optional arg
-        *gf-red* nil *gf-prim* nil 
+        *gf-red* nil *f2-red* 0 *gf-prim* nil
         *gf-fs-ord* nil *gf-fsx* nil *gf-fsx-base-p* nil *gf-x^p-powers* nil 
         *gf-char?* nil *gf-red?* nil *gf-irred?* nil *gf-data?* nil ) 
   t )
@@ -1842,7 +2147,10 @@
 
 (defmfun $ef_eval (a) 
   (ef-gf-field? "ef_eval")
-  (let ((*ef-arith?*)) (gf-eval a *ef-red* "ef_eval")) )
+  (let ((*ef-arith?* t)) 
+    (unless (equal a ($expand a))
+      (gf-merror (intl:gettext "`ef_eval': The argument must be an expanded polynomial.")) )
+    (gf-eval a *ef-red* "ef_eval") ))
 
 (defun gf-eval (a red fun)
   (setq a (let ((modulus)) (car (prep1 a)))) 
@@ -1873,7 +2181,7 @@
 (defun gf-np2smod (x) ;; modifies x
   (cond 
     ((null x) nil)
-    ((not $gf_symmetric) x)
+    ((not $gf_balanced) x)
     (*ef-arith?*
       (*f-np2smod x *gf-card* #'(lambda (c) (neg (gf-ctimes (1- *gf-char*) c)))) )
     (t 
@@ -1890,7 +2198,7 @@
 ;; adjust a coefficient to a symmetric modulus:
 (defun gf-cp2smod (c)
   (cond 
-    ((not $gf_symmetric) c)
+    ((not $gf_balanced) c)
     (*ef-arith?*
       (if (> c (ash *gf-card* -1)) (neg (gf-ctimes c (1- *gf-char*))) c) )
     (t 
@@ -2106,6 +2414,14 @@
            ((null rx) res)
         (rplacd r (list (+ e (the fixnum (car rx))) (gf-ctimes c (cadr rx)))) ))))
 
+;; v^e * x
+
+(defun gf-nxetimes (x e) ;; modifies x
+  (if (null x) x
+    (do ((r x (cddr r)))
+        ((null r) x)
+      (rplaca r (+ e (car r))) )))
+
 ;; - x
 
 (defun gf-minus (x) 
@@ -2123,23 +2439,6 @@
     (do ((r (cdr x) (cddr r))) (())
       (rplaca r (gf-cminus-b (car r)))
       (when (null (cdr r)) (return x)) )))
-
-;; x + c, 0 < c < *gf-char*
-
-(defun gf-nxcplus (x c) ;; modifies x
-  #+ (or ccl ecl gcl) (declare (optimize (speed 3) (safety 0)))
-  (maybe-char-is-fixnum-let ((c c))
-    (cond 
-      ((null x) (list 0 c))
-      (t (setq x (nreverse x))
-         (cond
-           ((= 0 (the fixnum (cadr x)))
-             (setq c (gf-cplus-b c (car x)))
-             (if (= 0 c)
-               (setq x (cddr x))
-               (rplaca x c) ))
-           (t (setq x (cons c (cons 0 x)))) )
-         (nreverse x) ))))
 
 ;; x + y
 
@@ -2964,7 +3263,7 @@
         (if (= 0 n) nil (list 0 n)) ))
     (t
       (do (res) (())
-        (setq res (gf-nxcplus res (cadr y))) 
+        (setq res (gf-nplus res (list 0 (cadr y))))
         (when (null (cddr y)) 
           (return (gf-times res (gf-pow x (car y) red) red)) ) 
         (setq res (gf-times res (gf-pow x (- (car y) (caddr y)) red) red)
@@ -3325,9 +3624,9 @@
            (setq a (simplifya (cons '(mtimes) (cdr a)) nil)) )
          a ))))
 
-;; adjust results from rat3d/pfactor to a positive modulus if $gf_symmetric = false 
+;; adjust results from rat3d/pfactor to a positive modulus if $gf_balanced = false 
 (defun gf-ns2pmod-factors (fs) ;; modifies fs 
-  (if $gf_symmetric fs
+  (if $gf_balanced fs
     (maybe-char-is-fixnum-let ((m *gf-char*))
       (do ((r fs (cddr r)))
           ((null r) fs)
@@ -3588,16 +3887,19 @@
 
 (defun gf-ord (x ord fs-ord red) ;; assume x # 0 
   #+ (or ccl ecl gcl) (declare (optimize (speed 3) (safety 0)))
-  (let (p (e 0)) 
+  (let (p (e 0) z) 
        (declare (fixnum e))
     (dolist (pe fs-ord ord)
       (setq p (car pe) 
             e (the fixnum (cadr pe))
-            ord (truncate ord (expt p e)) )
-      (do ((z (gf-pow$ x ord red))) ;; use exponentiation by precomputation
+            ord (truncate ord (expt p e))
+            z (gf-pow$ x ord red) ) ;; use exponentiation by precomputation
+      (do ()
           ((equal z '(0 1)))
-        (setq z (gf-pow$ z p red) 
-              ord (* ord p) ) ))))
+        (setq ord (* ord p))
+        (when (= e 1) (return))
+        (decf e)
+        (setq z (gf-pow$ z p red)) ))))
 
 (defun gf-ord-by-table (x) 
   (let ((index (svref $gf_logs (gf-x2n x))))
@@ -3800,7 +4102,7 @@
 
 (defun ef-normal-p (x) 
   (unless (null x) 
-    (let ((mat (gf-maybe-normal-basis x)) )
+    (let ((mat (ef-maybe-normal-basis x)) )
       (/= 0 ($ef_determinant mat)) )))
 
 
@@ -4192,7 +4494,7 @@
   (let* ((a-ind (funcall dlog-fn a)) (b-ind (funcall dlog-fn b))
          (d (gcd (gcd a-ind b-ind) ord))
          (m (truncate ord d)) )
-    (mod (* (inv-mod (truncate b-ind d) m) (truncate a-ind d)) m) ))
+    (zn-quo (truncate a-ind d) (truncate b-ind d) m) ))
 
 ;; Pohlig and Hellman reduction
 
@@ -4202,7 +4504,7 @@
 (defun ef-dlog (a)
   (*f-dlog a *ef-prim* *ef-red* *ef-ord* *ef-fs-ord*) )
 
-(defun *f-dlog (a g red ord fs-ord)
+(defun *f-dlog (a g red ord fs-ord) 
   #+ (or ccl ecl gcl) (declare (optimize (speed 3) (safety 0)))
   (cond
     ((or (null a) (null g)) nil) 
@@ -4211,29 +4513,26 @@
     ((equal g a) 1)
     ((not (gf-unit-p a red)) nil)
     (t 
-      (let (p (e 0) ord/p gg x dlog dlogs tmp) 
+      (let (p (e 0) ord/p om xp xk dlogs mods (g-inv (gf-inv g red))) 
            (declare (fixnum e))
         (dolist (f fs-ord)
           (setq p (car f) e (cadr f)
                 ord/p (truncate ord p)
-                gg (gf-pow g ord/p red) ) ;; gg is generator of order p
-          (cond 
-            ((= 1 e) 
-              (setq x (gf-dlog-rho-brent (gf-pow a ord/p red) gg p red)) )
-            (t
-              (setq x 0)
-              (do ((aa a) (k 1) (pk 1)) (()) (declare (fixnum k))
-                (setq tmp (gf-pow aa (truncate ord/p pk) red) 
-                      dlog (gf-dlog-rho-brent tmp gg p red) 
-                      x (+ x (* dlog pk)) )
-                (if (= k e) 
-                  (return)
-                  (setq k (1+ k) pk (* pk p)) )
-                (setq tmp (gf-inv (gf-pow g x red) red)) 
-                (setq aa (gf-times a tmp red)) ))) 
-          (setq dlogs (cons x dlogs)) )
-        (car (chinese (nreverse dlogs) 
-                    (mapcar #'(lambda (z) (apply #'expt z)) fs-ord) )) ))))
+                om (gf-pow g ord/p red)
+                xp 0 )
+          (do ((b a) (k 0) (pk 1) (acc g-inv) (e1 (1- e))) 
+              (()) (declare (fixnum k))
+            (setq xk (gf-dlog-rho-brent (gf-pow b ord/p red) om p red))
+            (incf xp (* xk pk))
+            (incf k) 
+            (when (= k e) (return))
+            (setq ord/p (truncate ord/p p)
+                  pk (* pk p) )
+            (when (/= xk 0) (setq b (gf-times b (gf-pow acc xk red) red)))
+            (when (/= k e1) (setq acc (gf-pow acc p red))) )
+          (push (expt p e) mods)
+          (push xp dlogs) )
+        (car (chinese dlogs mods)) ))))
 
 ;; iteration for Pollard rho:  b = g^y * a^z in each step
 
@@ -4307,7 +4606,7 @@
             (setq bb b yy y zz z) ))
         (setq dy (mod (- yy y) p) dz (mod (- z zz) p)) ;; g^dy = a^dz = g^(x*dz)
         (when (= 1 (gcd dz p))
-          (return (mod (* dy (inv-mod dz p)) p)) )     ;; x = dy/dz mod p (since g is generator of order p)
+          (return (zn-quo dy dz p)) ) ;; x = dy/dz mod p (since g is generator of order p)
         (setq y 0
               z 0
               b (list 0 1)
@@ -4365,10 +4664,9 @@
 
 ;; inspired by Bach,Shallit 7.3.2
 (defun gf-amm (x r red ord) ;; r prime, red irreducible
-  (cond 
-    ((= 1 r) (list x))
-    (t 
-      (let (k n e u u1 s m re xr xu om g r-inv br bu ab alpha beta rt)
+  (if (= 1 r)
+    (list x)
+    (let (k n e u s m re xr xu om g br bu ab alpha beta rt)
       (when (= 2 r) 
         (cond
           ((and (= 0 (setq m (mod ord 2))) 
@@ -4398,23 +4696,22 @@
           ((= 2 m)                    ;; unique solution
             (return-from gf-amm 
               `(,(gf-pow x (truncate (1+ ord) 3) red)) ))))
-      (setq u ord e 0 u1 u m 0)
-      (do () (())
+      ;; compute u,e with ord = u*r^e and r,u coprime:
+      (setq u ord e 0)
+      (do ((u1 u)) (())
         (multiple-value-setq (u1 m) (truncate u1 r))
-        (cond 
-          ((= 0 m) (setq u u1 e (1+ e)))
-          (t (setq re (expt r e)          ;; ord = u*r^e
-                   r-inv (inv-mod r u) )  ;; r,u coprime
-             (return) )))
+        (when (/= 0 m) (return))
+        (setq u u1 e (1+ e)) )
       (cond 
         ((= 0 e) 
-          (setq rt (gf-pow x r-inv red))  ;; unique solution, see Bach,Shallit 7.3.1
+          (setq rt (gf-pow x (inv-mod r u) red)) ;; unique solution, see Bach,Shallit 7.3.1
           (list rt) )
         (t  
           (setq n (gf-n2x 2))
           (do () ((not (equal '(0 1) (gf-pow n s red)))) ;; n is no r-th power
             (setq n (gf-n2x (1+ (gf-x2n n)))) )
           (setq g (gf-pow n u red)  
+                re (expt r e)
                 om (gf-pow g (truncate re r) red) )      ;; r-th root of unity
           (cond
             ((or (/= 3 r) (= 0 (setq m (mod ord 9)))) 
@@ -4422,7 +4719,7 @@
                     xu (gf-pow x re red)
                     k (*f-dlog xr g red re `((,r ,e)))   ;; g^k = xr
                     br (gf-pow g (truncate k r) red)     ;; br^r = xr
-                    bu (gf-pow xu r-inv red)             ;; bu^r = xu
+                    bu (gf-pow xu (inv-mod r u) red)     ;; bu^r = xu
                     ab (cdr (zn-gcdex1 u re)) 
                     alpha (car ab)
                     beta (cadr ab) )
@@ -4436,7 +4733,7 @@
           (do ((i 1 (1+ i)) (j (list 0 1)) (res (list rt)))
               ((= i r) res)
             (setq j (gf-times j om red))
-            (push (gf-times rt j red) res) )))))))
+            (push (gf-times rt j red) res) ))))))
 ;;
 ;; -----------------------------------------------------------------------------
 

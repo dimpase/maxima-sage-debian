@@ -8,34 +8,51 @@ dnl Note: during Lisp-based builds (see INSTALL.lisp) the version
 dnl number is read from the following AC_INIT line.  It's sensitive to
 dnl whitespace so when updating the version number only make changes
 dnl within the second pair of square brackets.
-AC_INIT([maxima], [5.35.1])
+AC_INIT([maxima], [5.39.0])
 AC_CONFIG_SRCDIR([src/macsys.lisp])
-AM_INIT_AUTOMAKE([-Wno-portability])
+AM_INIT_AUTOMAKE([-Wno-portability tar-ustar])
 
 AM_PATH_LISPDIR
 
 AC_CANONICAL_HOST
 
-dnl Don't use AC_EXEEXT as that requires a C compiler
+dnl If we were using a C compiler, EXEEXT would get defined
+dnl automatically. But we aren't, so we have to define it ourselves.
+dnl Still to do: Add Win64 support here, if this is needed.
 case "$host" in
         *mingw*)
                 win32=true
+                win64=false
                 mingw=true
                 EXEEXT=.exe
+		CLISPEXT=${EXEEXT}
                 ;;
         *cygwin*)
-                win32=true
+                win32=false
+                win64=false
                 mingw=false
                 EXEEXT=.exe
+		CLISPEXT=${EXEEXT}
                 ;;
         *)
                 win32=false
+                win64=false
                 mingw=false
                 EXEEXT=
+		CLISPEXT=.run
 esac
 AC_SUBST(EXEEXT)
 AC_SUBST(win32)
+AC_SUBST(win64)
 AM_CONDITIONAL(WIN32, test x$win32 = xtrue)
+AM_CONDITIONAL(WIN64, test x$win64 = xtrue)
+
+dnl To make life more confusing, the automake test machinery (which we
+dnl use in ./tests) needs the am__EXEEXT conditional. This would have
+dnl normally been expanded (via something we've copied from Automake's
+dnl init.m4 into our aclocal.m4) as Automake computed EXEEXT, but it
+dnl didn't so we have to drop this in ourselves.
+AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
 
 explicit_lisp=false
 lisps_enabled=""
@@ -64,11 +81,7 @@ AC_ARG_WITH(clisp,
 		CLISP_NAME="$withval"
 	fi],
 	[CLISP_NAME=${clisp_default_name}])
-if test x"${win32}" = x"true" ; then
-   	CLISP_RUNTIME="lisp.exe"
-else
-	CLISP_RUNTIME="lisp.run"
-fi
+	CLISP_RUNTIME="lisp${CLISPEXT}"
 AC_ARG_WITH(clisp-runtime,
 	[  --with-clisp-runtime=<path>  Use clisp runtime <path> (default
 	                          *lib-directory*/base/lisp.run on unix,
@@ -468,6 +481,48 @@ if test x"${openmcl}" = xtrue ; then
 	fi
 fi
 
+dnl n.b. ccl64_default_name is hardcoded in "with" message
+dnl We assume we're running on an x86 processor.  The user has to
+dnl select a different executable name to match his system, if neceessary.
+
+ccl64_default_name=dx86cl64
+AC_ARG_ENABLE(ccl64,
+	[  --enable-ccl64               Use CCL (Clozure Common Lisp), 64-bit],
+     	[case "${enableval}" in
+       		yes) ccl64=true 
+		     lisps_enabled="${lisps_enabled} ccl64"
+		     explicit_lisp=true;;
+       		no)  ccl64=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-ccl64) ;;
+     	esac],
+	[ccl64=false])
+AC_ARG_WITH(ccl64,
+	[  --with-ccl64=<prog>          Use ccl64 executable <prog> (default dx86cl64)],
+	[ccl64=true
+	lisps_enabled="${lisps_enabled} ccl64"
+	explicit_lisp=true
+	if test "$withval" = "yes"; then
+		CCL64_NAME="${ccl64_default_name}"
+	else
+		CCL64_NAME="$withval"
+	fi],
+	[CCL64_NAME=${ccl64_default_name}])
+AC_ARG_ENABLE(ccl64-exec,
+	[  --enable-ccl64-exec          Create a maxima executable image using CCL.
+                                No check is made if the version of 
+                                CCL supports executable images],
+	[case "${enableval}" in
+	    yes) ccl64_exec=true
+                 ccl64=true 
+		 lisps_enabled="${lisps_enabled} ccl64"
+                 explicit_lisp=true;;
+	    no) ccl64_exec=false ;;
+	    *) AC_MSG_ERROR(bad value ${enableval} for --enable-ccl64-exec) ;;
+         esac
+	 CCL64_EXEC=${ccl64_exec}],
+	[ccl64_exec=false
+	 CCL64_EXEC=false])
+
 dnl n.b. ecl_default_name is hardcoded in "with" message
 ecl_default_name=ecl
 AC_ARG_ENABLE(ecl,
@@ -516,6 +571,7 @@ AC_ARG_ENABLE(gettext,
 	 esac],
 	 [enable_gettext=false])
 
+
 AM_CONDITIONAL(ENABLE_GETTEXT, test x$enable_gettext = xtrue)
 
 dnl languages
@@ -550,6 +606,7 @@ AC_ARG_ENABLE(lang-es,
      	esac],
 	[lang_es=false])
 
+AC_SUBST(lang_es)
 AM_CONDITIONAL(LANG_ES, test x$lang_es = xtrue)
 
 AC_ARG_ENABLE(lang-es-utf8,
@@ -572,6 +629,7 @@ AC_ARG_ENABLE(lang-pt,
      	esac],
 	[lang_pt=false])
 
+AC_SUBST(lang_pt)
 AM_CONDITIONAL(LANG_PT, test x$lang_pt = xtrue)
 
 AC_ARG_ENABLE(lang-pt-utf8,
@@ -594,6 +652,7 @@ AC_ARG_ENABLE(lang-pt_BR,
      	esac],
 	[lang_pt_br=false])
 
+AC_SUBST(lang_pt_br)
 AM_CONDITIONAL(LANG_PT_BR, test x$lang_pt_br = xtrue)
 
 AC_ARG_ENABLE(lang-pt_BR-utf8,
@@ -671,6 +730,17 @@ if test x$chm = xtrue; then
   fi
 fi
 
+dnl Make the build quiet
+AC_ARG_ENABLE(quiet_build,
+  [  --enable-quiet-build         Make the build quieter],
+  [case "${enableval}" in
+     yes) quiet_build=true ;;
+     no)  quiet_build=false ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-quiet-build) ;;
+   esac],
+  [quiet_build=false])
+AM_CONDITIONAL(QUIET_BUILD, test x${quiet_build} = xtrue)
+
 dnl Optionally build xmaxima.exe under windows
 dnl default to false as additional software
 AC_ARG_ENABLE(xmaxima_exe,
@@ -683,28 +753,64 @@ AC_ARG_ENABLE(xmaxima_exe,
    [xmaxima_exe=false])
 AM_CONDITIONAL(XMAXIMA_EXE, test x$xmaxima_exe = xtrue)
 
+dnl Optionally build xmaxima.exe under windows
+dnl default to false as additional software
+AC_ARG_ENABLE(winkill_exe,
+  [  --enable-winkill             Build Windows winkill.exe and winkill_lib.dll for installer],
+  [case "${enableval}" in
+       		yes) winkill_exe=true ;;
+       		no)  winkill_exe=false ;;
+		*) AC_MSG_ERROR(bad value ${enableval} for --enable-winkill-exe) ;;
+   esac],
+   [winkill_exe=false])
+AM_CONDITIONAL(WINKILL_EXE, test x$winkill_exe = xtrue)
+
+dnl Should we build a win64 installer?
+AC_ARG_ENABLE(win64-installer,
+  [  --enable-win64-installer     Build a 64bit installer on Windows],
+  [case "${enableval}" in
+                yes) win64_installer=true ;;
+                no) win64_installer=false ;;
+                *) AC_MSG_ERROR(bad valu ${enableval} for --enable-win64-installer) ;;
+  esac],
+  [win64_installer=false])
+AM_CONDITIONAL(WIN64_INSTALLER, test x$win64_installer = xtrue)
+AC_SUBST(win64_installer)
+
+dnl Enable use of MathJax in the html documentation.  This just loads
+dnl MathJax in each html file.  The texi files need to put the
+dnl appropriate @html/@end html text to generate the equations for MathJax.
+AC_ARG_ENABLE(mathjax,
+  [  --enable-mathjax             Enable MathJax support for html manual],
+  [case "${enableval}" in
+      yes) mathjax=true
+           mathjax_enable='@set mathjax true'
+           mathjax_script="<script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>"
+;;
+      no)  mathjax=false
+           mathjax_enable='@clear mathjax'
+           mathjax_script="";;
+      *) AC_MSG_ERROR(bad value ${enableval} for --enable-mathjax) ;;
+   esac],
+  [mathjax=false])
+AM_CONDITIONAL(MATHJAX, test x$mathjax = xtrue)
+AC_SUBST(mathjax_script)
+AC_SUBST(mathjax_enable)
+
 dnl Tools for building xmaxima.exe on windows
 dnl Hard code the filenames for now.  Can over-ride on make command line
 GCCVER=undefined
 if test x${xmaxima_exe} = xtrue ; then
   GCCVER=`gcc -dumpversion`
-  if  test x${GCCVER} = x3.3.1; then
-    TCLINCLUDE=
-    TCLSTUBLIB=-ltclstub84
-  else
-    TCLINCLUDE=/c/tcl/include
-    TCLSTUBLIB=/c/tcl/lib/tclstub85.lib
-  fi
-  dnl http://code.google.com/p/tclkit/ and http://www.tcl.tk/starkits/
-  TCLKITSH=/c/programs/star/tclkitsh-win32.upx.exe
-  TCLKIT_RUNTIME=/c/programs/star/tclkit-win32.upx.exe 
+  dnl http://tclkits.rkeene.org/fossil/wiki?name=Downloads
+  dnl and http://www.tcl.tk/starkits/
+  TCLKITSH=/c/programs/star/tclkitsh-8.6.3-win32-ix86.exe
+  TCLKIT_RUNTIME=/c/programs/star/tclkit-8.6.3-win32-ix86.exe
   SDXKIT=/c/programs/star/sdx.kit
   IMGKIT=/c/programs/star/img.kit
 fi
 
 AC_SUBST(GCCVER)
-AC_SUBST(TCLINCLUDE)
-AC_SUBST(TCLSTUBLIB)
 AC_SUBST(TCLKITSH)
 AC_SUBST(TCLKIT_RUNTIME)
 AC_SUBST(SDXKIT)
@@ -720,6 +826,7 @@ if test x"${explicit_lisp}" = xfalse ; then
 	AC_CHECK_PROG(sbcl_found,$SBCL_NAME,true,false)
 	AC_CHECK_PROG(acl_found,$ACL_NAME,true,false)
 	AC_CHECK_PROG(openmcl_found,$OPENMCL_NAME,true,false)
+	AC_CHECK_PROG(ccl64_found,$CCL64_NAME,true,false)
 	AC_CHECK_PROG(ecl_found,$ECL_NAME,true,false)
 
   	if test x"${clisp_found}" = xtrue ; then
@@ -743,6 +850,9 @@ if test x"${explicit_lisp}" = xfalse ; then
 	elif test x"${ecl_found}" = xtrue ; then
 		ecl=true
 		lisps_enabled="${lisps_enabled} ecl"
+        elif test x"${ccl64_found}" = xtrue; then
+                ccl64=true
+                lisps_enabled="${lisps_enabled} ccl64"
 	else
 		AC_MSG_ERROR(No lisp implementation specified and none of the default executables [${clisp_default_name}(clisp),${gcl_default_name}(GCL),${cmucl_default_name}(CMUCL),${scl_default_name}(SCL),${sbcl_default_name}(SBCL),${acl_default_name}(ACL),${openmcl_default_name}(OpenMCL),${ecl_default_name}(ECL)] were found in PATH)
 	fi
@@ -760,6 +870,8 @@ AM_CONDITIONAL(ACL, test x$acl = xtrue)
 AM_CONDITIONAL(OPENMCL, test x$openmcl = xtrue)
 AM_CONDITIONAL(OPENMCL_EXEC, test x${openmcl_exec} = xtrue)
 AM_CONDITIONAL(ECL, test x$ecl = xtrue)
+AM_CONDITIONAL(CCL64, test x$ccl64 = xtrue)
+AM_CONDITIONAL(CCL64_EXEC, test x${ccl64_exec} = xtrue)
 
 if test x"${clisp}" = xtrue; then
     if test x"${CLISP_RUNTIME_PATH}" = x"" ; then
@@ -840,7 +952,7 @@ script the SCL executable is the program exec'd by that shell script.])
 fi
 
 if test x"${gcl}" = xtrue; then
-   result=`"${GCL_NAME}" -batch -eval '#+ansi-cl (format t "MAXIMA_GCL_ANSI_TEST_SUCCESS~%") #-ansi-cl (format t "MAXIMA_GCL_ANSI_TEST_FAILURE~%")' -eval '(bye)'`
+   result=`"${GCL_NAME}" -batch -eval '#+ansi-cl (format t "MAXIMA_GCL_ANSI_TEST_SUCCESS~%") #-ansi-cl (format t "MAXIMA_GCL_ANSI_TEST_FAILURE~%")' -eval '(si::bye)'`
    retval=$?
    if test ! x"${retval}" = x"0" ; then
       AC_MSG_ERROR(unable to run gcl executable \"${GCL_NAME}\".)
@@ -865,19 +977,6 @@ AC_ARG_ENABLE(gcl-alt-link,
 
 AM_CONDITIONAL(GCL_ALT_LINK, test x$gcl_alt_link = xtrue)
 
-## Enable building sys-proclaim.lisp. Only has any effect on GCL,
-## where it increases the compiled binary's performance by maybe 5% at
-## the expense of doubling compile time.
-AC_ARG_ENABLE([sys-proclaim],
-        [  --enable-sys-proclaim        Use sys-proclaim.lisp (only affects GCL)],
-        [case "${enableval}" in
-              yes) sys_proclaim=true ;;
-              no) sys_proclaim=false ;;
-              *) AC_MSG_ERROR(bad value ${enableval} for --enable-sys-proclaim) ;;
-         esac],
-        [sys_proclaim=true])
-AM_CONDITIONAL([SYS_PROCLAIM], [test x${sys_proclaim} = xtrue])
-	
 AC_ARG_WITH(default-lisp,
 	[  --with-default-lisp=<lisp>   Set default lisp implementation to <lisp>],
      	[case "${withval}" in
@@ -936,6 +1035,13 @@ AC_ARG_WITH(default-lisp,
 			else
 				AC_MSG_ERROR(ecl not enabled)
 			fi
+			;;
+		ccl64)		
+			if test x"${ccl64}" = xtrue ; then
+				DEFAULTLISP=ccl64
+			else
+				AC_MSG_ERROR(ccl64 not enabled)
+			fi
 			;;		
 		*) 
 			AC_MSG_ERROR(Unknown argument ${DEFAULTLISP} to --with-default-lisp) 
@@ -957,6 +1063,8 @@ AC_ARG_WITH(default-lisp,
 		DEFAULTLISP=openmcl
 	elif test x"${ecl}" = xtrue ; then
 		DEFAULTLISP=ecl
+	elif test x"${ccl64}" = xtrue ; then
+		DEFAULTLISP=ccl64
 	else
 		AC_MSG_ERROR(Internal error. No lisp enabled. Please contact maintainer.)
 	fi])
@@ -976,6 +1084,7 @@ AC_SUBST(GCL_NAME)
 AC_SUBST(ACL_NAME)
 AC_SUBST(OPENMCL_NAME)
 AC_SUBST(ECL_NAME)
+AC_SUBST(CCL64_NAME)
 AC_SUBST(DEFAULTLISP)
 AC_SUBST(HHC)
 AC_SUBST(lisps_enabled)
@@ -1030,21 +1139,22 @@ if test x"${exec_prefix}" = xNONE ; then
 else
 	tmp_exec_prefix="${exec_prefix}"
 fi
-expanded_top_srcdir="`(cd \"$top_srcdir\" 1>/dev/null 2>/dev/null; pwd)`"
+expanded_top_srcdir="$(cd "$top_srcdir" 1>/dev/null 2>/dev/null; pwd)"
 expanded_exec_prefix="${tmp_exec_prefix}"
-expanded_libdir="`eval \"exec_prefix=\\\"${tmp_exec_prefix}\\\";echo ${libdir}\"`"
-expanded_libexecdir="`eval \"exec_prefix=\\\"${tmp_exec_prefix}\\\";echo ${libexecdir}\"`"
-expanded_datadir="`eval \"prefix=\\\"${tmp_prefix}\\\";datarootdir=\\\"${datarootdir}\\\";echo ${datadir}\"`"
-expanded_infodir="`eval \"prefix=\\\"${tmp_prefix}\\\";datarootdir=\\\"${datarootdir}\\\";echo ${infodir}\"`"
+expanded_libdir="$(eval "exec_prefix=\"${tmp_exec_prefix}\";echo ${libdir}")"
+expanded_libexecdir="$(eval "exec_prefix=\"${tmp_exec_prefix}\";echo ${libexecdir}")"
+expanded_datadir="$(eval "prefix=\"${tmp_prefix}\";datarootdir=\"${datarootdir}\";echo ${datadir}")"
+expanded_infodir="$(eval "prefix=\"${tmp_prefix}\";datarootdir=\"${datarootdir}\";echo ${infodir}")"
 
 
 dnl Find all the directories in share, but remove the share directory
-dnl itself and all CVS directories (if any) and fortran directories.
+dnl itself and all CVS directories (if any) and fortran directories
+dnl and *.t2p directories (created when generating pdf documentation).
 dnl Remove the leading "share" part of the path, and add double-quotes
 dnl around it.
 
 #default_sharedirs=`find share -type d | sort | egrep -v 'share$|CVS|/fortran' | sed 's;share/\(.*\);        "\1" \\\\;' | sed '$s;\\\\;;'`
-default_sharedirs=`find share -type d | sort | egrep -v 'share$|CVS|/fortran' | sed 's;share/\(.*\);"\1";' | tr '\n' ' '`
+default_sharedirs=`find share -type d | sort | egrep -v 'share$|CVS|/fortran|\.t2p' | sed 's;share/\(.*\);"\1";' | tr '\n' ' '`
 
 AC_SUBST(expanded_top_srcdir)
 AC_SUBST(expanded_exec_prefix)
@@ -1060,7 +1170,10 @@ AC_SUBST(default_sharedirs)
 dnl Look for grep that can handle long lines and -e.
 AC_PROG_EGREP
 AC_SUBST(EGREP)
-
+AC_PATH_PROG([CAT],[cat])
+AC_PROG_SED
+AC_PROG_AWK
+AM_PATH_PYTHON
 
 # Configure these files and make them executable
 AC_CONFIG_FILES([maxima-local], chmod +x maxima-local)
@@ -1076,7 +1189,10 @@ AC_OUTPUT(Makefile maxima.spec maxima.iss \
 admin/Makefile src/Makefile src/maxima src/rmaxima src/autoconf-variables.lisp \
 src/share-subdirs.lisp \
 lisp-utils/Makefile tests/Makefile doc/Makefile \
+crosscompile-windows/Makefile \
 doc/emaxima/Makefile doc/info/Makefile doc/info/include-maxima.texi \
+doc/info/texi2html.init \
+doc/info/figures/Makefile \
 doc/info/de/Makefile \
 doc/info/de.utf8/Makefile doc/info/es/Makefile doc/info/es.utf8/Makefile \
 doc/info/pt/Makefile doc/info/pt.utf8/Makefile \
@@ -1091,6 +1207,7 @@ interfaces/xmaxima/doc/Makefile interfaces/xmaxima/doc/figures/Makefile \
 interfaces/xmaxima/msgs/Makefile interfaces/xmaxima/win32/Makefile \
 plotting/mgnuplot share/Makefile demo/Makefile plotting/Makefile locale/Makefile \
 share/contrib/Makefile share/contrib/integration/Makefile \
+share/contrib/maxima-odesolve/Makefile \
 share/draw/Makefile share/logic/Makefile  doc/info/es/include-maxima.texi \
 src/lisp)
 
@@ -1135,6 +1252,12 @@ fi
 if test x"${openmcl_exec}" = xtrue ; then
    echo "OpenMCL executable image enabled for maxima."
 fi
+if test x"${ccl64}" = xtrue ; then
+	echo "CCL64 enabled. Executable name: \"${CCL64_NAME}\""
+fi
+if test x"${ccl64_exec}" = xtrue ; then
+   echo "CCL64 executable image enabled for maxima."
+fi
 if test x"${ecl}" = xtrue ; then
 	echo "ECL enabled. Executable name: \"${ECL_NAME}\""
 fi
@@ -1148,11 +1271,6 @@ fi
 if test x"${xmaxima_exe}" = xtrue ; then
    echo "Windows xmaxima.exe enabled"
    echo "  GCC version GCCVER: ${GCCVER}"
-   echo "  TCLSTUBLIB: ${TCLSTUBLIB}"
-   if ! test -f "${TCLSTUBLIB}" ; then
-     AC_MSG_WARN(*** TCLSTUBLIB ${TCLSTUBLIB} not found)
-     xmaxima_exe_prerequisite=notfound
-   fi
    echo "  TCLKITSH: ${TCLKITSH}"
    if ! test -f "${TCLKITSH}" ; then
      AC_MSG_WARN(*** TCLKITSH ${TCLKITSH} not found)

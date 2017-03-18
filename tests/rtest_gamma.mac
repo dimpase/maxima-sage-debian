@@ -387,6 +387,9 @@ double_factorial(n-3);
 double_factorial(n-4),factorial_expand:true;
 double_factorial(n)/(n*(n-2));
 
+makegamma(double_factorial(n));
+(gamma(n/2+1)*2^((1-cos(%pi*n))/4+n/2))/%pi^((1-cos(%pi*n))/4);
+
 /* Some small numbers */
 
 double_factorial(-3);
@@ -480,7 +483,7 @@ true;
 closeto(
   double_factorial(7.0),
   105.0,
-  1e-13);
+  1.279e-13);
 true;
 
 closeto(
@@ -868,7 +871,7 @@ relerror(
   gamma(75.5+%i),
   (-1.092860022497734443706055997676557155572470037327121860702819811b108 
    -2.622326961675321010452173874453854546607804545768376326095021243b108*%i),
-  5e-14);
+  5.339e-14);
 true;
 
 /* Check negative real arguments in double float precision. 
@@ -1330,7 +1333,7 @@ fpprec:64;
 closeto(
   gamma_incomplete(0.25b0,1.50b0),
   0.1211549910403384861486034087836891246955052387140720625064500006b0,
-  1b-63);
+  1.5b-63);
 true;
 
 fpprec:128;
@@ -1339,13 +1342,13 @@ fpprec:128;
 closeto(
   gamma_incomplete(0.25b0,1.50b0),
   0.12115499104033848614860340878368912469550523871407206250645000059332022509505923467877887847273887882437030555876962014143410940b0,
-  1b-127);
+  4b-127);
 true;
 
 closeto(
   gamma_incomplete(0.25b0,1.50b0),
   1.5b0^0.25b0*expintegral_e(1.0b0-0.25b0,1.50b0),
-  1b-128);
+  5b-128);
 true;
 
 fpprec:34; /* Two extra digits to get 32 digits in the following tests */
@@ -1523,7 +1526,7 @@ relerror(
   gamma_incomplete(10.0+1.5*%i,10.0+1.5*%i),
   (-143260.5455945276009736506823530548923946268185687353440779787855b0 
   -36427.8601104063533811294405176711748076293661563594190640674077b0*%i),
-  5.0e-15);
+  1.02e-14);
 true;
 
 relerror(
@@ -1537,7 +1540,7 @@ relerror(
   gamma_incomplete(10.0+1.5*%i,10.0+0.5*%i),
   (-134422.2837349310843015830622649231296922981730868773827217434186b0 
   -76495.4696532860249045908863041952283847028641854696387454419024b0*%i),
-  5.0e-15);
+  1.271e-14);
 true;
 
 relerror(
@@ -1962,7 +1965,7 @@ true;
 relerror(
   gamma_incomplete(0.5,-10+10.0*%i),
   921.0687349037275816861912330294 + 5931.0759029700741177372337479958*%i,
-  1e-15);
+  1.072e-15);
 true;
 
 relerror(
@@ -2010,7 +2013,7 @@ true;
 relerror(
   gamma_incomplete(0.5,-10+10.0*%i),
   921.0687349037275816861912330294 + 5931.0759029700741177372337479958*%i,
-  1e-15);
+  1.072e-15);
 true;
 
 relerror(
@@ -2188,6 +2191,10 @@ gamma_incomplete_regularized(0,z);
 0;
 gamma_incomplete_regularized(a,inf);
 0;
+
+/* Check that the derivative is correct. */
+diff(gamma_incomplete_regularized(a,z),z);
+-(z^(a-1)*%e^(-z))/gamma(a);
 
 /* Expand gamma_incomplete_regularized */
 
@@ -2588,7 +2595,7 @@ true;
 relerror(
   erfc(6.0),
   2.15197367124989131659335039918738463047751406e-17,
-  2e-15);
+  2.005e-15);
 true;
 
 relerror(
@@ -2974,7 +2981,7 @@ true;
 relerror(
   fresnel_s(2.0b0),
   0.3434156783636982421953008159580684568865418122025247675792689204b0,
-  5.3b-64);
+  1.5b-63);
 true;
 
 relerror(
@@ -3121,7 +3128,7 @@ true;
 relerror(
   fresnel_c(2.0b0),
   0.4882534060753407545002235033572610376883671545092153829475964427b0,
-  5.0b-64);
+  5.1b-64);
 true;
 
 relerror(
@@ -3446,13 +3453,13 @@ true;
 closeto(
   beta_incomplete(0.5,1.0,0.50),
   1.414213562373095048801688724209698078569671875376948073176679738b0,
-  1e-15);
+  1.416e-15);
 true;
 
 closeto(
   beta_incomplete(0.5,1.0,0.75),
   1.732050807568877293527446341505872366942805253810380628055806979b0,
-  2.0e-15);
+  2.11e-15);
 true;
 
 closeto(
@@ -3476,13 +3483,13 @@ true;
 closeto(
   beta_incomplete(0.5,1.0,1.75),
   2.645751311064590590501615753639260425710259183082450180368334459b0,
-  1e-15);
+  1.446e-15);
 true;
 
 closeto(
   beta_incomplete(0.5,1.0,2.00),
   2.828427124746190097603377448419396157139343750753896146353359476b0,
-  1e-15);
+  1.503e-15);
 true;
 
 /* Some numerical tests in bigfloat precision */
@@ -3577,7 +3584,7 @@ true;
 relerror(
   gamma_incomplete(1/5,-32.0),
   -4.0986398326716649399d12 - %i*2.9778361454160762231d12,
-  2e-15);
+  2.545e-15);
 true;
 
 relerror(
@@ -3595,7 +3602,7 @@ true;
 relerror(
   gamma_incomplete(10,-100d0+%i),
   subst(x=-100d0+%i, block([gamma_expand : true], gamma_incomplete(10,x))),
-  8.1e-15);
+  1.046e-14);
 true;
       
 relerror(
@@ -3647,13 +3654,13 @@ fpprec:24;
 relerror(
  erf(inverse_erf(2b0)),
  2b0,
- 2.9b-24);
+ 5.9b-24);
 true;
 
 relerror(
  erf(inverse_erf(-2b0)),
  -2b0,
- 2.9b-24);
+ 5.9b-24);
 true;
 
 relerror(
@@ -3720,4 +3727,20 @@ true;
 
 (fpprec:oldfpprec,done);
 done;
+
+/* SF bug #3090: "erfi switches sign at approximately -0.476 and 0.476" */
+
+block
+  (kill (x, L1, L2),
+   x : makelist (i/10.0, i, -20, 20),
+   L1 : makelist (erfi (x1), x1, x),
+   L2 : makelist (-%i*erf (%i*x1), x1, x),
+   every (lambda ([x1, x2], x1 = x2), L1, L2));
+true;
+
+every (lambda ([x1, e1], sign(x1) = sign(e1)), x, L1);
+true;
+
+every (lambda ([x1, e1], sign(x1) = sign(e1)), x, L2);
+true;
 

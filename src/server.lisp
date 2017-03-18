@@ -8,18 +8,31 @@
 
 #+(or ecl sbcl)
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  #+sbcl (require 'asdf)		    ;not needed here for a recent SBCL
   #+sbcl (require 'sb-posix)
   (require 'sb-bsd-sockets))
 
 (defvar $in_netmath nil)
 (defvar $show_openplot t)
 (defvar *socket-connection*)
+(defvar $old_stdout)
+(defvar $old_stderr)
 
 (defun setup-client (port &optional (host "localhost"))
-  (let* ((sock (open-socket host port)))
+  ;; The following command has to be executed on windows before
+  ;; the connection is opened. If it isn't the first unicode 
+  ;; character maxima wants to send causes sbcl to wait indefinitely.
+  #+sbcl (setf sb-impl::*default-external-format* :utf-8)
+  (multiple-value-bind (sock condition) (ignore-errors (open-socket host port))
+    (unless sock
+      ; It appears that we were unable to open a socket or connect to the
+      ; specified port.
+      (mtell (intl:gettext "~%Unable to connect Maxima to port ~:M.~%") port)
+      (mtell (intl:gettext "Error: ~A~%") condition)
+      ($quit))
     #+gcl (setq si::*sigpipe-action* 'si::bye)
     (setq *socket-connection* sock)
+    (setq $old_stderr *error-output*
+	  $old_stdout *standard-output*)
     #+ecl (setq *old-stdin* *standard-input*
 		*old-stdout* *standard-output*
 		*old-stderr* *error-output*
@@ -52,7 +65,11 @@
 
   (let ((host (etypecase host
                 (string host)
-                (integer (hostent-name (resolve-host-ipaddr host))))))
+                ;; Can't actually handle this case for lack of HOSTENT-NAME and RESOLVE-HOST-IPADDR.
+                ;;(integer (hostent-name (resolve-host-ipaddr host)))))
+                (integer (merror (intl:gettext "OPEN-SOCKET: can't handle integer host argument (host=~M)~%") host))))
+	#+(and ccl openmcl-unicode-strings)
+	(ccl:*default-socket-character-encoding* :utf-8))
     #+allegro (socket:make-socket :remote-host host :remote-port port
                                   :format (if bin :binary :text))
     #+clisp (socket:socket-connect port host :element-type
@@ -71,7 +88,8 @@
 		      (sb-bsd-sockets:get-host-by-name host)) port)
 	     (sb-bsd-sockets:socket-make-stream
 	      socket :input t :output t :buffering (if bin :none :line)
-	      :element-type (if bin '(unsigned-byte 8) 'character)))
+	      :element-type (if bin '(unsigned-byte 8) 'character)
+              #+sb-unicode :external-format #+sb-unicode :utf-8))
     #+gcl (si::socket port :host host)
     #+lispworks (comm:open-tcp-stream host port :direction :io :element-type
                                       (if bin 'unsigned-byte 'base-char))
@@ -104,10 +122,12 @@
 #+lispworks (system::getpid)
 #+ecl (si:getpid)
 #+ccl (ccl::getpid)
-#-(or clisp cmu scl sbcl gcl openmcl lispworks ecl ccl) (getpid-from-environment)
+#+allegro (excl::getpid)
+#-(or clisp cmu scl sbcl gcl openmcl lispworks ecl ccl allegro)
+  (getpid-from-environment)
 )
 
-#+(or gcl clisp cmu scl sbcl lispworks ecl ccl)
+#+(or gcl clisp cmu scl sbcl lispworks ecl ccl allegro)
 (defun xchdir (w)
   #+clisp (ext:cd w)
   #+gcl (si::chdir w)
@@ -116,4 +136,5 @@
   #+lispworks (hcl:change-directory w)
   #+ecl (si:chdir w)
   #+ccl (ccl:cwd w)
+  #+allegro (excl:chdir w)
   )

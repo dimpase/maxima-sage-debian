@@ -49,7 +49,12 @@
 
 ; ------------------ search help topics ------------------
 
+(defun maxima::combine-path (&rest list)
+  "splice a '/' between the path components given as arguments"
+  (format nil "~{~A~^/~}" list))
+
 (defun load-primary-index ()
+  (declare (special maxima::*maxima-lang-subdir* maxima::*maxima-infodir*))
   ;; Load the index, but make sure we use a sensible *read-base*.
   ;; See bug 1951964.  GCL doesn't seem to have
   ;; with-standard-io-syntax.  Is just binding *read-base* enough?  Is
@@ -129,22 +134,28 @@
 
     (setq wanted
           (if (> nitems 1)
-          (loop
-           for prompt-count from 0
-           thereis (progn
-                 (finish-output *debug-io*)
-                 (print-prompt prompt-count)
-                 (force-output)
-                 (clear-input)
-                 (select-info-items
-                  (parse-user-choice nitems) items-list)))
-          items-list))
-    (clear-input)
+            (prog1
+              (loop
+                for prompt-count from 0
+                thereis (progn
+                          (finish-output *debug-io*)
+                          (print-prompt prompt-count)
+                          (force-output)
+                          (clear-input)
+                          (select-info-items
+                            (parse-user-choice nitems) items-list)))
+              (clear-input))
+            items-list))
     (finish-output *debug-io*)
     (when (consp wanted)
       (format t "~%")
       (loop for item in wanted
-        do (format t "~A~%~%" (read-info-text (first item) (second item)))))))
+	    do (let ((doc (read-info-text (first item) (second item))))
+		 (if doc
+		     (format t "~A~%~%" doc)
+		     (format t "Unable to find documentation for `~A'.~%~
+                                Possible bug maxima-index.lisp or build_index.pl?~%"
+			     (first (second item)))))))))
 
 (defun inexact-topic-match (topic)
   (setq topic (regex-sanitize topic))
@@ -193,13 +204,18 @@
     ((value (cdr parameters))
      (filename (car value))
      (byte-offset (cadr value))
-     (byte-count (caddr value))
-     (text (make-string byte-count))
-     (path+filename (make-pathname :directory dir-name :name filename)))
+     (char-count (caddr value))
+     (text (make-string char-count))
+     (path+filename (merge-pathnames (make-pathname :name filename) dir-name)))
     (with-open-file (in path+filename :direction :input)
+      (unless (plusp byte-offset)
+	;; If byte-offset isn't positive there must be some error in
+	;; the index.  Return nil and let the caller deal with it.
+	(return-from read-info-text nil))
       (file-position in byte-offset)
-      #+gcl (gcl-read-sequence text in :start 0 :end byte-count)
-      #-gcl (read-sequence text in :start 0 :end byte-count))
+      (#-gcl read-sequence
+       #+gcl gcl-read-sequence
+       text in :start 0 :end char-count))
     text))
 
 #+gcl

@@ -12,8 +12,8 @@
 
 #+gcl
 (progn 
-  (lisp:clines "#define MAKE_UNSPECIAL(x) (check_type_symbol(&(x)),(x)->s.s_stype = stp_ordinary, Cnil)")
-  (lisp:defentry make-unspecial (lisp:object) (lisp:object "MAKE_UNSPECIAL")))
+  (system::clines "#define MAKE_UNSPECIAL(x) (check_type_symbol(&(x)),(x)->s.s_stype = stp_ordinary, Cnil)")
+  (system::defentry make-unspecial (system::object) (system::object "MAKE_UNSPECIAL")))
 
 #+(or scl cmu)
 (defun make-unspecial (symbol)
@@ -99,7 +99,7 @@
 	  $tr_predicate_brain_damage $tr_semicompile $tr_state_vars
 	  $tr_true_name_of_file_being_translated $tr_warn_bad_function_calls
 	  $tr_warn_fexpr $tr_warn_meval $tr_warn_mode $tr_warn_undeclared
-	  $tr_warn_undefined_variable $ttyintfun $ttyintnum
+	  $tr_warn_undefined_variable
 	  $universe $user_mesfile $use_fast_arrays $values $vect_cross
 	  $zerobern %e-val %p%i %pi-val %pi//2 %pi//4 %pi2 *$any-modes*
 	  *alpha *const* *fnewvarsw *gcdl* *in *in-$batchload* *in-compile*
@@ -131,7 +131,7 @@
 	  sums tellratlist timesinp tr-abort tr-progret tr-unique
 	  transl-file translate-time-evalables transp
 	  tstack typel user-mesfile varlist wflag
-	  $wtlevel $cflength $weightlevels *trunclist $taylordepth
+	  $cflength *trunclist $taylordepth
 	  $maxtaydiff $verbose $psexpand ps-bmt-disrep
 	  silent-taylor-flag $define_variable $infolists))
 

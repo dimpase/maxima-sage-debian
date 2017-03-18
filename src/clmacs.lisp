@@ -12,7 +12,7 @@
   (member x lis :test #'eq))
 
 ;;this will make operators which declare the type and result of numerical operations
-(eval-when (:compile-toplevel :load-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
 
   (defmacro def-op (name arg-type op &optional return-type)
     `(setf (macro-function ',name)
@@ -136,8 +136,8 @@
 	((symbolp x)
 	 (cond ((or (numberp y) (stringp y)) nil)
 	       ((symbolp y)
-		(let ((nx (symbol-name x))
-		      (ny (symbol-name y)))
+		(let ((nx (print-invert-case x))
+		      (ny (print-invert-case y)))
 		  (declare (string nx ny))
 		  (cond ((string<$ nx ny)
 			 t)
@@ -397,7 +397,7 @@
 #-(or flonum-long flonum-double-double)
 (progn
 ;; Tell Lisp the float type for a 'flonum.
-#-clisp
+#-(or clisp abcl)
 (deftype flonum (&optional low high)
   (cond (high
 	 `(double-float ,low ,high))
@@ -406,11 +406,11 @@
 	(t
 	 'double-float)))
 
-;; Some versions of clisp appear to be buggy: (coerce 1 'flonum)
+;; Some versions of clisp and ABCL appear to be buggy: (coerce 1 'flonum)
 ;; signals an error.  So does (coerce 1 '(double-float 0d0)).  But
 ;; (coerce 1 'double-float) returns 1d0 as expected.  So for now, make
 ;; flonum be exactly the same as double-float, without bounds.
-#+clisp
+#+(or clisp abcl)
 (deftype flonum (&optional low high)
   (declare (ignorable low high))
   'double-float)
