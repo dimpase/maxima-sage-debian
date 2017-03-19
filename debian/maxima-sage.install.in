@@ -1,5 +1,5 @@
 debian/tmp/usr/bin/maxima-sage
-debian/tmp/usr/lib/maxima-sage/@MVERS@/binary-ecl/maxima-sage
+debian/tmp/usr/lib/maxima-sage/@MVERS@/binary-ecl/maxima
 debian/tmp/usr/lib/ecl/maxima.fas
 debian/tmp/usr/share/doc/maxima-sage/info/maxima-index.lisp
 debian/tmp/usr/share/doc/maxima-sage/info/maxima.info*

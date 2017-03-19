@@ -8,10 +8,12 @@ INSTALLS:=$(shell ls -1 debian/*.install.in | sed 's/\.in$$//g')
 	dh $@
 
 override_dh_auto_configure:
-	./configure --program-suffix=-sage --prefix=/usr --libdir=/usr/lib --infodir=/usr/share/doc/maxima-sage/info --enable-ecl git_found=false
+	./configure --prefix=/usr --libdir=/usr/lib --infodir=/usr/share/doc/maxima-sage/info --enable-ecl git_found=false
 
 override_dh_auto_install:
 	dh_auto_install
+	mv debian/tmp/usr/bin/maxima debian/tmp/usr/bin/maxima-sage
+	mv debian/tmp/usr/share/man/man1/maxima.1 debian/tmp/usr/share/man/man1/maxima-sage.1
 	rm -f debian/tmp/usr/share/doc/maxima-sage/info/imaxima.info
 	rm -f debian/tmp/usr/share/doc/maxima-sage/info/xmaxima.info
 	mkdir -p debian/tmp/usr/share/doc

@@ -1,4 +1,4 @@
-maxima-sage (5.39.0+ds-0sage1) unstable-sage; urgency=medium
+maxima-sage (5.39.0+ds-0sage2) unstable-sage; urgency=medium
 
   * New upstream version.
   * Remove stdin-illegal-seek.patch (applied upstream).
