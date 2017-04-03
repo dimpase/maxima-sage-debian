@@ -1,4 +1,4 @@
-maxima-sage (5.39.0+ds-0sage2) unstable-sage; urgency=medium
+maxima-sage (5.39.0+ds-1) experimental; urgency=medium
 
   * New upstream version.
   * Remove stdin-illegal-seek.patch (applied upstream).
@@ -7,7 +7,7 @@ maxima-sage (5.39.0+ds-0sage2) unstable-sage; urgency=medium
     using new patch change_name_to_maxima-sage.patch.
   * Repack source to get rid of dos line endings conflicting with git.
 
- -- Tobias Hansen <thansen@debian.org>  Sat, 18 Mar 2017 11:44:29 +0000
+ -- Tobias Hansen <thansen@debian.org>  Mon, 03 Apr 2017 19:53:07 +0100
 
 maxima-sage (5.35.1-2) unstable; urgency=medium
 
