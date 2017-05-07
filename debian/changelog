@@ -1,3 +1,9 @@
+maxima-sage (5.39.0+ds-3) unstable; urgency=medium
+
+  * Upload to unstable.
+
+ -- Tobias Hansen <thansen@debian.org>  Sun, 07 May 2017 16:32:16 +0100
+
 maxima-sage (5.39.0+ds-2) experimental; urgency=medium
 
   * Build-Depend on python-dev.
