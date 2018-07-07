@@ -1,6 +1,8 @@
 maxima-sage (5.41.0+ds-1) UNRELEASED; urgency=medium
 
   * New upstream version
+  * Update Vcs-* fields for Salsa.
+  * Bump Standards-Version.
 
  -- Tobias Hansen <thansen@debian.org>  Sat, 07 Jul 2018 19:32:28 +0200
 
