@@ -181,8 +181,10 @@ is EQ to FNNAME if the latter is non-NIL."
 	(decf mlambda-pointer 5)))))
 
 (defun mlambda (fn args fnname noeval form)
-  (cond ((not ($listp (cadr fn)))
-	 (merror (intl:gettext "lambda: first argument must be a list; found: ~M") (cadr fn))))
+  ; We assume that the lambda expression handed to us has been simplified,
+  ; or at least that it's well-formed.  This is because various checks are
+  ; performed during simplification instead of every time lambda expressions
+  ; are applied to arguments.
   (setq noevalargs nil)
   (let ((params  (cdadr fn))( mlocp  t))
     (setq loclist (cons nil loclist))
@@ -321,9 +323,9 @@ is EQ to FNNAME if the latter is non-NIL."
          (setq u
                (or (safe-getl (caar form) '(noun))
                    (and *nounsflag*
-                        (and (symbolp (caar form)) (eql (getcharn (caar form) 1) #\%))
+                        (and (symbolp (caar form)) (char= (get-first-char (caar form)) #\%))
                         (not (or (getl-lm-fcn-prop (caar form) '(subr))
-                                 (safe-getl (caar form) '(mfexpr*))))
+                              (safe-getl (caar form) '(mfexpr*))))
                         (prog2 ($verbify (caar form))
                                (safe-getl (caar form) '(noun))))
                    (and (not aryp)
@@ -411,10 +413,10 @@ is EQ to FNNAME if the latter is non-NIL."
      (mapply1 (caar form) (mevalargs (cdr form)) (caar form) form))))
 
 (defun getl-lm-fcn-prop (sym props &aux fn typ)
-  (check-arg sym symbolp "symbol")
   (setq fn sym)
   (cond ((functionp fn)
 	 (setq typ 'subr))
+	((not (symbolp sym))) ;; eventually return nil if not a symbol
 	((macro-function sym)
 	 (setq typ 'macro))
 	((setq fn (symbol-array sym))
@@ -434,12 +436,16 @@ is EQ to FNNAME if the latter is non-NIL."
 	  (nosimp (if aryp new (cons (cons (caar new) '(simp)) newargs)))
 	  (t (cons (cons (caar new) aryp) newargs)))))
 
+(defun mparam (var)
+  (cond ((atom var)
+         var)
+        ((atom (cadr var))
+         (cadr var))
+        (t
+         (cadadr var))))
+
 (defun mparams (vars)
-  (mapcar #'(lambda (x)
-	      (cond ((atom x) x)
-		    ((atom (cadr x)) (cadr x))
-		    (t (cadadr x))))
-	  (cdr vars)))
+  (mapcar #'mparam (cdr vars)))
 
 (defmfun mop (form)
   (if (eq (caar form) 'mqapply)
@@ -478,7 +484,11 @@ wrapper for this."
 			"Expected a maxima function designator but got NIL.")
 		(merror (intl:gettext "~M arguments supplied to ~M; found: ~M")
 			(if vars (intl:gettext "Too few") (intl:gettext "Too many"))
-			(cons (ncons fnname) lamvars)
+			(if (and (consp fnname)
+				 (consp (car fnname))
+				 (eq (caar fnname) 'lambda))
+			    fnname
+			    (cons (ncons fnname) lamvars))
 			(cons '(mlist) fnargs)))))
     (let ((var (car vars)))
       (if (not (symbolp var))
@@ -1067,7 +1077,7 @@ wrapper for this."
 	     (meval exp)
 	     (list (car exp) (cadr exp) (caddr exp)
 		   (mevalatoms (cadddr exp)) (mevalatoms (car (cddddr exp))))))
-	((and (eq (caar exp) '$%th) (eq (ml-typep (simplify (cadr exp))) 'fixnum))
+	((and (eq (caar exp) '$%th) (fixnump (simplify (cadr exp))))
 	 (meval1 exp))
 	((prog2 (autoldchk (caar exp))
 	     (and (getl (caar exp) '(mfexpr*))
@@ -1425,31 +1435,32 @@ wrapper for this."
 
 (defun declare1 (vars val prop mpropp)
   (dolist (var vars)
-    (setq var (getopr var))
     (unless (or (symbolp var) (stringp var))
       (merror (intl:gettext "declare: argument must be a symbol or a string; found: ~M") var))
-    (cond ((eq mpropp 'kind) (declarekind var prop))
-	  ((eq mpropp 'opers)
-	   (putprop (setq var (linchk var)) t prop) (putprop var t 'opers)
-	   (if (and (symbolp var) (not (get var 'operators)))
-         (putprop var 'simpargs1 'operators)))
 
-	  ((eq mpropp '$alphabetic)
-       ; Explode var into characters and put each one on the *alphabet* list,
-       ; which is used by src/nparse.lisp .
-       (dolist (1-char (coerce var 'list))
-         (add2lnc 1-char *alphabet*)))
-
-	  (mpropp
-	   (if (and (member prop '($scalar $nonscalar) :test #'eq)
-		    (mget var (if (eq prop '$scalar) '$nonscalar '$scalar)))
-	       (merror (intl:gettext "declare: inconsistent declaration ~:M") `(($declare) ,var ,prop)))
-	   (mputprop var val prop))
-	  (t (putprop var val prop)))
-    (if (and (safe-get var 'op) (operatorp1 var)
-	     (not (member (setq var (get var 'op)) (cdr $props) :test #'eq)))
-	(setq *mopl* (cons var *mopl*)))
-    (add2lnc (getop var) $props)))
+      (if (eq mpropp '$alphabetic)
+        ; Explode var into characters and put each one on the *alphabet* list,
+        ; which is used by src/nparse.lisp .
+        (dolist (1-char (coerce var 'list))
+          (add2lnc 1-char *alphabet*))
+        (progn
+          (setq var (getopr var))
+          (cond
+            ((eq mpropp 'kind) (declarekind var prop))
+            ((eq mpropp 'opers)
+             (putprop (setq var (linchk var)) t prop) (putprop var t 'opers)
+             (if (and (symbolp var) (not (get var 'operators)))
+               (putprop var 'simpargs1 'operators)))
+            (mpropp
+              (if (and (member prop '($scalar $nonscalar) :test #'eq)
+                       (mget var (if (eq prop '$scalar) '$nonscalar '$scalar)))
+                (merror (intl:gettext "declare: inconsistent declaration ~:M") `(($declare) ,var ,prop)))
+              (mputprop var val prop))
+            (t (putprop var val prop)))
+          (if (and (safe-get var 'op) (operatorp1 var)
+                   (not (member (setq var (get var 'op)) (cdr $props) :test #'eq)))
+            (setq *mopl* (cons var *mopl*)))
+          (add2lnc (getop var) $props)))))
 
 (defun linchk (var)
   (if (member var '($sum $integrate $limit $diff $transpose) :test #'eq)
@@ -1513,44 +1524,46 @@ wrapper for this."
 
 (defmfun remove1 (vars prop mpropp info funp)
   (do ((vars vars (cdr vars)) (allflg))
-      ((null vars))
+    ((null vars))
     (unless (or (symbolp (car vars)) (stringp (car vars)))
       (merror (intl:gettext "remove: argument must be a symbol or a string; found: ~M") (car vars)))
-    (cond ((and (eq (car vars) '$all) (null allflg))
-	   (setq vars (append vars (cond ((atom info) (cdr $props))
-					 (funp (mapcar #'caar (cdr info)))
-					 (t (cdr info))))
-		 allflg t))
-	  (t
+    (cond
+      ((and (eq (car vars) '$all) (null allflg))
+       (setq vars (append vars (cond ((atom info) (cdr $props))
+                                     (funp (mapcar #'caar (cdr info)))
+                                     (t (cdr info))))
+             allflg t))
+      (t
         (if (and (stringp (car vars)) (eq prop '$op) (getopr0 (car vars)))
           (kill-operator (getopr0 (car vars))))
 
-	   (let ((var  (getopr (car vars)))( flag  nil))
-	     (cond (mpropp (mremprop var prop)
-			   (when (member prop '(mexpr mmacro) :test #'eq)
-			     (mremprop var 'mlexprp)
-			     (mremprop var 'mfexprp)
-			     (remprop var 'lineinfo)
-			     (if (mget var 'trace)
-				 (macsyma-untrace var))))
-		   ((and (eq prop '$alphabetic) (stringp var))
-	    (dolist (1-char (coerce var 'list))
-	      (setf *alphabet* (delete 1-char *alphabet* :count 1 :test #'equal))))
-		   ((eq prop '$transfun)
-		    (remove-transl-fun-props var)
-		    (remove-transl-array-fun-props var))
-		   ((or (setq flag (member prop (cdr $features) :test #'eq)) (member prop opers :test #'eq))
-		    (if flag (unkind var prop))
-		    (zl-remprop var prop)
-		    (if (not (getl var (delete prop (copy-list opers) :count 1 :test #'eq)))
-			(zl-remprop var 'opers)))
-		   (t (zl-remprop var prop)))
-	     (cond ((eq info t) (rempropchk var))
-		   ((eq info 'foo))
-		   (funp
-		    (mfunction-delete var info))
-		   (t
-		    (setf info (delete var info :count 1 :test #'eq)))))))))
+        (if (and (eq prop '$alphabetic) (stringp (car vars)))
+          (dolist (1-char (coerce (car vars) 'list))
+            (setf *alphabet* (delete 1-char *alphabet* :count 1 :test #'equal)))
+          (let ((var  (getopr (car vars)))( flag  nil))
+            (cond
+              (mpropp (mremprop var prop)
+                      (when (member prop '(mexpr mmacro) :test #'eq)
+                        (mremprop var 'mlexprp)
+                        (mremprop var 'mfexprp)
+                        (remprop var 'lineinfo)
+                        (if (mget var 'trace)
+                          (macsyma-untrace var))))
+              ((eq prop '$transfun)
+               (remove-transl-fun-props var)
+               (remove-transl-array-fun-props var))
+              ((or (setq flag (member prop (cdr $features) :test #'eq)) (member prop opers :test #'eq))
+               (if flag (unkind var prop))
+               (zl-remprop var prop)
+               (if (not (getl var (delete prop (copy-list opers) :count 1 :test #'eq)))
+                 (zl-remprop var 'opers)))
+              (t (zl-remprop var prop)))
+            (cond ((eq info t) (rempropchk var))
+                  ((eq info 'foo))
+                  (funp
+                    (mfunction-delete var info))
+                  (t
+                    (setf info (delete var info :count 1 :test #'eq))))))))))
 
 (defun remove-transl-fun-props (fun)
   (if (mget fun 'trace)
@@ -1757,8 +1770,7 @@ wrapper for this."
 		    (wna-err '$array))
 		   ((> (length diml) 5)
 		    (merror (intl:gettext "array: number of dimensions must be 5 or less; found: ~M") (length diml)))
-		   ((member nil (mapcar #'(lambda (u) (eq (ml-typep u) 'fixnum)) diml)
-			    :test #'eq)
+		   ((member nil (mapcar #'fixnump diml) :test #'eq)
 		    (merror (intl:gettext "array: all dimensions must be integers."))))
 	     (setq diml (mapcar #'1+ diml))
 	     (setq new (if compp fun (gensym)))
@@ -1785,9 +1797,9 @@ wrapper for this."
 				   (merror (intl:gettext "array: existing elements must be ~M; found: ~M") compp (cdar items)))
 			       (setf (apply #'aref (symbol-array new) (caar items))
 				     (cdar items)))
-			    (if (or (not (eq (ml-typep (car x)) 'fixnum))
-				    (< (car x) 0)
-				    (not (< (car x) (car y))))
+			    (if (or (not (fixnump (car x)))
+                                   (< (car x) 0)
+                                   (not (< (car x) (car y))))
 				(merror (intl:gettext "array: index must be nonnegative integer less than ~M; found: ~M") (car y) (car x))))))
 		      (mremprop fun 'hashar)
 		      (mputprop fun new 'array)))
@@ -1812,56 +1824,7 @@ wrapper for this."
 ;; whereas if it is false they are stored in the function cell
 (defmvar $use_fast_arrays nil)
 
-(defmfun arrstore (l r &aux tem index)
-  (cond ($use_fast_arrays
-	 (cond ((and (boundp (caar l)) (setq tem (symbol-value (caar l))))
-		(setq index (mevalargs (cdr l)))
-		(let ((the-type (ml-typep tem)))
-		  (cond ((eq the-type 'array)
-			 (setf (apply #'aref tem index)  r))
-			((eq the-type 'hash-table)
-             ;; SINCE A "FAST ARRAY" IS JUST A HASH TABLE, SEEMS LIKE THESE !!
-             ;; TESTS ON THE NUMBER OF INDICES OBSTRUCTS LEGITIMATE HASH TABLE !!
-             ;; USE; I RECOMMEND CUTTING THEM OUT !!
-			 (cond ((gethash 'dim1 tem)
-				(if (cdr index)
-				    (merror (intl:gettext "assignment: array has one dimension, but two or more indices supplied."))))
-			       (t (or (cdr index)
-				      (merror (intl:gettext "assignment: array has two or more dimensions, but one index supplied.")))))
-			 (setf (gethash	(if (cdr index)
-					    index
-					    (car index))
-					tem) r))
-			((eq the-type 'list)
-			 (cond ((eq (caar tem) 'mlist)
-				(setq index (car index))
-				(setf (nth index tem) r)
-				r)
-			       ((eq (caar tem) '$matrix)
-				(setf (nth (second index) (nth (first index) tem)) r)
-				r)
-			       (t
-				(merror (intl:gettext "assignment: ~A is not a hash table, an array, Maxima list, or a matrix.")
-                        (caar l)))))
-			(t
-			 (cond ((eq tem (caar l))
-				(meval* `((mset) ,(caar l)
-					  ,(make-equal-hash-table
-					    (cdr (mevalargs (cdr l))))))
-				(arrstore l r))
-			       (t
-				(merror (intl:gettext "assignment: ~A is not a hash table, an array, a Maxima list, or a matrix.")
-                        (caar l))))))))
-	       (t
-		(cond ((mget (caar l) 'hashar)
-		       (let ($use_fast_arrays)
-			 (arrstore l r)))
-		      (t
-		       (meval* `((mset) ,(caar l)
-				 ,(make-equal-hash-table
-				   (cdr (mevalargs (cdr l))))))
-		       (arrstore l r))))))
-	(t
+(defmfun arrstore (l r)
 	 (let ((fun (caar l)) ary sub (lispsub 0) hashl mqapplyp)
 	   (cond ((setq ary (mget fun 'array))
 		  (dimcheck fun (setq sub (mapcar #'meval (cdr l))) t)
@@ -1894,7 +1857,7 @@ wrapper for this."
 		  (if (> (aref (symbol-array ary) 1) (aref (symbol-array ary) 0))
 		      (arraysize fun (* 2 (aref (symbol-array ary) 0))))
 		  r)
-		 ((and (eq fun 'mqapply) (mxorlistp (setq ary (meval (cadr l))))
+		 ((and (eq fun 'mqapply) (or (mxorlistp (setq ary (meval (cadr l)))) (arrayp ary))
 		       (prog2
 			   (setq mqapplyp t l (cdr l))
 			   nil)))
@@ -1905,13 +1868,19 @@ wrapper for this."
 		                    (typep ary 'hash-table)
 		                    (eq (type-of ary) 'mgenarray)))))
 		  (if (member fun '(mqapply $%) :test #'eq) (merror (intl:gettext "assignment: cannot assign to ~M") l))
+		  (if $use_fast_arrays
+		    (progn
+		      (format t "ARRSTORE: use_fast_arrays=true; allocate a new value hash table for ~S~%" fun)
+		      (meval* `((mset) ,fun ,(make-equal-hash-table (cdr (mevalargs (cdr l)))))))
+		    (progn
+		      (format t "ARRSTORE: use_fast_arrays=false; allocate a new property hash table for ~S~%" fun)
 		  (add2lnc fun $arrays)
 		  (setq ary (gensym))
 		  (mputprop fun ary 'hashar)
 		  (setf (symbol-array ary) (make-array 7 :initial-element nil))
 		  (setf (aref (symbol-array ary) 0) 4)
 		  (setf (aref (symbol-array ary) 1) 0)
-		  (setf (aref (symbol-array ary) 2) (length (cdr l)))
+		  (setf (aref (symbol-array ary) 2) (length (cdr l)))))
 		  (arrstore l r))
 	         ((or (arrayp ary)
 	              (typep ary 'hash-table)
@@ -1924,7 +1893,7 @@ wrapper for this."
 			((not (= (length l) 2))
 			 (merror (intl:gettext "assignment: matrix row must have one index; found: ~M") (cons '(mlist) (cdr l)))))
 		  (let ((index (meval (cadr l))))
-		    (cond ((not (eq (ml-typep index) 'fixnum))
+		    (cond ((not (fixnump index))
 			   (merror (intl:gettext "assignment: matrix row index must be an integer; found: ~M") index))
 			  ((and (> index 0) (< index (length ary)))
 			   (rplaca (nthcdr (1- index) (cdr ary)) r))
@@ -1933,7 +1902,7 @@ wrapper for this."
 		 (t (if (not (= (length l) 3))
 			(merror (intl:gettext "assignment: matrix must have two indices; found: ~M") (cons '(mlist) (cdr l))))
 		    ($setelmx r (meval (cadr l)) (meval (caddr l)) ary)
-		    r))))))
+		    r))))
 
 (defun arrfunp (x)
   (or (and $transrun (getl x '(a-expr))) (mgetl x '(aexpr))))
@@ -1989,8 +1958,7 @@ wrapper for this."
 		     `((mlist) ,@(mapcar #'1- (cdr (arraydims (mget ary 'array)))))
 		     `((mlist) ,@sub))
 	   ret))
-    (cond ((or (null x) (and (eq (ml-typep (car x)) 'fixnum)
-			     (or (< (car x) 0) (not (< (car x) (car y))))))
+    (cond ((or (null x) (and (fixnump (car x)) (or (< (car x) 0) (not (< (car x) (car y))))))
 	   (setq y nil x (cons nil t)))
 	  ((not (fixnump (car x)) )
 	   (if fixpp (setq y nil x (cons nil t)) (setq ret nil))))))
@@ -2110,6 +2078,9 @@ wrapper for this."
   (list '(lambda) (cons '(mlist) args) body))
 
 (defun mdefchk (fun args ary mqdef)
+  (let ((dup (find-duplicate args :test #'eq :key #'mparam)))
+    (when dup
+      (merror (intl:gettext "define: ~M occurs more than once in the parameter list") (mparam dup))))
   (do ((l args (cdr l)) (mfex) (mlex))
       ((null l) (and mfex (not mqdef) (mputprop fun mfex 'mfexprp))
        (and mlex (not mqdef) (mputprop fun mlex 'mlexprp)))
@@ -2126,7 +2097,7 @@ wrapper for this."
 	(merror (intl:gettext "define: in definition of ~:M, found bad argument ~M") fun (car l)))))
 
 (defun mdefparam (x)
-  (and (atom x) (not (maxima-constantp x)) (not (stringp x))))
+  (and (symbolp x) (not (kindp x '$constant))))
 
 (defun mdeflistp (l)
   (and (null (cdr l)) ($listp (car l)) (cdar l) (null (cddar l))))
@@ -2289,7 +2260,6 @@ wrapper for this."
   (setq prog (cdr prog))
   (let (vars vals (mlocp t))
     (if ($listp (car prog)) (setq vars (cdar prog) prog (cdr prog)))
-    (setq loclist (cons nil loclist))
     (do ((l vars (cdr l))) ((null l) (setq vals vars))
       (if (not (atom (car l))) (return (setq vals t))))
     (if (eq vals t)
@@ -2301,26 +2271,34 @@ wrapper for this."
 					 v))))
 			   vars)
 	      vars (mapcar #'(lambda (v) (if (atom v) v (cadr v))) vars)))
-    (mbinding (vars vals)
-	      (do ((prog prog (cdr prog)) (mprogp prog)
-		   (bindl bindlist) (val '$done) (retp) (x) ($%% '$%%))
-		  ((null prog) (munlocal) val)
-		(cond ((atom (car prog))
-		       (if (null (cdr prog))
-			   (setq retp t val (meval (car prog)))))
-		      ((null (setq x (catch 'mprog
-				       (prog2 (setq val (setq $%% (meval (car prog))))
-					   nil)))))
-		      ((not (eq bindl bindlist))
-		       (if (not (atom x))
-                 ;; DUNNO WHAT'S "ILLEGAL" HERE
-			   (merror (intl:gettext "block: illegal 'return': ~M") (car x))
-                 ;; DUNNO WHAT'S "ILLEGAL" HERE
-			   (merror (intl:gettext "block: illegal 'go': ~M") x)))
-		      ((not (atom x)) (setq retp t val (car x)))
-		      ((not (setq prog (member x mprogp :test #'equal)))
-		       (merror (intl:gettext "block: no such tag: ~:M") x)))
-		(if retp (setq prog '(nil)))))))
+    (let ((dup (find-duplicate vars :test #'eq)))
+      (when dup
+        (merror (intl:gettext "block: ~M occurs more than once in the variable list") dup)))
+    (setq loclist (cons nil loclist))
+    ; Ensure that MUNLOCAL gets called so that we don't leak local
+    ; properties if we run into an error
+    (unwind-protect
+	(mbinding (vars vals)
+		  (do ((prog prog (cdr prog)) (mprogp prog)
+		       (bindl bindlist) (val '$done) (retp) (x) ($%% '$%%))
+		      ((null prog) val)
+		    (cond ((atom (car prog))
+			   (if (null (cdr prog))
+			       (setq retp t val (meval (car prog)))))
+			  ((null (setq x (catch 'mprog
+					   (prog2 (setq val (setq $%% (meval (car prog))))
+					       nil)))))
+			  ((not (eq bindl bindlist))
+			   (if (not (atom x))
+			       ;; DUNNO WHAT'S "ILLEGAL" HERE
+			       (merror (intl:gettext "block: illegal 'return': ~M") (car x))
+			       ;; DUNNO WHAT'S "ILLEGAL" HERE
+			       (merror (intl:gettext "block: illegal 'go': ~M") x)))
+			  ((not (atom x)) (setq retp t val (car x)))
+			  ((not (setq prog (member x mprogp :test #'equal)))
+			   (merror (intl:gettext "block: no such tag: ~:M") x)))
+		    (if retp (setq prog '(nil)))))
+      (munlocal))))
 
 (defmfun mreturn (&optional (x nil) &rest args)
   (cond 

@@ -16,6 +16,8 @@
 (macsyma-module nset)
 
 ($put '$nset 1.21 '$version)
+;; Let's remove built-in symbols from list for user-defined properties.
+(setq $props (remove '$nset $props))
 
 ;; Display sets as { .. }.
 
@@ -43,6 +45,9 @@
 ;No RPOS
 
 (def-operator "{" '$any nil '$any nil nil nil nil '(nud . parse-matchfix) 'msize-matchfix 'dimension-match "}")
+;; Let's remove built-in operators from list for user-defined properties.
+(setq $props (remove "{" $props :test #'equal))
+(setq $props (remove "}" $props :test #'equal))
 
 ;; DEF-OPERATOR makes "{" map to ${, but it needs to map to $SET.
 ;; Just clobber whatever DEF-OPERATOR put into *OPR-TABLE*.
@@ -1340,11 +1345,10 @@
   (setq n (simpcheck (cadr n) z))
   (cond ((or ($listp n) ($setp n) ($matrixp n) (mequalp n))
 	 (thread y (cdr n) (caar n)))
-	((and (integerp n) (not (= n 0)))
-	 (let (($intfaclim))
-	   (setq n (abs n))
-	   `(($set simp) ,@(sort (mapcar #'(lambda (x) (car x)) 
-					 (divisors (cfactorw n))) '$orderlessp))))
+	((and (integerp n) (not (zerop n)))
+	 (let (($intfaclim nil)
+               (n (abs n)))
+	   `(($set simp) ,@(sort (mapcar #'car (divisors (cfactorw n))) #'<))))
 	(t `(($divisors simp) ,n))))
 
 ;; The Moebius function; it threads over lists, sets, matrices, and equalities.
@@ -1355,14 +1359,15 @@
   (oneargcheck n)
   (setq y (caar n))
   (setq n (simpcheck (cadr n) z))
-  (cond ((and (integerp n) (> n 0))
-	 (cond ((= n 1) 1)
-	       (t
-		(let (($intfaclim))
-		  (setq n (cfactorw n))
-		  (if (every #'(lambda (x) (= 1 x)) (odds n 0))
-		      (if (evenp (ash (length n) -1)) 1 -1)
-		    0)))))
+  (cond ((posint n)
+	 (if (= n 1)
+             1
+             (let (($intfaclim nil)
+                   (pfl (get-factor-list n))) ; pfl is a list of (prime exponent) pairs
+               (if (every #'(lambda (x) (= 1 (second x))) pfl) ; if n is not
+                                                          ; squarefree return 0
+                   (if (evenp (length pfl)) 1 -1)         ; else (-1)^(number of prime factors)
+                   0))))
 	((or ($listp n) ($setp n) ($matrixp n) (mequalp n))
 	 (thread y (cdr n) (caar n)))
 	(t `(($moebius simp) ,n))))

@@ -449,15 +449,22 @@
 			     "A trace option predicate")))))))
 
 
-(defun trace-enter-print (fun lev largs &aux (mlargs `((mlist) ,@largs)))
-  (if (not (trace-option-p fun '$noprint))
-      (let ((info (trace-option-p fun '$info)))
-	(cond ((trace-option-p fun '$lisp_print)
-	       (trace-print `(,lev enter ,fun ,largs ,@info)))
-	      (t
-	       (trace-mprint lev (intl:gettext " Enter ") (mopstringnam fun) " " mlargs
-			     (if info " -> " "")
-			     (if info info "")))))))
+(defun trace-enter-print (fun lev largs)
+  (let ((args (if (eq (trace-type fun) 'mfexpr*)
+		  (margs (car largs))
+		  largs)))
+    (if (not (trace-option-p fun '$noprint))
+	(let ((info (trace-option-p fun '$info)))
+	  (cond ((trace-option-p fun '$lisp_print)
+		 (trace-print `(,lev enter ,fun ,args ,@info)))
+		(t
+		 (trace-mprint lev
+			       (intl:gettext " Enter ")
+			       (mopstringnam fun)
+			       " "
+			       `((mlist) ,@args)
+			       (if info " -> " "")
+			       (if info info ""))))))))
 
 (defun mopstringnam (x)
   (maknam (mstring (getop x))))
@@ -623,7 +630,8 @@
   (if *prin1*
       (funcall *prin1* form)
       (prin1 form))
-  (terpri))
+  (terpri)
+  (force-output))
 
 ;; 9:02pm  Monday, 18 May 1981 -GJC
 ;; A function benchmark facility using trace utilities.

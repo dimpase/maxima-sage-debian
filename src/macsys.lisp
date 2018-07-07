@@ -188,6 +188,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 	 (c-tag)
 	 (d-tag))
 	(nil)
+      (declare (ignorable area-before area-after))
       (catch 'return-from-debugger
 	(when (or (not (checklabel $inchar))
 		  (not (checklabel $outchar)))
@@ -269,7 +270,8 @@ DESTINATION is an actual stream (rather than nil for a string)."
 		(other (- (cadr area-after) (cadr area-before)))
 		(gctime (- (caddr area-after) (caddr area-before))))
 	    (if (= 0 gctime) nil (format t (intl:gettext " including GC time ~s s,") (* 0.001 gctime)))
-	    (format t (intl:gettext " using ~s cons-cells and ~s other bytes.~%") conses other)))
+	    (format t (intl:gettext " using ~s cons-cells and ~s other bytes.~%") conses other))
+	  (force-output))
 	(unless $nolabels
           (putprop '$% (cons time-used 0) 'time)
 	  (putprop d-tag (cons time-used  0) 'time))
@@ -279,9 +281,9 @@ DESTINATION is an actual stream (rather than nil for a string)."
           (princ (break-prompt))
           (force-output)
 	  (let (quitting)
-	    (do ((char)) (nil)
+	    (loop
 	      ;;those are common lisp characters you're reading here
-	      (case (setq char (read-char *terminal-io*))
+	      (case (read-char *terminal-io*)
                 ((#\page)
                  (fresh-line)
                  (princ (break-prompt))
@@ -336,7 +338,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
          (format-prompt t ""))
 	((atom msg)
          (format-prompt t "~A" msg)
-	 (terpri))
+	 (mterpri))
 	((eq flag t)
          (format-prompt t "~{~A~}" (cdr msg))
 	 (mterpri))
@@ -523,7 +525,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 
 (defmfun $appendfile (name)
   (if (and (symbolp name)
-	   (member (char (symbol-name name) 0) '(#\$) :test #'char=))
+	   (char= (char (symbol-name name) 0) #\$))
       (setq name (maxima-string name)))
   (if $appendfile (merror (intl:gettext "appendfile: already in appendfile, you must call closefile first.")))
   (let ((stream  (open name :direction :output
@@ -537,7 +539,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 	  *terminal-io* $appendfile)
     (multiple-value-bind (sec min hour day month year)
 	(get-decoded-time)
-      (format t (intl:gettext "~&/* Starts dribbling to ~A (~d/~d/~d, ~d:~d:~d).*/~&")
+      (format t (intl:gettext "~&/* Starts dribbling to ~A (~d/~d/~d, ~2,'0d:~2,'0d:~2,'0d).*/~&")
 	      name year month day hour min sec))
     '$done))
 
@@ -607,6 +609,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 	shell shell-opt)
     #+(or gcl ecl lispworks)
     (declare (ignore s))
+    (declare (ignorable shell shell-opt))
 
     (cond ((string= *autoconf-windows* "true")
 	   (setf shell "cmd") (setf shell-opt "/c"))
@@ -641,6 +644,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
   (declare (ignore me-or-my-encapsulation))
   (format t (intl:gettext "~&Maxima encountered a Lisp error:~%~% ~A") condition)
   (format t (intl:gettext "~&~%Automatically continuing.~%To enable the Lisp debugger set *debugger-hook* to nil.~%"))
+  (force-output)
   (throw 'return-from-debugger t))
 
 (let ((t0-real 0) (t0-run 0)
