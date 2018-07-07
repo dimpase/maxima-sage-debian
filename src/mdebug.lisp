@@ -146,9 +146,6 @@
 	   for j from *current-frame*
 	   while (print-one-frame j t))))
 
-;; the following are in the maxima package....
-;; they are DIFFERENT from ones in si package..
-
 ;; if this is NIL then nothing more is checked in eval
 
 (defvar *break-points* nil)
@@ -377,8 +374,6 @@
 (defvar *break-env* nil)
 (defvar *top-eof* (cons nil nil))
 (defvar *quit-tag* 'macsyma-quit)
-;; should maybe be??
-;;(defvar *quit-tag* 'si::*quit-tag*)
 
 (defvar *quit-tags* nil)
 
@@ -632,7 +627,8 @@ Command      Description~%~
 		       tem))
 		  (:show
 		   (when tem (show-break-point i)
-			 (terpri))
+			 (terpri)
+			 (force-output))
 		   tem)))))))
 
 ;; get the most recent function on the stack with step info.

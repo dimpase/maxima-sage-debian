@@ -21,7 +21,7 @@
 
 (defmfun alphabetp (n)
   (and (characterp n)
-       (or (alpha-char-p n)
+       (or (alpha-char-p n) #+gcl(>= (char-code n) 128)
 	   (member n *alphabet*))))
 
 (defmfun ascii-numberp (num)
@@ -35,6 +35,11 @@
 (defvar *mread-prompt* nil    "prompt used by `mread'")
 (defvar *mread-eof-obj* ()    "Bound by `mread' for use by `mread-raw'")
 (defvar *current-line-info* nil)
+
+(defvar *parse-string-input-stream*             ;; reference to the input stream 
+  (let ((stream (make-string-input-stream ""))) ;;   used by parse-string
+    (close stream)                              ;;   in share/stringroc/eval_string.lisp
+    stream ))                                   ;; (see also add-lineinfo below)
 
 (defmvar $report_synerr_line t "If T, report line number where syntax error occurs; otherwise, report FILE-POSITION of error.")
 (defmvar $report_synerr_info t "If T, report the syntax error details from all sources; otherwise, only report details from standard-input.")
@@ -93,6 +98,7 @@
 	       (format t "~%~{~c~}~%~vt^" some (- (length some) 2))
 	       (read-line *parse-stream* nil nil))))
       (terpri)
+      (force-output)
       (throw-macsyma-top))))
 
 (defun tyi-parse-int (stream eof)
@@ -326,6 +332,7 @@
 			 (map nil #'princ x))
 		 (reverse numlist))
 	    (terpri)
+	    (force-output)
 	    (unless (equalp true fast)
 	      (incf failures)
 	      (format t "NUM:  ~A~%  TRUE: ~S~%  FAST: ~S~%"
@@ -577,7 +584,7 @@
 
 (defun scan-number-rest (data)
   (let ((c (caar data)))
-    (cond ((member c '(#\.))
+    (cond ((char= c #\.)
 	   ;; We found a dot
 	   (scan-number-after-dot data))
 	  ((member c '(#\E #\e #\F #\f #\B #\b #\D #\d #\S #\s #\L #\l #+cmu #\W #+cmu #\w))
@@ -1747,9 +1754,12 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
 
 
 (defun add-lineinfo (lis)
-  (if (or (atom lis) (and (eq *parse-window* *standard-input*)
-			  (not (find-stream *parse-stream*))))
-			  lis
+  (if (or (atom lis) 
+          (eq *parse-stream* *parse-string-input-stream*) ;; avoid consing *parse-string-input-stream* 
+                                                          ;;   via get-instream to *stream-alist* 
+          (and (eq *parse-window* *standard-input*)
+               (not (find-stream *parse-stream*)) ))
+    lis
     (let* ((st (get-instream *parse-stream*))
  	   (n (instream-line st))
 	   (nam (instream-name st)))

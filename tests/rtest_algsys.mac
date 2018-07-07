@@ -321,7 +321,7 @@ algsys([2*k*y+2*h*x+s^2-k^2-h^2-d^2,
  *   also #3212 ALGSYS throws error
  *
  * Note: %nrum is the counter for the %r variables introduced
- *       by algsys.  Set it to 0 for reproducable results
+ *       by algsys.  Set it to 0 for reproducible results
  */
 block([%rnum:0], algsys([
  4*y*(y^2-28),
@@ -640,6 +640,14 @@ block([%rnum:0],
  [a = -1, b = %r6, c = 0, d =  1],
  [a = -1, b = 0,   c = 0, d = -1],
  [a =  1, b = 0,   c = 0, d =  1]];
+
+/* Example from Stavros Macrakis, maxima mailing list, 2017-07-31
+   Not solved by 5.38.0, solved by 5.39.0 */
+block([%rnum:0],
+ algsys(eqs:[b*c+a^2,b*d+a*b,c*d+a*c,d^2+b*c],[a,b,c,d]));
+[[a = -sqrt(-%r1*%r2), b = %r1, c = %r2, d =  sqrt(-%r1*%r2)],
+ [a =  sqrt(-%r3*%r4), b = %r3, c = %r4, d = -sqrt(-%r3*%r4)],
+ [a =  0,              b = %r5, c = 0,   d = 0]];
 
 (kill(eqt,eqs,F,G,p,p1,p2),done)$
 done;
