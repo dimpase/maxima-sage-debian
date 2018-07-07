@@ -1,3 +1,9 @@
+maxima-sage (5.41.0+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream version
+
+ -- Tobias Hansen <thansen@debian.org>  Sat, 07 Jul 2018 19:32:28 +0200
+
 maxima-sage (5.39.0+ds-3) unstable; urgency=medium
 
   * Upload to unstable.
