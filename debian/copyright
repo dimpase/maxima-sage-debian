@@ -158,10 +158,7 @@ License: LGPL-2+
  On Debian systems, the complete text of the GNU Library General
  Public License version 2 can be found in /usr/share/common-licenses/LGPL-2
 
-Files: ./doc/misc/grepforvariables.sh
- ./doc/misc/processlisfiles.sh
- ./doc/misc/x.awk
- ./share/contrib/ggf.mac
+Files: ./share/contrib/ggf.mac
  ./share/contrib/lindstedt.mac
  ./share/contrib/Eulix/Eulix.mac
  ./share/logic/logic.dem
