@@ -1,8 +1,8 @@
-maxima-sage (5.41.0+ds-3) UNRELEASED; urgency=medium
+maxima-sage (5.41.0+ds-3) experimental; urgency=medium
 
   * Rebuild against ecl 16.1.3.
 
- -- Tobias Hansen <thansen@debian.org>  Wed, 31 Oct 2018 22:26:31 +0100
+ -- Tobias Hansen <thansen@debian.org>  Wed, 16 Jan 2019 12:25:40 +0100
 
 maxima-sage (5.41.0+ds-2) unstable; urgency=medium
 
