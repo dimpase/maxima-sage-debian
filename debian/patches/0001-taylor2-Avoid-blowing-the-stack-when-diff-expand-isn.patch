@@ -13,7 +13,7 @@ Bug: https://sourceforge.net/p/maxima/bugs/2520/
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/src/hayat.lisp
 +++ b/src/hayat.lisp
-@@ -2188,6 +2188,23 @@
+@@ -2190,6 +2190,23 @@
        (or (alike1 (exp-pt (get-datum (datum-var (car l)))) (exp-pt (car l)))
  	  (return () ))))
  
@@ -37,7 +37,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  (defun taylor2  (e)
   (let ((last-exp e))	    ;; lexp-non0 should be bound here when needed
    (cond ((assolike e tlist) (var-expand e 1 () ))
-@@ -2231,8 +2248,31 @@
+@@ -2233,8 +2250,31 @@
  		 ((null l) t)
  		 (or (free e (car l)) (return ()))))
  	 (newsym e))
@@ -71,7 +71,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
  (defun compatvarlist (a b c d)
     (cond ((null a) t)
-@@ -2967,7 +3007,21 @@
+@@ -2969,7 +3009,21 @@
         (and (or (member '$inf pt-list :test #'eq) (member '$minf pt-list :test #'eq))
  	    (unfam-sing-err)))
  
@@ -96,10 +96,10 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  	(t
 --- a/tests/rtest_taylor.mac
 +++ b/tests/rtest_taylor.mac
-@@ -539,3 +539,9 @@
-  + 2856700692480*x^2  + 3370143559680*x + 2386516803584)],
-  pade (t, 5, 5), is (equal (%%, foo)));
- true;
+@@ -559,3 +559,9 @@
+ 
+ (kill (f), 0);
+ 0;
 +
 +/* Avoid blowing the stack if diff-expand doesn't return anything
 +   helpful. Example comes from Bug ID: 2520
