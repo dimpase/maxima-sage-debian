@@ -1,6 +1,8 @@
 maxima-sage (5.42.2-2) unstable; urgency=medium
 
   * Change Build-Dependency python-dev to python3-dev. (Closes: #943119)
+  * Add texinfo-encoding.patch to fix build failure due to missing declaration
+    of the file encoding with texinfo 6.7.
 
  -- Tobias Hansen <thansen@debian.org>  Mon, 28 Oct 2019 19:48:29 +0100
 
