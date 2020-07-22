@@ -76,11 +76,18 @@ and develop DOE Macsyma, now called Maxima.
 
 @end titlepage
 
+@ifnotinfo
 @summarycontents
 @contents
+@end ifnotinfo
 
 @ifnottex
+@ifinfo
 @node Top, Introduction to Maxima, (dir), (dir)
+@end ifinfo
+@ifnotinfo
+@node Top, Introduction to Maxima
+@end ifnotinfo
 @top
 
 Maxima is a computer algebra system, implemented in Lisp.
@@ -113,7 +120,7 @@ and develop DOE Macsyma, now called Maxima.
 * Evaluation::                  Evaluating expressions.
 * Simplification::              Simplifying expressions.
 * Mathematical Functions::      Mathematical functions in Maxima.
-* Maximas Database::            Declarations, Contexts, Facts, and Properties.
+* Maxima's Database::           Declarations, Contexts, Facts, and Properties.
 * Plotting::                    2D and 3D graphical output.
 * File Input and Output::       File input and output.
 
@@ -186,9 +193,11 @@ and develop DOE Macsyma, now called Maxima.
 * minpack-pkg::                     MINPACK functions for minimization and roots
 * mnewton-pkg::                     Newton's method.
 * numericalio-pkg::                 Reading and writing files.
+* odepack-pkg::                     Numerical ODE solver
 * operatingsystem-pkg::             Common operating system tasks (create/remove dirs+files,...).
 * opsubst-pkg::                     Substitutions utility.
 * orthopoly-pkg::                   Orthogonal polynomials.
+* pytranslate::                     Maxima to Python Translation
 * ratpow-pkg::                      Determine the coefficients of polynoms.
 * romberg-pkg::                     Romberg method for numerical integration.
 * simplex-pkg::                     Linear programming.
@@ -207,6 +216,9 @@ and develop DOE Macsyma, now called Maxima.
 
 @b{Index}
 * Function and Variable Index:: Index.
+@ifhtml
+* Documentation Categories::        Docuemntation categories
+@end ifhtml
 
 @comment @detailmenu
 @b{ --- The Detailed Node Listing --- }
@@ -264,8 +276,8 @@ Mathematical Functions
 * Trigonometric Functions::
 * Random Numbers::
 
-Maximas Database
-* Introduction to Maximas Database::
+Maxima's Database
+* Introduction to Maxima's Database::
 * Functions and Variables for Properties::
 * Functions and Variables for Facts::
 * Functions and Variables for Predicates::
@@ -543,6 +555,10 @@ numericalio
 * Functions and Variables for plain-text input and output::
 * Functions and Variables for binary input and output::
 
+odepack
+* Introduction to ODEPACK::
+* Functions and Variables for odepack::  
+
 operatingsystem
 * Introduction to operatingsystem::
 * Directory operations::
@@ -554,6 +570,11 @@ opsubst
 orthopoly
 * Introduction to orthogonal polynomials::
 * Functions and Variables for orthogonal polynomials::
+
+pytranslate
+* Introduction to pytranslate::
+* Functions in pytranslate::
+* Extending pytranslate::
 
 ratpow
 * Functions and Variables for ratpow::
@@ -573,7 +594,6 @@ simplification
 * Package ineq::
 * Package rducon::
 * Package scifac::
-* Package sqdnst::
 
 solve_rec
 * Introduction to solve_rec::
@@ -657,15 +677,15 @@ Understanding maxima's output
 @chapter Simplification
 @include Simplification.texi
 
-@node Mathematical Functions, Maximas Database, Simplification, Top
+@node Mathematical Functions, Maxima's Database, Simplification, Top
 @chapter Mathematical Functions
 @include MathFunctions.texi
 
-@node Maximas Database, Plotting, Mathematical Functions, Top
-@chapter Maximas Database
+@node Maxima's Database, Plotting, Mathematical Functions, Top
+@chapter Maxima's Database
 @include Database.texi
 
-@node Plotting, File Input and Output, Maximas Database, Top
+@node Plotting, File Input and Output, Maxima's Database, Top
 @chapter Plotting
 @include Plotting.texi
 
@@ -915,11 +935,15 @@ Understanding maxima's output
 @chapter mnewton
 @include mnewton.texi
 
-@node numericalio-pkg, operatingsystem-pkg, mnewton-pkg, Top
+@node numericalio-pkg, odepack-pkg, mnewton-pkg, Top
 @chapter numericalio
 @include numericalio.texi
 
-@node operatingsystem-pkg, opsubst-pkg, numericalio-pkg, Top
+@node odepack-pkg, operatingsystem-pkg, numericalio-pkg, Top
+@chapter odepack
+@include odepack.texi
+
+@node operatingsystem-pkg, opsubst-pkg, odepack-pkg, Top
 @chapter operatingsystem
 @include operatingsystem.texi
 
@@ -927,11 +951,15 @@ Understanding maxima's output
 @chapter opsubst
 @include opsubst.texi
 
-@node orthopoly-pkg, ratpow-pkg, opsubst-pkg, Top
+@node orthopoly-pkg, pytranslate, opsubst-pkg, Top
 @chapter orthopoly
 @include orthopoly.texi
 
-@node ratpow-pkg, romberg-pkg, orthopoly-pkg, Top
+@node pytranslate, ratpow-pkg, orthopoly-pkg, Top
+@chapter pytranslate
+@include pytranslate.texi
+
+@node ratpow-pkg, romberg-pkg, pytranslate, Top
 @chapter ratpow
 @include ratpow.texi
 
@@ -985,7 +1013,17 @@ Understanding maxima's output
 
 @c end includes
 
+@ifnothtml
 @node Function and Variable Index,  , Error and warning messages, Top
+@end ifnothtml
+@ifhtml
+@node Function and Variable Index, Documentation Categories , Error and warning messages, Top
+@end ifhtml
 @appendix Function and Variable Index
 
 @printindex fn
+
+@page
+@ifhtml
+@contents
+@end ifhtml

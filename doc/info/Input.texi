@@ -93,7 +93,8 @@ always appended.
 @code{writefile}.
 
 @opencatbox
-@category{File output} @category{Console interaction}
+@category{File output}
+@category{Console interaction}
 @closecatbox
 @end deffn
 
@@ -154,7 +155,8 @@ the tests which have failed.
 See also @mrefcomma{load} @mrefcomma{batchload} and @mrefdot{demo}
 
 @opencatbox
-@category{Session management} @category{File input}
+@category{Session management}
+@category{File input}
 @closecatbox
 @end deffn
 
@@ -181,7 +183,8 @@ See also @mrefcomma{batch} and @mrefdot{load}
 @c WHY NOT GET RID OF batchload ???
 
 @opencatbox
-@category{Session management} @category{File input}
+@category{Session management}
+@category{File input}
 @closecatbox
 @end deffn
 
@@ -192,7 +195,8 @@ See also @mrefcomma{batch} and @mrefdot{load}
 Closes the transcript file opened by @mref{writefile} or @mrefdot{appendfile}
 
 @opencatbox
-@category{File output} @category{Console interaction}
+@category{File output}
+@category{Console interaction}
 @closecatbox
 @end deffn
 
@@ -213,7 +217,8 @@ functions always truncate their output file, and @mref{tex} and
 @c WHAT ABOUT WRITEFILE ??
 
 @opencatbox
-@category{File output} @category{Global flags}
+@category{File output}
+@category{Global flags}
 @closecatbox
 @end defvr
 
@@ -231,7 +236,8 @@ component is simply replaced by @var{filename}.
 The result is a Lisp pathname object.
 
 @opencatbox
-@category{File input} @category{File output}
+@category{File input}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -270,7 +276,7 @@ directories specified by @var{pathlist}, which is a list of strings.  The
 argument @var{pathlist} supersedes the default search directories, so if the
 path list is given, @code{file_search} searches only the ones specified, and not
 any of the default search directories.  Even if there is only one directory in
-@var{pathlist}, it must still be given as a one-element list.
+@var{pathlist}, it must still be given as an one-element list.
 
 The user may modify the default search directories.
 See @mrefdot{file_search_maxima}
@@ -335,7 +341,8 @@ expands into @code{/home/wfs/neumann.lisp}, @code{/home/gcj/neumann.lisp},
 @end flushleft
 
 @opencatbox
-@category{File input} @category{Global variables}
+@category{File input}
+@category{Global variables}
 @closecatbox
 @end defvr
 
@@ -360,10 +367,10 @@ See @mref{file_type_maxima} and @mref{file_type_lisp} for the default values.
 
 Examples:
 
-@c === beg ===
+@c ===beg===
 @c map('file_type,
 @c     ["test.lisp", "test.mac", "test.dem", "test.txt"]);
-@c === end ===
+@c ===end===
 @example
 (%i2) map('file_type,
           ["test.lisp", "test.mac", "test.dem", "test.txt"]);
@@ -419,7 +426,7 @@ while processing @var{filename}, the global variables @code{_}, @code{__},
 @code{%}, and @code{%th} have whatever bindings they had when @code{load} was
 called.
 
-It is also to note that structures will only be read back as structures if
+Note also that structures will only be read back as structures if
 they have been defined by @code{defstruct} before the @code{load} command
 is called.
 
@@ -428,11 +435,14 @@ See also @mrefcomma{loadfile} @mrefcomma{batch} @mrefcomma{batchload} and
 @code{batchload}, and @code{demo} process Maxima files.
 
 See @mref{file_search} for more detail about the file search mechanism.
+Additionally the chapter on @mref{numericalio} describes many functions
+that allow to load files that contain csv or similar data.
 
 @code{load} evaluates its argument.
 
 @opencatbox
-@category{Session management} @category{File input}
+@category{Session management}
+@category{File input}
 @closecatbox
 @end deffn
 
@@ -489,7 +499,8 @@ as much of the path as needed to find the file.
 more convenient to use @mref{load} instead of @code{loadfile}.
 
 @opencatbox
-@category{Session management} @category{File input}
+@category{Session management}
+@category{File input}
 @closecatbox
 @end deffn
 
@@ -518,7 +529,8 @@ When @code{loadprint} is @code{false}, never print a message.
 @end itemize
 
 @opencatbox
-@category{File input} @category{Global flags}
+@category{File input}
+@category{Global flags}
 @closecatbox
 @end defvr
 
@@ -554,11 +566,11 @@ These functions return the components of @var{pathname}.
 
 Examples:
 
-@c === beg ===
+@c ===beg===
 @c pathname_directory("/home/dieter/maxima/changelog.txt");
 @c pathname_name("/home/dieter/maxima/changelog.txt");
 @c pathname_type("/home/dieter/maxima/changelog.txt");
-@c === end ===
+@c ===end===
 @example 
 (%i1) pathname_directory("/home/dieter/maxima/changelog.txt");
 (%o1)                 /home/dieter/maxima/
@@ -589,7 +601,8 @@ attempts to locate the file by appending @var{path} to each of the elements of
 or otherwise the result of a successful filename merge.
 
 @opencatbox
-@category{File input} @category{Console interaction}
+@category{File input}
+@category{Console interaction}
 @closecatbox
 @end deffn
 
@@ -654,7 +667,8 @@ have been assigned new values by the user; see @mrefdot{myoptions}
 @code{save} evaluates @var{filename} and quotes all other arguments.
 
 @opencatbox
-@category{Session management} @category{File output}
+@category{Session management}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -681,7 +695,7 @@ creates the file if it does not yet exist.
 The general form of @code{stringout} writes the values of one or more 
 expressions to the output file.  Note that if an expression is a
 variable, only the value of the variable is written and not the name
-of the variable.  As a useful special case, the expressions may be
+of the variable.  As an useful special case, the expressions may be
 input labels (@code{%i1}, @code{%i2}, @code{%i3}, @dots{}) or output labels
 (@code{%o1}, @code{%o2}, @code{%o3}, @dots{}).
 
@@ -706,7 +720,8 @@ variable, a colon, and its value.  Note that the general form of
 @code{stringout} does not print variables as assignment statements.
 
 @opencatbox
-@category{Session management} @category{File output}
+@category{Session management}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -729,7 +744,7 @@ is @code{true}, @code{with_stdout} appends to the output file.  Otherwise,
 
 @code{with_stdout} returns the value of its final argument.
 
-See also @mrefdot{writefile}
+See also @mref{writefile} and @mrefdot{display2d}
 
 @c THIS DOESN'T SEEM VERY IMPORTANT TO MENTION ...
 @c Note the binding of display2d to be
@@ -792,7 +807,8 @@ displayed by @code{playback}.
 @code{appendfile}.
 
 @opencatbox
-@category{File output} @category{Console interaction}
+@category{File output}
+@category{Console interaction}
 @closecatbox
 @end deffn
 
@@ -837,7 +853,7 @@ return their TeX output as a string.
 label.  Quote-quote @code{''} forces evaluation of the argument, thereby
 defeating the test and preventing the label.
 
-See also @mrefdot{texput}
+See also @mref{tex1} and @mrefdot{texput}
 
 Examples:
 
@@ -874,7 +890,8 @@ $$-\cos x$$
 @end example
 
 @opencatbox
-@category{TeX output} @category{File output}
+@category{TeX output}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -885,6 +902,8 @@ $$-\cos x$$
 Returns a string which represents the TeX output for the expressions @var{e}.
 The TeX output is not enclosed in delimiters for an equation or any other
 environment.
+
+See also @mref{tex} and @mrefdot{texput}
 
 Examples:
 
@@ -933,6 +952,8 @@ separated by commas.
 @code{tex} function to interpolate @var{s_1} and @var{s_2} into the TeX output
 on either side of the arguments of @var{a}, with @var{s_3} separating the
 arguments.
+
+See also @mref{tex} and @mrefdot{tex1}
 
 Examples:
 

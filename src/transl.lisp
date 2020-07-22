@@ -94,23 +94,9 @@
 (defmvar *declared-translated-functions* nil
          "List of functions which are believed to be translated.")
 
-(defmvar $tr_semicompile nil
-  "If TRUE TRANSLATE_FILE and COMPFILE output forms which will~
-	 be macroexpanded but not compiled into machine code by the~
-	 lisp compiler.")
-
-(defmvar  $transcompile  t
-  "If TRUE TRANSLATE_FILE outputs declarations for the COMPLR.
-	  The only use of the switch is to save the space declarations take
-	  up in interpreted code.")
-
 (defmvar tstack nil " stack of local variable modes ")
 
 (defmvar local nil "T if a $local statement is in the body.")
-(defmvar arrays nil "arrays to declare to `complr'")
-(defmvar lexprs nil "Lexprs to declare.")
-(defmvar exprs nil "what else?")
-(defmvar fexprs nil "Fexprs to declare.")
 (defmvar tr-progret t)
 (defmvar inside-mprog nil)
 (defmvar returns nil "list of `translate'd return forms in the block.")
@@ -179,10 +165,6 @@ APPLY means like APPLY.")
 (defmvar $tr_numer nil
   "If `true' numer properties are used for atoms which have them, e.g. %pi")
 
-(defmvar $tr_predicate_brain_damage nil
-  "If TRUE, output possible multiple evaluations in an attempt
-  to interface to the COMPARE package.")
-
 (defvar boolean-object-table
   '(($true . ($boolean . t))
     ($false . ($boolean . nil))
@@ -205,11 +187,10 @@ APPLY means like APPLY.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defun barfo (&rest l)
-  (apply #'tr-format
-	 (nconc (list (intl:gettext "translator: internal error. Message: ~:M~%")) l))
+(defun barfo (msg)
+  (tr-format (intl:gettext "translator: internal error. Message: ~:M~%") msg)
   (cond (*transl-debug*
-	 (break "transl barfo ~S" t))
+	 (break "transl barfo"))
 	(t
 	 (setq tr-abort t)
 	 nil)))
@@ -217,7 +198,7 @@ APPLY means like APPLY.")
 (defun specialp (var)
   (cond ((or (optionp var)
 	     (tr-get-special var))
-	 (if $transcompile (pushnew var specials :test #'eq))
+	 (pushnew var specials :test #'eq)
 	 t)))
 
 
@@ -249,7 +230,7 @@ APPLY means like APPLY.")
   " if in debug mode `warning's signaled go to lisp break loops ")
 
 (defmacro tr-warnbreak ()
-  `(and *transl-debug* *tr-warn-break* (break "transl ~S" t )))
+  `(and *transl-debug* *tr-warn-break* (break "transl")))
 
 (defun tr-warnp (val)
   (and val
@@ -346,7 +327,7 @@ APPLY means like APPLY.")
 			    (($modedeclare) ,@vars-modes)
 			    ,exp)))))
     (let ((mode (car loc))
-	  (exp (car (last loc)))) ;;; length varies with TRANSCOMPILE.
+	  (exp (car (last loc))))
       (cons mode exp))))
 
 (defun tr-args (form)
@@ -368,7 +349,8 @@ APPLY means like APPLY.")
   (cond ((member (car x) '($fixnum $number) :test #'eq)
 	 (if (integerp (cdr x)) (float (cdr x)) (list 'float (cdr x))))
 	((eq '$rational (car x))
-	 (cond ((not (eq 'quote (cadr x)))
+	 (cond ((or (atom (cdr x))
+		    (not (eq 'quote (cadr x))))
 		`($float ,(cdr x)))
 	       (t
 		(/ (float (cadadr (cdr x))) (float (caddr (caddr x)))))))
@@ -496,16 +478,12 @@ APPLY means like APPLY.")
 	  (t
 	   (barfo '?)))))
 
-
-(defun lisp-fcn-typep (fcn type)
-  (get fcn type))
-
 (defun translate-function (name)
   (bind-transl-state
    (setq *in-translate* t)
    (let ((lisp-def-form (tr-mfun name))
 	 (delete-subr? (and (get name 'translated)
-			    (not (lisp-fcn-typep name 'expr)))))
+			    (not (get name 'expr)))))
      (cond (tr-abort
 	    (trfail name))
 	   (t
@@ -518,23 +496,20 @@ APPLY means like APPLY.")
 		   (errset (apply 'eval (list lisp-def-form)))))
 	      (cond ((not lisp-action)
 		     (trfail name))
-		    (t (values name lisp-def-form)))))))))
+		    (t name))))))))
 
 
 (defun trfail (x)
   (tr-format (intl:gettext "error: failed to translate ~:@M~%") x)
   nil)
 
-(defmfun translate-and-eval-macsyma-expression (form)
+(defun translate-and-eval-macsyma-expression (form)
   ;; this is the hyper-random entry to the transl package!
-  ;; it is used by MLISP for TRANSLATE:TRUE ":=".
+  ;; it is used by MLISP for TRANSLATE:TRUE "::=".
   (bind-transl-state
    (setq *in-translate* t)
-   ;; Use FUNCALL so that we can be sure we can TRACE this even when
-   ;; JPG sets PURE to NIL. Also, use a function named TRANSLATOR-EVAL
-   ;; so we don't have to lose badly by tracing EVAL!
-   (funcall (progn 'translator-eval)
-	    (funcall (progn 'translate-macexpr-toplevel) form))))
+   ;; Use TRANSLATOR-EVAL so we don't have to lose badly by tracing EVAL
+   (translator-eval (translate-macexpr-toplevel form))))
 
 (defun translator-eval (x)
   (eval x))
@@ -544,7 +519,7 @@ APPLY means like APPLY.")
 ;; specified by ANSI CL.
 (defvar *macexpr-top-level-form-p* nil)
 
-(defmfun translate-macexpr-toplevel (form &aux (*transl-backtrace* nil) tr-abort)
+(defun translate-macexpr-toplevel (form &aux (*transl-backtrace* nil) tr-abort)
   ;; there are very few top-level special cases, I don't
   ;; think it would help the code any to generalize TRANSLATE
   ;; to target levels.
@@ -558,7 +533,7 @@ APPLY means like APPLY.")
 	   (setq whens (cond (($listp whens) (cdr whens))
 			     ((atom whens) (list whens))
 			     (t
-			      (tr-format (intl:gettext "error: 'eval-when' argument must be a list or atom; found: ~:M~%") (cadr form))
+			      (tr-format (intl:gettext "error: 'eval_when' argument must be a list or atom; found: ~:M~%") (cadr form))
 			      nil)))
 	   (setq tr-whens (mapcar 'stripdollar whens))
 	   (cond ((member '$translate whens :test #'eq)
@@ -594,12 +569,8 @@ APPLY means like APPLY.")
 		  `(meval* ',form))
 		 (t trl))))
 	((eq 'mprogn (caar form))
-	 ;; flatten out all PROGN's of course COMPLR needs PROGN 'COMPILE to
-	 ;; tell it to flatten. I don't really see the use of that since one
-	 ;; almost allways wants to. flatten.
 	 ;; note that this ignores the $%% crock.
-	 `(progn 'compile
-		 ,@(mapcar #'translate-macexpr-toplevel (cdr form))))
+	 `(progn ,@(mapcar #'translate-macexpr-toplevel (cdr form))))
 	((eq 'msetq (caar form))
 	 ;; Toplevel msetq's should really be defparameter instead of
 	 ;; setq for Common Lisp.  
@@ -631,10 +602,9 @@ APPLY means like APPLY.")
   ;; Also: think about calling the simplifier here.
   (cond ((atom form)
 	 (cond ((symbolp form)
-        ;; FOLLOWING CODE APPEARS TO BE BROKEN; NOT SURE WHAT WAS THE INTENT.
-        ;; FOLLOWING CODE ALWAYS RETURNS SYMBOL ITSELF EVEN WHEN '$CONSTANTP IS A PROPERTY
-        ;; IS IT SUPPOSED TO FETCH A DECLARED CONSTANT VALUE ??
-        ;; JUST LEAVE IT BE FOR NOW; DO NOT TRY TO REVISE WITH KINDP
+		;; If this symbol has the constant property, then
+		;; use its assigned constant value in place of the
+		;; symbol.
 		(let ((v (getl (mget form '$props) '($constant))))
 		  (if v (cadr v) form)))
 	       (t form)))
@@ -694,12 +664,9 @@ APPLY means like APPLY.")
   (and *transl-debug* (pop *transl-backtrace*))
   (prog2
       (and *transl-debug* (push form *transl-backtrace*))
-      (cond ((atom form)
-	     (translate-atom form))
-	    ((consp form)
-	     (translate-form form))
-	    (t
-	     (barfo "help")))
+      (if (atom form)
+          (translate-atom form)
+          (translate-form form))
     ;; hey boy, reclaim that cons, just don't pop it!
     (and *transl-debug* (pop *transl-backtrace*))))
 
@@ -718,7 +685,7 @@ APPLY means like APPLY.")
 	(t
 	 (cond ((not (specialp form))
 		(warn-undefined-variable form)
-		(if $transcompile (pushnew form specials :test #'eq))))
+		(pushnew form specials :test #'eq)))
 	 ;; note that the lisp analysis code must know that
 	 ;; the TRD-MSYMEVAL form is a semantic variable.
 	 (let* ((mode (value-mode form))		
@@ -811,15 +778,9 @@ APPLY means like APPLY.")
 (defun tr-lisp-function-call (form type)
   (let ((op (caar form)) (mode) (args))
     (setq args (cond ((member type '(subr lsubr expr) :test #'eq)
-		      (if $transcompile
-			  (case type
-			    ((subr) (pushnew op exprs :test #'eq))
-			    ((lsubr) (pushnew op lexprs :test #'eq))
-			    (t nil)))
 		      (mapcar #'(lambda (llis) (dconvx (translate llis)))
 			      (cdr form)))
 		     (t
-		      (if $transcompile (pushnew op fexprs :test #'eq))
 		      (mapcar 'dtranslate (cdr form))))
 	  mode (function-mode op))
     (call-and-simp mode op args)))
@@ -879,12 +840,11 @@ APPLY means like APPLY.")
   (cond ((atom form)
 	 (cond ((or (numberp form) (member form '(t nil) :test #'eq)) form)
 	       ((tboundp form)
-		(if $transcompile
-		    (or (specialp form)
-			(pushnew form specials :test #'eq)))
+		(or (specialp form)
+		    (pushnew form specials :test #'eq))
 		form)
 	       (t
-		(if $transcompile (pushnew form specials :test #'eq))
+		(pushnew form specials :test #'eq)
 		form)))
 	((eq 'mquote (caar form)) form)
 	(t (cons (car form) (mapcar #'translate-atoms (cdr form))))))
@@ -917,9 +877,7 @@ APPLY means like APPLY.")
 	else do (merror (intl:gettext "declare_translated: arguments must be symbols or strings; found: ~:M") v)))
 
 (def%tr $declare (form)
-  (do ((l (cdr form) (cddr l)) (nl))
-      ((null l) (if nl `($any $declare . ,(nreverse nl))))
-      (setq nl (cons (cadr l) (cons (car l) nl)))))
+  `($any . (meval ',form)))
 
 (def%tr $eval_when (form)
   (tr-format (intl:gettext "error: found 'eval_when' in a function or expression: ~:M~%") form)
@@ -993,7 +951,8 @@ APPLY means like APPLY.")
 			     ,@(mapcan #'(lambda (var val)
 					   (let ((assign (get var 'assign)))
 					     (if assign
-						 (list `(,assign ',var ,val)))))
+					       (let ((assign-fn (if (symbolp assign) (symbol-function assign) (coerce assign 'function))))
+						 (list `(funcall ,assign-fn ',var ,val))))))
 				       arglist temps)
 			     ;; [2] do the binding.
 			     ((lambda ,(tunbinds arglist)
@@ -1004,40 +963,37 @@ APPLY means like APPLY.")
 			,@(mapcan #'(lambda (var)
 				      (let ((assign (get var 'assign)))
 					(if assign
-					    (list `(,assign ',var
+					  (let ((assign-fn (if (symbolp assign) (symbol-function assign) (coerce assign 'function))))
+					    (list `(funcall ,assign-fn ',var
 						    ;; use DTRANSLATE to
 						    ;; catch global
 						    ;; scoping if any.
-						    ,(dtranslate var))))))
+						    ,(dtranslate var)))))))
 				  arglist))))))))
 
 
 (defun make-declares (varlist localp &aux (dl) (fx) (fl) specs)
-  (when $transcompile
-    (do ((l varlist (cdr l))
-	 (mode) (var))
-	((null l))
-      
-      ;; When a variable is declared special, be sure to declare it
-      ;; special here.
-      (when (and localp (tr-get-special (car l)))
-	(push (car l) specs))
-      
-      (when (or (not localp)
-		(not (tr-get-special (car l))))
-	;; don't output local declarations on special variables.
-	(setq var (teval (car l)) mode (value-mode var))
-	(setq specs (cons var specs))
-		
-	(cond ((eq '$fixnum mode) (pushnew var fx :test #'eq))
-	      ((eq '$float mode)  (pushnew var fl :test #'eq)))))
-    (if fx (pushnew `(fixnum  . ,fx) dl :test #'eq))
-    (if fl (pushnew `(type flonum  . ,fl) dl :test #'eq))
-    (if specs (pushnew `(special  . ,specs) dl :test #'eq))
-    (if dl `(declare . ,dl))))
+  (do ((l varlist (cdr l))
+       (mode) (var))
+      ((null l))
 
-(def%tr dolist (form)
-  (translate `((mprogn) . ,(cdr form))))
+    ;; When a variable is declared special, be sure to declare it
+    ;; special here.
+    (when (and localp (tr-get-special (car l)))
+      (push (car l) specs))
+
+    (when (or (not localp)
+	      (not (tr-get-special (car l))))
+      ;; don't output local declarations on special variables.
+      (setq var (teval (car l)) mode (value-mode var))
+      (setq specs (cons var specs))
+
+      (cond ((eq '$fixnum mode) (pushnew var fx :test #'eq))
+	    ((eq '$float mode)  (pushnew var fl :test #'eq)))))
+  (if fx (pushnew `(fixnum  . ,fx) dl :test #'eq))
+  (if fl (pushnew `(type flonum  . ,fl) dl :test #'eq))
+  (if specs (pushnew `(special  . ,specs) dl :test #'eq))
+  (if dl `(declare . ,dl)))
 
 (defun tr-seq (l)
   (do ((mode nil)
@@ -1166,7 +1122,7 @@ APPLY means like APPLY.")
     (cond ((atom fn) 
 	   ;; I'm guessing (ATOM FN) is a parser error or other Lisp error,
 	   ;; so don't bother to translate the following error message.
-	   (mformat *translation-msgs-files* "translator: MQAPPLY operator must be a cons; found: ~:M" form)
+	   (tr-format "translator: MQAPPLY operator must be a cons; found: ~:M" form)
 	   nil)
 	  ((eq (caar fn) 'mquote) 
 	   `($any list ',(cons (cadr fn) aryp) ,@(tr-args args)))
@@ -1225,7 +1181,12 @@ APPLY means like APPLY.")
 					      (atom (cdar l))) nil)
 					(t (list (cdr (car l))))))
 			    form)))))
-     (return (cons mode (cons 'cond form)))))
+     ;; Wrap (LET (($PREDERROR T)) ...) around translation of MCOND.
+     ;; Nested MCOND expressions (e.g. if x > 0 then if y > 0 then ...)
+     ;; will therefore yield nested (LET (($PREDERROR T)) ... (LET (($PREDERROR T)) ...)).
+     ;; I suppose only the topmost one is needed, but there is very little harm
+     ;; in the redundant ones, so I'll let it stand.
+     (return (cons mode (list 'let '(($prederror t)) (cons 'cond form))))))
 
 
 
@@ -1312,10 +1273,11 @@ APPLY means like APPLY.")
 	       (setq val (dconv val mode)))
 	   (cons mode
 		 (if (setq assign (get var 'assign))
-		     (let ((tn (tr-gensym)))
+		     (let ((tn (tr-gensym))
+		           (assign-fn (if (symbolp assign) (symbol-function assign) (coerce assign 'function))))
 		       (lambda-wrap1 tn val `(let nil
 					      (declare (special ,var ,(teval var)))
-					      (,assign ',var ,tn)
+					      (funcall ,assign-fn ',var ,tn)
 					      (setq ,(teval var) ,tn))))
                      `(let nil (declare (special ,(teval var)))
                         (if (not (boundp ',(teval var)))
@@ -1340,12 +1302,29 @@ APPLY means like APPLY.")
 
 (defun translate-$max-$min (form)
   (let   ((mode) (arglist) (op (stripdollar (caar form))))
-    (setq arglist 
-	  (mapcar #'(lambda (l) (setq l (translate l)
-				      mode (*union-mode (car l) mode))
-			    l)
+    (setq arglist
+	  (mapcar (lambda (l)
+		    (setq l (translate l))
+		    (cond ((null mode)
+			   (setq mode (car l)))
+			  ((eq mode (car l)))
+			  (t
+			   (setq mode '$any)))
+		    l)
 		  (cdr form)))
-    (if (member mode '($fixnum $float $number) :test #'eq)
+    ; To match the interpreted case, and to make sure we use the
+    ; correct mode for the return value, we do not apply float
+    ; contagion to the arguments and we use a special translation
+    ; to call MAX or MIN only when every argument has the same
+    ; mode (either all fixnum or all float).  CLHS says that
+    ; implementations have choices they can make about what MAX
+    ; and MIN return when the arguments are a mix of float and
+    ; rational types.
+    ; Example: if an implementation decides to apply float contagion
+    ; to the arguments of MAX (MIN), then it can return either an
+    ; integer or a float if the greatest (least) argument was an
+    ; integer.
+    (if (member mode '($fixnum $float) :test #'eq)
 	`(,mode  ,(if (eq 'min op) 'min 'max) . ,(mapcar 'cdr arglist))
 	`($any ,(if (eq 'min op) '$lmin '$lmax)
 	  (list '(mlist) . ,(mapcar 'dconvx arglist))))))

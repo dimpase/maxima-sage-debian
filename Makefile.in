@@ -84,7 +84,6 @@ DIST_COMMON = $(srcdir)/common.mk INSTALL NEWS README AUTHORS \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(srcdir)/maxima-local.in $(srcdir)/xmaxima-local.in \
 	$(srcdir)/maxima.spec.in $(srcdir)/maxima.iss.in \
-	$(top_srcdir)/doc/man/ru/maxima.1.in \
 	$(top_srcdir)/interfaces/xmaxima/Tkmaxima/Header.tcl.in \
 	COPYING config.guess config.sub install-sh missing
 # Install files for lisp runtime support
@@ -100,7 +99,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES = maxima-local xmaxima-local maxima.spec maxima.iss \
-	doc/man/ru/maxima.1 interfaces/xmaxima/Tkmaxima/Header.tcl
+	interfaces/xmaxima/Tkmaxima/Header.tcl
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -201,6 +200,7 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
+ABCL_JAR = @ABCL_JAR@
 ACLOCAL = @ACLOCAL@
 ACL_NAME = @ACL_NAME@
 AMTAR = @AMTAR@
@@ -221,12 +221,14 @@ CMUCL_RUNTIME_PATH = @CMUCL_RUNTIME_PATH@
 CYGPATH_W = @CYGPATH_W@
 DEFAULTLISP = @DEFAULTLISP@
 DEFS = @DEFS@
+DISTCLEAN_EXTRA_SRC_FILES = @DISTCLEAN_EXTRA_SRC_FILES@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 ECL_NAME = @ECL_NAME@
 EGREP = @EGREP@
 EMACS = @EMACS@
+EMACSDIR = @EMACSDIR@
 EMACSLOADPATH = @EMACSLOADPATH@
 EXEEXT = @EXEEXT@
 GCCVER = @GCCVER@
@@ -239,6 +241,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+JRE = @JRE@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -260,6 +263,7 @@ PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
+SBCL_EXTRA_ARGS = @SBCL_EXTRA_ARGS@
 SBCL_NAME = @SBCL_NAME@
 SCL_NAME = @SCL_NAME@
 SCL_RUNTIME = @SCL_RUNTIME@
@@ -323,6 +327,7 @@ lang_pt = @lang_pt@
 lang_pt_br = @lang_pt_br@
 libdir = @libdir@
 libexecdir = @libexecdir@
+lisp_only_build = @lisp_only_build@
 lispdir = @lispdir@
 lisps_enabled = @lisps_enabled@
 localedir = @localedir@
@@ -383,7 +388,7 @@ docchmdir = $(docdir)/chm
 dochtmldir = $(docdir)/html
 docsharedir = $(docdir)/share
 demodir = $(verpkgdatadir)/demo
-emacsdir = $(verpkgdatadir)/emacs
+emacsdir = $(EMACSDIR)
 sharedir = $(verpkgdatadir)/share
 instsrcdir = $(verpkgdatadir)/src
 xmaximadir = $(verpkgdatadir)/xmaxima
@@ -442,8 +447,6 @@ xmaxima-local: $(top_builddir)/config.status $(srcdir)/xmaxima-local.in
 maxima.spec: $(top_builddir)/config.status $(srcdir)/maxima.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 maxima.iss: $(top_builddir)/config.status $(srcdir)/maxima.iss.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
-doc/man/ru/maxima.1: $(top_builddir)/config.status $(top_srcdir)/doc/man/ru/maxima.1.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 interfaces/xmaxima/Tkmaxima/Header.tcl: $(top_builddir)/config.status $(top_srcdir)/interfaces/xmaxima/Tkmaxima/Header.tcl.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
@@ -736,6 +739,7 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) check-local
 check: check-recursive
 all-am: Makefile
 installdirs: installdirs-recursive
@@ -839,23 +843,24 @@ ps-am:
 
 uninstall-am: uninstall-local
 
-.MAKE: $(am__recursive_targets) install-am install-strip
+.MAKE: $(am__recursive_targets) check-am install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
-	am--refresh check check-am clean clean-cscope clean-generic \
-	clean-local cscope cscopelist-am ctags ctags-am dist dist-all \
-	dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ dist-xz \
-	dist-zip distcheck distclean distclean-generic distclean-tags \
-	distcleancheck distdir distuninstallcheck dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-data-local install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-local
+	am--refresh check check-am check-local clean clean-cscope \
+	clean-generic clean-local cscope cscopelist-am ctags ctags-am \
+	dist dist-all dist-bzip2 dist-gzip dist-lzip dist-shar \
+	dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-generic distclean-tags distcleancheck distdir \
+	distuninstallcheck dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am \
+	install-data-local install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am tags tags-am uninstall uninstall-am \
+	uninstall-local
 
 
 # On debian-based systems this makes us use the right gcl version out-of-the box.
@@ -1002,9 +1007,15 @@ rpm: $(distdir).tar.gz
 
 @WIN32_TRUE@iss: win32-lisp-runtime wxmaxima gnuplot extradocinstall
 
+rpm: maxima.spec dist-gzip
+	rpmbuild -ba $(top_srcdir)/maxima.spec --define "_sourcedir $(abs_top_builddir)" --define "_rpmdir $(abs_top_builddir)"
+	rpmbuild -bb $(top_srcdir)/maxima.spec --define "_sourcedir $(abs_top_builddir)" --define "_rpmdir $(abs_top_builddir)"
+
 clean-local:
 	rm -rf bin
 	rm -rf binary
+
+check-local: all
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

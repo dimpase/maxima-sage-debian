@@ -34,7 +34,7 @@
 
 (declare-top (special $algdelta $ratepsilon $algepsilon $keepfloat
 		     varlist genvar *roots *failures $ratprint $numer $ratfac
-		     $rnum $solvefactors $dispflag $breakup
+		     $solvefactors $dispflag $breakup
 		     *tvarxlist* errorsw $programmode *ivar* errset $polyfactor
 		     bindlist loclist $float $infeval))
 
@@ -63,8 +63,8 @@
   in-core)
 
 (defmacro merrset (l)
-  `(let ((errset 'errbreak1) (unbind (cons bindlist loclist)) val)
-     (setq val (errset ,l nil))
+  `(let ((errset t) (unbind (cons bindlist loclist)) val)
+     (setq val (errset ,l))
      (when (null val) (errlfun1 unbind))
      val))
 
@@ -573,7 +573,7 @@
     (setq e1 (sratsimp e))
     (if ($constantp e)
       (progn
-	(setq e (sqrtdenest e))
+	(setq e ($sqrtdenest e))
 	;; Rectform does more than is wanted.  A function that denests and
 	;; rationalizes nested complex radicals would be better.
 	;; Limit expression growth.  The factor is based on trials.
@@ -772,7 +772,7 @@
 						  (pderivative p x)))))
 		(listovars p))))
 
-(defmfun mycabs (x)
+(defun mycabs (x)
   (and (complexnump x) (cabs x)))
 
 ;;; (DISTREP LOL)

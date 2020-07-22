@@ -719,7 +719,7 @@ English language user documentation for these packages.
           (%i3) simp_inequality(x > 0);
           (%o3)                         x > 0
 
-     To use 'load(fourier_elim)'
+     'load(to_poly_solve)' loads this function.
 
      Status The function 'simp_inequality' is experimental; its
      specifications might change and its functionality might be merged
@@ -1688,7 +1688,7 @@ File: maxima.info,  Node: Introduction to zeilberger,  Next: Functions and Varia
 77.1 Introduction to zeilberger
 ===============================
 
-'zeilberger' is a implementation of Zeilberger's algorithm for definite
+'zeilberger' is an implementation of Zeilberger's algorithm for definite
 hypergeometric summation, and also Gosper's algorithm for indefinite
 hypergeometric summation.  'zeilberger' makes use of the "filtering"
 optimization method developed by Axel Riese.  'zeilberger' was developed
@@ -7642,37 +7642,37 @@ Appendix A Index der Funktionen und Variablen
 * zn_log <1>:                            Funktionen und Variablen der Zahlentheorie.
                                                              (line  691)
 * zn_mult_table:                         Funktionen und Variablen der Zahlentheorie.
-                                                             (line  750)
+                                                             (line  763)
 * zn_mult_table <1>:                     Funktionen und Variablen der Zahlentheorie.
-                                                             (line  751)
+                                                             (line  764)
 * zn_nth_root:                           Funktionen und Variablen der Zahlentheorie.
-                                                             (line  857)
+                                                             (line  870)
 * zn_nth_root <1>:                       Funktionen und Variablen der Zahlentheorie.
-                                                             (line  858)
+                                                             (line  871)
 * zn_order:                              Funktionen und Variablen der Zahlentheorie.
-                                                             (line  969)
+                                                             (line  982)
 * zn_order <1>:                          Funktionen und Variablen der Zahlentheorie.
-                                                             (line  970)
+                                                             (line  983)
 * zn_power_table:                        Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1020)
+                                                             (line 1033)
 * zn_power_table <1>:                    Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1021)
+                                                             (line 1034)
 * zn_power_table <2>:                    Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1022)
+                                                             (line 1035)
 * zn_primroot:                           Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1115)
+                                                             (line 1128)
 * zn_primroot <1>:                       Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1116)
+                                                             (line 1129)
 * zn_primroot_limit:                     Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1174)
+                                                             (line 1187)
 * zn_primroot_p:                         Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1183)
+                                                             (line 1196)
 * zn_primroot_p <1>:                     Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1184)
+                                                             (line 1197)
 * zn_primroot_pretest:                   Funktionen und Variablen der Zahlentheorie.
-                                                             (line 1225)
-* zn_primroot_verbose:                   Funktionen und Variablen der Zahlentheorie.
                                                              (line 1238)
+* zn_primroot_verbose:                   Funktionen und Variablen der Zahlentheorie.
+                                                             (line 1251)
 * zrange:                                Functions and Variables for draw.
                                                              (line 2474)
 * ztics:                                 Functions and Variables for draw.

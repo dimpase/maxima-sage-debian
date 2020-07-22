@@ -36,7 +36,7 @@ while re-formulating its representation to be smaller, simpler to understand, or
 conform to particular specifications (like factored, expanded). For
 example, @code{sin(0)} to @code{0} or @code{x+x to 2*x}.
 There are several powerful tools to alter the results 
-of simplification, since it is largely in this part of the system that a user can 
+of simplification, since it is largely in this part of the system that an user can 
 incorporate knowledge of newly introduced functions or symbolic notation into Maxima.
 
 Simplification is generally done at four different levels:
@@ -78,7 +78,7 @@ operator and add its simplification routine without disturbing existing code.
 We note that in addition to this general simplifier operating on algebraic 
 expression trees, there are several other representations of expressions in 
 Maxima which have separate methods and simplifiers. For example, the
-@code{rat()} function converts polynomials to vectors of coefficients to
+@mref{rat} function converts polynomials to vectors of coefficients to
 assist in rapid manipulation of such forms. Other representations include
 Taylor series and the (rarely used) Poisson series.
 
@@ -133,7 +133,7 @@ of @code{h} will be ignored.
 
 In addition to these directly related properties set up by the user, facts and 
 properties from the actual context may have an impact on the simplifier's behavior, 
-too. @xref{Introduction to Maximas Database}.
+too. @xref{Introduction to Maxima's Database}.
 
 Example: @code{sin(n*%pi)} is simplified to zero, if @var{n} is an integer.
 
@@ -233,7 +233,8 @@ Example:
 @end example
 
 @opencatbox
-@category{Operators} @category{Declarations and inferences}
+@category{Operators}
+@category{Declarations and inferences}
 @closecatbox
 @end defvr
 
@@ -295,15 +296,19 @@ Examples:
 @end example
 
 @opencatbox
-@category{Operators} @category{Declarations and inferences}
+@category{Operators}
+@category{Declarations and inferences}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
+@anchor{combine}
 @deffn {Function} combine (@var{expr})
 
 Simplifies the sum @var{expr} by combining terms with the same
 denominator into a single term.
+
+See also: @mrefdot{rncombine}
 
 Example:
 
@@ -377,7 +382,8 @@ Exemplo:
 @end example
 
 @opencatbox
-@category{Operators} @category{Declarations and inferences}
+@category{Operators}
+@category{Declarations and inferences}
 @closecatbox
 @end defvr
 
@@ -403,7 +409,9 @@ form.  @code{demoivre} and @code{exponentialize} cannot both be true at the same
 time.
 
 @opencatbox
-@category{Complex variables} @category{Trigonometric functions} @category{Hyperbolic functions}
+@category{Complex variables}
+@category{Trigonometric functions}
+@category{Hyperbolic functions}
 @closecatbox
 @end deffn
 
@@ -420,6 +428,12 @@ all sums at that level.
 
 Examples:
 
+@c ===beg===
+@c distrib ((a+b) * (c+d));
+@c multthru ((a+b) * (c+d));
+@c distrib (1/((a+b) * (c+d)));
+@c expand (1/((a+b) * (c+d)), 1, 0);
+@c ===end===
 @example
 (%i1) distrib ((a+b) * (c+d));
 (%o1)                 b d + a d + b c + a c
@@ -592,6 +606,14 @@ the function @code{f} as an even or odd function.
 
 Examples:
 
+@c ===beg===
+@c o (- x) + o (x);
+@c declare (o, oddfun);
+@c o (- x) + o (x);
+@c e (- x) - e (x);
+@c declare (e, evenfun);
+@c e (- x) - e (x);
+@c ===end===
 @example
 (%i1) o (- x) + o (x);
 (%o1)                     o(x) + o(- x)
@@ -838,7 +860,9 @@ The default value is @code{false}.
 both be true at the same time.
 
 @opencatbox
-@category{Complex variables} @category{Trigonometric functions} @category{Hyperbolic functions}
+@category{Complex variables}
+@category{Trigonometric functions}
+@category{Hyperbolic functions}
 @closecatbox
 @end deffn
 
@@ -873,7 +897,9 @@ left-associative.  E.g., @code{g (g (a, b), g (c, d))} will simplify to
 @code{g (g (g (a, b), c), d)}.
 
 @opencatbox
-@category{Declarations and inferences} @category{Operators} @category{Simplification}
+@category{Declarations and inferences}
+@category{Operators}
+@category{Simplification}
 @closecatbox
 @end defvr
 
@@ -957,7 +983,9 @@ Example:
 @end example
 
 @opencatbox
-@category{Declarations and inferences} @category{Operators} @category{Simplification}
+@category{Declarations and inferences}
+@category{Operators}
+@category{Simplification}
 @closecatbox
 @end defvr
 
@@ -1069,7 +1097,9 @@ Example:
 @end example
 
 @opencatbox
-@category{Declarations and inferences} @category{Expressions} @category{Simplification}
+@category{Declarations and inferences}
+@category{Expressions}
+@category{Simplification}
 @closecatbox
 @end defvr
 
@@ -1095,6 +1125,15 @@ noncommutative) over sums.  Since quotients are represented as products
 @var{expr_1} is not itself a sum then this form is equivalent to
 @code{multthru (@var{expr_1}*@var{expr_2})}.
 
+@c ===beg===
+@c x/(x-y)^2 - 1/(x-y) - f(x)/(x-y)^3;
+@c multthru ((x-y)^3, %);
+@c ratexpand (%);
+@c ((a+b)^10*s^2 + 2*a*b*s + (a*b)^2)/(a*b*s^2);
+@c multthru (%);  /* note that this does not expand (b+a)^10 */
+@c multthru (a.(b+c.(d+e)+f));
+@c expand (a.(b+c.(d+e)+f));
+@c ===end===
 @example
 (%i1) x/(x-y)^2 - 1/(x-y) - f(x)/(x-y)^3;
                       1        x         f(x)
@@ -1145,6 +1184,11 @@ expressions, for example, to simplify @code{foo(x, foo(y, z))} to
 
 Example:
 
+@c ===beg===
+@c H (H (a, b), H (c, H (d, e)));
+@c declare (H, nary);
+@c H (H (a, b), H (c, H (d, e)));
+@c ===end===
 @example
 (%i1) H (H (a, b), H (c, H (d, e)));
 (%o1)               H(H(a, b), H(c, H(d, e)))
@@ -1225,7 +1269,9 @@ lassociative, rassociative]
 @end example
 
 @opencatbox
-@category{Global variables} @category{Operators} @category{Simplification}
+@category{Global variables}
+@category{Operators}
+@category{Simplification}
 @closecatbox
 @end defvr
 
@@ -1290,7 +1336,8 @@ Declare that @code{f} and @code{g} have the new property.
 @end example
 
 @opencatbox
-@category{Operators} @category{Simplification}
+@category{Operators}
+@category{Simplification}
 @closecatbox
 @end deffn
 
@@ -1349,7 +1396,8 @@ Example:
 @end example
 
 @opencatbox
-@category{Declarations and inferences} @category{Operators}
+@category{Declarations and inferences}
+@category{Operators}
 @closecatbox
 @end defvr
 
@@ -1360,7 +1408,7 @@ Example:
 Simplifies @var{expr}, which can contain logs, exponentials, and radicals, by 
 converting it into a form which is canonical over a large class of expressions 
 and a given ordering of variables; that is, all functionally equivalent forms 
-are mapped into a unique form.  For a somewhat larger class of expressions, 
+are mapped into an unique form.  For a somewhat larger class of expressions, 
 @code{radcan} produces a regular form.  Two equivalent expressions in this class 
 do not necessarily have the same appearance, but their difference can be 
 simplified by @code{radcan} to zero.
@@ -1460,7 +1508,8 @@ simplifier that @code{g} is right-associative.  E.g.,
 @code{g(g(a, b), g(c, d))} simplifies to @code{g(a, g(b, g(c, d)))}.
 
 @opencatbox
-@category{Declarations and inferences} @category{Operators}
+@category{Declarations and inferences}
+@category{Operators}
 @closecatbox
 @end defvr
 
@@ -1570,7 +1619,8 @@ simplifies to @code{h (x, y, z)}.
 @code{commutative} is synonymous with @code{symmetric}.
 
 @opencatbox
-@category{Declarations and inferences} @category{Operators}
+@category{Declarations and inferences}
+@category{Operators}
 @closecatbox
 @end defvr
 

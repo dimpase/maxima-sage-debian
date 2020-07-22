@@ -111,6 +111,7 @@ am__can_run_installinfo = \
   esac
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+ABCL_JAR = @ABCL_JAR@
 ACLOCAL = @ACLOCAL@
 ACL_NAME = @ACL_NAME@
 AMTAR = @AMTAR@
@@ -131,12 +132,14 @@ CMUCL_RUNTIME_PATH = @CMUCL_RUNTIME_PATH@
 CYGPATH_W = @CYGPATH_W@
 DEFAULTLISP = @DEFAULTLISP@
 DEFS = @DEFS@
+DISTCLEAN_EXTRA_SRC_FILES = @DISTCLEAN_EXTRA_SRC_FILES@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 ECL_NAME = @ECL_NAME@
 EGREP = @EGREP@
 EMACS = @EMACS@
+EMACSDIR = @EMACSDIR@
 EMACSLOADPATH = @EMACSLOADPATH@
 EXEEXT = @EXEEXT@
 GCCVER = @GCCVER@
@@ -149,6 +152,7 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+JRE = @JRE@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -170,6 +174,7 @@ PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
+SBCL_EXTRA_ARGS = @SBCL_EXTRA_ARGS@
 SBCL_NAME = @SBCL_NAME@
 SCL_NAME = @SCL_NAME@
 SCL_RUNTIME = @SCL_RUNTIME@
@@ -233,6 +238,7 @@ lang_pt = @lang_pt@
 lang_pt_br = @lang_pt_br@
 libdir = @libdir@
 libexecdir = @libexecdir@
+lisp_only_build = @lisp_only_build@
 lispdir = @lispdir@
 lisps_enabled = @lisps_enabled@
 localedir = @localedir@
@@ -270,7 +276,7 @@ SUFFIXES = .pdf .gif .mac
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .pdf .gif .mac
+.SUFFIXES: .pdf .gif .mac .png
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -463,7 +469,9 @@ draw_cbtics.pdf\
 draw_colorbox2.pdf\
 draw_colorbox.pdf\
 draw_color.pdf\
+draw_color2.pdf\
 draw_color3.pdf\
+draw_color4.pdf\
 draw_columns.pdf\
 draw_contour2.pdf\
 draw_contour.pdf\
@@ -601,6 +609,7 @@ draw_colorbox2.gif\
 draw_colorbox.gif\
 draw_color.gif\
 draw_color3.gif\
+draw_color4.gif\
 draw_columns.gif\
 draw_contour2.gif\
 draw_contour.gif\
@@ -725,10 +734,88 @@ worldmap_geomap2.gif\
 worldmap_geomap3.gif\
 worldmap_geomap4.gif\
 worldmap_geomap5.gif\
-worldmap_geomap6.gif
+worldmap_geomap6.gif\
+plotting1.png plotting1.pdf\
+plotting2.png plotting2.pdf\
+plotting3.png plotting3.pdf\
+plotting4.png plotting4.pdf\
+plotting5.png plotting5.pdf\
+plotting6.png plotting6.pdf\
+plotting7.png plotting7.pdf\
+plotting8.png plotting8.pdf\
+plotting9.png plotting9.pdf\
+plotting10.png plotting10.pdf\
+plotting11.png plotting11.pdf\
+plotting12.png plotting12.pdf\
+plotting13.png plotting13.pdf\
+plotting14.png plotting14.pdf\
+plotting15.png plotting15.pdf\
+plotting16.png plotting16.pdf\
+plotting17.png plotting17.pdf\
+plotting18.png plotting18.pdf\
+plotting19.png plotting19.pdf\
+plotting20.png plotting20.pdf\
+plotting21.png plotting21.pdf\
+plotting22.png plotting22.pdf\
+plotting23.png plotting23.pdf\
+plotting24.png plotting24.pdf\
+plotting25.png plotting25.pdf\
+plotting26.png plotting26.pdf
 # draw_color2.gif and draw_color2.pdf aren't automatically remade since the gif terminal
 # doesn't support transparency
 
+plotting26.pdf: plotting26.mac ../docdraw.mac
+plotting26.png: plotting26.mac ../docdraw.mac
+plotting25.pdf: plotting25.mac ../docdraw.mac
+plotting25.png: plotting25.mac ../docdraw.mac
+plotting24.pdf: plotting24.mac ../docdraw.mac
+plotting24.png: plotting24.mac ../docdraw.mac
+plotting23.pdf: plotting23.mac ../docdraw.mac
+plotting23.png: plotting23.mac ../docdraw.mac
+plotting22.pdf: plotting22.mac ../docdraw.mac
+plotting22.png: plotting22.mac ../docdraw.mac
+plotting21.pdf: plotting21.mac ../docdraw.mac
+plotting21.png: plotting21.mac ../docdraw.mac
+plotting20.pdf: plotting20.mac ../docdraw.mac
+plotting20.png: plotting20.mac ../docdraw.mac
+plotting19.pdf: plotting19.mac ../docdraw.mac
+plotting19.png: plotting19.mac ../docdraw.mac
+plotting18.pdf: plotting18.mac ../docdraw.mac
+plotting18.png: plotting18.mac ../docdraw.mac
+plotting17.pdf: plotting17.mac ../docdraw.mac
+plotting17.png: plotting17.mac ../docdraw.mac
+plotting16.pdf: plotting16.mac ../docdraw.mac
+plotting16.png: plotting16.mac ../docdraw.mac
+plotting15.pdf: plotting15.mac ../docdraw.mac
+plotting15.png: plotting15.mac ../docdraw.mac
+plotting14.pdf: plotting14.mac ../docdraw.mac
+plotting14.png: plotting14.mac ../docdraw.mac
+plotting13.pdf: plotting13.mac ../docdraw.mac
+plotting13.png: plotting13.mac ../docdraw.mac
+plotting12.pdf: plotting12.mac ../docdraw.mac
+plotting12.png: plotting12.mac ../docdraw.mac
+plotting11.pdf: plotting11.mac ../docdraw.mac
+plotting11.png: plotting11.mac ../docdraw.mac
+plotting10.pdf: plotting10.mac ../docdraw.mac
+plotting10.png: plotting10.mac ../docdraw.mac
+plotting9.pdf: plotting9.mac ../docdraw.mac
+plotting9.png: plotting9.mac ../docdraw.mac
+plotting8.pdf: plotting8.mac ../docdraw.mac
+plotting8.png: plotting8.mac ../docdraw.mac
+plotting7.pdf: plotting7.mac ../docdraw.mac
+plotting7.png: plotting7.mac ../docdraw.mac
+plotting6.pdf: plotting6.mac ../docdraw.mac
+plotting6.png: plotting6.mac ../docdraw.mac
+plotting5.pdf: plotting5.mac ../docdraw.mac
+plotting5.png: plotting5.mac ../docdraw.mac
+plotting4.pdf: plotting4.mac ../docdraw.mac
+plotting4.png: plotting4.mac ../docdraw.mac
+plotting3.pdf: plotting3.mac ../docdraw.mac
+plotting3.png: plotting3.mac ../docdraw.mac
+plotting2.pdf: plotting2.mac ../docdraw.mac
+plotting2.png: plotting2.mac ../docdraw.mac
+plotting1.pdf: plotting1.mac ../docdraw.mac
+plotting1.png: plotting1.mac ../docdraw.mac
 draw_scene.pdf: draw_scene.mac ../docdraw.mac
 draw_scene.gif: draw_scene.mac ../docdraw.mac
 draw_equiv.pdf: draw_equiv.mac ../docdraw.mac
@@ -745,6 +832,12 @@ draw_cbtics.gif: draw_cbtics.mac ../docdraw.mac
 draw_cbtics.pdf: draw_cbtics.mac ../docdraw.mac
 draw_color.gif: draw_color.mac ../docdraw.mac
 draw_color.pdf: draw_color.mac ../docdraw.mac
+draw_color2.gif: draw_color2.mac ../docdraw.mac
+draw_color2.pdf: draw_color2.mac ../docdraw.mac
+draw_color3.gif: draw_color3.mac ../docdraw.mac
+draw_color3.pdf: draw_color3.mac ../docdraw.mac
+draw_color4.gif: draw_color4.mac ../docdraw.mac
+draw_color4.pdf: draw_color4.mac ../docdraw.mac
 draw_colorbox.gif: draw_colorbox.mac ../docdraw.mac
 draw_colorbox.pdf: draw_colorbox.mac ../docdraw.mac
 draw_colorbox2.gif: draw_colorbox2.mac ../docdraw.mac
@@ -1082,6 +1175,9 @@ worldmap_geomap6.pdf: worldmap_geomap6.mac ../docdraw.mac
 	cd ..&&maxima < figures/$<
 
 .mac.gif:
+	cd ..&&maxima < figures/$<
+
+.mac.png:
 	cd ..&&maxima < figures/$<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

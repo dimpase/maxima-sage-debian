@@ -64,7 +64,7 @@
 ;;; error variables. However, since we do bind the value of the
 ;;; variable $ERROR, calling the function $ERRORMSG will always
 ;;; set things back. It would be better to bind these variables,
-;;; for, amoung other things, then the values could get garbage 
+;;; for, among other things, then the values could get garbage
 ;;; collected.
 
 (define-condition maxima-$error (error)
@@ -93,7 +93,7 @@
 	 (fresh-line *standard-output*)
 	 ($backtrace 3)
 	 (format t (intl:gettext "~& -- an error. To debug this try: debugmode(true);~%"))
-	 (force-output)
+	 (finish-output)
 	 (throw 'macsyma-quit 'maxima-error))))
 
 (defun mwarning (&rest l)
@@ -169,7 +169,7 @@
     (fresh-line))
   '$done)
 
-(defmfun read-only-assign (var val)
+(defun read-only-assign (var val)
   (if munbindp
       'munbindp
       (merror (intl:gettext "assignment: attempting to assign read-only variable ~:M the value ~M") var val)))
@@ -226,7 +226,7 @@
 ;;; This might also be done at code translation time.
 ;;; This is a bit crude.
 
-(defmfun fstringc (l)
+(defun fstringc (l)
   (do ((sl nil) (s) (sb)
        (se nil))
       ((null l)

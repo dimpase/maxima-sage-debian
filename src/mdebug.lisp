@@ -16,16 +16,6 @@
 
 (defstruct (bkpt (:type list)) form file file-line function)
 
-;; This function is not documented and not used in Maxima core or share.
-(defun $bt()
-  (loop for v in *baktrcl*
-	 do 
-	 (and (consp v)
-	      (consp (cadar v))
-	      (eq (caadar v) 'src))
-	 ($print (format nil "~a:~a:" (nth 1 (cadar v))
-			 (nth 0 (cadar v))) v)))
-
 ;; *mlambda-call-stack*
 ;; #(NIL ($X) (1) $FF ($BIL $X) ($Y) (36) $JOE ($Y $BIL $X) ($JJX) (36)
 ;; to get to current values in ff need to unbind bindlist downto ($BIL $X)
@@ -35,7 +25,7 @@
 
 (defvar $mdebug_print_length 100 "Length of forms to print out in debugger")
 
-(defmacro bak-top-form (x) x)
+(defvar *lisp-quiet-suppressed-prompt* "" "The prompt lisp-quiet has suppressed")
 
 (defun frame-info (n)
   (declare (fixnum n))
@@ -53,16 +43,8 @@
     (setq bdlist (if (< m (fill-pointer ar)) (aref ar m) bindlist))
 					; (setq lineinfo (get-lineinfo backtr))
     (setq lineinfo (if ( < m (fill-pointer ar))
-		       (get-lineinfo (bak-top-form (aref ar (f+ m 1))))
-		       (get-lineinfo (bak-top-form *last-meval1-form*))))
-    ;;    #+if-you-use-baktrcl 
-    ;;	  (if ( < m (fill-pointer ar))
-    ;;	      (get-lineinfo (bak-top-form (aref ar (f+ m 1))))
-    ;;	    (or (get-lineinfo (bak-top-form *last-meval1-form*
-    ;;					    ;baktrcl
-    ;;					    ))
-    ;;		;(get-lineinfo (bak-top-form (cdr baktrcl)))
-    ;;		))
+		       (get-lineinfo (aref ar (f+ m 1)))
+		       (get-lineinfo *last-meval1-form*)))
     (values fname vals params backtr lineinfo bdlist)))
 
 (defun print-one-frame (n print-frame-number &aux val (st *debug-io*))
@@ -90,8 +72,7 @@
 
 ;; these are in the system package in gcl...
 #-gcl
-(progn 'compile
-       (defun break-call (key args prop &aux fun)
+(progn (defun break-call (key args prop &aux fun)
 	 (setq fun (complete-prop key 'keyword prop))
 	 (setq key fun)
 	 (or fun (return-from break-call nil))
@@ -140,7 +121,7 @@
 		      (t (return-from complete-prop
 			   (car all)))))))
 
-(defun $backtrace (&optional (n 0 n-p))
+(defmfun $backtrace (&optional (n 0 n-p))
   (unless (typep n '(integer 0))
     (merror
       (intl:gettext "backtrace: number of frames must be a nonnegative integer; got ~M~%")
@@ -286,7 +267,7 @@
     (progn
       (fresh-line *standard-output*)
       (princ mprompt *standard-output*)
-      (force-output *standard-output*)
+      (finish-output *standard-output*)
       (setf *prompt-on-read-hang* nil))
     (progn
       (setf *prompt-on-read-hang* t)
@@ -514,7 +495,7 @@ Command      Description~%~
 (defun break-function (fun &optional (li 0) absolute 
                            &aux i tem info form fun-line)
   (unless *mdebug*
-    (format t "~&Turning on debugging debugmode(true)")
+    (format t "~&Turning on debugging debugmode(true)~%")
     (setq *mdebug* t))
   (cond ((stringp fun)
 	 (let ((file fun)  start)
@@ -632,7 +613,7 @@ Command      Description~%~
 		  (:show
 		   (when tem (show-break-point i)
 			 (terpri)
-			 (force-output))
+			 (finish-output))
 		   tem)))))))
 
 ;; get the most recent function on the stack with step info.
@@ -654,6 +635,8 @@ Command      Description~%~
   "Print information about item")
 
 (defmacro lisp-quiet (&rest l)
+  (if (not (string= *mread-prompt* ""))
+      (setq *lisp-quiet-suppressed-prompt* *mread-prompt*))
   (setq *mread-prompt* "")
   (eval (cons 'progn l))
   nil)
@@ -665,6 +648,9 @@ Command      Description~%~
   "Evaluate the lisp form following on the line")
 
 (defmacro lisp-eval (&rest l)
+  (if (string= *mread-prompt* "")
+      (setq *mread-prompt* *lisp-quiet-suppressed-prompt*))
+  
   (dolist (v (multiple-value-list (eval (cons 'progn l))))
     (fresh-line *standard-output*)
     (princ v)))
