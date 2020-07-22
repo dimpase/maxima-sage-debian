@@ -53,7 +53,8 @@
 				     (:file "clmacs")))
                (:module compatibility-macros :pathname ""
                         :components (#+gcl (:file "gcl-compat")
-                                     (:file "commac"))) 
+				     (:file "defmfun-check")
+                                     (:file "commac")))
                (:module prerequisites :pathname ""
                         :components ((:file "mormac") 
                                      (:file "compat")))
@@ -392,6 +393,7 @@
                (:module i-o :pathname ""
 			:depends-on (compatibility-macros)
                         :components ((:file "macsys") 
+                                     (:file "testsuite")
                                      (:file "mload") 
                                      (:file "suprv1")
                                      (:file "dskfn")))

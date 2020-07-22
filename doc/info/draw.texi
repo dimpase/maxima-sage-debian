@@ -36,7 +36,7 @@ A selection of useful objects a scene can be made up from are:
 
 A short description of all draw commands and options including example plots
 (in the html and pdf version of this manual) can be found in the section
-@xref{Functions and Variables for draw}. A online version of the html manual can be
+@xref{Functions and Variables for draw}. An online version of the html manual can be
 found at @url{maxima.sourceforge.net/docs/manual/maxima_singlepage.html#draw}. 
 More elaborated examples of this package can be found at the following locations:
 
@@ -64,7 +64,9 @@ replacements for draw that do the same as @mrefcomma{draw} @mref{draw2d} and
 @mref{draw3d} but embed the resulting plot in the worksheet.
 
 @opencatbox
-@category{Plotting} @category{Share packages} @category{Package draw}
+@category{Plotting}
+@category{Share packages}
+@category{Package draw}
 @closecatbox
 
 
@@ -237,7 +239,8 @@ End of animation sequence
 See also @mrefcomma{gr2d} @mrefcomma{gr3d} @mref{draw2d} and @mrefdot{draw3d}
 
 @opencatbox
-@category{Package draw} @category{File output}
+@category{Package draw}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -251,12 +254,13 @@ See also @mrefcomma{gr2d} @mrefcomma{gr3d} @mref{draw2d} and @mrefdot{draw3d}
 This function is a shortcut for
 @code{draw(gr2d(@var{options}, ..., @var{graphic_object}, ...))}.
 
-It can be used to plot a unique scene in 2d, as can be seen in most examples below.
+It can be used to plot an unique scene in 2d, as can be seen in most examples below.
 
 See also @mref{draw} and @mrefdot{gr2d}
 
 @opencatbox
-@category{Package draw} @category{File output}
+@category{Package draw}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -271,12 +275,13 @@ See also @mref{draw} and @mrefdot{gr2d}
 This function is a shortcut for
 @code{draw(gr3d(@var{options}, ..., @var{graphic_object}, ...))}.
 
-It can be used to plot a unique scene in 3d, as can be seen in many examples below.
+It can be used to plot an unique scene in 3d, as can be seen in many examples below.
 
 See also @mref{draw} and @mrefdot{gr3d}
 
 @opencatbox
-@category{Package draw} @category{File output}
+@category{Package draw}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -299,7 +304,8 @@ Example:
 @end example
 
 @opencatbox
-@category{Package draw} @category{File output}
+@category{Package draw}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -341,7 +347,8 @@ Example:
 @figure{draw_multiplot}
 
 @opencatbox
-@category{Package draw} @category{File output}
+@category{Package draw}
+@category{File output}
 @closecatbox
 @end deffn
 
@@ -823,6 +830,21 @@ Example:
 @end example
 @figure{draw_color3}
 
+@example
+(%i1) draw2d(
+        "figures/draw_color4",
+        makelist(
+            [
+                color=i,
+                key=sconcat("color =",i),
+                explicit(sin(i*x),x,0,1)
+            ],
+            i,0,17
+        )
+    )$
+@end example
+@figure{draw_color4}
+
 
 See also @mrefdot{fill_color}
 
@@ -1105,7 +1127,7 @@ the terminal you are working with.
 With terminals @code{gif}, @code{animated_gif}, @code{png}, @code{jpg},
 @code{svg}, @code{screen}, @code{wxt}, and @code{aquaterm},
 the integers represent the number of points in each direction. If they
-are not intergers, they are rounded.
+are not integers, they are rounded.
 
 With terminals @code{eps}, @code{eps_color}, @code{pdf}, and 
 @code{pdfcairo}, both numbers represent hundredths of cm, which
@@ -1517,7 +1539,7 @@ Option @code{font} can be given the complete path to the font file:
         terminal  = png)$
 @end example
 
-If environment variable @code{GDFONTPATH} is set to the
+If environment variable @env{GDFONTPATH} is set to the
 path where font files are allocated, it is possible to
 set graphic option @code{font} to the name of the font.
 @example
@@ -2423,7 +2445,7 @@ negative numbers mean negative colour component.
 @code{palette = gray} and @code{palette = color} are short cuts for
 @code{palette = [3,3,3]} and @code{palette = [7,5,15]}, respectively.
 
-Second, @code{palette} can be a user defined lookup table. In this case,
+Second, @code{palette} can be an user defined lookup table. In this case,
 the format for building a lookup table of length @code{n} is
 @code{palette=[color_1, color_2, ..., color_n]}, where @code{color_i} is
 a well formed color (see option @code{color}) such that @code{color_1} is
@@ -2460,7 +2482,7 @@ It also works with gray images.
 @end example
 @figure{draw_palette2}
 
-@code{palette} can be a user defined lookup table.
+@code{palette} can be an user defined lookup table.
 In this example, low values of @code{x} are colored
 in red, and higher values in yellow.
 
@@ -4959,7 +4981,7 @@ plots points @code{[x1,y1]}, @code{[x2,y2]}, etc. If abscissas
 are not given, they are set to consecutive positive integers, so that 
 @code{points ([@var{y1},@var{y2},...])} draws points @code{[1,@var{y1}]}, @code{[2,@var{y2}]}, etc.
 If @var{matrix} is a two-column or two-row matrix, @code{points (@var{matrix})}
-draws the associated points. If @var{matrix} is a one-column or one-row matrix,
+draws the associated points. If @var{matrix} is an one-column or one-row matrix,
 abscissas are assigned automatically.
 
 If @var{1d_y_array} is a 1D lisp array of numbers, @code{points (@var{1d_y_array})} plots them
@@ -5581,7 +5603,8 @@ Returns the negative of a (@var{level} or @var{rgb}) picture.
 Returns @code{true} in case of equal pictures, and @code{false} otherwise.
 
 @opencatbox
-@category{Package draw} @category{Predicate functions}
+@category{Package draw}
+@category{Predicate functions}
 @closecatbox
 
 @end deffn
@@ -5595,7 +5618,8 @@ Returns @code{true} if the argument is a well formed image,
 and @code{false} otherwise.
 
 @opencatbox
-@category{Package draw} @category{Predicate functions}
+@category{Package draw}
+@category{Predicate functions}
 @closecatbox
 
 @end deffn

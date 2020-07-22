@@ -79,7 +79,7 @@
 	    (merror (intl:gettext "defmatch: failed to compile match for pattern ~M") pt))
 	   (t
          ;; NOTE TO TRANSLATORS: MEANING OF FOLLOWING TEXT IS UNKNOWN
-         (mtell "defmatch: ~M will be matched uniquely since sub-parts would otherwise be ambigious.~%" pt)
+         (mtell "defmatch: ~M will be matched uniquely since sub-parts would otherwise be ambiguous.~%" pt)
 	      (return (list 'lambda
 			    (list e)
 			    `(declare (special ,e))
@@ -347,7 +347,7 @@
   (let ((meta-prop-p nil))
     (proc-$tellsimp (cdr form))))
 
-(defun $clear_rules ()
+(defmfun $clear_rules ()
   (mapc 'kill1 (cdr $rules))
   (loop for v in '(mexpt mplus mtimes)
 	 do (setf (mget v 'rulenum) nil)))
@@ -576,7 +576,7 @@
 ; tellsimpafter (fc(cc), gc(cc));
 ;  getdec => (COND ((IS '(($MY_P) TR-GENSYM~5)) (MSETQ $CC TR-GENSYM~5)) ((MATCHERR)))
 
-; :lisp (defun $my_p2 (y x) (is `((mgeqp) ,x ,y)))
+; :lisp (defmfun $my_p2 (y x) (is `((mgeqp) ,x ,y)))
 ; matchdeclare (dd, my_p2 (200));
 ;  :lisp (symbol-plist '$dd) => (MPROPS (NIL MATCHDECLARE ((($MY_P2) 200))))
 ; tellsimpafter (fd(dd), gd(dd));

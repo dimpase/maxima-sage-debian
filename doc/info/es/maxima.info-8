@@ -3762,7 +3762,7 @@ fue escrito por Barton Willis de la Universidad de Nebraska en Kearney.
           (%i3) simp_inequality(x > 0);
           (%o3)                         x > 0
 
-     Para hacer uso de esta función, ejecútese 'load(fourier_elim)'.
+     Para hacer uso de esta función, ejecútese 'load(to_poly_solve)'.
 
  -- Función: standardize_inverse_trig (<e>)
 

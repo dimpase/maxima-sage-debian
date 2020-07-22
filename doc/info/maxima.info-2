@@ -413,7 +413,7 @@ set to 'true', the following tensors can be calculated:
      <dis> is 'true'.
 
  -- Function: rinvariant ()
-     Forms the Kretchmann-invariant ('kinvariant') obtained by
+     Forms the Kretschmann-invariant ('kinvariant') obtained by
      contracting the tensors
 
           lriem[i,j,k,l]*uriem[i,j,k,l].
@@ -728,7 +728,7 @@ For a demonstration of this capability, see the file
 'ctensor' has the ability to compute and include torsion and
 nonmetricity coefficients in the connection coefficients.
 
-   The torsion coefficients are calculated from a user-supplied tensor
+   The torsion coefficients are calculated from an user-supplied tensor
 'tr', which should be a rank (2,1) tensor.  From this, the torsion
 coefficients 'kt' are computed according to the following formulae:
 
@@ -1303,11 +1303,11 @@ connection coefficients.
 
  -- Variable: ric
 
-     The mixed Ricci-tensor.  Computed by 'ricci'.
+     The covariant Ricci-tensor.  Computed by 'ricci'.
 
  -- Variable: uric
 
-     The contravariant Ricci-tensor.  Computed by 'uricci'.
+     The mixed-index Ricci-tensor.  Computed by 'uricci'.
 
  -- Variable: lg
 
@@ -1328,7 +1328,7 @@ connection coefficients.
 
  -- Variable: kinvariant
 
-     The Kretchmann invariant.  Computed by 'rinvariant'.
+     The Kretschmann invariant.  Computed by 'rinvariant'.
 
  -- Variable: np
 
@@ -2172,7 +2172,7 @@ File: maxima.info,  Node: Functions and Variables for Series,  Next: Introductio
      approximants, and which additionally satisfy the specified degree
      bounds.
 
-     <taylor_series> is a univariate Taylor series.  <numer_deg_bound>
+     <taylor_series> is an univariate Taylor series.  <numer_deg_bound>
      and <denom_deg_bound> are positive integers specifying degree
      bounds on the numerator and denominator.
 
@@ -3589,21 +3589,25 @@ File: maxima.info,  Node: Functions and Variables for Number Theory,  Prev: Numb
           zn_log (<a>, <g>, <n>, [[<p1>, <e1>], ..., [<pk>, <ek>]])
 
      Computes the discrete logarithm.  Let (Z/<n>Z)* be a cyclic group,
-     <g> a primitive root modulo <n> and let <a> be a member of this
-     group.  'zn_log (a, g, n)' then solves the congruence 'g^x = a mod
-     n'.
+     <g> a primitive root modulo <n> or a generator of a subgroup of
+     (Z/<n>Z)* and let <a> be a member of this group.  'zn_log (a, g,
+     n)' then solves the congruence 'g^x = a mod n'.  Please note that
+     if <a> is not a power of <g> modulo <n>, 'zn_log' will not
+     terminate.
 
-     The applied algorithm needs a prime factorization of 'totient(n)'.
-     This factorization might be time consuming as well and in some
-     cases it can be useful to factor first and then to pass the list of
-     factors to 'zn_log' as the fourth argument.  The list must be of
-     the same form as the list returned by 'ifactors(totient(n))' using
-     the default option 'factors_only : false'.
+     The applied algorithm needs a prime factorization of 'zn_order(g)'
+     resp.  'totient(n)' in case <g> is a primitive root modulo <n>.  A
+     precomputed list of factors of 'zn_order(g)' might be used as the
+     optional fourth argument.  This list must be of the same form as
+     the list returned by 'ifactors(zn_order(g))' using the default
+     option 'factors_only : false'.  However, compared to the running
+     time of the logarithm algorithm providing the list of factors has
+     only a quite small effect.
 
      The algorithm uses a Pohlig-Hellman-reduction and Pollard's
-     Rho-method for discrete logarithms.  The run time of 'zn_log'
-     primarily depends on the bitlength of the totient's greatest prime
-     factor.
+     Rho-method for discrete logarithms.  The running time of 'zn_log'
+     primarily depends on the bitlength of the greatest prime factor of
+     'zn_order(g)'.
 
      See also 'zn_primroot', 'zn_order', 'ifactors', 'totient'.
 
@@ -3618,29 +3622,38 @@ File: maxima.info,  Node: Functions and Variables for Number Theory,  Prev: Numb
           (%o3)                              10
           (%i4) powers_7 : makelist(power_mod(g, x, n), x, 0, ord_7 - 1);
           (%o4)              [1, 7, 5, 13, 3, 21, 15, 17, 9, 19]
-          (%i5) zn_log(21, g, n);
-          (%o5)                               5
+          (%i5) zn_log(9, g, n);
+          (%o5)                               8
           (%i6) map(lambda([x], zn_log(x, g, n)), powers_7);
           (%o6)                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+          (%i7) ord_5 : zn_order(5, n);
+          (%o7)                               5
+          (%i8) powers_5 : makelist(power_mod(5,x,n), x, 0, ord_5 - 1);
+          (%o8)                       [1, 5, 3, 15, 9]
+          (%i9) zn_log(9, 5, n);
+          (%o9)                               4
 
      The optional fourth argument must be of the same form as the list
-     returned by 'ifactors(totient(n))'.  The run time primarily depends
-     on the bitlength of the totient's greatest prime factor.
+     returned by 'ifactors(zn_order(g))'.  The running time primarily
+     depends on the bitlength of the totient's greatest prime factor.
 
           (%i1) (p : 2^127-1, primep(p));
           (%o1)                             true
           (%i2) ifs : ifactors(p - 1)$
           (%i3) g : zn_primroot(p, ifs);
           (%o3)                              43
-          (%i4) a : power_mod(g, 1234567890, p)$
+          (%i4) a : power_mod(g, 4711, p)$
           (%i5) zn_log(a, g, p, ifs);
-          (%o5)                          1234567890
-          (%i6) time(%o5);
-          (%o6)                            [1.204]
-          (%i7) f_max : last(ifs);
-          (%o7)                       [77158673929, 1]
-          (%i8) slength( printf(false, "~b", f_max[1]) );
-          (%o8)                              37
+          (%o5)                             4711
+          (%i6) f_max : last(ifs);
+          (%o6)                       [77158673929, 1]
+          (%i7) ord_5 : zn_order(5,p,ifs)$
+          (%i8) (p - 1)/ord_5;
+          (%o8)                              73
+          (%i9) ifs_5 : ifactors(ord_5)$
+          (%i10) a : power_mod(5, 4711, p)$
+          (%i11) zn_log(a, 5, p, ifs_5);
+          (%o11)                            4711
 
  -- Function: zn_mult_table
           zn_mult_table (<n>)
@@ -3861,8 +3874,8 @@ File: maxima.info,  Node: Functions and Variables for Number Theory,  Prev: Numb
           zn_order (<x>, <n>)
           zn_order (<x>, <n>, [[<p1>, <e1>], ..., [<pk>, <ek>]])
 
-     Returns the order of <x> if it is a unit of the finite group
-     (Z/<n>Z)* or returns 'false'.  <x> is a unit modulo <n> if it is
+     Returns the order of <x> if it is an unit of the finite group
+     (Z/<n>Z)* or returns 'false'.  <x> is an unit modulo <n> if it is
      coprime to <n>.
 
      The applied algorithm needs a prime factorization of 'totient(n)'.
@@ -5254,9 +5267,8 @@ File: maxima.info,  Node: Functions and Variables for Runtime Environment,  Prev
 
  -- Function: timedate
           timedate (<T>, <tz_offset>)
-
-     timedate (<T>)
-     timedate ()  
+          timedate (<T>)
+          timedate ()
 
      'timedate(<T>, <tz_offset>)' returns a string representing the time
      <T> in the time zone <tz_offset>.  The string format is 'YYYY-MM-DD
@@ -5590,7 +5602,7 @@ File: maxima.info,  Node: Functions and Variables for Miscellaneous Options,  Pr
      When 'asksign' is called, 'askexp' is the expression 'asksign' is
      testing.
 
-     At one time, it was possible for a user to inspect 'askexp' by
+     At one time, it was possible for an user to inspect 'askexp' by
      entering a Maxima break with control-A.
 
  -- Option variable: genindex
@@ -6053,7 +6065,7 @@ File: maxima.info,  Node: Functions and Variables for Rules and Patterns,  Prev:
 
      These substitution functions allow you to work with several rule
      packages at once.  Each rule package can contain any number of
-     'let' rules and is referenced by a user-defined name.  The command
+     'let' rules and is referenced by an user-defined name.  The command
      'let ([<prod>, <repl>, <predname>, <arg_1>, ..., <arg_n>],
      <package_name>)' adds the rule <predname> to the rule package
      <package_name>.  The command 'letsimp (<expr>, <package_name>)'
@@ -6949,6 +6961,8 @@ File: maxima.info,  Node: Functions and Variables for Sets,  Prev: Introduction 
 
      'cartesian_product' complains if any argument is not a literal set.
 
+     See also 'cartesian_product_list'.
+
      Examples:
 
           (%i1) cartesian_product ({0, 1});
@@ -6959,6 +6973,82 @@ File: maxima.info,  Node: Functions and Variables for Sets,  Prev: Introduction 
           (%o3)                      {[x, y, z]}
           (%i4) cartesian_product ({x}, {-1, 0, 1});
           (%o4)              {[x, - 1], [x, 0], [x, 1]}
+
+ -- Function: cartesian_product_list (<b_1>, ... , <b_n>)
+     Returns a list of lists of the form '[<x_1>, ..., <x_n>]', where
+     <x_1>, ..., <x_n> are elements of the lists <b_1>, ...  , <b_n>,
+     respectively, comprising all possible combinations of the elements
+     of <b_1>, ...  , <b_n>.
+
+     The list returned by 'cartesian_product_list' is equivalent to the
+     following recursive definition.  Let <L> be the list returned by
+     'cartesian_product_list(<b_2>, ..., <b_n>)'.  Then
+     'cartesian_product_list(<b_1>, <b_2>, ..., <b_n>)' (i.e., <b_1> in
+     addition to <b_2>, ..., <b_n>) returns a list comprising each
+     element of <L> appended to the first element of <b_1>, each element
+     of <L> appended to the second element of <b_1>, each element of <L>
+     appended to the third element of <b_1>, etc.  The order of the list
+     returned by 'cartesian_product_list(<b_1>, <b_2>, ..., <b_n>)' may
+     therefore be summarized by saying the lesser indices (1, 2, 3, ...)
+     vary more slowly than the greater indices.
+
+     The list returned by 'cartesian_product_list' contains duplicate
+     elements if any argument <b_1>, ..., <b_n> contains duplicates.  In
+     this respect, 'cartesian_product_list' differs from
+     'cartesian_product', which returns no duplicates.  Also, the
+     ordering of the list returned 'cartesian_product_list' is
+     determined by the order of the elements of <b_1>, ..., <b_n>.
+     Again, this differs from 'cartesian_product', which returns a set
+     (with order determined by 'orderlessp').
+
+     The length of the list returned by 'cartesian_product_list' is
+     equal to the product of the lengths of the arguments <b_1>, ...,
+     <b_n>.
+
+     See also 'cartesian_product'.
+
+     'cartesian_product_list' complains if any argument is not a list.
+
+     Examples:
+
+     'cartesian_product_list' returns a list of lists comprising all
+     possible combinations.
+
+          (%i1) cartesian_product_list ([0, 1]);
+          (%o1)                      [[0], [1]]
+          (%i2) cartesian_product_list ([0, 1], [0, 1]);
+          (%o2)           [[0, 0], [0, 1], [1, 0], [1, 1]]
+          (%i3) cartesian_product_list ([x], [y], [z]);
+          (%o3)                      [[x, y, z]]
+          (%i4) cartesian_product_list ([x], [-1, 0, 1]);
+          (%o4)              [[x, - 1], [x, 0], [x, 1]]
+          (%i5) cartesian_product_list ([a, h, e], [c, b, 4]);
+          (%o5) [[a, c], [a, b], [a, 4], [h, c], [h, b], [h, 4], [e, c],
+                                                            [e, b], [e, 4]]
+
+     The order of the list returned by 'cartesian_product_list' may be
+     summarized by saying the lesser indices vary more slowly than the
+     greater indices.
+
+          (%i1) cartesian_product_list ([1, 2, 3], [a, b], [i, ii]);
+          (%o1) [[1, a, i], [1, a, ii], [1, b, i], [1, b, ii], [2, a, i],
+          [2, a, ii], [2, b, i], [2, b, ii], [3, a, i], [3, a, ii],
+          [3, b, i], [3, b, ii]]
+
+     The list returned by 'cartesian_product_list' contains duplicate
+     elements if any argument contains duplicates.
+
+          (%i1) cartesian_product_list ([e, h], [3, 7, 3]);
+          (%o1)   [[e, 3], [e, 7], [e, 3], [h, 3], [h, 7], [h, 3]]
+
+     The length of the list returned by 'cartesian_product_list' is
+     equal to the product of the lengths of the arguments.
+
+          (%i1) foo: cartesian_product_list ([1, 1, 2, 2, 3], [h, z, h]);
+          (%o1) [[1, h], [1, z], [1, h], [1, h], [1, z], [1, h], [2, h],
+            [2, z], [2, h], [2, h], [2, z], [2, h], [3, h], [3, z], [3, h]]
+          (%i2) is (length (foo) = 5*3);
+          (%o2)                         true
 
  -- Function: disjoin (<x>, <a>)
      Returns the set <a> without the member <x>.  If <x> is not a member
@@ -9370,6 +9460,7 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
                                       a b + 99
 
  -- Function: mode_declare (<y_1>, <mode_1>, ..., <y_n>, <mode_n>)
+ -- Function: modedeclare (<y_1>, <mode_1>, ..., <y_n>, <mode_n>)
 
      A 'mode_declare' informs the compiler which type (lisp programmers
      name the type: "mode") a function parameter or its return value
@@ -9383,15 +9474,12 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
      (or a list of variables all having the same mode) and a mode.
      Available modes ("types") are:
           array            an declared array (see the detailed description below)
-          string           a string
           boolean          true or false
           integer          integers (including arbitrary-size integers)
           fixnum           integers (excluding arbitrary-size integers)
           float            machine-size floating-point numbers
           real             machine-size floating-point or integer
           number           Numbers
-          even             Even integers
-          odd              Odd integers
           any              any kind of object (useful for arrays of any)
 
      A function parameter named 'a' can be declared as an array filled
@@ -9541,22 +9629,13 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
  -- Option variable: savedef
      Default value: 'true'
 
-     When 'savedef' is 'true', the Maxima version of a user function is
+     When 'savedef' is 'true', the Maxima version of an user function is
      preserved when the function is translated.  This permits the
      definition to be displayed by 'dispfun' and allows the function to
      be edited.
 
      When 'savedef' is 'false', the names of translated functions are
      removed from the 'functions' list.
-
- -- Option variable: transcompile
-     Default value: 'true'
-
-     When 'transcompile' is 'true', 'translate' and 'translate_file'
-     generate declarations to make the translated code more suitable for
-     compilation.
-
-     'compfile' sets 'transcompile: true' for the duration.
 
  -- Function: translate
           translate (<f_1>, ..., <f_n>)
@@ -9592,7 +9671,7 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
      expressions to be translated.
 
      The switch 'translate', if 'true', causes automatic translation of
-     a user's function to Lisp.
+     an user's function to Lisp.
 
      Note that translated functions may not run identically to the way
      they did before translation as certain incompatibilities may exist
@@ -9602,7 +9681,7 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
      rational expressions (CRE). Also the 'prederror: false' setting
      will not translate.
 
-     'savedef' - if 'true' will cause the Maxima version of a user
+     'savedef' - if 'true' will cause the Maxima version of an user
      function to remain when the function is 'translate''d.  This
      permits the definition to be displayed by 'dispfun' and allows the
      function to be edited.
@@ -9663,7 +9742,6 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
      'tr_function_call_default',
      'tr_numer',
      'tr_optimize_max_loop',
-     'tr_semicompile',
      'tr_state_vars',
      'tr_warnings_get',
      'tr_warn_bad_function_calls'
@@ -9694,13 +9772,28 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
  -- Option variable: tr_bound_function_applyp
      Default value: 'true'
 
-     When 'tr_bound_function_applyp' is 'true', Maxima gives a warning
-     if a bound variable (such as a function argument) is found being
-     used as a function.  'tr_bound_function_applyp' does not affect the
-     code generated in such cases.
+     When 'tr_bound_function_applyp' is 'true' and
+     'tr_function_call_default' is 'general', if a bound variable (such
+     as a function argument) is found being used as a function then
+     Maxima will rewrite that function call using 'apply' and print a
+     warning message.
 
-     For example, an expression such as 'g (f, x) := f (x+1)' will
-     trigger the warning message.
+     For example, if 'g' is defined by 'g(f,x) := f(x+1)' then
+     translating 'g' will cause Maxima to print a warning and rewrite
+     'f(x+1)' as 'apply(f,[x+1])'.
+
+          (%i1) f (x) := x^2$
+          (%i2) g (f) := f (3)$
+          (%i3) tr_bound_function_applyp : true$
+          (%i4) translate (g)$
+          warning: f is a bound variable in f(3), but it is used as a function.
+          note: instead I'll translate it as: apply(f,[3])
+          (%i5) g (lambda ([x], x));
+          (%o5)                           3
+          (%i6) tr_bound_function_applyp : false$
+          (%i7) translate (g)$
+          (%i8) g (lambda ([x], x));
+          (%o8)                           9
 
  -- Option variable: tr_file_tty_messagesp
      Default value: 'false'
@@ -9715,11 +9808,8 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
      Default value: 'true'
 
      Tells the Maxima-to-Lisp translator to assume that the functions
-     'acos', 'asin', 'asec', and 'acsc' can return complex results.
-
-     The ostensible effect of 'tr_float_can_branch_complex' is the
-     following.  However, it appears that this flag has no effect on the
-     translator output.
+     'acos', 'asin', 'asec', 'acsc', 'log' and 'sqrt' can return complex
+     results.
 
      When it is 'true' then 'acos(x)' is of mode 'any' even if 'x' is of
      mode 'float' (as set by 'mode_declare').  When 'false' then
@@ -9752,18 +9842,13 @@ File: maxima.info,  Node: Functions and Variables for Function Definition,  Prev
      in considering a form.  This is to catch macro expansion errors,
      and non-terminating optimization properties.
 
- -- Option variable: tr_semicompile
-     Default value: 'false'
-
-     When 'tr_semicompile' is 'true', 'translate_file' and 'compfile'
-     output forms which will be macroexpanded but not compiled into
-     machine code by the Lisp compiler.
-
  -- System variable: tr_state_vars
      Default value:
-          [transcompile, tr_semicompile, tr_warn_undeclared, tr_warn_meval,
+          [translate_fast_arrays, tr_warn_undeclared, tr_warn_meval,
           tr_warn_fexpr, tr_warn_mode, tr_warn_undefined_variable,
-          tr_function_call_default, tr_array_as_ref,tr_numer]
+          tr_function_call_default, tr_bound_function_applyp,
+          tr_array_as_ref, tr_numer, tr_float_can_branch_complex,
+          define_variable]
 
      The list of the switches that affect the form of the translated
      output.  This information is useful to system people when trying to
@@ -9874,10 +9959,12 @@ File: maxima.info,  Node: Lisp and Maxima,  Next: Garbage Collection,  Prev: Pro
 37.1 Lisp and Maxima
 ====================
 
-Maxima is written in Lisp, and it is easy to access Lisp functions and
-variables from Maxima and vice versa.  Lisp and Maxima symbols are
-distinguished by a naming convention.  A Lisp symbol which begins with a
-dollar sign '$' corresponds to a Maxima symbol without the dollar sign.
+Maxima is a fairly complete programming language.  But since it is
+written in Lisp, it additionally can provide easy access to Lisp
+functions and variables from Maxima and vice versa.  Lisp and Maxima
+symbols are distinguished by a naming convention.  A Lisp symbol which
+begins with a dollar sign '$' corresponds to a Maxima symbol without the
+dollar sign.
 
    A Maxima symbol which begins with a question mark '?' corresponds to
 a Lisp symbol without the question mark.  For example, the Maxima symbol
@@ -9970,20 +10057,23 @@ File: maxima.info,  Node: Garbage Collection,  Next: Introduction to Program Flo
 37.2 Garbage Collection
 =======================
 
-Symbolic computation tends to create a good deal of garbage (temporary
-or intermediate results that are eventually not used), and effective
-handling of this can be crucial to successful completion of some
-programs.
+One of the advantages of using lisp is that it uses "Garbage
+Collection".  In other words it automatically takes care of freeing
+memory occupied for example of intermediate results that were used
+during symbolic computation.
 
-   Under GCL, on UNIX systems where the mprotect system call is
-available (including SUN OS 4.0 and some variants of BSD) a stratified
-garbage collection is available.  This limits the collection to pages
-which have been recently written to.  See the GCL documentation under
-ALLOCATE and GBC. At the Lisp level doing (setq si::*notify-gbc* t) will
-help you determine which areas might need more space.
+   Garbage Collection avoids many errors frequently found in C programs
+(memory being freed too early, multiple times or not at all).
 
-   For other Lisps that run Maxima, we refer the reader to the
-documentation for that Lisp on how to control GC.
+ -- Function: garbage_collect ()
+
+     Tries to manually trigger the lisp's garbage collection.  This
+     rarely is necessary as the lisp will employ an excellent algorithm
+     for determining when to start garbage collection.
+
+     If maxima knows how to do manually trigger the garbage collection
+     for the current lisp 'garbage_collect' returns 'true', else
+     'false'.
 
 
 File: maxima.info,  Node: Introduction to Program Flow,  Next: Functions and Variables for Program Flow,  Prev: Garbage Collection,  Up: Program Flow
@@ -10285,7 +10375,7 @@ File: maxima.info,  Node: Functions and Variables for Program Flow,  Prev: Intro
      The function 'warning' always returns false.
 
  -- Option variable: error_size
-     Default value: 10
+     Default value: 60
 
      'error_size' modifies error messages according to the size of
      expressions which appear in them.  If the size of an expression (as
@@ -12219,7 +12309,7 @@ interpolation points are regarded as vertices of a simplex.  The
 parameter RHO controls the size of the simplex and it is reduced
 automatically from RHOBEG to RHOEND. For each RHO the subroutine tries
 to achieve a good vector of variables for the current size, and then RHO
-is reduced until the value RHOEND is reached.  Therefore RHOBEG and
+is reduced until the value RHOEND is reached.  Therefore, RHOBEG and
 RHOEND should be set to reasonable initial changes to and the required
 accuracy in the variables respectively, but this accuracy should be
 viewed as a subject for experimentation because it is not guaranteed.
@@ -12258,8 +12348,8 @@ File: maxima.info,  Node: Functions and Variables for cobyla,  Next: Examples fo
      to the variables <X>, subject to an optional set of constraints.
      <Y> is a list of initial guesses for <X>.
 
-     <F> must be an ordinary expressions, not names of functions or
-     lambda expressions.
+     <F> must be ordinary expressions, not names of functions or lambda
+     expressions.
 
      'optional_args' represents additional arguments, specified as
      '<symbol> = <value>'.  The optional arguments recognized are:
@@ -12558,7 +12648,7 @@ File: maxima.info,  Node: Functions and Variables for Combinatorics,  Prev: Pack
 
      Finds the position of permutation <p>, an integer from 1 to the
      degree <n> of the permutation, in the sequence of permutations in
-     lexicographic order.
+     Trotter-Johnson order.
 
      See also 'perm_unrank' and 'perms'.
 
@@ -12617,11 +12707,11 @@ File: maxima.info,  Node: Functions and Variables for Combinatorics,  Prev: Pack
      so-called Trotter-Johnson order.
 
      'perms(<n>, <i>)' returns the _n_-degree permutation which is at
-     the _i_th position (from 1 to _n_!)  in the lexicographic ordering
-     of the permutations.
+     the _i_th position (from 1 to _n_!)  in the Trotter-Johnson
+     ordering of the permutations.
 
      'perms(<n>, <i>, <j>)' returns a list of the _n_-degree
-     permutations between positions <i> and <j> in the lexicographic
+     permutations between positions <i> and <j> in the Trotter-Johnson
      ordering of the permutations.
 
      The sequence of permutations in Trotter-Johnson order starts with
@@ -14145,7 +14235,7 @@ File: maxima.info,  Node: Functions and Variables for descriptive statistics,  N
 
      Empirical distribution function F(x).
 
-     Data can be introduced as a list of numbers, or as a one column
+     Data can be introduced as a list of numbers, or as an one column
      matrix.
 
      The optional argument is the name of the variable in the returned
@@ -14728,7 +14818,7 @@ File: maxima.info,  Node: Functions and Variables for statistical graphs,  Prev:
           histogram (<one_row_matrix>, <option_1>, <option_2>, ...)
 
      This function plots an histogram from a continuous sample.  Sample
-     data must be stored in a list of numbers or a one dimensional
+     data must be stored in a list of numbers or an one dimensional
      matrix.
 
      Available options are:
@@ -17426,7 +17516,7 @@ with options for the scene or the following objects.
 
    A short description of all draw commands and options including
 example plots (in the html and pdf version of this manual) can be found
-in the section *Note Functions and Variables for draw::.  A online
+in the section *Note Functions and Variables for draw::.  An online
 version of the html manual can be found at
 <maxima.sourceforge.net/docs/manual/maxima_singlepage.html#draw>.  More
 elaborated examples of this package can be found at the following
@@ -17578,8 +17668,8 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
      This function is a shortcut for 'draw(gr2d(<options>, ...,
      <graphic_object>, ...))'.
 
-     It can be used to plot a unique scene in 2d, as can be seen in most
-     examples below.
+     It can be used to plot an unique scene in 2d, as can be seen in
+     most examples below.
 
      See also 'draw' and 'gr2d'.
 
@@ -17588,8 +17678,8 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
      This function is a shortcut for 'draw(gr3d(<options>, ...,
      <graphic_object>, ...))'.
 
-     It can be used to plot a unique scene in 3d, as can be seen in many
-     examples below.
+     It can be used to plot an unique scene in 3d, as can be seen in
+     many examples below.
 
      See also 'draw' and 'gr3d'.
 
@@ -17973,6 +18063,19 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
                 )$
      (Figure draw_color3)
 
+          (%i1) draw2d(
+                  "figures/draw_color4",
+                  makelist(
+                      [
+                          color=i,
+                          key=sconcat("color =",i),
+                          explicit(sin(i*x),x,0,1)
+                      ],
+                      i,0,17
+                  )
+              )$
+     (Figure draw_color4)
+
      See also 'fill_color'.
 
  -- Graphic option: colorbox
@@ -18155,7 +18258,7 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
 
      With terminals 'gif', 'animated_gif', 'png', 'jpg', 'svg',
      'screen', 'wxt', and 'aquaterm', the integers represent the number
-     of points in each direction.  If they are not intergers, they are
+     of points in each direction.  If they are not integers, they are
      rounded.
 
      With terminals 'eps', 'eps_color', 'pdf', and 'pdfcairo', both
@@ -19084,7 +19187,7 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
      and 'palette = color' are short cuts for 'palette = [3,3,3]' and
      'palette = [7,5,15]', respectively.
 
-     Second, 'palette' can be a user defined lookup table.  In this
+     Second, 'palette' can be an user defined lookup table.  In this
      case, the format for building a lookup table of length 'n' is
      'palette=[color_1, color_2, ..., color_n]', where 'color_i' is a
      well formed color (see option 'color') such that 'color_1' is
@@ -19117,8 +19220,8 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
                        image(im,0,0,30,30))$
      (Figure draw_palette2)
 
-     'palette' can be a user defined lookup table.  In this example, low
-     values of 'x' are colored in red, and higher values in yellow.
+     'palette' can be an user defined lookup table.  In this example,
+     low values of 'x' are colored in red, and higher values in yellow.
 
           (%i1) draw3d(
                    palette = [red, blue, yellow],
@@ -20797,7 +20900,7 @@ File: maxima.info,  Node: Functions and Variables for draw,  Next: Functions and
      consecutive positive integers, so that 'points ([<y1>,<y2>,...])'
      draws points '[1,<y1>]', '[2,<y2>]', etc.  If <matrix> is a
      two-column or two-row matrix, 'points (<matrix>)' draws the
-     associated points.  If <matrix> is a one-column or one-row matrix,
+     associated points.  If <matrix> is an one-column or one-row matrix,
      abscissas are assigned automatically.
 
      If <1d_y_array> is a 1D lisp array of numbers, 'points
@@ -21682,7 +21785,7 @@ File: maxima.info,  Node: Functions and Variables for drawdf,  Prev: Introductio
      'terminal', 'dimensions', 'file_name', and all others supported by
      'draw2d' and 'gr2d'.
 
-     See also 'draw2d'.
+     See also 'draw2d', 'rk', 'desolve' and 'ode2'.
 
      Users of wxMaxima or Imaxima may optionally use 'wxdrawdf', which
      is identical to 'drawdf' except that the graphics are drawn within
@@ -21928,7 +22031,7 @@ File: maxima.info,  Node: Graphical analysis of discrete dynamical systems,  Nex
 
      Draws the orbits diagram for a family of one-dimensional discrete
      dynamical systems, with one parameter <x>; that kind of diagram is
-     used to study the bifurcations of a one-dimensional discrete
+     used to study the bifurcations of an one-dimensional discrete
      system.
 
      The function <F(y)> defines a sequence with a starting value of
@@ -22270,7 +22373,7 @@ which in some system might come in a separate package).
  -- Object option: resolution [resolution, <number>]
      Default value: '6'
 
-     <number> must be a integer greater than 2 that sets the number of
+     <number> must be an integer greater than 2 that sets the number of
      edges in the base of a cone or a cylinder.
 
  -- Object option: scale [scale, <factors>]

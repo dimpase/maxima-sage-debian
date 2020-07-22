@@ -31,13 +31,12 @@
   (let ((elist (if (listp ielist)
                    (margs ielist)
                    (merror 
-                     (intl:gettext "assoc: second argument must be a list; found: ~:M") 
+                     (intl:gettext "assoc: second argument must be a nonatomic expression; found: ~:M") 
                      ielist))))
-    (if (and (listp elist)
-             (every #'(lambda (x) (and (listp x) (= 3 (length x)))) elist))
+    (if (every #'(lambda (x) (and (listp x) (= 3 (length x)))) elist)
 	(let ((found (find key elist :test #'alike1 :key #'second)))
 	  (if found (third found) default))
-	(merror (intl:gettext "assoc: every list element must be an expression with two arguments; found: ~:M") ielist))))
+	(merror (intl:gettext "assoc: every argument must be an expression of two parts; found: ~:M") ielist))))
 
 ;;; (ASSOL item A-list)
 ;;;
@@ -46,11 +45,11 @@
 ;;;
 ;;;  Meta-Synonym:	(ASS #'ALIKE1 ITEM ALIST)
 
-(defmfun assol (item alist)
+(defun assol (item alist)
   (dolist (pair alist)
     (if (alike1 item (car pair)) (return pair))))
 
-(defmfun assolike (item alist) 
+(defun assolike (item alist) 
   (cdr (assol item alist)))
 
 ;;; (MEMALIKE X L)
@@ -65,7 +64,7 @@
 ;;;
 ;;;  except that MEMALIKE requires a list rather than a general sequence, so the
 ;;;  host lisp can probably generate faster code.
-(defmfun memalike (x l)
+(defun memalike (x l)
   (do ((l l (cdr l)))
       ((null l))
     (when (alike1 x (car l)) (return l))))
@@ -98,7 +97,7 @@
 ;;; Maxima produces some expressions that contain Maxima gensyms, so
 ;;; the use of uninterned symbols instead can cause confusion (since
 ;;; these print like any other symbol).
-(defun $gensym (&optional x)
+(defmfun $gensym (&optional x)
   (typecase x
     (null
      (intern (symbol-name (gensym "$G")) :maxima))

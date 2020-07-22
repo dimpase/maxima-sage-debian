@@ -556,22 +556,22 @@
 
 
 ;; Define the actual functions for the user
-(defun-checked $jacobi_sn ((u m))
+(defmfun $jacobi_sn (u m)
   (simplify (list '(%jacobi_sn) (resimplify u) (resimplify m))))
 
-(defun-checked $jacobi_cn ((u m))
+(defmfun $jacobi_cn (u m)
   (simplify (list '(%jacobi_cn) (resimplify u) (resimplify m))))
 
-(defun-checked $jacobi_dn ((u m))
+(defmfun $jacobi_dn (u m)
   (simplify (list '(%jacobi_dn) (resimplify u) (resimplify m))))
 
-(defun-checked $inverse_jacobi_sn ((u m))
+(defmfun $inverse_jacobi_sn (u m)
   (simplify (list '(%inverse_jacobi_sn) (resimplify u) (resimplify m))))
 
-(defun-checked $inverse_jacobi_cn ((u m))
+(defmfun $inverse_jacobi_cn (u m)
   (simplify (list '(%inverse_jacobi_cn) (resimplify u) (resimplify m))))
 
-(defun-checked $inverse_jacobi_dn ((u m))
+(defmfun $inverse_jacobi_dn (u m)
   (simplify (list '(%inverse_jacobi_dn) (resimplify u) (resimplify m))))
 
 ;; Possible forms of a complex number:
@@ -643,7 +643,7 @@
 ;;
 ;; FORM is list containing the actual expression.  I don't really know
 ;; what Y and Z contain.  Most of this modeled after SIMP-%SIN.
-(defmfun simp-%jacobi_sn (form unused z)
+(defun simp-%jacobi_sn (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -793,7 +793,7 @@
        ;; Nothing to do
        (eqtest (list '(%jacobi_sn) u m) form)))))
 
-(defmfun simp-%jacobi_cn (form unused z)
+(defun simp-%jacobi_cn (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -910,7 +910,7 @@
       (t
        (eqtest (list '(%jacobi_cn) u m) form)))))
 
-(defmfun simp-%jacobi_dn (form unused z)
+(defun simp-%jacobi_dn (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -1016,7 +1016,7 @@
 ;; it, but perhaps allow some way to do that transformation if
 ;; desired.
 
-(defmfun simp-%inverse_jacobi_sn (form unused z)
+(defun simp-%inverse_jacobi_sn (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -1088,7 +1088,7 @@
 	   ;; Nothing to do
 	   (eqtest (list '(%inverse_jacobi_sn) u m) form)))))
 
-(defmfun simp-%inverse_jacobi_cn (form unused z)
+(defun simp-%inverse_jacobi_cn (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -1132,7 +1132,7 @@
 	   ;; Nothing to do
 	   (eqtest (list '(%inverse_jacobi_cn) u m) form)))))
 
-(defmfun simp-%inverse_jacobi_dn (form unused z)
+(defun simp-%inverse_jacobi_dn (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -1563,7 +1563,7 @@ first kind:
 (defmfun $elliptic_e (phi m)
   (simplify (list '($elliptic_e) (resimplify phi) (resimplify m))))
 
-(defmfun simp-$elliptic_f (form unused z)
+(defun simp-$elliptic_f (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((phi (simpcheck (cadr form) z))
@@ -1608,7 +1608,7 @@ first kind:
 	   ;; Nothing to do
 	   (eqtest (list '($elliptic_f) phi m) form)))))
 
-(defmfun simp-$elliptic_e (form unused z)
+(defun simp-$elliptic_e (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((phi (simpcheck (cadr form) z))
@@ -1703,7 +1703,7 @@ first kind:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmfun simp-%elliptic_kc (form yy z)
+(defun simp-%elliptic_kc (form yy z)
   (declare (ignore yy))
   (oneargcheck form)
   (let ((m (simpcheck (cadr form) z))
@@ -1757,7 +1757,7 @@ first kind:
       ((mexpt) m -1)))
   grad)
 
-(defmfun simp-%elliptic_ec (form yy z)
+(defun simp-%elliptic_ec (form yy z)
   (declare (ignore yy))
   (oneargcheck form)
   (let ((m (simpcheck (cadr form) z))
@@ -1847,7 +1847,7 @@ first kind:
   (simplify (list '($elliptic_pi)
 		  (resimplify n) (resimplify phi) (resimplify m))))
 
-(defmfun simp-$elliptic_pi (form yy z)
+(defun simp-$elliptic_pi (form yy z)
   (declare (ignore yy))
   ;;(threeargcheck form)
   (let ((n (simpcheck (cadr form) z))
@@ -2445,21 +2445,21 @@ first kind:
 ;; Define Carlson's elliptic integrals so we can test their
 ;; implementation.  We only support bigfloat
 
-(defun $carlson_rc (x y)
+(defmfun $carlson_rc (x y)
   (to (bigfloat::bf-rc (bigfloat:bigfloat ($bfloat x))
 		       (bigfloat:bigfloat ($bfloat y)))))
 
-(defun $carlson_rd (x y z)
+(defmfun $carlson_rd (x y z)
   (to (bigfloat::bf-rd (bigfloat:bigfloat ($bfloat x))
 		       (bigfloat:bigfloat ($bfloat y))
 		       (bigfloat:bigfloat ($bfloat z)))))
 
-(defun $carlson_rf (x y z)
+(defmfun $carlson_rf (x y z)
   (to (bigfloat::bf-rf (bigfloat:bigfloat ($bfloat x))
 		       (bigfloat:bigfloat ($bfloat y))
 		       (bigfloat:bigfloat ($bfloat z)))))
 
-(defun $carlson_rj (x y z p)
+(defmfun $carlson_rj (x y z p)
   (to (bigfloat::bf-rj (bigfloat:bigfloat ($bfloat x))
 		       (bigfloat:bigfloat ($bfloat y))
 		       (bigfloat:bigfloat ($bfloat z))
@@ -2469,7 +2469,7 @@ first kind:
 ;;; Other Jacobian elliptic functions
 
 ;; jacobi_ns(u,m) = 1/jacobi_sn(u,m)
-(defun-checked  $jacobi_ns ((u m))
+(defmfun  $jacobi_ns (u m)
   (simplify (list '(%jacobi_ns) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_ns simp-%jacobi_ns operators)
@@ -2495,7 +2495,7 @@ first kind:
 	   m)))))))
   grad)
 
-(defmfun simp-%jacobi_ns (form unused z)
+(defun simp-%jacobi_ns (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -2601,7 +2601,7 @@ first kind:
 
 ;; jacobi_nc(u,m) = 1/jacobi_cn(u,m)
 
-(defun-checked $jacobi_nc ((u m))
+(defmfun $jacobi_nc (u m)
   (simplify (list '(%jacobi_nc) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_nc simp-%jacobi_nc operators)
@@ -2624,7 +2624,7 @@ first kind:
 	  (($elliptic_e) ((%asin) ((%jacobi_sn) u m)) m)))))))
   grad)
 
-(defmfun simp-%jacobi_nc (form unused z)
+(defun simp-%jacobi_nc (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -2738,7 +2738,7 @@ first kind:
 	   (eqtest (list '(%jacobi_nc) u m) form)))))
 
 ;; jacobi_nd(u,m) = 1/jacobi_dn(u,m)
-(defun-checked $jacobi_nd ((u m))
+(defmfun $jacobi_nd (u m)
   (simplify (list '(%jacobi_nd) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_nd simp-%jacobi_nd operators)
@@ -2764,7 +2764,7 @@ first kind:
 	   m)))))))
   grad)
 
-(defmfun simp-%jacobi_nd (form unused z)
+(defun simp-%jacobi_nd (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -2858,7 +2858,7 @@ first kind:
 	   (eqtest (list '(%jacobi_nd) u m) form)))))
 
 ;; jacobi_sc(u,m) = jacobi_sn/jacobi_cn
-(defun-checked $jacobi_sc ((u m))
+(defmfun $jacobi_sc (u m)
   (simplify (list '(%jacobi_sc) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_sc simp-%jacobi_sc operators)
@@ -2899,7 +2899,7 @@ first kind:
 	    m))))))))
   grad)
 
-(defmfun simp-%jacobi_sc (form unused z)
+(defun simp-%jacobi_sc (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -2999,7 +2999,7 @@ first kind:
        (eqtest (list '(%jacobi_sc) u m) form)))))
 
 ;; jacobi_sd(u,m) = jacobi_sn/jacobi_dn
-(defun-checked $jacobi_sd ((u m))
+(defmfun $jacobi_sd (u m)
   (simplify (list '(%jacobi_sd) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_sd simp-%jacobi_sd operators)
@@ -3040,7 +3040,7 @@ first kind:
 	    m))))))))
   grad)
 
-(defmfun simp-%jacobi_sd (form unused z)
+(defun simp-%jacobi_sd (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3168,7 +3168,7 @@ first kind:
        (eqtest (list '(%jacobi_sd) u m) form)))))
 
 ;; jacobi_cs(u,m) = jacobi_cn/jacobi_sn
-(defun-checked $jacobi_cs ((u m))
+(defmfun $jacobi_cs (u m)
   (simplify (list '(%jacobi_cs) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_cs simp-%jacobi_cs operators)
@@ -3209,7 +3209,7 @@ first kind:
 	    m))))))))
   grad)
 
-(defmfun simp-%jacobi_cs (form unused z)
+(defun simp-%jacobi_cs (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3313,7 +3313,7 @@ first kind:
        (eqtest (list '(%jacobi_cs simp) u m) form)))))
 
 ;; jacobi_cd(u,m) = jacobi_cn/jacobi_dn
-(defun-checked $jacobi_cd ((u m))
+(defmfun $jacobi_cd (u m)
   (simplify (list '(%jacobi_cd) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_cd simp-%jacobi_cd operators)
@@ -3355,7 +3355,7 @@ first kind:
 	    m))))))))
   grad)
 
-(defmfun simp-%jacobi_cd (form unused z)
+(defun simp-%jacobi_cd (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3470,7 +3470,7 @@ first kind:
        (eqtest (list '(%jacobi_cd) u m) form)))))
 
 ;; jacobi_ds(u,m) = jacobi_dn/jacobi_sn
-(defun-checked $jacobi_ds ((u m))
+(defmfun $jacobi_ds (u m)
   (simplify (list '(%jacobi_ds) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_ds simp-%jacobi_ds operators)
@@ -3511,7 +3511,7 @@ first kind:
 	    m))))))))
   grad)
 
-(defmfun simp-%jacobi_ds (form unused z)
+(defun simp-%jacobi_ds (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3639,7 +3639,7 @@ first kind:
        (eqtest (list '(%jacobi_ds) u m) form)))))
 
 ;; jacobi_dc(u,m) = jacobi_dn/jacobi_cn
-(defun-checked $jacobi_dc ((u m))
+(defmfun $jacobi_dc (u m)
   (simplify (list '(%jacobi_dc) (resimplify u) (resimplify m))))
 
 (defprop %jacobi_dc simp-%jacobi_dc operators)
@@ -3681,7 +3681,7 @@ first kind:
 	    m))))))))
   grad)
 
-(defmfun simp-%jacobi_dc (form unused z)
+(defun simp-%jacobi_dc (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3806,7 +3806,7 @@ first kind:
 ;;
 ;; so u = inverse_jacobi_sn(1/x)
 
-(defun-checked $inverse_jacobi_ns ((u m))
+(defmfun $inverse_jacobi_ns (u m)
   (simplify (list '(%inverse_jacobi_ns) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_ns
@@ -3826,7 +3826,7 @@ first kind:
 
 (defprop %inverse_jacobi_ns simp-%inverse_jacobi_ns operators)
 
-(defmfun simp-%inverse_jacobi_ns (form unused z)
+(defun simp-%inverse_jacobi_ns (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3878,7 +3878,7 @@ first kind:
 ;;
 ;; so u = inverse_jacobi_cn(1/x)
 
-(defun-checked $inverse_jacobi_nc ((u m))
+(defmfun $inverse_jacobi_nc (u m)
   (simplify (list '(%inverse_jacobi_nc) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_nc
@@ -3899,7 +3899,7 @@ first kind:
 
 (defprop %inverse_jacobi_nc simp-%inverse_jacobi_nc operators)
 
-(defmfun simp-%inverse_jacobi_nc (form unused z)
+(defun simp-%inverse_jacobi_nc (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3909,7 +3909,7 @@ first kind:
 	       (bigfloat-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
 	   ;;
-	   ($inverse_jacobi_cn (div 1 u) m))
+	   ($inverse_jacobi_cn ($rectform (div 1 u)) m))
 	  ((onep1 u)
 	   0)
 	  ((alike1 u -1)
@@ -3933,7 +3933,7 @@ first kind:
 ;;
 ;; so u = inverse_jacobi_dn(1/x)
 
-(defun-checked $inverse_jacobi_nd ((u m))
+(defmfun $inverse_jacobi_nd (u m)
   (simplify (list '(%inverse_jacobi_nd) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_nd
@@ -3955,7 +3955,7 @@ first kind:
 
 (defprop %inverse_jacobi_nd simp-%inverse_jacobi_nd operators)
 
-(defmfun simp-%inverse_jacobi_nd (form unused z)
+(defun simp-%inverse_jacobi_nd (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -3964,7 +3964,7 @@ first kind:
 	       (complex-float-numerical-eval-p u m)
 	       (bigfloat-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
-	   ($inverse_jacobi_dn (div 1 u) m))
+	   ($inverse_jacobi_dn ($rectform (div 1 u)) m))
 	  ((onep1 u)
 	   0)
 	  ((onep1 ($ratsimp (mul (power (sub 1 m) 1//2) u)))
@@ -3998,7 +3998,7 @@ first kind:
 ;; u = inverse_sn(x/sqrt(1+x^2))
 ;;
 
-(defun-checked $inverse_jacobi_sc ((u m))
+(defmfun $inverse_jacobi_sc (u m)
   (simplify (list '(%inverse_jacobi_sc) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_sc
@@ -4020,7 +4020,7 @@ first kind:
 
 (defprop %inverse_jacobi_sc simp-%inverse_jacobi_sc operators)
 
-(defmfun simp-%inverse_jacobi_sc (form unused z)
+(defun simp-%inverse_jacobi_sc (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -4029,7 +4029,9 @@ first kind:
 	       (complex-float-numerical-eval-p u m)
 	       (bigfloat-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
-	   ($inverse_jacobi_sn (div u (power (add 1 (mul u u)) 1//2)) m))
+	   ($inverse_jacobi_sn
+	     ($rectform (div u (power (add 1 (mul u u)) 1//2)))
+	     m))
 	  ((zerop1 u)
 	   ;; jacobi_sc(0,m) = 0
 	   0)
@@ -4060,7 +4062,7 @@ first kind:
 ;; u = inverse_sn(x/sqrt(1+m*x^2))
 ;;
 
-(defun-checked $inverse_jacobi_sd ((u m))
+(defmfun $inverse_jacobi_sd (u m)
   (simplify (list '(%inverse_jacobi_sd) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_sd
@@ -4081,7 +4083,7 @@ first kind:
 
 (defprop %inverse_jacobi_sd simp-%inverse_jacobi_sd operators)
 
-(defmfun simp-%inverse_jacobi_sd (form unused z)
+(defun simp-%inverse_jacobi_sd (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -4090,8 +4092,9 @@ first kind:
 	       (complex-float-numerical-eval-p u m)
 	       (bigfloat-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
-	   ($inverse_jacobi_sn (div u (power (add 1 (mul m (mul u u))) 1//2))
-			       m))
+	   ($inverse_jacobi_sn
+	     ($rectform (div u (power (add 1 (mul m (mul u u))) 1//2)))
+	     m))
 	  ((zerop1 u)
 	   0)
 	  ((eql 0 ($ratsimp (sub u (div 1 (power (sub 1 m) 1//2)))))
@@ -4119,7 +4122,7 @@ first kind:
 ;; u = inverse_sc(1/x)
 ;;
 
-(defun-checked $inverse_jacobi_cs ((u m))
+(defmfun $inverse_jacobi_cs (u m)
   (simplify (list '(%inverse_jacobi_cs) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_cs
@@ -4141,7 +4144,7 @@ first kind:
 
 (defprop %inverse_jacobi_cs simp-%inverse_jacobi_cs operators)
 
-(defmfun simp-%inverse_jacobi_cs (form unused z)
+(defun simp-%inverse_jacobi_cs (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -4150,7 +4153,7 @@ first kind:
 	       (complex-float-numerical-eval-p u m)
 	       (bigfloat-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
-	   ($inverse_jacobi_sc (div 1 u) m))
+	   ($inverse_jacobi_sc ($rectform (div 1 u)) m))
 	  ((zerop1 u)
 	   `((%elliptic_kc) ,m))
 	  (t
@@ -4174,7 +4177,7 @@ first kind:
 ;; u = inverse_sn(sqrt(1-x^2)/sqrt(1-m*x^2))
 ;;
 
-(defun-checked $inverse_jacobi_cd ((u m))
+(defmfun $inverse_jacobi_cd (u m)
   (simplify (list '(%inverse_jacobi_cd) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_cd
@@ -4196,7 +4199,7 @@ first kind:
 
 (defprop %inverse_jacobi_cd simp-%inverse_jacobi_cd operators)
 
-(defmfun simp-%inverse_jacobi_cd (form unused z)
+(defun simp-%inverse_jacobi_cd (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -4204,9 +4207,10 @@ first kind:
     (cond ((or (complex-float-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
 	   (let (($numer t))
-	     ($inverse_jacobi_sn (div (power (mul (sub 1 u) (add 1 u)) 1//2)
-				      (power (sub 1 (mul m (mul u u))) 1//2))
-				 m)))
+	     ($inverse_jacobi_sn
+	       ($rectform (div (power (mul (sub 1 u) (add 1 u)) 1//2)
+			       (power (sub 1 (mul m (mul u u))) 1//2)))
+	       m)))
 	  ((onep1 u)
 	   0)
 	  ((zerop1 u)
@@ -4229,7 +4233,7 @@ first kind:
 ;; u = inverse_sd(1/x)
 ;;
 
-(defun-checked $inverse_jacobi_ds ((u m))
+(defmfun $inverse_jacobi_ds (u m)
   (simplify (list '(%inverse_jacobi_ds) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_ds
@@ -4251,7 +4255,7 @@ first kind:
 
 (defprop %inverse_jacobi_ds simp-%inverse_jacobi_ds operators)
 
-(defmfun simp-%inverse_jacobi_ds (form unused z)
+(defun simp-%inverse_jacobi_ds (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -4260,7 +4264,7 @@ first kind:
 	       (complex-float-numerical-eval-p u m)
 	       (bigfloat-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
-	   ($inverse_jacobi_sd (div 1 u) m))
+	   ($inverse_jacobi_sd ($rectform (div 1 u)) m))
 	  ((and $trigsign (mminusp* u))
 	   (neg (cons-exp '%inverse_jacobi_ds (neg u) m)))
 	  ((eql 0 ($ratsimp (sub u (power (sub 1 m) 1//2))))
@@ -4289,7 +4293,7 @@ first kind:
 ;; u = inverse_cd(1/x)
 ;;
 
-(defun-checked $inverse_jacobi_dc ((u m))
+(defmfun $inverse_jacobi_dc (u m)
   (simplify (list '(%inverse_jacobi_dc) (resimplify u) (resimplify m))))
 
 (defprop %inverse_jacobi_dc
@@ -4317,14 +4321,14 @@ first kind:
 
 (defprop %inverse_jacobi_dc simp-%inverse_jacobi_dc operators)
 
-(defmfun simp-%inverse_jacobi_dc (form unused z)
+(defun simp-%inverse_jacobi_dc (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
 	(m (simpcheck (caddr form) z)))
     (cond ((or (complex-float-numerical-eval-p u m)
 	       (complex-bigfloat-numerical-eval-p u m))
-	   ($inverse_jacobi_cd (div 1 u) m))
+	   ($inverse_jacobi_cd ($rectform (div 1 u)) m))
 	  ((onep1 u)
 	   0)
 	  ((and (eq $triginverses '$all)
@@ -4512,7 +4516,7 @@ first kind:
      )
   grad)
 
-(defmfun simp-$elliptic_eu (form unused z)
+(defun simp-$elliptic_eu (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))
@@ -4538,7 +4542,7 @@ first kind:
 (defmfun $jacobi_am (u m)
   (simplify `((%jacobi_am) ,(resimplify u) ,(resimplify m))))
 
-(defmfun simp-%jacobi_am (form unused z)
+(defun simp-%jacobi_am (form unused z)
   (declare (ignore unused))
   (twoargcheck form)
   (let ((u (simpcheck (cadr form) z))

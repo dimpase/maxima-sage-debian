@@ -648,7 +648,7 @@ One extra decimal digit in actual representation for rounding purposes.")
       (when sign (princ "-"))
       (princ (maknam (fpformat (cons (car x) (fpabs (cdr x))))))
       (terpri)
-      (force-output))
+      (finish-output))
     exp))
 
 (defun fpration1 (x)
@@ -724,7 +724,7 @@ One extra decimal digit in actual representation for rounding purposes.")
 		(+ fpprec (- exp scale)))))))
 
 ;; Convert a bigfloat into a floating point number.
-(defmfun fp2flo (l)
+(defun fp2flo (l)
   (let ((precision (bigfloat-prec l))
 	(mantissa (cadr l))
 	(exponent (caddr l))
@@ -810,7 +810,7 @@ One extra decimal digit in actual representation for rounding purposes.")
 (defprop %log logbigfloat floatprog)
 (defprop mabs mabsbigfloat floatprog)
 
-(defmfun addbigfloat (h)
+(defun addbigfloat (h)
   (prog (fans tst r nfans)
      (setq fans (setq tst bigfloatzero) nfans 0)
      (do ((l h (cdr l)))
@@ -822,7 +822,7 @@ One extra decimal digit in actual representation for rounding purposes.")
 		   ((equal fans tst) nfans)
 		   (t (simplify (list '(mplus) fans nfans)))))))
 
-(defmfun ratbigfloat (r)
+(defun ratbigfloat (r)
   ;; R is a Maxima ratio, represented as a list of the numerator and
   ;; denominator.  FLOAT-RATIO doesn't like it if the numerator is 0,
   ;; so handle that here.
@@ -899,10 +899,10 @@ One extra decimal digit in actual representation for rounding purposes.")
     (when (> (integer-length (expt 10. i)) x)
       (return (1- i)))))
 
-(defmfun atanbigfloat (x)
+(defun atanbigfloat (x)
   (*fpatan (car x) (cdr x)))
 
-(defmfun *fpatan (a y)
+(defun *fpatan (a y)
   (fpend (let ((fpprec (+ 8. fpprec)))
 	   (if (null y)
 	       (if ($bfloatp a) (fpatan (cdr ($bfloat a)))
@@ -1140,12 +1140,12 @@ One extra decimal digit in actual representation for rounding purposes.")
 (defun fpposp (x)
   (> (car x) 0))
 
-(defmfun fpmin (arg1 &rest args)
+(defun fpmin (arg1 &rest args)
   (let ((min arg1))
     (mapc #'(lambda (u) (if (fplessp u min) (setq min u))) args)
     min))
 
-(defmfun fpmax (arg1 &rest args)
+(defun fpmax (arg1 &rest args)
   (let ((max arg1))
     (mapc #'(lambda (u) (if (fpgreaterp u max) (setq max u))) args)
     max))
@@ -1160,7 +1160,7 @@ One extra decimal digit in actual representation for rounding purposes.")
 ;; bigfloat tag.
 ;;
 ;; See
-;; https://sourceforge.net/tracker/?func=detail&atid=104933&aid=2910437&group_id=4933
+;; https://sourceforge.net/p/maxima/bugs/1842/
 ;; for an explanation.
 (let ((table (make-hash-table)))
   (defun fpe ()
@@ -1887,7 +1887,7 @@ One extra decimal digit in actual representation for rounding purposes.")
       x
       (cons (- (car x)) (cdr x))))
 
-(defmfun fpentier (f)
+(defun fpentier (f)
   (let ((fpprec (bigfloat-prec f)))
     (fpintpart (cdr f))))
 
@@ -2474,8 +2474,8 @@ One extra decimal digit in actual representation for rounding purposes.")
 		    (bigfloatp result))))))
 	(let ((fp-x (cdr (bigfloatp x))))
 	  (cond ((onep1 x)
-		 ;; Special case for log(1).  See Bug 3381301:
-		 ;; https://sourceforge.net/tracker/?func=detail&aid=3381301&group_id=4933&atid=104933
+		 ;; Special case for log(1).  See:
+		 ;; https://sourceforge.net/p/maxima/bugs/2240/
 		 (bcons (intofp 0)))
 		((fplessp fp-x (intofp 0))
 		 ;; ??? Do we want to return an exact %i*%pi or a float

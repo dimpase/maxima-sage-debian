@@ -9,14 +9,14 @@
 # If no further patches are needed, you should get a
 # updated setup-file automatically.
 
-set(TCLVERSION  "8.6.8")
-set(TKVERSION   "8.6.8")
+set(TCLVERSION "8.6.10")
+set(TKVERSION  "8.6.10")
 
-set(TCL_MD5     "81656d3367af032e0ae6157eff134f89")
-set(TK_MD5      "5e0faecba458ee1386078fb228d008ba")
+set(TCL_MD5 "97c55573f8520bcab74e21bfd8d0aadc")
+set(TK_MD5  "602a47ad9ecac7bf655ada729d140a94")
 
-set(TCL_URL     "http://prdownloads.sourceforge.net/tcl/tcl${TCLVERSION}-src.tar.gz")
-set(TK_URL      "http://prdownloads.sourceforge.net/tcl/tk${TKVERSION}-src.tar.gz")
+set(TCL_URL "http://prdownloads.sourceforge.net/tcl/tcl${TCLVERSION}-src.tar.gz")
+set(TK_URL  "http://prdownloads.sourceforge.net/tcl/tk${TKVERSION}-src.tar.gz")
 
 if(BUILD_64BIT)
     set(CONFIGURE64BIT "--enable-64bit")
@@ -34,7 +34,7 @@ externalproject_add(tcl
   BUILD_COMMAND $(MAKE)
         COMMAND $(MAKE) install
 )
-install(DIRECTORY ${CMAKE_BINARY_DIR}/tcltk/tcl-prefix/src/tcl-build/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/ DESTINATION . COMPONENT Maxima)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/tcltk/tcl-prefix/src/tcl-build/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/ DESTINATION . COMPONENT TclTk)
 
 externalproject_add(tk
   URL "${TK_URL}"
@@ -45,4 +45,4 @@ externalproject_add(tk
   BUILD_COMMAND $(MAKE)
         COMMAND $(MAKE) install
 )
-install(DIRECTORY ${CMAKE_BINARY_DIR}/tcltk/tk-prefix/src/tk-build/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/ DESTINATION . COMPONENT Maxima)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/tcltk/tk-prefix/src/tk-build/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/ DESTINATION . COMPONENT TclTk)

@@ -12,7 +12,7 @@ END-INFO-DIR-ENTRY
 
 File: maxima.info,  Node: Top,  Next: Introduction to Maxima,  Prev: (dir),  Up: (dir)
 
-Maxima 5.42.2 Manual
+Maxima 5.44.0 Manual
 ********************
 
 Maxima is a computer algebra system, implemented in Lisp.
@@ -43,7 +43,7 @@ Maxima infrastructure
 * Evaluation::                  Evaluating expressions.
 * Simplification::              Simplifying expressions.
 * Mathematical Functions::      Mathematical functions in Maxima.
-* Maximas Database::            Declarations, Contexts, Facts, and Properties.
+* Maxima's Database::           Declarations, Contexts, Facts, and Properties.
 * Plotting::                    2D and 3D graphical output.
 * File Input and Output::       File input and output.
 
@@ -116,9 +116,11 @@ Additional packages
 * minpack-pkg::                     MINPACK functions for minimization and roots
 * mnewton-pkg::                     Newton's method.
 * numericalio-pkg::                 Reading and writing files.
+* odepack-pkg::                     Numerical ODE solver
 * operatingsystem-pkg::             Common operating system tasks (create/remove dirs+files,...).
 * opsubst-pkg::                     Substitutions utility.
 * orthopoly-pkg::                   Orthogonal polynomials.
+* pytranslate::                     Maxima to Python Translation
 * ratpow-pkg::                      Determine the coefficients of polynoms.
 * romberg-pkg::                     Romberg method for numerical integration.
 * simplex-pkg::                     Linear programming.
@@ -193,8 +195,8 @@ Mathematical Functions
 * Trigonometric Functions::
 * Random Numbers::
 
-Maximas Database
-* Introduction to Maximas Database::
+Maxima's Database
+* Introduction to Maxima's Database::
 * Functions and Variables for Properties::
 * Functions and Variables for Facts::
 * Functions and Variables for Predicates::
@@ -472,6 +474,10 @@ numericalio
 * Functions and Variables for plain-text input and output::
 * Functions and Variables for binary input and output::
 
+odepack
+* Introduction to ODEPACK::
+* Functions and Variables for odepack::  
+
 operatingsystem
 * Introduction to operatingsystem::
 * Directory operations::
@@ -483,6 +489,11 @@ opsubst
 orthopoly
 * Introduction to orthogonal polynomials::
 * Functions and Variables for orthogonal polynomials::
+
+pytranslate
+* Introduction to pytranslate::
+* Functions in pytranslate::
+* Extending pytranslate::
 
 ratpow
 * Functions and Variables for ratpow::
@@ -502,7 +513,6 @@ simplification
 * Package ineq::
 * Package rducon::
 * Package scifac::
-* Package sqdnst::
 
 solve_rec
 * Introduction to solve_rec::
@@ -848,6 +858,10 @@ File: maxima.info,  Node: Functions and Variables for Bug Detection and Reportin
      the checkout is 331 commits after the latest GIT tag (usually a
      Maxima (major) release (5.37 in our example)) and the abbreviated
      commit hash of the last commit was "8322940".
+
+     Front-ends for maxima can add information about currently being
+     used by setting the variables 'maxima_frontend' and
+     'maxima_frontend_version' accordingly.
 
 
 File: maxima.info,  Node: Help,  Next: Command Line,  Prev: Bug Detection and Reporting,  Up: Top
@@ -1360,7 +1374,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
           created by 'tellsimp', 'tellsimpafter', 'defmatch', or
           'defrule'.
      'aliases'
-          All atoms which have a user-defined alias, created by the
+          All atoms which have an user-defined alias, created by the
           'alias', 'ordergreat', 'orderless' functions or by declaring
           the atom as a 'noun' with 'declare'.
      'dependencies'
@@ -1374,6 +1388,8 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
           above, such as properties established by 'atvalue' or
           'matchdeclare', etc., as well as properties established in the
           'declare' function.
+     'structures'
+          All structs defined using 'defstruct'.
      'let_rule_packages'
           All user-defined 'let' rule packages plus the special package
           'default_let_rule_package'.  ('default_let_rule_package' is
@@ -1445,6 +1461,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
      'kill' always returns 'done', even if an argument has no binding.
 
  -- Function: labels (<symbol>)
+
      Returns the list of input, output, or intermediate expression
      labels which begin with <symbol>.  Typically <symbol> is the value
      of 'inchar', 'outchar', or 'linechar'.  If no labels begin with
@@ -1698,7 +1715,7 @@ File: maxima.info,  Node: Functions and Variables for Command Line,  Next: Funct
      Define a function and enter the Lisp system under Maxima.  The
      definition is inspected on the property list, then the function
      definition is extracted, factored and stored in the variable
-     $result.  The variable can be used in Maxima after returning to
+     '$result'.  The variable can be used in Maxima after returning to
      Maxima.
 
           (%i1) f(x):=x^2+x;
@@ -1780,6 +1797,220 @@ File: maxima.info,  Node: Functions and Variables for Display,  Prev: Functions 
           (%i1) abs((x^3+1));
                                       ! 3    !
           (%o1)                       !x  + 1!
+
+ -- Function: declare_index_properties (<a>, [<p_1>, <p_2>, <p_3>, ...])
+ -- Function: declare_index_properties ([<a>, <b>, <c>, ...], [<p_1>,
+          <p_2>, <p_3>, ...])
+ -- Symbol: postsubscript
+ -- Symbol: postsuperscript
+ -- Symbol: presuperscript
+ -- Symbol: presubscript
+
+     Declares the properties of indices applied to the symbol <a> or
+     each of the of symbols <a>, <b>, <c>, ....  If multiple symbols are
+     given, the whole list of properties applies to each symbol.
+
+     Given a symbol with indices, '<a>[<i_1>, <i_2>, <i_3>, ...]', the
+     'k'-th property <p_k> applies to the 'k'-th index <i_k>.  There may
+     be any number of index properties, in any order.
+
+     Each property <p_k> must one of these four recognized properties:
+     'postsubscript', 'postsuperscript', 'presuperscript', or
+     'presubscript', to denote indices which are displayed,
+     respectively, to the right and below, to the right and above, to
+     the left and above, or to the left and below.
+
+     Index properties apply only to the 2-dimensional display of indexed
+     variables (i.e., when 'display2d' is 'true') and TeX output via
+     'tex'.  Otherwise, index properties are ignored.  Index properties
+     do not change the input of indexed variables, do not change the
+     algebraic properties of indexed variables, and do not change the
+     1-dimensional display of indexed variables.
+
+     'declare_index_properties' quotes (does not evaluate) its
+     arguments.
+
+     'remove_index_properties' removes index properties.  'kill' also
+     removes index properties (and all other properties).
+
+     'get_index_properties' retrieves index properties.
+
+     Examples:
+
+     Given a symbol with indices, '<a>[<i_1>, <i_2>, <i_3>, ...]', the
+     'k'-th property <p_k> applies to the 'k'-th index <i_k>.  There may
+     be any number of index properties, in any order.
+
+          (%i1) declare_index_properties (A, [presubscript, postsubscript]);
+          (%o1)                         done
+          (%i2) declare_index_properties (B, [postsuperscript, postsuperscript, presuperscript]);
+          (%o2)                         done
+          (%i3) declare_index_properties (C, [postsuperscript, presubscript, presubscript, presuperscript]);
+          (%o3)                         done
+          (%i4) A[w, x];
+          (%o4)                           A
+                                         w x
+          (%i5) B[w, x, y];
+                                       y w, x
+          (%o5)                         B
+          (%i6) C[w, x, y, z];
+                                          z w
+          (%o6)                            C
+                                       x, y
+
+     Index properties apply only to the 2-dimensional display of indexed
+     variables and TeX output.  Otherwise, index properties are ignored.
+
+          (%i1) declare_index_properties (A, [presubscript, postsubscript]);
+          (%o1)                         done
+          (%i2) A[w, x];
+          (%o2)                           A
+                                         w x
+          (%i3) tex (A[w, x]);
+          $${}_{w}A_{x}$$
+          (%o3)                         false
+          (%i4) display2d: false $
+          (%i5) A[w, x];
+          (%o5) A[w,x]
+          (%i6) display2d: true $
+          (%i7) grind (A[w, x]);
+          A[w,x]$
+          (%o7)                         done
+          (%i8) stringdisp: true $
+          (%i9) string (A[w, x]);
+          (%o9)                       "A[w,x]"
+
+ -- Function: get_index_properties (<a>)
+
+     Returns the properties for <a> established by
+     'declare_index_properties'.
+
+     See also 'remove_index_properties'.
+
+ -- Function: remove_index_properties (<a>, <b>, <c>, ...)
+
+     Removes the properties established by 'declare_index_properties'.
+     All index properties are removed from each symbol <a>, <b>, <c>,
+     ....
+
+     'remove_index_properties' quotes (does not evaluate) its arguments.
+
+ -- Symbol property: display_index_separator
+
+     When a symbol <A> has index display properties declared via
+     'declare_index_properties', the value of the property
+     'display_index_separator' is the string or other expression which
+     is displayed between indices.
+
+     The value of 'display_index_separator' is assigned by 'put(<A>,
+     <S>, display_index_separator)', where <S> is a string or other
+     expression.  The assigned value is retrieved by 'get(<A>,
+     display_index_separator)'.
+
+     The display index separator <S> can be a string, including an empty
+     string, or 'false', indicating the default separator, or any
+     expression.  If not a string and not 'false', the property value is
+     coerced to a string via 'string'.
+
+     If no display index separator is assigned, the default separator is
+     used.  The default separator is a comma.  There is no way to change
+     the default separator.
+
+     Each symbol has its own value of 'display_index_separator'.
+
+     See also 'put', 'get', and 'declare_index_properties'.
+
+     Examples:
+
+     When a symbol <A> has index display properties, the value of the
+     property 'display_index_separator' is the string or other
+     expression which is displayed between indices.  The value is
+     assigned by 'put(<A>, <S>, display_index_separator)',
+
+          (%i1) declare_index_properties (A, [postsuperscript, postsuperscript, presubscript, presubscript]);
+          (%o1)                         done
+          (%i2) put (A, ";", display_index_separator);
+          (%o2)                           ;
+          (%i3) A[w, x, y, z];
+                                           w;x
+          (%o3)                           A
+                                       y;z
+
+     The assigned value is retrieved by 'get(<A>,
+     display_index_separator)'.
+
+          (%i1) declare_index_properties (A, [postsuperscript, postsuperscript, presubscript, presubscript]);
+          (%o1)                         done
+          (%i2) put (A, ";", display_index_separator);
+          (%o2)                           ;
+          (%i3) get (A, display_index_separator);
+          (%o3)                           ;
+
+     The display index separator <S> can be a string, including an empty
+     string, or 'false', indicating the default separator, or any
+     expression.
+
+          (%i1) declare_index_properties (A, [postsuperscript, postsuperscript, presubscript, presubscript]);
+          (%o1)                         done
+          (%i2) A[w, x, y, z];
+                                           w, x
+          (%o2)                           A
+                                      y, z
+          (%i3) put (A, "-", display_index_separator);
+          (%o3)                           -
+          (%i4) A[w, x, y, z];
+                                           w-x
+          (%o4)                           A
+                                       y-z
+          (%i5) put (A, " ", display_index_separator);
+          (%o5)
+          (%i6) A[w, x, y, z];
+                                           w x
+          (%o6)                           A
+                                       y z
+          (%i7) put (A, "", display_index_separator);
+          (%o7)
+          (%i8) A[w, x, y, z];
+                                           wx
+          (%o8)                           A
+                                        yz
+          (%i9) put (A, false, display_index_separator);
+          (%o9)                         false
+          (%i10) A[w, x, y, z];
+                                           w, x
+          (%o10)                          A
+                                      y, z
+          (%i11) put (A, 'foo, display_index_separator);
+          (%o11)                         foo
+          (%i12) A[w, x, y, z];
+                                           wfoox
+          (%o12)                          A
+                                     yfooz
+
+     If no display index separator is assigned, the default separator is
+     used.  The default separator is a comma.
+
+          (%i1) declare_index_properties (A, [postsuperscript, postsuperscript, presubscript, presubscript]);
+          (%o1)                         done
+          (%i2) A[w, x, y, z];
+                                           w, x
+          (%o2)                           A
+                                      y, z
+
+     Each symbol has its own value of 'display_index_separator'.
+
+          (%i1) declare_index_properties (A, [postsuperscript, postsuperscript, presubscript, presubscript]);
+          (%o1)                         done
+          (%i2) put (A, " ", display_index_separator);
+          (%o2)
+          (%i3) declare_index_properties (B, [postsuperscript, postsuperscript, presubscript, presubscript]);
+          (%o3)                         done
+          (%i4) put (B, ";", display_index_separator);
+          (%o4)                           ;
+          (%i5) A[w, x, y, z] + B[w, x, y, z];
+                                      w;x       w x
+          (%o5)                      B    +    A
+                                  y;z       y z
 
  -- Function: disp (<expr_1>, <expr_2>, ...)
 
@@ -2778,7 +3009,9 @@ File: maxima.info,  Node: Functions and Variables for Strings,  Prev: Introducti
      'concat' evaluates its arguments.  The single quote ''' prevents
      evaluation.
 
-     See also 'sconcat' and 'eval_string'.
+     See also 'sconcat', that works on non-atoms, too, 'simplode',
+     'string' and 'eval_string'.  For complex string conversions see
+     also 'printf'.
 
           (%i1) y: 7$
           (%i2) z: 88$
@@ -2815,8 +3048,8 @@ File: maxima.info,  Node: Functions and Variables for Strings,  Prev: Introducti
      Concatenates its arguments into a string.  Unlike 'concat', the
      arguments do not need to be atoms.
 
-     See also 'concat', and 'eval_string'.  For complex string
-     conversions see also 'printf'.
+     See also 'concat', 'simplode', 'string' and 'eval_string'.  For
+     complex string conversions see also 'printf'.
 
           (%i1) sconcat ("xx[", 3, "]:", expand ((x+y)^3));
           (%o1)             xx[3]:y^3+3*x*y^2+3*x^2*y+x^3
@@ -2835,6 +3068,8 @@ File: maxima.info,  Node: Functions and Variables for Strings,  Prev: Introducti
 
      The return value of 'string' is a string, and thus it cannot be
      used in a computation.
+
+     See also 'concat', 'sconcat', 'simplode' and 'eval_string'.
 
  -- Option variable: stringdisp
      Default value: 'false'
@@ -3077,7 +3312,7 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
      Note that if an element of a subscripted variable is written to
      before a list or an array of this name is declared a 'hashed array'
-     *Note Arrays::.)  is created, not a list.
+     (*note Arrays::) is created, not a list.
 
      Examples:
 
@@ -3117,35 +3352,45 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
      Do 'example(append);' for an example.
 
  -- Function: assoc
-          assoc (<key>, <list>, <default>)
-          assoc (<key>, <list>)
+          assoc (<key>, <e>, <default>)
+          assoc (<key>, <e>)
 
-     This function searches for <key> in the left hand side of the input
-     <list>.  The <list> argument should be a list, each of whose
-     elements is an expression with exactly two parts.  Most usually,
-     the elements of <list> are themselves lists, each with two
-     elements.
+     'assoc' searches for <key> as the first part of an argument of <e>
+     and returns the second part of the first match, if any.
 
-     The 'assoc' function iterates along <list>, checking the first part
-     of each element for equality with <key>.  If an element is found
-     where the comparison is true, 'assoc' returns the second part of
-     that element.  If there is no such element in the list, 'assoc'
-     returns either 'false' or <default>, if given.
+     <key> may be any expression.  <e> must be a nonatomic expression,
+     and every argument of <e> must have exactly two parts.  'assoc'
+     returns the second part of the first matching argument of <e>.
+     Matches are determined by 'is(<key> = first(<a>))' where <a> is an
+     argument of <e>.
 
-     For example, in the expression 'assoc (y, [[x,1], [y,2], [z,3]])',
-     the 'assoc' function searches for 'x' in the left hand side of the
-     list '[[y,1],[x,2]]' and finds it at the second term, returning
-     '2'.  In 'assoc (z, [[x,1], [z,2], [z,3]])', the search stops at
-     the first term starting with 'z' and returns '2'.  In 'assoc(x,
-     [[y,1]])', there is no matching element, so 'assoc' returns
-     'false'.
+     If there are two or more matches, only the first is returned.  If
+     there are no matches, <default> is returned, if specified.
+     Otherwise, 'false' is returned.
 
-          (%i1) assoc (y, [[x,1], [y,2],[z,3]]);
-          (%o1)                           2
-          (%i2) assoc (z, [[x,1], [z,2], [z,3]]);
-          (%o2)                           2
-          (%i3) assoc (x, [[y,1]]);
-          (%o3)                         false
+     See also 'sublist' and 'member'.
+
+     Examples:
+
+     <key> may be any expression.  <e> must be a nonatomic expression,
+     and every argument of <e> must have exactly two parts.  'assoc'
+     returns the second part of the first matching argument of <e>.
+
+          (%i1) assoc (f(x), foo(g(x) = y, f(x) = z + 1, h(x) = 2*u));
+          (%o1)                         z + 1
+
+     If there are two or more matches, only the first is returned.
+
+          (%i1) assoc (yy, [xx = 111, yy = 222, yy = 333, yy = 444]);
+          (%o1)                          222
+
+     If there are no matches, <default> is returned, if specified.
+     Otherwise, 'false' is returned.
+
+          (%i1) assoc (abc, [[x, 111], [y, 222], [z, 333]], none);
+          (%o1)                         none
+          (%i2) assoc (abc, [[x, 111], [y, 222], [z, 333]]);
+          (%o2)                         false
 
  -- Function: cons
           cons (<expr>, <list>)
@@ -3281,8 +3526,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
  -- Function: eighth (<expr>)
 
-     Returns the 8'th item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 8th item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: endcons
           endcons (<expr>, <list>)
@@ -3317,8 +3562,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
  -- Function: fifth (<expr>)
 
-     Returns the 5'th item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 5th item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: first (<expr>)
 
@@ -3441,8 +3686,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
  -- Function: fourth (<expr>)
 
-     Returns the 4'th item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 4th item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: join (<l>, <m>)
 
@@ -3648,7 +3893,7 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
      If both <i_0> and <step> are omitted, they will both have a default
      value of 1.
 
-     'makelist (<expr>, <x>, <list>)' returns a list, the 'j''th element
+     'makelist (<expr>, <x>, <list>)' returns a list, the 'j'th element
      of which is equal to 'ev (<expr>, <x>=<list>[j])' for 'j' equal to
      1 through 'length (<list>)'.
 
@@ -3705,8 +3950,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
  -- Function: ninth (<expr>)
 
-     Returns the 9'th item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 9th item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: pop (<list>)
 
@@ -3763,7 +4008,7 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
      'partswitch' is true, 'rest' returns 'end'.
 
      Applying 'rest' to expression such as 'f(a,b,c)' returns 'f(b,c)'.
-     In general, applying 'rest' to an nonlist doesn't make sense.  For
+     In general, applying 'rest' to a nonlist doesn't make sense.  For
      example, because '^' requires two arguments, 'rest(a^b)' results in
      an error message.  The functions 'args' and 'op' may be useful as
      well, since 'args(a^b)' returns '[a,b]' and 'op(a^b)' returns ^.
@@ -3782,6 +4027,8 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
      Reverses the order of the members of the <list> (not the members
      themselves).  'reverse' also works on general expressions, e.g.
      'reverse(a=b);' gives 'b=a'.
+
+     See also 'sreverse'.
 
  -- Function: rreduce
           rreduce (<F>, <s>)
@@ -3828,18 +4075,18 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
  -- Function: second (<expr>)
 
-     Returns the 2'nd item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 2nd item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: seventh (<expr>)
 
-     Returns the 7'th item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 7th item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: sixth (<expr>)
 
-     Returns the 6'th item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 6th item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: sort
           sort (<L>, <P>)
@@ -4013,13 +4260,13 @@ File: maxima.info,  Node: Functions and Variables for Lists,  Next: Performance 
 
  -- Function: tenth (<expr>)
 
-     Returns the 10'th item of expression or list <expr>.  See 'first'
+     Returns the 10th item of expression or list <expr>.  See 'first'
      for more details.
 
  -- Function: third (<expr>)
 
-     Returns the 3'rd item of expression or list <expr>.  See 'first'
-     for more details.
+     Returns the 3rd item of expression or list <expr>.  See 'first' for
+     more details.
 
  -- Function: tree_reduce
           tree_reduce (<F>, <s>)
@@ -4167,8 +4414,8 @@ reversing the list using 'reverse ()'.  If the elements of a long list
 need to be processed in a different order performance might be increased
 by converting the list into a declared array first.
 
-   It is also to note that the ending condition of 'for' loops is tested
-for every iteration which means that the result of a 'length' should be
+   Note also that the ending condition of 'for' loops is tested for
+every iteration which means that the result of a 'length' should be
 cached if it is used in the ending condition:
 
      (%i1) l:makelist(i,i,1,100000)$
@@ -4295,7 +4542,7 @@ File: maxima.info,  Node: Functions and Variables for Arrays,  Prev: Arrays,  Up
           (%o5) [#####, #####, #####, #####, #####, #####, %e, #####,
                                                   #####, #####, #####, %pi]
 
-     'arrayinfo' and 'listarray' applied to a undeclared array ('hashed
+     'arrayinfo' and 'listarray' applied to an undeclared array ('hashed
      array'.).
 
           (%i1) bb [FOO] : (a + b)^2;
@@ -4530,7 +4777,7 @@ File: maxima.info,  Node: Functions and Variables for Arrays,  Prev: Arrays,  Up
           (%i5) arrayinfo (aa);
           (%o5)                 [declared, 2, [2, 3]]
 
-     'listarray' and 'arrayinfo' applied to a undeclared array ('hashed
+     'listarray' and 'arrayinfo' applied to an undeclared array ('hashed
      array').
 
           (%i1) bb [FOO] : (a + b)^2;
@@ -4545,7 +4792,7 @@ File: maxima.info,  Node: Functions and Variables for Arrays,  Prev: Arrays,  Up
           (%i4) arrayinfo (bb);
           (%o4)               [hashed, 1, [BAR], [FOO]]
 
-     'listarray' and 'arrayinfo' applied to an 'memoizing function'.
+     'listarray' and 'arrayinfo' applied to a 'memoizing function'.
 
           (%i1) cc [x, y] := y / x;
                                                y
@@ -5073,8 +5320,8 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
  -- System variable: aliases
      Default value: '[]'
 
-     'aliases' is the list of atoms which have a user defined alias (set
-     up by the 'alias', 'ordergreat', 'orderless' functions or by
+     'aliases' is the list of atoms which have an user defined alias
+     (set up by the 'alias', 'ordergreat', 'orderless' functions or by
      declaring the atom a 'noun' with 'declare'.)
 
  -- Keyword: allbut
@@ -6090,7 +6337,7 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
         * Exponentials are replaced by 'Expt'.
         * Quotients are replaced by 'Quotient'.
         * Unary negation is replaced by 'Negterm'.
-        * Lists are replaced by 'List(<n>)' where <n> ist the number of
+        * Lists are replaced by 'List(<n>)' where <n> is the number of
           elements of the list.
 
      When <depth> is greater than or equal to the maximum depth of
@@ -6135,6 +6382,27 @@ File: maxima.info,  Node: Functions and Variables for Expressions,  Prev: Inequa
           (%o7)               -------------------------
                                   b + a     2 b     2 a
                               2 %e      + %e    + %e
+
+ -- Function: sqrtdenest (<expr>)
+     Denests 'sqrt' of simple, numerical, binomial surds, where
+     possible.  E.g.
+
+          (%i1) sqrt(sqrt(3)/2+1)/sqrt(11*sqrt(2)-12);
+                                       sqrt(3)
+                                  sqrt(------- + 1)
+                                          2
+          (%o1)                 ---------------------
+                                sqrt(11 sqrt(2) - 12)
+          (%i2) sqrtdenest(%);
+                                     sqrt(3)   1
+                                     ------- + -
+                                        2      2
+          (%o2)                     -------------
+                                       1/4    3/4
+                                    3 2    - 2
+
+     Sometimes it helps to apply 'sqrtdenest' more than once, on such as
+     '(19601-13860 sqrt(2))^(7/4)'.
 
  -- Function: sublis (<list>, <expr>)
 
@@ -8284,7 +8552,7 @@ an expression while re-formulating its representation to be smaller,
 simpler to understand, or to conform to particular specifications (like
 factored, expanded).  For example, 'sin(0)' to '0' or 'x+x to 2*x'.
 There are several powerful tools to alter the results of simplification,
-since it is largely in this part of the system that a user can
+since it is largely in this part of the system that an user can
 incorporate knowledge of newly introduced functions or symbolic notation
 into Maxima.
 
@@ -8327,7 +8595,7 @@ without disturbing existing code.
    We note that in addition to this general simplifier operating on
 algebraic expression trees, there are several other representations of
 expressions in Maxima which have separate methods and simplifiers.  For
-example, the 'rat()' function converts polynomials to vectors of
+example, the 'rat' function converts polynomials to vectors of
 coefficients to assist in rapid manipulation of such forms.  Other
 representations include Taylor series and the (rarely used) Poisson
 series.
@@ -8379,7 +8647,7 @@ of 'h' will be ignored.
 
    In addition to these directly related properties set up by the user,
 facts and properties from the actual context may have an impact on the
-simplifier's behavior, too.  *Note Introduction to Maximas Database::.
+simplifier's behavior, too.  *Note Introduction to Maxima's Database::.
 
    Example: 'sin(n*%pi)' is simplified to zero, if <n> is an integer.
 
@@ -8484,6 +8752,8 @@ File: maxima.info,  Node: Functions and Variables for Simplification,  Prev: Int
 
      Simplifies the sum <expr> by combining terms with the same
      denominator into a single term.
+
+     See also: 'rncombine'.
 
      Example:
 
@@ -9085,7 +9355,7 @@ File: maxima.info,  Node: Functions and Variables for Simplification,  Prev: Int
      Simplifies <expr>, which can contain logs, exponentials, and
      radicals, by converting it into a form which is canonical over a
      large class of expressions and a given ordering of variables; that
-     is, all functionally equivalent forms are mapped into a unique
+     is, all functionally equivalent forms are mapped into an unique
      form.  For a somewhat larger class of expressions, 'radcan'
      produces a regular form.  Two equivalent expressions in this class
      do not necessarily have the same appearance, but their difference
@@ -9222,7 +9492,7 @@ File: maxima.info,  Node: Functions and Variables for Simplification,  Prev: Int
                                       (y + x)
 
 
-File: maxima.info,  Node: Mathematical Functions,  Next: Maximas Database,  Prev: Simplification,  Up: Top
+File: maxima.info,  Node: Mathematical Functions,  Next: Maxima's Database,  Prev: Simplification,  Up: Top
 
 10 Mathematical Functions
 *************************
@@ -9538,7 +9808,7 @@ File: maxima.info,  Node: Functions for Numbers,  Next: Functions for Complex Nu
      signum(y)').
 
      The 'signum' function distributes over a list, a matrix, or an
-     equation.  See 'distribute_over'.
+     equation.  See 'sign' and 'distribute_over'.
 
  -- Function: truncate (<x>)
 
@@ -9903,10 +10173,8 @@ File: maxima.info,  Node: Combinatorial Functions,  Next: Root Exponential and L
                                     16
           (%i3) [4,77!, (1.0+%i)!];
           (%o3) [4, 77!, 0.3430658398165453 %i + 0.6529654964201667]
-          (%i4) [2.86b0!, 1.0b0+%i)!];
-          incorrect syntax: Missing ]
-          [2.86b0!, 1.0b0+%i)
-                           ^
+          (%i4) [2.86b0!, (1.0b0+%i)!];
+          (%o4)  [5.046635586910012b0, 3.430658398165454b-1 %i + 6.529654964201667b-1]
 
      The factorial of a known constant, or general expression is not
      simplified.  Even so it may be possible to simplify the factorial
@@ -10152,8 +10420,8 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
           (%i5) li [3] (7);
           (%o5)                        li (7)
                                          3
-          (%i6) li [2] (7), numer;
-          (%o6)       1.248273182099423 - 6.113257028817991 %i
+          (%i6) li [3] (7), numer;
+          (%o6)       5.319257992145674 - 5.94792444808033 %i
           (%i7) L : makelist (i / 4.0, i, 0, 8);
           (%o7)   [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
           (%i8) map (lambda ([x], li [2] (x)), L);
@@ -10176,7 +10444,7 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
      Represents the natural (base e) logarithm of <x>.
 
      Maxima does not have a built-in function for the base 10 logarithm
-     or other bases.  'log10(x) := log(x) / log(10)' is a useful
+     or other bases.  'log10(x) := log(x) / log(10)' is an useful
      definition.
 
      Simplification and evaluation of logarithms is governed by several
@@ -10217,15 +10485,18 @@ File: maxima.info,  Node: Root Exponential and Logarithmic Functions,  Next: Tri
      used, because here "evaluation" of the indefinite integral at the
      endpoints is often needed.
 
- -- Option variable: logarc
  -- Function: logarc (<expr>)
+
+     The function 'logarc(<expr>)' carries out the replacement of
+     inverse circular and hyperbolic functions with equivalent
+     logarithmic functions for an expression <expr> without setting the
+     global variable 'logarc'.
+
+ -- Option variable: logarc
 
      When the global variable 'logarc' is 'true', inverse circular and
      hyperbolic functions are replaced by equivalent logarithmic
      functions.  The default value of 'logarc' is 'false'.
-
-     The function 'logarc(<expr>)' carries out that replacement for an
-     expression <expr> without setting the global variable 'logarc'.
 
  -- Option variable: logconcoeffp
      Default value: 'false'
@@ -10514,10 +10785,14 @@ File: maxima.info,  Node: Functions and Variables for Trigonometric,  Prev: Intr
 
      - Arc Tangent.
 
+     See also 'atan2'.
+
  -- Function: atan2 (<y>, <x>)
 
      - yields the value of 'atan(<y>/<x>)' in the interval '-%pi' to
      '%pi'.
+
+     See also 'atan'.
 
  -- Function: atanh (<x>)
 
@@ -10874,26 +11149,26 @@ File: maxima.info,  Node: Random Numbers,  Prev: Trigonometric Functions,  Up: M
           (%o13)                  32.28666704056853
 
 
-File: maxima.info,  Node: Maximas Database,  Next: Plotting,  Prev: Mathematical Functions,  Up: Top
+File: maxima.info,  Node: Maxima's Database,  Next: Plotting,  Prev: Mathematical Functions,  Up: Top
 
-11 Maximas Database
-*******************
+11 Maxima's Database
+********************
 
 * Menu:
 
-* Introduction to Maximas Database::
+* Introduction to Maxima's Database::
 * Functions and Variables for Properties::
 * Functions and Variables for Facts::
 * Functions and Variables for Predicates::
 
 
-File: maxima.info,  Node: Introduction to Maximas Database,  Next: Functions and Variables for Properties,  Prev: Maximas Database,  Up: Maximas Database
+File: maxima.info,  Node: Introduction to Maxima's Database,  Next: Functions and Variables for Properties,  Prev: Maxima's Database,  Up: Maxima's Database
 
-11.1 Introduction to Maximas Database
-=====================================
+11.1 Introduction to Maxima's Database
+======================================
 
 
-File: maxima.info,  Node: Functions and Variables for Properties,  Next: Functions and Variables for Facts,  Prev: Introduction to Maximas Database,  Up: Maximas Database
+File: maxima.info,  Node: Functions and Variables for Properties,  Next: Functions and Variables for Facts,  Prev: Introduction to Maxima's Database,  Up: Maxima's Database
 
 11.2 Functions and Variables for Properties
 ===========================================
@@ -11505,7 +11780,7 @@ File: maxima.info,  Node: Functions and Variables for Properties,  Next: Functio
      See also the predicate function 'nonscalarp'.
 
 
-File: maxima.info,  Node: Functions and Variables for Facts,  Next: Functions and Variables for Predicates,  Prev: Functions and Variables for Properties,  Up: Maximas Database
+File: maxima.info,  Node: Functions and Variables for Facts,  Next: Functions and Variables for Predicates,  Prev: Functions and Variables for Properties,  Up: Maxima's Database
 
 11.3 Functions and Variables for Facts
 ======================================
@@ -11744,10 +12019,11 @@ File: maxima.info,  Node: Functions and Variables for Facts,  Next: Functions an
      'contexts' is a list of the contexts which currently exist,
      including the currently active context.
 
-     The context mechanism makes it possible for a user to bind together
-     and name a collection of facts, called a context.  Once this is
-     done, the user can have Maxima assume or forget large numbers of
-     facts merely by activating or deactivating their context.
+     The context mechanism makes it possible for an user to bind
+     together and name a collection of facts, called a context.  Once
+     this is done, the user can have Maxima assume or forget large
+     numbers of facts merely by activating or deactivating their
+     context.
 
      Any symbolic atom can be a context, and the facts contained in that
      context will be retained in storage until destroyed one by one by
@@ -11912,6 +12188,8 @@ File: maxima.info,  Node: Functions and Variables for Facts,  Next: Functions an
      zero), 'nz' (negative or zero), 'pn' (positive or negative), or
      'pnz' (positive, negative, or zero, i.e.  nothing known).
 
+     See also 'signum'.
+
  -- Function: supcontext
           supcontext (<name>, <context>)
           supcontext (<name>)
@@ -11929,7 +12207,7 @@ File: maxima.info,  Node: Functions and Variables for Facts,  Next: Functions an
      (if specified) or the new context name.
 
 
-File: maxima.info,  Node: Functions and Variables for Predicates,  Prev: Functions and Variables for Facts,  Up: Maximas Database
+File: maxima.info,  Node: Functions and Variables for Predicates,  Prev: Functions and Variables for Facts,  Up: Maxima's Database
 
 11.4 Functions and Variables for Predicates
 ===========================================
@@ -12141,7 +12419,7 @@ File: maxima.info,  Node: Functions and Variables for Predicates,  Prev: Functio
      'b'.
 
 
-File: maxima.info,  Node: Plotting,  Next: File Input and Output,  Prev: Maximas Database,  Up: Top
+File: maxima.info,  Node: Plotting,  Next: File Input and Output,  Prev: Maxima's Database,  Up: Top
 
 12 Plotting
 ***********
@@ -12172,17 +12450,17 @@ concurrently-running instance of Maxima and 'format' is the name of the
 plotting format being used ('gnuplot', 'xmaxima', 'mgnuplot',
 'gnuplot_pipes' or 'geomview').
 
-   There are to save the plot in a graphic format file.  In those cases,
-the file 'maxout_xxx.format' created by Maxima includes commands that
-will make the external plotting program save the result in a graphic
-file.  The default name for that graphic file is 'maxplot.extension',
-where 'extension' is the extension normally used for the kind of graphic
-file selected.
+   There are commands to save the plot in a graphic format file.  In
+those cases, the file 'maxout_xxx.format' created by Maxima includes
+commands that will make the external plotting program save the result in
+a graphic file.  The default name for that graphic file is
+'maxplot.extension', where 'extension' is the extension normally used
+for the kind of graphic file selected.
 
    The 'maxout_xxx.format' and 'maxplot.extension' files are created in
 the directory specified by the system variable 'maxima_tempdir'.  That
 location can be changed by assigning to that variable (or to the
-environment variable MAXIMA_TEMPDIR) a string that represents a valid
+environment variable 'MAXIMA_TEMPDIR') a string that represents a valid
 directory where Maxima can create new files.  The output of the Maxima
 plotting command will be a list with the names of the file(s) created,
 including their complete path.
@@ -12492,7 +12770,7 @@ File: maxima.info,  Node: Functions and Variables for Plotting,  Next: Plotting 
      variable or parameter.
 
      'plot2d' displays one or several plots in two dimensions.  When
-     expressions or function name are used to define the plots, they
+     expressions or function names are used to define the plots, they
      should all depend on only one variable <var> and the use of
      <x_range> will be mandatory, to provide the name of the variable
      and its minimum and maximum values; the syntax for <x_range> is:
@@ -12598,10 +12876,11 @@ File: maxima.info,  Node: Functions and Variables for Plotting,  Next: Plotting 
      "data.txt" which is then read and the second and third column are
      plotted on the two axes:
 
-          (%i1) with_stdout ("data.txt", for x:0 thru 10 do
+          (%i1) display2d:false$
+          (%i2) with_stdout ("data.txt", for x:0 thru 10 do
                                        print (x, x^2, x^3))$
-          (%i2) data: read_matrix ("data.txt")$
-          (%i3) plot2d ([discrete, transpose(data)[2], transpose(data)[3]],
+          (%i3) data: read_matrix ("data.txt")$
+          (%i4) plot2d ([discrete, transpose(data)[2], transpose(data)[3]],
             [style,points], [point_type,diamond], [color,red])$
 
      A plot of discrete data points together with a continuous function:
@@ -12656,7 +12935,7 @@ File: maxima.info,  Node: Functions and Variables for Plotting,  Next: Plotting 
      Two surfaces in the same plot.  Ranges specific to one of the
      surfaces can be given by placing each expression and its ranges in
      a separate list; global ranges for the complete plot are also given
-     after the functions definitions.
+     after the function definitions.
 
           (%i1) plot3d ([[-3*x - y, [x, -2, 2], [y, -2, 2]],
              4*sin(3*(x^2 + y^2))/(x^2 + y^2), [x, -3, 3], [y, -3, 3]],
@@ -12855,7 +13134,7 @@ names.  For instance, typing logx as an option is equivalent to writing
      coming out of the screen.  The z axis is then rotated around the x
      axis through an angle equal to 'elevation' and then the new xy
      plane is rotated around the new z axis through an angle 'azimuth'.
-     This option sets the value for the azimuth, in degrees.
+     This option sets the value for the elevation, in degrees.
 
      See also 'azimuth'.
 
@@ -13351,6 +13630,17 @@ specific option.
      font \",24\""'.  See the gnuplot documentation for 'set term
      postscript' for more information.
 
+ -- Plot option: gnuplot_strings [gnuplot_strings, <value>]
+
+     With a value of 'true', all strings used in labels and titles will
+     be interpreted by gnuplot as "enhanced" text, if the terminal being
+     used supports it.  In enhanced mode, some characters such as ^ and
+     _ are not printed, but interpreted as formatting characters.  For a
+     list of the formatting characters and their meaning, see the
+     documentation for enhanced in Gnuplot.  The default value for this
+     option is 'false', which will not treat any characters as
+     formatting characters.
+
  -- Plot option: gnuplot_svg_term_command [gnuplot_svg_term_command,
           <command>]
 
@@ -13361,7 +13651,7 @@ specific option.
 
  -- Plot option: gnuplot_curve_titles
 
-     This is an obsolete option that has been replaced 'legend'
+     This is an obsolete option that has been replaced by 'legend'
      described above.
 
  -- Plot option: gnuplot_curve_styles
@@ -13620,7 +13910,7 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
      so if the path list is given, 'file_search' searches only the ones
      specified, and not any of the default search directories.  Even if
      there is only one directory in <pathlist>, it must still be given
-     as a one-element list.
+     as an one-element list.
 
      The user may modify the default search directories.  See
      'file_search_maxima'.
@@ -13724,15 +14014,17 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
      while processing <filename>, the global variables '_', '__', '%',
      and '%th' have whatever bindings they had when 'load' was called.
 
-     It is also to note that structures will only be read back as
-     structures if they have been defined by 'defstruct' before the
-     'load' command is called.
+     Note also that structures will only be read back as structures if
+     they have been defined by 'defstruct' before the 'load' command is
+     called.
 
      See also 'loadfile', 'batch', 'batchload', and 'demo'.  'loadfile'
      processes Lisp files; 'batch', 'batchload', and 'demo' process
      Maxima files.
 
      See 'file_search' for more detail about the file search mechanism.
+     Additionally the chapter on 'numericalio' describes many functions
+     that allow to load files that contain csv or similar data.
 
      'load' evaluates its argument.
 
@@ -13903,7 +14195,7 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
      The general form of 'stringout' writes the values of one or more
      expressions to the output file.  Note that if an expression is a
      variable, only the value of the variable is written and not the
-     name of the variable.  As a useful special case, the expressions
+     name of the variable.  As an useful special case, the expressions
      may be input labels ('%i1', '%i2', '%i3', ...) or output labels
      ('%o1', '%o2', '%o3', ...).
 
@@ -13946,7 +14238,7 @@ File: maxima.info,  Node: Functions and Variables for File Input and Output,  Ne
 
      'with_stdout' returns the value of its final argument.
 
-     See also 'writefile'.
+     See also 'writefile' and 'display2d'.
 
           (%i1) with_stdout ("tmp.out", for i:5 thru 10 do
                 print (i, "! yields", i!))$
@@ -14025,7 +14317,7 @@ of the functions described here but uses its own implementation instead.
      a label.  Quote-quote '''' forces evaluation of the argument,
      thereby defeating the test and preventing the label.
 
-     See also 'texput'.
+     See also 'tex1' and 'texput'.
 
      Examples:
 
@@ -14058,6 +14350,8 @@ of the functions described here but uses its own implementation instead.
      Returns a string which represents the TeX output for the
      expressions <e>.  The TeX output is not enclosed in delimiters for
      an equation or any other environment.
+
+     See also 'tex' and 'texput'.
 
      Examples:
 
@@ -14097,6 +14391,8 @@ of the functions described here but uses its own implementation instead.
      function to interpolate <s_1> and <s_2> into the TeX output on
      either side of the arguments of <a>, with <s_3> separating the
      arguments.
+
+     See also 'tex' and 'tex1'.
 
      Examples:
 
@@ -14366,46 +14662,53 @@ File: maxima.info,  Node: Introduction to Polynomials,  Next: Functions and Vari
 
 Polynomials are stored in Maxima either in General Form or as Canonical
 Rational Expressions (CRE) form.  The latter is a standard form, and is
-used internally by operations such as factor, ratsimp, and so on.
+used internally by operations such as 'factor', 'ratsimp', and so on.
 
    Canonical Rational Expressions constitute a kind of representation
 which is especially suitable for expanded polynomials and rational
 functions (as well as for partially factored polynomials and rational
-functions when RATFAC is set to 'true').  In this CRE form an ordering
+functions when 'ratfac' is set to 'true').  In this CRE form an ordering
 of variables (from most to least main) is assumed for each expression.
-Polynomials are represented recursively by a list consisting of the main
-variable followed by a series of pairs of expressions, one for each term
-of the polynomial.  The first member of each pair is the exponent of the
-main variable in that term and the second member is the coefficient of
-that term which could be a number or a polynomial in another variable
-again represented in this form.  Thus the principal part of the CRE form
-of 3*X^2-1 is (X 2 3 0 -1) and that of 2*X*Y+X-3 is (Y 1 (X 1 2) 0 (X 1
-1 0 -3)) assuming Y is the main variable, and is (X 1 (Y 1 2 0 1) 0 -3)
-assuming X is the main variable.  "Main"-ness is usually determined by
-reverse alphabetical order.  The "variables" of a CRE expression needn't
-be atomic.  In fact any subexpression whose main operator is not + - * /
-or ^ with integer power will be considered a "variable" of the
-expression (in CRE form) in which it occurs.  For example the CRE
-variables of the expression X+SIN(X+1)+2*SQRT(X)+1 are X, SQRT(X), and
-SIN(X+1).  If the user does not specify an ordering of variables by
-using the RATVARS function Maxima will choose an alphabetic one.  In
-general, CRE's represent rational expressions, that is, ratios of
+
+   Polynomials are represented recursively by a list consisting of the
+main variable followed by a series of pairs of expressions, one for each
+term of the polynomial.  The first member of each pair is the exponent
+of the main variable in that term and the second member is the
+coefficient of that term which could be a number or a polynomial in
+another variable again represented in this form.  Thus the principal
+part of the CRE form of '3*x^2-1' is '(X 2 3 0 -1)' and that of
+'2*x*y+x-3' is '(Y 1 (X 1 2) 0 (X 1 1 0 -3))' assuming 'y' is the main
+variable, and is '(X 1 (Y 1 2 0 1) 0 -3)' assuming 'x' is the main
+variable.  "Main"-ness is usually determined by reverse alphabetical
+order.
+
+   The "variables" of a CRE expression needn't be atomic.  In fact any
+subexpression whose main operator is not '+', '-', '*', '/' or '^' with
+integer power will be considered a "variable" of the expression (in CRE
+form) in which it occurs.  For example the CRE variables of the
+expression 'x+sin(x+1)+2*sqrt(x)+1' are 'x', 'sqrt(X)', and 'sin(x+1)'.
+If the user does not specify an ordering of variables by using the
+'ratvars' function Maxima will choose an alphabetic one.
+
+   In general, CRE's represent rational expressions, that is, ratios of
 polynomials, where the numerator and denominator have no common factors,
 and the denominator is positive.  The internal form is essentially a
 pair of polynomials (the numerator and denominator) preceded by the
 variable ordering list.  If an expression to be displayed is in CRE form
-or if it contains any subexpressions in CRE form, the symbol /R/ will
-follow the line label.  See the RAT function for converting an
-expression to CRE form.  An extended CRE form is used for the
-representation of Taylor series.  The notion of a rational expression is
-extended so that the exponents of the variables can be positive or
-negative rational numbers rather than just positive integers and the
-coefficients can themselves be rational expressions as described above
-rather than just polynomials.  These are represented internally by a
-recursive polynomial form which is similar to and is a generalization of
-CRE form, but carries additional information such as the degree of
-truncation.  As with CRE form, the symbol /T/ follows the line label of
-such expressions.
+or if it contains any subexpressions in CRE form, the symbol '/R/' will
+follow the line label.
+
+   See the 'rat' function for converting an expression to CRE form.
+
+   An extended CRE form is used for the representation of Taylor series.
+The notion of a rational expression is extended so that the exponents of
+the variables can be positive or negative rational numbers rather than
+just positive integers and the coefficients can themselves be rational
+expressions as described above rather than just polynomials.  These are
+represented internally by a recursive polynomial form which is similar
+to and is a generalization of CRE form, but carries additional
+information such as the degree of truncation.  As with CRE form, the
+symbol '/T/' follows the line label of such expressions.
 
 
 File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introduction to Polynomials,  Up: Polynomials
@@ -14713,7 +15016,7 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
      certain polynomials from being factored if their degree in any
      variable exceeds 'n'.
 
-     See also 'collectterms'.
+     See also 'collectterms' and 'sqfr'
 
      Examples:
 
@@ -15613,7 +15916,7 @@ File: maxima.info,  Node: Functions and Variables for Polynomials,  Prev: Introd
      ((x^2 - 1)^4/(x + 1)^2)' yields '(x - 1)^4 (x + 1)^2', but the
      factors within each part may not be relatively prime.
 
-     In the 'ctensr' (Component Tensor Manipulation) package, Ricci,
+     In the 'ctensor' (Component Tensor Manipulation) package, Ricci,
      Einstein, Riemann, and Weyl tensors and the scalar curvature are
      factored automatically when 'ratfac' is 'true'.  'ratfac' should
      only be set for cases where the tensorial components are known to
@@ -16251,7 +16554,7 @@ File: maxima.info,  Node: Bessel Functions,  Next: Airy Functions,  Prev: Introd
  -- Function: scaled_bessel_i (<v>, <z>)
 
      The scaled modified Bessel function of the first kind of order v
-     and argument z.  That is, scaled_bessel_i(v,z) =
+     and argument z.  That is, scaled\_bessel_i(v,z) =
      exp(-abs(z))*bessel_i(v, z).  This function is particularly useful
      for calculating bessel_i for large z, which is large.  However,
      maxima does not otherwise know much about this function.  For
@@ -16494,7 +16797,8 @@ Functions, Chapter 6.
 
      'gamma_expand' controls expansion of 'gamma_incomplete'.  When
      'gamma_expand' is 'true', 'gamma_incomplete(v,z)' is expanded in
-     terms of 'z', 'exp(z)', and 'erfc(z)' when possible.
+     terms of 'z', 'exp(z)', and 'gamma_incomplete' or 'erfc(z)' when
+     possible.
 
           (%i1) gamma_incomplete(2,z);
           (%o1)                       gamma_incomplete(2, z)
@@ -16507,6 +16811,19 @@ Functions, Chapter 6.
                                         - z   sqrt(%pi) erfc(sqrt(z))
           (%o4)               sqrt(z) %e    + -----------------------
                                                          2
+          (%i5) gamma_incomplete(4/3,z);
+                                                              1
+                                             gamma_incomplete(-, z)
+                                 1/3   - z                    3
+          (%o5)                 z    %e    + ----------------------
+                                                       3
+          (%i6) gamma_incomplete(a+2,z);
+                       a               - z
+          (%o6)       z  (z + a + 1) %e    + a (a + 1) gamma_incomplete(a, z)
+          (%i7) gamma_incomplete(a-2, z);
+                  gamma_incomplete(a, z)    a - 2         z            1      - z
+          (%o7)   ---------------------- - z      (--------------- + -----) %e
+                     (1 - a) (2 - a)               (a - 2) (a - 1)   a - 2
 
  -- Option variable: gammalim
      Default value: 10000
@@ -17329,6 +17646,9 @@ File: maxima.info,  Node: Functions and Variables for Special Functions,  Prev: 
 
      Compute the Laplace transform of <expr> with respect to the
      variable <t>.  The integrand <expr> may contain special functions.
+     The parameter <s> maybe be named something else; it is determined
+     automatically, as the examples below show where <p> is used in some
+     places.
 
      The following special functions are handled by 'specint':
      incomplete gamma function, error functions (but not the error
@@ -18372,12 +18692,6 @@ File: maxima.info,  Node: Functions and Variables for Differentiation,  Prev: Di
      When 'diff' is present as an 'evflag' in call to 'ev', all
      differentiations indicated in 'expr' are carried out.
 
- -- Function: dscalar (<f>)
-
-     Applies the scalar d'Alembertian to the scalar function <f>.
-
-     'load ("ctensor")' loads this function.
-
  -- Function: express (<expr>)
 
      Expands differential operator nouns into expressions in terms of
@@ -18527,7 +18841,7 @@ File: maxima.info,  Node: Functions and Variables for Differentiation,  Prev: Di
      That is, if <f> depends on <x> and <y>, 'f (x, y)' must appear in
      <expr>.
 
-     See also 'ilt',, the inverse Laplace transform.
+     See also 'ilt', the inverse Laplace transform.
 
      Examples:
 
@@ -19560,6 +19874,7 @@ File: maxima.info,  Node: Functions and Variables for QUADPACK,  Prev: Introduct
 
      Examples:
 
+     'epsrel=1d-7); x, 0, 5);
           (%i1) quad_qawc (2^(-5)*((x-1)^2+4^(-5))^(-1), x, 2, 0, 5,
                            'epsrel=1d-7);
           (%o1)    [- 3.130120337415925, 1.306830140249558E-8, 495, 0]
@@ -19730,6 +20045,7 @@ File: maxima.info,  Node: Functions and Variables for QUADPACK,  Prev: Introduct
 
      Examples:
 
+     x, 0, inf));
           (%i1) quad_qawo (x^(-1/2)*exp(-2^(-2)*x), x, 1d-8, 20*2^2, 1, cos);
           (%o1)     [1.376043389877692, 4.72710759424899E-11, 765, 0]
           (%i2) rectform (integrate (x^(-1/2)*exp(-2^(-alpha)*x) * cos(x),
@@ -19808,6 +20124,7 @@ File: maxima.info,  Node: Functions and Variables for QUADPACK,  Prev: Introduct
 
      Examples:
 
+     'epsabs=1d-9);
           (%i1) quad_qaws (1/(x+1+2^(-4)), x, -1, 1, -0.5, -0.5, 1,
                            'epsabs=1d-9);
           (%o1)     [8.750097361672832, 1.24321522715422E-10, 170, 0]
@@ -20261,7 +20578,7 @@ File: maxima.info,  Node: Functions and Variables for Equations,  Prev: Equation
 
      If set to 'false' within a 'block' will inhibit the display of
      output generated by the solve functions called from within the
-     'block'.  Termination of the 'block' with a dollar sign, $, sets
+     'block'.  Termination of the 'block' with a dollar sign, '$', sets
      'dispflag' to 'false'.
 
  -- Function: funcsolve (<eqn>, <g>(<t>))
@@ -20394,7 +20711,7 @@ File: maxima.info,  Node: Functions and Variables for Equations,  Prev: Equation
      Returns the left-hand side (that is, the first argument) of the
      expression <expr>, when the operator of <expr> is one of the
      relational operators '< <= = # equal notequal >= >', one of the
-     assignment operators ':= ::= : ::', or a user-defined binary infix
+     assignment operators ':= ::= : ::', or an user-defined binary infix
      operator, as declared by 'infix'.
 
      When <expr> is an atom or its operator is something other than the
@@ -20629,7 +20946,7 @@ File: maxima.info,  Node: Functions and Variables for Equations,  Prev: Equation
      Returns the right-hand side (that is, the second argument) of the
      expression <expr>, when the operator of <expr> is one of the
      relational operators '< <= = # equal notequal >= >', one of the
-     assignment operators ':= ::= : ::', or a user-defined binary infix
+     assignment operators ':= ::= : ::', or an user-defined binary infix
      operator, as declared by 'infix'.
 
      When <expr> is an atom or its operator is something other than the
@@ -21033,6 +21350,8 @@ File: maxima.info,  Node: Functions and Variables for Differential Equations,  P
 
      If 'desolve' cannot obtain a solution, it returns 'false'.
 
+     See also 'ode2', 'drawdf' and 'rk'.
+
  -- Function: ic1 (<solution>, <xval>, <yval>)
      Solves initial value problems for first order differential
      equations.  Here <solution> is a general solution to the equation,
@@ -21092,6 +21411,8 @@ File: maxima.info,  Node: Functions and Variables for Differential Equations,  P
      'ic2' are available for first and second order equations, and to
      solve second-order boundary value problems (BVP) the function 'bc2'
      can be used.
+
+     See also 'desolve', 'drawdf' and 'rk'.
 
      Example:
 
@@ -21559,8 +21880,7 @@ File: maxima.info,  Node: Functions for numerical solution of equations,  Next: 
 
      'load(newton1)' loads this function.
 
-     See also 'realroots', 'allroots', 'find_root' and *note
-     mnewton-pkg::
+     See also 'realroots', 'allroots', 'find_root' and 'mnewton'.
 
      Examples:
 
@@ -21861,6 +22181,10 @@ File: maxima.info,  Node: Functions for numerical solution of differential equat
      the results list is itself another list with <m>+1 elements: the
      value of the independent variable, followed by the values of the
      dependent variables corresponding to that point.
+
+     See also 'drawdf', 'desolve' and 'ode2'.
+
+     Examples:
 
      To solve numerically the differential equation
 
@@ -22975,7 +23299,7 @@ File: maxima.info,  Node: Functions and Variables for Matrices and Linear Algebr
      name of an operator enclosed in quote marks, the name of a
      function, or a lambda expression.
 
-     The dot operator '.' is a useful choice in some contexts.
+     The dot operator '.' is an useful choice in some contexts.
 
      See also 'matrix_element_add' and 'matrix_element_transpose'.
 
@@ -23283,7 +23607,7 @@ File: maxima.info,  Node: Functions and Variables for Matrices and Linear Algebr
  -- Function: unitvector (<x>)
  -- Function: uvect (<x>)
 
-     Returns <x>/norm(<x>); this is a unit vector in the same direction
+     Returns <x>/norm(<x>); this is an unit vector in the same direction
      as <x>.
 
      'load ("eigen")' loads this function.
@@ -23552,7 +23876,7 @@ capacity is at hand, a complex metric with intricate functional and
 coordinate dependencies can easily lead to expressions whose size is
 excessive and whose structure is hidden.  In addition, many calculations
 involve intermediate expressions which swell causing programs to
-terminate before completion.  Through experience, a user can avoid many
+terminate before completion.  Through experience, an user can avoid many
 of these difficulties.
 
    Because of the special way in which tensors and tensor operations are
@@ -24595,7 +24919,7 @@ File: maxima.info,  Node: Functions and Variables for itensor,  Prev: Introducti
      when present, causes the function to stop after the first
      successful substitution in a product expression.  The
      'simpmetderiv' function also makes use of the global variable
-     <flipflag> which determines how to apply a "canonical" ordering to
+     'flipflag' which determines how to apply a "canonical" ordering to
      the product indices.
 
      Put together, these capabilities can be used to achieve powerful
@@ -24787,7 +25111,7 @@ frame.
    To use frames, you must first set 'iframe_flag' to 'true'.  This
 causes the Christoffel-symbols, 'ichr1' and 'ichr2', to be replaced by
 the more general frame connection coefficients 'icc1' and 'icc2' in
-calculations.  Speficially, the behavior of 'covdiff' and 'icurvature'
+calculations.  Specifically, the behavior of 'covdiff' and 'icurvature'
 is changed.
 
    The frame is defined by two tensors: the inverse frame field ('ifri',
@@ -25388,7 +25712,7 @@ and should not be redefined:
        ------------------------------------------
        indices2() Internal version of indices()
        conti      Lists contravariant indices
-       covi       Lists covariant indices of a indexed object
+       covi       Lists covariant indices of an indexed object
        deri       Lists derivative indices of an indexed object
        name       Returns the name of an indexed object
        concan

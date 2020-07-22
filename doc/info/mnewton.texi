@@ -12,7 +12,9 @@
 equations in one or more variables.
 
 @opencatbox
-@category{Numerical methods} @category{Share packages} @category{Package mnewton}
+@category{Numerical methods}
+@category{Share packages}
+@category{Package mnewton}
 @closecatbox
 
 @c -----------------------------------------------------------------------------
@@ -63,6 +65,9 @@ If the solution is not found, @code{[]} is returned.
 
 This function is controlled by global variables @mref{newtonepsilon} and
 @mrefdot{newtonmaxiter}
+
+See also @mrefcomma{realroots} @mrefcomma{allroots} @mref{find_root} and
+@mrefdot{newton}
 
 @example
 (%i1) load("mnewton")$

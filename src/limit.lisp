@@ -21,9 +21,9 @@
 
 ;;; I believe a large portion of this file is described in Paul
 ;;; Wang's thesis, "Evaluation of Definite Integrals by Symbolic
-;;; Integration," MIT/LCS/TR-92, Oct. 1971.  This can be found at
-;;; http://www.lcs.mit.edu/publications/specpub.php?id=660, but some
-;;; important pages are black.
+;;; Manipulation," MIT/LCS/TR-92, Oct. 1971.  This can be found at
+;;; https://web.archive.org/web/20191019131847/https://apps.dtic.mil/dtic/tr/fulltext/u2/732005.pdf
+
 
 ;;; TOP LEVEL FUNCTION(S): $LIMIT $LDEFINT
 
@@ -101,7 +101,7 @@
         (apply #'toplevel-$limit args))
       first-try)))
 
-(defmfun toplevel-$limit (&rest args)
+(defun toplevel-$limit (&rest args)
   (let ((limit-assumptions ())
 	(old-integer-info ())
 	($keepfloat t)
@@ -237,7 +237,7 @@
   (setq exp (restorelim exp))
   (if preserve-direction exp (ridofab exp)))
 
-(defmfun limit-list (exp1 &rest rest)
+(defun limit-list (exp1 &rest rest)
   (if (mbagp exp1)
       `(,(car exp1) ,@(mapcar #'(lambda (x) (apply #'toplevel-$limit `(,x ,@rest))) (cdr exp1)))
       ()))
@@ -574,7 +574,7 @@ ignoring dummy variables and array indices."
     
 
 ;;;*I* INDICATES: T => USE LIMIT1,THINK, NIL => USE SIMPLIMIT.
-(defmfun limit (exp var val *i*)
+(defun limit (exp var val *i*)
   (cond
     ((among '$und exp)  '$und)
     ((eq var exp)  val)
@@ -713,7 +713,7 @@ ignoring dummy variables and array indices."
   (resimplify ex))
 
 ;;Used by tlimit also.
-(defmfun limit1 (exp var val)
+(defun limit1 (exp var val)
   (prog ()
      (let ((lhprogress? lhp?)
            (lhp? ())
@@ -1362,7 +1362,7 @@ ignoring dummy variables and array indices."
 		  (exp (sratsimp (sdiff exp var)) (sratsimp (sdiff exp var)))
 		  (n () (not n))
 		  (ans ()))	; This do wins by a return.
-		 ((> ct 0) 0)	; This loop used to run up to 5 times,
+		 ((> ct 1) 0)	; This loop used to run up to 5 times,
 		 ;; but the size of some expressions would blow up.
 	       (setq ans (no-err-sub val exp)) ;Why not do an EVENFN and ODDFN
 					;test here.
@@ -1791,7 +1791,7 @@ ignoring dummy variables and array indices."
 	 (or (equal 1. bl) (equal bl -1.)))
 	(t (equal (getsignl (m1- `((mabs) ,bl))) 0))))
 
-(defmfun simplimit (exp var val &aux op)
+(defun simplimit (exp var val &aux op)
   (cond
     ((eq var exp) val)
     ((or (atom exp) (mnump exp)) exp)
@@ -2097,7 +2097,7 @@ ignoring dummy variables and array indices."
 	(t l)))
 
 ;; get rid of zeroa and zerob
-(defmfun ridofab (e)
+(defun ridofab (e)
   (if (among '$zeroa e) (setq e (maxima-substitute 0 '$zeroa e)))
   (if (among '$zerob e) (setq e (maxima-substitute 0 '$zerob e)))
   e)
@@ -2729,21 +2729,17 @@ ignoring dummy variables and array indices."
 	  ((member arglim '($minf $infinity) :test #'eq)
 	   '$infinity)
 	  ((member arglim '($ind $und) :test #'eq) '$und)
+	  ((eq arglim '$zeroa)  '$minf)
+	  ((eq arglim '$zerob)  '$infinity)
+	  ((equalp arglim 0)  '$infinity)
+	  ((equalp arglim 1)
+	   (let ((dir (behavior (cadr expr) var val)))
+	     (cond ((equal dir 1) '$zeroa)
+		   ((equal dir -1) '$zerob)
+		   (t 0))))
 	  ((equalp ($imagpart (cadr expr)) 0)
            ;; argument is real.
-	   (let* ((real-lim (ridofab arglim)))
-	     (if (equalp real-lim 0)
-		 (cond ((eq arglim '$zeroa)  '$minf)
-		       ((eq arglim '$zerob)  '$infinity)
-                       (t (let ((dir (behavior (cadr expr) var val)))
-			    (cond ((equal dir 1) '$minf)
-				  ((equal dir -1) '$infinity)
-				  (t (throw 'limit t))))))
-		 (cond ((equalp arglim 1)
-			(let ((dir (behavior (cadr expr) var val)))
-			  (if (equal dir 1) '$zeroa 0)))
-		       (t  ;; Call simplifier to get value at the limit of the argument. 
-		         (simplify `((%log) ,real-lim)))))))
+	   (simplify `((%log) ,arglim)))
 	  (t	   ;; argument is complex.
 	   (destructuring-bind (rp . ip)
                (trisplit expr)

@@ -105,16 +105,6 @@
   (let ((ex (simplify ($factor x))))
     (if (not (alike1 ex x)) ex)))
 
-;; Like FIND-IF, but calls FUNC on elements of SEQ in turn until one returns
-;; non-NIL. At that point, return the result (rather than the input, which is
-;; what you'd get from FIND-IF)
-
-(defun map-find (func seq)
-  (map nil (lambda (x)
-             (let ((result (funcall func x)))
-               (when result (return-from map-find result))))
-       seq))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Stage II of the Integrator
@@ -128,7 +118,7 @@
 
         ;; Map the function intform over the arguments of a sum or a product
 	((member (caar expres) '(mplus mtimes) :test #'eq)
-         (map-find #'intform (cdr expres)))
+         (some #'intform (cdr expres)))
 
         ((or (eq (caar expres) '%log)
             (arcp (caar expres)))
@@ -776,13 +766,14 @@
       (exptflag nil)) ; When T, the substitution is not possible.
   
   (defun superexpt (exp var bas1 pow1)
-    (prog (y)
+    (prog (y (new-var (gensym "NEW-VAR-")))
       (setq bas bas1
             pow pow1
             exptflag nil)
       ;; Transform the integrand. At this point resimplify, because it is not
       ;; guaranteed, that a correct simplified expression is returned.
-      (setq y (resimplify (elemxpt exp)))
+      ;; Use a new variable to prevent facts on the old variable to be wrongly used.
+      (setq y (resimplify (maxima-substitute new-var var (elemxpt exp))))
       (when exptflag (return nil))
       ;; Integrate the transformed integrand and substitute back.
       (return
@@ -790,11 +781,11 @@
           (substint (list '(mexpt) bas
                           (list '(mplus) (cdras 'a pow)
                                 (list '(mtimes) (cdras 'b pow) var)))
-                    var
+                    new-var
                     (integrator (div y
-                                     (mul var
+                                     (mul new-var
                                           (cdras 'b pow)
-                                          (take '(%log) bas))) var))))))
+                                          (take '(%log) bas))) new-var))))))
   
   ;; Transform expressions like g^(b*x+a) to the common base bas and
   ;; do the substitution y = bas^(b*x+a) in the expr.
@@ -1639,7 +1630,7 @@
 (defmvar $integration_constant '$%c)
 
 ;; This is the top level of the integrator
-(defmfun sinint (exp var)
+(defun sinint (exp var)
   ;; *integrator-level* is a recursion counter for INTEGRATOR.  See
   ;; INTEGRATOR for more details.  Initialize it here.
   (let ((*integrator-level* 0))

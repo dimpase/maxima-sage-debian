@@ -60,23 +60,23 @@
 
 (defvar *tex-environment-default* '("$$" . "$$"))
 
-(defun $set_tex_environment_default (env-open env-close)
+(defmfun $set_tex_environment_default (env-open env-close)
   (setq env-open ($sconcat env-open))
   (setq env-close ($sconcat env-close))
   (setq *tex-environment-default* `(,env-open . ,env-close))
   ($get_tex_environment_default))
 
-(defun $get_tex_environment_default ()
+(defmfun $get_tex_environment_default ()
   `((mlist) ,(car *tex-environment-default*) ,(cdr *tex-environment-default*)))
 
-(defun $set_tex_environment (x env-open env-close)
+(defmfun $set_tex_environment (x env-open env-close)
   (setq env-open ($sconcat env-open))
   (setq env-close ($sconcat env-close))
   (if (getopr x) (setq x (getopr x)))
   (setf (get x 'tex-environment) `(,env-open . ,env-close))
   ($get_tex_environment x))
 
-(defun $get_tex_environment (x)
+(defmfun $get_tex_environment (x)
   (if (getopr x) (setq x (getopr x)))
   (let ((e (get-tex-environment x)))
     `((mlist) ,(car e) ,(cdr e))))
@@ -344,17 +344,45 @@
   (tex x (append l '("\\left(")) (cons "\\right)" r) 'mparen 'mparen))
 
 (defun tex-array (x l r)
+  (tex-array-display-indices x l r))
+
+(defun tex-array-display-indices (x l r)
+  (let*
+    ((base-symbol (caar x))
+     (indices (cdr x))
+     (display-indices (safe-mget base-symbol 'display-indices)))
+    (if (or (not display-indices) (not (= (length display-indices) (length indices))))
+      ;; Ignore DISPLAY-INDICES if it's empty, or nonempty and not the same size as INDICES.
+      (tex-array-simple x l r)
+      (let
+        ((pre-subscripts (extract-indices indices display-indices '$presubscript))
+         (pre-superscripts (extract-indices indices display-indices '$presuperscript))
+         (post-subscripts (extract-indices indices display-indices '$postsubscript))
+         (post-superscripts (extract-indices indices display-indices '$postsuperscript)))
+        (when (or pre-subscripts pre-superscripts)
+          (setq l (append l
+                          (list "{}")
+                          (if pre-subscripts (cons "_{" (tex-list pre-subscripts nil (list "}") ",")))
+                          (if pre-superscripts (cons "^{" (tex-list pre-superscripts nil (list "}") ","))))))
+        (when (or post-subscripts post-superscripts)
+          (setq r (append (if post-subscripts (cons "_{" (tex-list post-subscripts nil (list "}") ",")))
+                          (if post-superscripts  (cons "^{" (tex-list post-superscripts nil (list "}") ","))) r)))
+        (tex-atom base-symbol l r)))))
+
+(defun tex-array-simple (x l r)
   (let ((f))
+    ;; I believe this test always fails; TEX-MQAPPLY calls TEX-ARRAY w/ X = second argument of MQAPPLY.
     (if (eq 'mqapply (caar x))
-	(setq f (cadr x)
-	      x (cdr x)
-	      l (tex f (append l (list "\\left(")) (list "\\right)") 'mparen 'mparen))
-	(setq f (caar x)
-	      l (tex f l nil lop 'mfunction)))
+        (setq f (cadr x)
+              x (cdr x)
+              l (tex f (append l (list "\\left(")) (list "\\right)") 'mparen 'mparen))
+        (setq f (caar x)
+              l (tex f l nil lop 'mfunction)))
     (setq
      r (nconc (tex-list (cdr x) nil (list "}") ",") r))
     (nconc l (list "_{") r  )))
 
+;;
 ;; we could patch this so sin x rather than sin(x), but instead we made sin a prefix
 ;; operator
 
@@ -452,6 +480,8 @@
 
 (defprop mlist tex-matchfix tex)
 (defprop mlist (("\\left[ ")" \\right] ") texsym)
+(setf (get '%mlist 'tex) (get 'mlist 'tex))
+(setf (get '%mlist 'texsym) (get 'mlist 'texsym))
 
 ;;absolute value
 (defprop mabs tex-matchfix tex)
@@ -1081,7 +1111,7 @@
   (append l (cons (format nil "\\hspace{~dmm}" (* 3 (cadr x))) r)))
 
 ;; run some code initialize file before $tex is run
-(defun $texinit(file)
+(defmfun $texinit(file)
 (declare (ignore file))
   '$done)
 
@@ -1089,7 +1119,7 @@
 ;; probably have no trouble spotting, and will generally be unnecessary, since
 ;; we anticipate almost all use of tex would be involved in inserting this
 ;; stuff into larger files that would have their own \\end or equivalent.
-(defun $texend(filename)
+(defmfun $texend(filename)
   (with-open-file (st (stripdollar filename)  :direction :output
 		      :if-exists :append :if-does-not-exist :create)
     (format st "\\end~%"))
@@ -1117,7 +1147,7 @@
 ;; Convenience function to allow user to process expression X
 ;; and get a string (TeX output for X) in return.
 
-(defun $tex1 (x) (reduce #'strcat (tex x nil nil 'mparen 'mparen)))
+(defmfun $tex1 (x) (reduce #'strcat (tex x nil nil 'mparen 'mparen)))
 
 ;; Undone and trickier:
 ;; handle reserved symbols stuff, just in case someone
@@ -1130,7 +1160,7 @@
 
 ;;  The texput function was written by Barton Willis.
 
-(defun $texput (e s &optional tx)
+(defmfun $texput (e s &optional tx)
 
   (cond
     ((stringp e)

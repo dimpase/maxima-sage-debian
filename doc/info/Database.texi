@@ -1,17 +1,17 @@
 @menu
-* Introduction to Maximas Database::
+* Introduction to Maxima's Database::
 * Functions and Variables for Properties::
 * Functions and Variables for Facts::
 * Functions and Variables for Predicates::
 @end menu
 
 @c -----------------------------------------------------------------------------
-@node Introduction to Maximas Database, Functions and Variables for Properties, Maximas Database, Maximas Database
-@section Introduction to Maximas Database
+@node Introduction to Maxima's Database, Functions and Variables for Properties, Maxima's Database, Maxima's Database
+@section Introduction to Maxima's Database
 @c -----------------------------------------------------------------------------
 
 @c -----------------------------------------------------------------------------
-@node Functions and Variables for Properties, Functions and Variables for Facts, Introduction to Maximas Database, Maximas Database
+@node Functions and Variables for Properties, Functions and Variables for Facts, Introduction to Maxima's Database, Maxima's Database
 @section Functions and Variables for Properties
 @c -----------------------------------------------------------------------------
 
@@ -106,7 +106,8 @@ Example:
 @end example
 
 @opencatbox
-@category{Declarations and inferences} @category{Constants}
+@category{Declarations and inferences}
+@category{Constants}
 @closecatbox
 @end deffn
 
@@ -158,7 +159,8 @@ Examples:
 @end example
 
 @opencatbox
-@category{Predicate functions} @category{Constants}
+@category{Predicate functions}
+@category{Constants}
 @closecatbox
 @end deffn
 
@@ -423,7 +425,8 @@ See also @mref{declare} and @mrefdot{features}
 @end example
 
 @opencatbox
-@category{Predicate functions} @category{Declarations and inferences}
+@category{Predicate functions}
+@category{Declarations and inferences}
 @closecatbox
 @end deffn
 
@@ -637,7 +640,9 @@ Makes atoms behave as does a list or matrix with respect to the dot operator.
 See also @mrefdot{declare}
 
 @opencatbox
-@category{Declarations and inferences} @category{Vectors} @category{Matrices}
+@category{Declarations and inferences}
+@category{Vectors}
+@category{Matrices}
 @closecatbox
 @end defvr
 
@@ -651,7 +656,9 @@ atoms declared as non-scalars, lists, or matrices.
 See also the predicate function @mref{scalarp} and @mrefdot{declare}
 
 @opencatbox
-@category{Predicate functions} @category{Vectors} @category{Matrices}
+@category{Predicate functions}
+@category{Vectors}
+@category{Matrices}
 @closecatbox
 @end deffn
 
@@ -667,7 +674,8 @@ See also the predicate function @mref{scalarp} and @mrefdot{declare}
 See also @mrefdot{declare}
 
 @opencatbox
-@category{Declarations and inferences} @category{Operators}
+@category{Declarations and inferences}
+@category{Operators}
 @closecatbox
 @end defvr
 
@@ -689,7 +697,8 @@ cannot otherwise be displayed, i.e.  for @mrefcomma{atvalue}@w{}
 @mrefcomma{atomgrad} @mrefcomma{gradef} and @mrefdot{matchdeclare}
 
 @opencatbox
-@category{Declarations and inferences} @category{Display functions}
+@category{Declarations and inferences}
+@category{Display functions}
 @closecatbox
 @end deffn
 
@@ -723,7 +732,8 @@ mentioned in @mrefcomma{infolists} such as specified by @mrefcomma{atvalue}@w{}
 @mref{declare} function.
 
 @opencatbox
-@category{Declarations and inferences} @category{Global variables}
+@category{Declarations and inferences}
+@category{Global variables}
 @closecatbox
 @end defvr
 
@@ -962,12 +972,14 @@ constants, and such variables, but not containing matrices or lists.
 See also the predicate function @mrefdot{nonscalarp}
 
 @opencatbox
-@category{Predicate functions} @category{Vectors} @category{Matrices}
+@category{Predicate functions}
+@category{Vectors}
+@category{Matrices}
 @closecatbox
 @end deffn
 
 @c -----------------------------------------------------------------------------
-@node Functions and Variables for Facts, Functions and Variables for Predicates, Functions and Variables for Properties, Maximas Database
+@node Functions and Variables for Facts, Functions and Variables for Predicates, Functions and Variables for Properties, Maxima's Database
 @section Functions and Variables for Facts
 @c -----------------------------------------------------------------------------
 
@@ -1228,7 +1240,9 @@ Examples:
 @c asksign (foo (a));
 @c asksign (foo (a) + bar (b));
 @c asksign (log (a));
+@c input:p;
 @c asksign (a - b);
+@c input:p;
 @c ===end===
 @example
 (%i1) assume_pos: true$
@@ -1317,7 +1331,7 @@ Default value: @code{[initial, global]}
 @code{contexts} is a list of the contexts which
 currently exist, including the currently active context.
 
-The context mechanism makes it possible for a user to bind together
+The context mechanism makes it possible for an user to bind together
 and name a collection of facts, called a context.
 Once this is done, the user can have Maxima assume or forget large numbers
 of facts merely by activating or deactivating their context.
@@ -1474,7 +1488,8 @@ a > 0
 @end example
 
 @opencatbox
-@category{Predicate functions} @category{Declarations and inferences}
+@category{Predicate functions}
+@category{Declarations and inferences}
 @closecatbox
 @end deffn
 
@@ -1536,7 +1551,8 @@ Examples:
 @end example
 
 @opencatbox
-@category{Predicate functions} @category{Declarations and inferences}
+@category{Predicate functions}
+@category{Declarations and inferences}
 @closecatbox
 @end deffn
 
@@ -1570,6 +1586,8 @@ current data base.  It returns one of the following answers: @code{pos}
 @code{nz} (negative or zero), @code{pn} (positive or negative), or @code{pnz}
 (positive, negative, or zero, i.e. nothing known).
 
+See also @mrefdot{signum}
+
 @opencatbox
 @category{Declarations and inferences}
 @closecatbox
@@ -1598,7 +1616,7 @@ If @var{name} is not specified, a new name is created (via @code{gensym}) and re
 @end deffn
 
 @c -----------------------------------------------------------------------------
-@node Functions and Variables for Predicates, , Functions and Variables for Facts, Maximas Database
+@node Functions and Variables for Predicates, , Functions and Variables for Facts, Maxima's Database
 @section Functions and Variables for Predicates
 @c -----------------------------------------------------------------------------
 
@@ -1901,7 +1919,8 @@ Returns @code{true} if and only if @var{expr} contains an operator or function
 not recognized by the Maxima simplifier.
 
 @opencatbox
-@category{Predicate functions} @category{Simplification functions}
+@category{Predicate functions}
+@category{Simplification functions}
 @closecatbox
 @end deffn
 
