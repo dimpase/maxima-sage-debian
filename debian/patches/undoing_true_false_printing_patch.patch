@@ -1,6 +1,6 @@
 --- a/src/grind.lisp
 +++ b/src/grind.lisp
-@@ -295,12 +295,12 @@
+@@ -297,12 +297,12 @@
        (msz nil l r)
        (do ((nl) (w 0))
            ((null (cdr x))

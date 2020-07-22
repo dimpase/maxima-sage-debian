@@ -9,5 +9,5 @@ Author: Tobias Hansen <thansen@debian.org>
  \input texinfo                  @c -*-texinfo-*-
 +@documentencoding ISO-8859-1
  @c %**start of header
+ @documentencoding ISO-8859-1
  @setfilename imaxima.info
- @settitle Imaxima Manual
