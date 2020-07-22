@@ -1,3 +1,9 @@
+maxima-sage (5.44.0-1) UNRELEASED; urgency=medium
+
+  * New upstream version.
+
+ -- Tobias Hansen <thansen@debian.org>  Wed, 22 Jul 2020 20:15:39 +0000
+
 maxima-sage (5.42.2-2) unstable; urgency=medium
 
   * Change Build-Dependency python-dev to python3-dev. (Closes: #943119)
