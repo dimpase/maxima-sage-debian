@@ -1,11 +1,11 @@
-maxima-sage (5.44.0-1) UNRELEASED; urgency=medium
+maxima-sage (5.44.0-1) unstable; urgency=medium
 
   * New upstream version.
   * Build-Depend on ecl (>= 20.4.24).
   * Remove 0001-taylor2-Avoid-blowing-the-stack-when-diff-expand-isn.patch
     The problem was fixed upstream.
 
- -- Tobias Hansen <thansen@debian.org>  Wed, 22 Jul 2020 20:15:39 +0000
+ -- Tobias Hansen <thansen@debian.org>  Sun, 30 Aug 2020 12:23:26 +0200
 
 maxima-sage (5.42.2-2) unstable; urgency=medium
 
