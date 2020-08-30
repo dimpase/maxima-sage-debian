@@ -1,6 +1,7 @@
 maxima-sage (5.44.0-1) UNRELEASED; urgency=medium
 
   * New upstream version.
+  * Build-Depend on ecl (>= 20.4.24).
 
  -- Tobias Hansen <thansen@debian.org>  Wed, 22 Jul 2020 20:15:39 +0000
 
