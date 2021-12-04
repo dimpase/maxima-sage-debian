@@ -35,6 +35,7 @@ Description: Computer algebra system -- base system
 Package: maxima-sage-doc
 Section: doc
 Architecture: all
+Multi-Arch: foreign
 Depends: ${misc:Depends}
 Description: Computer algebra system -- documentation
  Maxima is a fully symbolic computation program.  It is full featured

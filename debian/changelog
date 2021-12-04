@@ -1,6 +1,7 @@
 maxima-sage (5.45.1-1) UNRELEASED; urgency=medium
 
   * New upstream version.
+  * Mark maxima-sage-doc Multi-Arch: foreign.
 
  -- Tobias Hansen <thansen@debian.org>  Mon, 29 Nov 2021 22:28:40 +0000
 
