@@ -97,44 +97,44 @@ License: GPL-2+
  On Debian systems, the complete text of the GNU General
  Public License version 2 can be found in /usr/share/common-licenses/GPL-2
 
-Files: ./doc/intromax/intromax.html
- ./doc/intromax/intromax.tex
- ./share/contrib/coma/coma.mac
- ./share/contrib/diffequations/extrabessel.lisp
- ./share/contrib/diffequations/gauss.lisp
- ./share/contrib/diffequations/kummer.lisp
- ./share/contrib/diffequations/lazysolver.lisp
- ./share/contrib/diffequations/odelin.lisp
- ./share/contrib/diffequations/odeutils.lisp
- ./share/contrib/diffequations/spherodialwave.lisp
- ./share/contrib/diffequations/sqfr.lisp
- ./share/contrib/diffequations/testodelin.lisp
- ./share/contrib/integration/abs_integrate.mac
- ./share/contrib/integration/hyperint.mac
- ./share/contrib/odes/odes.mac
- ./share/contrib/opsubst.lisp
- ./share/contrib/stirling.mac
- ./share/contrib/tocl.lisp
- ./share/contrib/trigtools/trigtools.mac
- ./share/finance/finance.mac
- ./share/fourier_elim/fourier_elim.lisp
- ./share/hypergeometric/abramowitz_id.mac
- ./share/hypergeometric/hypergeometric.lisp
- ./share/hypergeometric/hypergeometric_mac.mac
- ./share/hypergeometric/nfloat.lisp
- ./share/linearalgebra/eigens-by-jacobi.lisp
- ./share/linearalgebra/linearalgebra.mac
- ./share/linearalgebra/lu.lisp
- ./share/linearalgebra/matrixexp.lisp
- ./share/multiadditive/multiadditive.lisp
- ./share/numericalio/encode-decode-float.lisp
- ./share/numericalio/numericalio.lisp
- ./share/orthopoly/orthopoly.lisp
- ./share/pdiff/pdiff.lisp
- ./share/solve_rat_ineq/solve_rat_ineq.mac
- ./src/conjugate.lisp
- ./src/expintegral.lisp
- ./src/nset.lisp
+Files: doc/intromax/intromax.html
+ doc/intromax/intromax.tex
+ share/contrib/coma/coma.mac
+ share/contrib/diffequations/extrabessel.lisp
+ share/contrib/diffequations/gauss.lisp
+ share/contrib/diffequations/kummer.lisp
+ share/contrib/diffequations/lazysolver.lisp
+ share/contrib/diffequations/odelin.lisp
+ share/contrib/diffequations/odeutils.lisp
+ share/contrib/diffequations/spherodialwave.lisp
+ share/contrib/diffequations/sqfr.lisp
+ share/contrib/diffequations/testodelin.lisp
+ share/contrib/integration/abs_integrate.mac
+ share/contrib/integration/hyperint.mac
+ share/contrib/odes/odes.mac
+ share/contrib/opsubst.lisp
+ share/contrib/stirling.mac
+ share/contrib/tocl.lisp
+ share/contrib/trigtools/trigtools.mac
+ share/finance/finance.mac
+ share/fourier_elim/fourier_elim.lisp
+ share/hypergeometric/abramowitz_id.mac
+ share/hypergeometric/hypergeometric.lisp
+ share/hypergeometric/hypergeometric_mac.mac
+ share/hypergeometric/nfloat.lisp
+ share/linearalgebra/eigens-by-jacobi.lisp
+ share/linearalgebra/linearalgebra.mac
+ share/linearalgebra/lu.lisp
+ share/linearalgebra/matrixexp.lisp
+ share/multiadditive/multiadditive.lisp
+ share/numericalio/encode-decode-float.lisp
+ share/numericalio/numericalio.lisp
+ share/orthopoly/orthopoly.lisp
+ share/pdiff/pdiff.lisp
+ share/solve_rat_ineq/solve_rat_ineq.mac
+ src/conjugate.lisp
+ src/expintegral.lisp
+ src/nset.lisp
 Copyright: 1988-2010, Richard H. Rand.
   2000-2009, Barton Willis
   2002-2003, Stavros Macrakis (macrakis@alum.mit.edu)
@@ -148,24 +148,24 @@ License: GPL
  Public License can be found in /usr/share/common-licenses/GPL-1
 
 
-Files: ./share/algebra/solver/*
- ./share/calculus/pade2.mac
- ./share/contrib/impdiff.mac
- ./share/contrib/makeOrders.mac
- ./share/contrib/state/*
+Files: share/algebra/solver/*
+ share/calculus/pade2.mac
+ share/contrib/impdiff.mac
+ share/contrib/makeOrders.mac
+ share/contrib/state/*
 Copyright: 1999, 2000 Dan Stanger
 License: LGPL-2+
  On Debian systems, the complete text of the GNU Library General
  Public License version 2 can be found in /usr/share/common-licenses/LGPL-2
 
-Files: ./share/contrib/ggf.mac
- ./share/contrib/lindstedt.mac
- ./share/contrib/Eulix/Eulix.mac
- ./share/logic/logic.dem
- ./share/logic/logic.lisp
- ./share/logic/logic.mac
- ./share/lsquares/plsquares.mac
- ./share/mnewton/mnewton.mac
+Files: share/contrib/ggf.mac
+ share/contrib/lindstedt.mac
+ share/contrib/Eulix/Eulix.mac
+ share/logic/logic.dem
+ share/logic/logic.lisp
+ share/logic/logic.mac
+ share/lsquares/plsquares.mac
+ share/mnewton/mnewton.mac
 Copyright: 2001, Dan Stanger
   2002, Cliff Yapp
   2002, Dan Stanger
@@ -177,19 +177,18 @@ License: LGPL-2.1+
  On Debian systems, the complete text of the GNU Lesser General
  Public License version 2.1 can be found in /usr/share/common-licenses/LGPL-2.1
 
-Files: ./doc/info/de.utf8/texinfo.tex
- ./doc/info/de/texinfo.tex
- ./doc/info/es/texinfo.tex
- ./doc/info/pt/texinfo.tex
+Files: doc/info/de/texinfo.tex
+ doc/info/es/texinfo.tex
+ doc/info/pt/texinfo.tex
 Copyright: 1985-1986, 1988, 1990-2011, Free Software Foundation, Inc.
 License: GPL-3+
  On Debian systems, the complete text of the GNU General
  Public License version 3 can be found in /usr/share/common-licenses/GPL-3
 
-Files: ./share/contrib/bitwise/bitwise.lisp
- ./share/linearalgebra/mring.lisp
- ./src/maxmin.lisp
- ./src/nummod.lisp
+Files: share/contrib/bitwise/bitwise.lisp
+ share/linearalgebra/mring.lisp
+ src/maxmin.lisp
+ src/nummod.lisp
 Copyright: 2004-2005, 2007, Barton Willis
   2008, Volker van Nek
 License: LLGPL
@@ -257,15 +256,15 @@ License: LLGPL
  source code of Library (or your derivative thereof) that is incorporated into 
  this executable.
 
-Files: ./interfaces/emacs/misc/sshell.el
- ./interfaces/emacs/misc/bookmode.el
+Files: interfaces/emacs/misc/sshell.el
+ interfaces/emacs/misc/bookmode.el
 Copyright: 1985-1988, Free Software Foundation, Inc.
            William F. Schelter
 License: GPL-1+
  On Debian systems, the complete text of the GNU General
  Public License version 1 can be found in /usr/share/common-licenses/GPL-1
 
-Files: ./src/intl.lisp
+Files: src/intl.lisp
 Copyright: 1999-2010, Paul Foley (mycroft@actrix.gen.nz)
 License: Expat
  Permission is hereby granted, free of charge, to any person obtaining
