@@ -3,7 +3,7 @@ Section: math
 Priority: optional
 Maintainer: Debian Math Team <team+math@tracker.debian.org>
 Uploaders: Tobias Hansen <thansen@debian.org>
-Build-Depends: ecl (>= 20.4.24), texinfo, libffi-dev, libgmp3-dev, automake, debhelper ( >=10 ), texlive-latex-recommended, tex-common, python3-dev
+Build-Depends: ecl (>= 21.2.1), texinfo, libffi-dev, libgmp3-dev, automake, debhelper ( >=10 ), texlive-latex-recommended, tex-common, python3-dev
 Standards-Version: 4.6.0
 Homepage: http://maxima.sourceforge.net/
 Vcs-Git: https://salsa.debian.org/math-team/maxima-sage.git
