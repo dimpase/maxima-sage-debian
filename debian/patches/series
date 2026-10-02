@@ -1,7 +1,3 @@
 renew-cl-info.lsp-patch-to-set-alternative-info-directory
-build-fasl.patch
-matrixexp.patch
-undoing_true_false_printing_patch.patch
 change_name_to_maxima-sage.patch
 handle-multiple-ldflags.patch
-texinfo-encoding.patch

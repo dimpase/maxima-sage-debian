@@ -6,7 +6,7 @@ Bug-Debian: http://bugs.debian.org/847925
 
 --- a/src/maxima.system
 +++ b/src/maxima.system
-@@ -58,6 +58,19 @@
+@@ -53,6 +53,19 @@
      (and (apply #'compile-file file :output-file object-output args)
  	 (c:build-fasl output :lisp-files (list object-output)))))
  
@@ -26,7 +26,7 @@ Bug-Debian: http://bugs.debian.org/847925
  #+ecl
  (defun build-maxima-lib ()
    (labels ((list-all-objects (module)
-@@ -79,12 +92,12 @@
+@@ -74,12 +87,12 @@
  			  :ld-flags
  			  (let ((x (symbol-value (find-symbol "*AUTOCONF-LD-FLAGS*"
  							      (find-package "MAXIMA")))))
@@ -40,4 +40,4 @@ Bug-Debian: http://bugs.debian.org/847925
 +			    (if (and x (not (string= x ""))) (split-string x)))
  			  :epilogue-code '(progn (cl-user::run)))))))
  
- (defun maxima-binary-pathname ()
+ ;; CMUCL, SCL, SBCL and LispWorks build an absolute binary pathname
