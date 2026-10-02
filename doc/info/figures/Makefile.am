@@ -141,6 +141,9 @@ worldmap_geomap3.pdf\
 worldmap_geomap4.pdf\
 worldmap_geomap5.pdf\
 worldmap_geomap6.pdf\
+wrstcse_ewc_2.pdf\
+wrstcse_ewc_3.pdf\
+wrstcse_montecarlo.pdf\
 draw_axis3d.png\
 draw_allocation.png\
 draw_allocation2.png\
@@ -279,6 +282,9 @@ worldmap_geomap3.png\
 worldmap_geomap4.png\
 worldmap_geomap5.png\
 worldmap_geomap6.png\
+wrstcse_ewc_2.png\
+wrstcse_ewc_3.png\
+wrstcse_montecarlo.png\
 plotting1.png plotting1.pdf\
 plotting2.png plotting2.pdf\
 plotting3.png plotting3.pdf\
@@ -304,11 +310,17 @@ plotting22.png plotting22.pdf\
 plotting23.png plotting23.pdf\
 plotting24.png plotting24.pdf\
 plotting25.png plotting25.pdf\
-plotting26.png plotting26.pdf
+plotting26.png plotting26.pdf\
+colnew-ex2.png colnew-ex2.pdf\
+colnew-ex5.png colnew-ex5.pdf
+
 # draw_color2.png and draw_color2.pdf aren't automatically remade since the png terminal
 # doesn't support transparency
 
-
+colnew-ex2.pdf: colnew-ex2.mac ../docdraw.mac
+colnew-ex2.png: colnew-ex2.mac ../docdraw.mac
+colnew-ex5.pdf: colnew-ex5.mac ../docdraw.mac
+colnew-ex5.png: colnew-ex5.mac ../docdraw.mac
 plotting26.pdf: plotting26.mac ../docdraw.mac
 plotting26.png: plotting26.mac ../docdraw.mac
 plotting25.pdf: plotting25.mac ../docdraw.mac
@@ -713,6 +725,13 @@ worldmap_geomap5.png: worldmap_geomap5.mac ../docdraw.mac
 worldmap_geomap5.pdf: worldmap_geomap5.mac ../docdraw.mac
 worldmap_geomap6.png: worldmap_geomap6.mac ../docdraw.mac
 worldmap_geomap6.pdf: worldmap_geomap6.mac ../docdraw.mac
+wrstcse_ewc_2.png: wrstcse_ewc_2.mac ../docdraw.mac
+wrstcse_ewc_2.pdf: wrstcse_ewc_2.mac ../docdraw.mac
+wrstcse_ewc_3.png: wrstcse_ewc_3.mac ../docdraw.mac
+wrstcse_ewc_3.pdf: wrstcse_ewc_3.mac ../docdraw.mac
+wrstcse_montecarlo.png: wrstcse_montecarlo.mac ../docdraw.mac
+wrstcse_montecarlo.pdf: wrstcse_montecarlo.mac ../docdraw.mac
+
 # draw_color2.png isn't automatically remade since the png terminal doesn't
 # support transparency
 

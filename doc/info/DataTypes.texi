@@ -35,7 +35,7 @@ of complex expressions can usually be accomplished by using the @code{realpart},
 @code{imagpart}, @code{rectform}, @code{polarform}, @code{abs}, @code{carg}
 functions.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 
@@ -109,7 +109,7 @@ in @var{expr} with bigfloat numbers.
 (%o4)                 4.812118250596035b-1
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end deffn
@@ -120,7 +120,7 @@ in @var{expr} with bigfloat numbers.
 
 Returns @code{true} if @var{expr} is a bigfloat number, otherwise @code{false}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @category{Predicate functions}
 @closecatbox
@@ -149,7 +149,7 @@ Example:
 @c ===end===
 @example
 (%i1) ratepsilon:1e-4;
-(%o1)                         1.e-4
+(%o1)                         1.0e-4
 (%i2) rat(bfloat(11111/111111)), bftorat:false;
 `rat' replaced 9.99990999991B-2 by 1/10 = 1.0B-1
                                1
@@ -162,7 +162,7 @@ Example:
                              111111
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end defvr
@@ -177,10 +177,108 @@ displayed.  Thus, if @code{bftrunc} is @code{false}, @code{bfloat (1)}
 displays as @code{1.000000000000000B0}.  Otherwise, this is displayed as
 @code{1.0B0}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{bigfloat_bits}
+@deffn {Function} bigfloat_bits ()
+Returns the number of bits of precision in a bigfloat number.  This
+value depends, of course, on the value of @mref{fpprec}. 
+
+@c ===beg===
+@c fpprec:16;
+@c bigfloat_bits();
+@c fpprec:32;
+@c bigfloat_bits();
+@c ===end===
+@example
+(%i1) fpprec:16;
+(%o1)                                 16
+(%i2) bigfloat_bits();
+(%o2)                                 56
+(%i3) fpprec:32;
+(%o3)                                 32
+(%i4) bigfloat_bits();
+(%o4)                                 109
+@end example
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{bigfloat_eps}
+@deffn {Function} bigfloat_eps ()
+Returns the smallest bigfloat value, @code{eps}, such that
+@code{1+eps} is not equal to 1.  The value depends on @mref{fpprec},
+of course.
+
+@c ===beg===
+@c fpprec:16;
+@c bigfloat_eps();
+@c fpprec:32;
+@c bigfloat_eps();
+@c ===end===
+@example
+(%i1) fpprec:16;
+(%o1)                                 16
+(%i2) bigfloat_eps();
+(%o2)                        1.387778780781446b-17
+(%i3) fpprec:32;
+(%o3)                                 32
+(%i4) bigfloat_eps();
+(%o4)                1.5407439555097886824447823540679b-33
+@end example
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{decode_float}
+@deffn {Function} decode_float (@var{f})
+@code{decode_float} takes a float @var{f} and returns a list of three
+values that characterizes @var{f}, which must be either a @code{float}
+or @code{bfloat}.  The first value has the same type as @var{f}, but
+is a number in the range @code{[1, 2)}.  The second value is an
+exponent.  The third value is a float of the same type as @var{f} and
+has the value of 1 if @var{f} is greater than or equal to 0;
+otherwise, -1.
+
+If the returned list is @code{[mantissa, expo, sign]}, then
+@code{scale_float(mantissa, exp)*sign} is identical to @var{f}.
+
+@example
+(%i1) decode_float(4e0);
+(%o1)                            [1.0, 2, 1.0]
+(%i2) decode_float(4b0);
+(%o2)                          [1.0b0, 2, 1.0b0]
+(%i3) decode_float(%pi);
+
+decode_float is only defined for floats and bfloats: %pi
+ -- an error. To debug this try: debugmode(true);
+(%i4) decode_float(float(%pi));
+(%o4)                     [1.570796326794897, 1, 1.0]
+(%i5) decode_float(1.1e-5);
+(%o5)                        [1.441792, - 17, 1.0]
+(%i6) %[1]*2^%[2];
+(%o6)                               1.1e-5
+@end example
+
+This is a relatively simple interface to Common Lisp
+@url{http://www.lispworks.com/documentation/HyperSpec/Body/f_dec_fl.htm,
+decode_float}.  However we return a signficand in the range
+@code{[1,2)} instead of @code{[0.5, 1)}.  The former matches
+IEEE-754.  Of course, this is extended to support bfloats.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
 
 @c -----------------------------------------------------------------------------
 @anchor{evenp}
@@ -193,7 +291,7 @@ Returns @code{true} if @var{expr} is a literal even integer, otherwise
 @code{evenp} returns @code{false} if @var{expr} is a symbol, even if @var{expr}
 is declared @code{even}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Predicate functions}
 @closecatbox
 @end deffn
@@ -207,7 +305,7 @@ point numbers.  It is also an @mrefcomma{evflag} @code{float} causes
 non-integral rational numbers and bigfloat numbers to be converted to floating
 point.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @category{Evaluation flags}
 @closecatbox
@@ -222,10 +320,125 @@ When @mref{float2bf} is @code{false}, a warning message is printed when
 a floating point number is replaced by a bigfloat number with less precision.
 @c DOES THAT APPLY ONLY TO BFLOAT, OR DO OTHER FUNCTIONS CALL IT ??
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{float_bits}
+@deffn {Function} float_bits ()
+Returns the number of bits of precision of a floating-point number.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{float_eps}
+@deffn {Function} float_eps ()
+Returns the smallest floating-point value, @code{eps}, such that
+@code{1+eps} is not equal to 1.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{float_precision}
+@deffn {Function} float_precision (@var{f})
+Returns the number of bits of precision of a floating-point number,
+which can be either a float or bigfloat.  This is basically the number
+of bits used to represent the mantissa of a floating-point number.
+For floats, this is 53 (for IEEE double-floats), but can be less when
+denormal numbers occur.  For bigfloats, this is equal to
+@mref{fpprec}, when converted from digits to bits.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{float_sign}
+@deffn {Function} float_sign (@var{f})
+Returns the sign of @var{f}.  It is @math{+1} or @math{-1} of the same
+type as @var{f}.  It is an error if @var{f} is not a float or
+bigfloat.  Note that some lisps do not support signed zeros for
+floating-point numbers.  Bigfloats do not support signed zeroes.  The
+examples below assume signed zeroes are supported.
+@example
+(%i1) float_sign(1.0);
+(%o1)                                 1.0
+(%i2) float_sign(-5.0);
+(%o2)                                - 1.0
+(%i3) float_sign(-0.0);
+(%o3)                                - 1.0
+(%i4) float_sign(1b0);
+(%o4)                                1.0b0
+(%i5) float_sign(-5b0);
+(%o5)                               - 1.0b0
+(%o6) float_sign(-0b0);
+(%o6)                                1.0b0
+(%i7) float_sign(%pi);
+
+float_sign is only defined for floats and bfloats: %pi
+ -- an error. To debug this try: debugmode(true);
+@end example
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{float_infinity_p}
+@deffn {Function} float_infinity_p (@var{x})
+
+Returns @code{true} if @var{x} is floating point positive infinity or floating point negative infinity,
+and returns @code{false} for all other arguments;
+arguments which are not numbers are allowed,
+and @code{float_infinity_p} returns @code{false} for all such arguments.
+
+Positive and negative floating point infinity may be distinguished by @code{sign},
+which returns @code{pos} for positive infinity and @code{neg} for negative infinity.
+
+@code{float_infinity_p} is defined whether or not the Lisp implementation supports float infinity.
+When float infinity does not exist in the Lisp implementation's number system,
+@code{float_infinity_p} returns @code{false} for all arguments.
+
+A Lisp implementation may support more than one precision of floating point numbers.
+@code{float_infinity_p} only recognizes double precision floating point infinity,
+and not any other precision.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@category{Predicate functions}
+@closecatbox
+
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{float_nan_p}
+@deffn {Function} float_nan_p (@var{x})
+
+Returns @code{true} if @var{x} is a floating point not-a-number (NaN) value,
+and returns @code{false} for all other arguments;
+arguments which are not numbers are allowed,
+and @code{float_nan_p} returns @code{false} for all such arguments.
+
+@code{float_nan_p} is defined whether or not the Lisp implementation supports floating point not-a-number values.
+When floating point not-a-number does not exist in the Lisp implementation's number system,
+@code{float_nan_p} returns @code{false} for all arguments.
+
+A Lisp implementation may support more than one precision of floating point numbers.
+@code{float_nan_p} only recognizes double precision floating point not-a-number,
+and not any other precision.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@category{Predicate functions}
+@closecatbox
+
+@end deffn
 
 @c -----------------------------------------------------------------------------
 @anchor{floatnump}
@@ -234,7 +447,7 @@ a floating point number is replaced by a bigfloat number with less precision.
 Returns @code{true} if @var{expr} is a floating point number, otherwise
 @code{false}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @category{Predicate functions}
 @closecatbox
@@ -251,7 +464,7 @@ numbers.
 
 See also @mref{bfloat} and @mrefdot{fpprintprec}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end defvr
@@ -268,7 +481,8 @@ For ordinary floating point numbers,
 when @code{fpprintprec} has a value between 2 and 16 (inclusive),
 the number of digits printed is equal to @code{fpprintprec}.
 Otherwise, @code{fpprintprec} is 0, or greater than 16,
-and the number of digits printed is 16.
+and the number is printed "readably":
+that is, it is printed with sufficient digits to exactly reconstruct the number on input.
 
 For bigfloat numbers,
 when @code{fpprintprec} has a value between 2 and @code{fpprec} (inclusive),
@@ -283,7 +497,7 @@ if there are trailing zero digits.
 
 @code{fpprintprec} cannot be 1.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @category{Display flags and variables}
 @closecatbox
@@ -333,7 +547,110 @@ Examples:
 (%o9)                         false
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
+@category{Predicate functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{integer_decode_float}
+@deffn {Function} integer_decode_float (@var{f})
+@code{integer_decode_float} takes a float @var{f} and returns a list of three
+values that characterizes @var{f}, which must be either a @code{float}
+or @code{bfloat}.  The first value is an integer.  The second value is an
+exponent.  The third value is 1 if @var{f} is positive or zero;
+otherwise, -1.
+
+If the returned list is @code{[mantissa, expo, sign]}, then
+@code{scale_float(fl(mantissa), expo)*sign} is identical to @var{f}.
+Here, @code{fl} is either @code{float} or @code{bfloat} depending on
+whether @var{f} is a @code{float} or a @code{bfloat}.
+
+@example
+(%i1) integer_decode_float(4.0);
+(%o1)                     [4503599627370496, - 50, 1]
+(%i2) integer_decode_float(4b0);
+(%o2)                    [36028797018963968, - 53, 1]
+(%i3) scale_float(float(%o1[1]), %o1[2]);
+(%o3)                                 4.0
+(%i4) scale_float(bfloat(%o2[1]), %o2[2]);
+(%o4)                                4.0b0
+(%i5) integer_decode_float(4);
+
+decode_float is only defined for floats and bfloats: 4
+ -- an error. To debug this try: debugmode(true);
+(%i6) integer_decode_float(1e-7);
+(%o6)                     [7555786372591432, - 76, 1]
+(%i7) integer_decode_float(1b-7);
+(%o7)                    [60446290980731459, - 79, 1]
+(%i8) scale_float(float(%o6[1]), %o6[2]);
+(%o8)                               1.0e-7
+@end example
+
+For lisps that support denormal numbers, we have the following results.
+@example
+(%i1) integer_decode_float(least_positive_float);
+(%o1)                           [1, - 1074, 1]
+(%i2) integer_decode_float(100*least_positive_float);
+(%o2)                          [100, - 1074, 1]
+(%i3) integer_decode_float(least_positive_normalized_float);
+(%o3)                    [4503599627370496, - 1074, 1]
+@end example
+The number of bits in the integer part decreases as the denormal
+number decreases.  Bfloat numbers do not have denormals because the
+exponent is not bounded.
+
+This is a relatively simple interface to Common Lisp
+@url{http://www.lispworks.com/documentation/HyperSpec/Body/f_dec_fl.htm,
+integer_decode_float}.  However, the integer part can vary depending
+on the Lisp implementation; we return the same value, independent of
+the Lisp implementation.  Of course, this is extended to support bfloats.
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{is_power_of_two}
+@deffn {Function} is_power_of_two (@var{n})
+@code{is_power_to_two} returns @code{true} if @var{n} is a power of
+two and @code{false} otherwise.  @var{n} may be an integer, a
+rational, a float, or a big float.
+
+Some examples:
+@example
+(%i1) is_power_of_two(0);
+(%o1)                                false
+(%i2) is_power_of_two(4);
+(%o2)                                true
+(%i3) is_power_of_two(355/113);
+(%o3)                                false
+(%i4) is_power_of_two(1/32);
+(%o4)                                true
+(%i5) is_power_of_two(1048576);
+(%o5)                                true
+(%i6) is_power_of_two(1048575);
+(%o6)                                false
+(%i7) is_power_of_two(0.0);
+(%o7)                                false
+(%i8) is_power_of_two(1048576.0);
+(%o8)                                true
+(%i9) is_power_of_two(1048575.0);
+(%o9)                                false
+(%i10) is_power_of_two(1/256.0);
+(%o10)                               true
+(%i11) is_power_of_two(0b0);
+(%o11)                               false
+(%i12) is_power_of_two(1048576b0);
+(%o12)                               true
+(%i13) is_power_of_two(1048575b0);
+(%o13)                               false
+(%i14) is_power_of_two(1/256b0);
+(%o14)                               true
+@end example
+
+@opencatbox{Categories:}
 @category{Predicate functions}
 @closecatbox
 @end deffn
@@ -360,7 +677,7 @@ m1pbranch:false          m1pbranch:true
 (-1)^(1/4)              sqrt(2)/2+%i*sqrt(2)/2
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @category{Global flags}
 @closecatbox
@@ -372,7 +689,7 @@ m1pbranch:false          m1pbranch:true
 
 Return @code{true} if and only if @code{@var{n} >= 0} and @var{n} is an integer.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Predicate functions}
 @closecatbox
 @end deffn
@@ -397,7 +714,8 @@ Examples:
 @c numberp (3.14159);
 @c numberp (-1729b-4);
 @c map (numberp, [%e, %pi, %i, %phi, inf, minf]);
-@c declare (a, even, b, odd, c, integer, d, rational, e, irrational, f, real, g, imaginary, h, complex);
+@c declare (a, even, b, odd, c, integer, d, rational,
+@c     e, irrational, f, real, g, imaginary, h, complex);
 @c map (numberp, [a, b, c, d, e, f, g, h]);
 @c ===end===
 @example
@@ -418,7 +736,7 @@ Examples:
 (%o7) [false, false, false, false, false, false, false, false]
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Predicate functions}
 @closecatbox
 @end deffn
@@ -458,7 +776,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @category{Evaluation flags}
 @closecatbox
@@ -511,7 +829,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end defvr
@@ -532,7 +850,7 @@ in any expressions in which the variable occurs if the @code{numer} flag is
 The expressions @code{expr_1}, @dots{}, @code{expr_n} can be any expressions,
 not necessarily numeric.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Numerical evaluation}
 @closecatbox
@@ -549,7 +867,7 @@ Returns @code{true} if @var{expr} is a literal odd integer, otherwise
 @code{oddp} returns @code{false} if @var{expr} is a symbol, even if @var{expr}
 is declared @code{odd}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Predicate functions}
 @closecatbox
 @end deffn
@@ -563,7 +881,7 @@ Default value: @code{2.0e-15}
 of floating point numbers to rational numbers, when the option variable
 @mref{bftorat} has the value @code{false}.  See @code{bftorat} for an example.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @category{Rational expressions}
 @closecatbox
@@ -624,7 +942,7 @@ representation.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical evaluation}
 @closecatbox
 @end deffn
@@ -636,12 +954,102 @@ representation.
 Returns @code{true} if @var{expr} is a literal integer or ratio of literal
 integers, otherwise @code{false}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Predicate functions}
 @category{Rational expressions}
 @closecatbox
 @end deffn
 
+@c -----------------------------------------------------------------------------
+@anchor{scale_float}
+@deffn {Function} scale_float (@var{f}, @var{n})
+@code{scale_float} scales the float @var{f} by the value
+@code{2^@var{n}}.  This is done carefully so that no round-off every
+occurs.  If @var{f} is a float, then it is possible to underflow to 0
+or overflow, depending on the value of @var{f} and @var{n}.  Bigfloats
+cannot underflow or overflow.
+
+@example
+(%i1) scale_float(2d0, 2);
+(%o1)                                 8.0
+(%i2) scale_float(2d0, -2);
+(%o2)                                 0.5
+(%i3) scale_float(-2d0, -10);
+(%o3)                            - 0.001953125
+(%i4) scale_float(1d0, -2000);
+(%o4)                                 0.0
+(%i5) scale_float(2b0, 2);
+(%o5)                                8.0b0
+(%i6) scale_float(1b0, -2000);
+(%o6)                       8.709809816217217b-603
+(%i7) scale_float(1, 5);
+
+scale_float: first arg must be a float or bfloat: 1
+ -- an error. To debug this try: debugmode(true);
+(%i8) scale_float(1.0, n);
+
+scale_float: second arg must be an integer: n
+ -- an error. To debug this try: debugmode(true);
+@end example
+
+This is a relatively simple interface to Common Lisp
+@url{http://www.lispworks.com/documentation/HyperSpec/Body/f_dec_fl.htm,
+scale_float}.  Of course, this is extended to support bfloats.
+
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{unit_in_last_place}
+@deffn {Function} unit_in_last_place (@var{n})
+
+@code{unit_in_last_place} returns a value that is the gap between
+@var{n} and the nearest other number.  See, for example,
+@url{https://people.eecs.berkeley.edu/~wkahan/LOG10HAF.TXT,
+Kahan@comma{} FOOTNOTE 1}.  @code{unit_in_last_place} supports rational numbers,
+floating-point numbers and bigfloat numbers.  For integer, the result
+is always 1, and for rational numbers the result is always 0.
+
+The examples below assume
+@url{https://en.wikipedia.org/wiki/IEEE_754,IEEE-754} arithmetic that
+supports
+@url{https://en.wikipedia.org/wiki/IEEE_754-1985#Denormalized_numbers,denormal}
+numbers.  Some lisps like @url{https://clisp.sourceforge.io/, Clisp}
+do not have denormal numbers.
+
+@example
+(%i1) unit_in_last_place(0);
+(%o1)                                  1
+(%i2) unit_in_last_place(-123);
+(%o2)                                  1
+(%i3) unit_in_last_place(2/3);
+(%o3)                                  0
+(%i4) unit_in_last_place(355/113);
+(%o4)                                  0
+(%i5) unit_in_last_place(0b0);
+(%o5)                                0.0b0
+(%i6) unit_in_last_place(0.0);
+(%o6)                       4.940656458412465e-324
+(%i7) unit_in_last_place(1.0);
+(%o7)                        1.110223024625157e-16
+(%i8) unit_in_last_place(1b0);
+(%o8)                        1.387778780781446b-17
+(%i9) unit_in_last_place(100.0);
+(%o9)                         1.4210854715202e-14
+(%i10) unit_in_last_place(100b0);
+(%o10)                       1.77635683940025b-15
+(%i11) fpprec:32;
+(%o11)                                32
+(%i12) unit_in_last_place(1b0);
+(%o12)               1.5407439555097886824447823540679b-33
+(%i13) unit_in_last_place(100b0);
+(%o13)               1.972152263052529513529321413207b-31
+@end example
+
+@opencatbox{Categories:}
+@category{Numerical evaluation}
+@closecatbox
+
+@end deffn
 
 @c -----------------------------------------------------------------------------
 @page
@@ -718,33 +1126,36 @@ Examples:
 @end group
 @group
 (%i3) s_3 : "Embedded line termination
+in this string.";
 (%o3) Embedded line termination
 in this string.
 @end group
 @group
-(%i4) in this string.";
+(%i4) s_4 : "Ignore the \
+line termination \
+characters in \
+this string.";
 (%o4) Ignore the line termination characters in this string.
 @end group
 @group
-(%i5) s_4 : "Ignore the \
+(%i5) stringdisp : false;
 (%o5)                         false
 @end group
 @group
-(%i6) line termination \
+(%i6) s_1;
 (%o6)                   This is a string.
 @end group
 @group
-(%i7) characters in \
+(%i7) stringdisp : true;
 (%o7)                         true
 @end group
 @group
-(%i8) this string.";
+(%i8) s_1;
 (%o8)                  "This is a string."
 @end group
-(%i9) stringdisp : false;
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Syntax}
 @closecatbox
 
@@ -801,10 +1212,8 @@ left-hand side.
 (%i7) y44;
 (%o7)                          123
 (%i8) b^a;
-@group
                                y44
 (%o8)                         b
-@end group
 (%i9) %, numer;
                                123
 (%o9)                         b
@@ -820,7 +1229,7 @@ Note that although @code{concat (1, 2)} looks like a number, it is a string.
 (%o10)                       12 + 3
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @category{Strings}
 @closecatbox
@@ -862,7 +1271,7 @@ Another purpose for @code{sconcat} is to convert arbitrary objects to strings.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @category{Strings}
 @closecatbox
@@ -883,7 +1292,7 @@ computation.
 See also @mrefcomma{concat} @mrefcomma{sconcat} @mref{simplode} and
 @mrefdot{eval_string}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Strings}
 @closecatbox
 @end deffn
@@ -929,7 +1338,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Display flags and variables}
 @closecatbox
 @end defvr

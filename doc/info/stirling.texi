@@ -2,15 +2,15 @@
 * Functions and Variables for stirling::
 @end menu
 
-@node Functions and Variables for stirling,  , stirling-pkg, stirling-pkg
+@node Functions and Variables for stirling,  , Package stirling, Package stirling
 @section Functions and Variables for stirling
 
-@anchor{stirling}o
+@anchor{stirling}
 @deffn {Function} stirling @
 @fname{stirling} (@var{z},@var{n}) @
 @fname{stirling} (@var{z},@var{n},@var{pred})
 
-Replace @code{gamma(x)} with the @math{O(1/x^(2n-1))} Stirling formula. when @var{n} isn't
+Replace @code{gamma(x)} with the @math{O(1/x^{2n-1})} Stirling formula. when @var{n} isn't
 a nonnegative integer, signal an error. With the optional third argument @code{pred},
 the Stirling formula is applied only when @code{pred} is true.
 
@@ -66,7 +66,7 @@ was not applied to these two terms.
 
 To use this function write first @code{load("stirling")}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @category{Share packages}
 @category{Package stirling}

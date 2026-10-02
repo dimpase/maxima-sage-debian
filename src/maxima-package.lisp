@@ -1,13 +1,16 @@
 (in-package :common-lisp-user)
 
-(defpackage :maxima-nregex
+(defpackage :pregexp
   (:use :common-lisp)
   (:export
-   ;; vars
-   #:*regex-debug* #:*regex-groups* #:*regex-groupings*
-   ;; functions
-   #:regex-compile
-   ))
+   ;; These exports are the regexp procedures mentioned in the manual.
+   #:pregexp
+   #:pregexp-match-positions
+   #:pregexp-match
+   #:pregexp-split
+   #:pregexp-replace
+   #:pregexp-replace*
+   #:pregexp-quote))
 
 (defpackage :cl-info
   (:use :common-lisp))
@@ -31,15 +34,9 @@
 
 (defpackage :maxima
   (:use :common-lisp :command-line)
-  ;; Gcl has DEFINE-COMPILER-MACRO but it's in the SYSTEM package.  So
-  ;; we shadowing import it into our package here.  (Can't just import
-  ;; because there's already a DEFINE-COMPILER-MACRO symbol.)
-  #+gcl
-  (:shadowing-import-from #:system #:define-compiler-macro)
   (:nicknames :cl-macsyma :cl-maxima :macsyma)
   (:import-from :cl-sloop #:sloop)
   (:shadow continue		 ;(macsys): part of the top-level loop
-	   //                           ;(clmacs): arithmetic operator
 	   float		  ;(clmacs): has 1.0 as default format
 	   functionp                    ;(commac): accepts symbols
 	   array                        ;(commac)
@@ -51,7 +48,7 @@
 	   tanh cosh sinh tan  ;(trigi): same, could remove from trigi
 	   break		     ; special variable in displa.lisp
 	   gcd				; special in rat module
-	   #+(and sbcl sb-package-locks) makunbound)
+	   )
   #+gcl
   (:import-from :system
 		;; Faster modular arithmetic.
@@ -86,15 +83,13 @@
        #:random-chunk
        #:init-random-state))
 
-;; This package is for the implmentation of the BIGFLOAT routines that
+;; This package is for the implementation of the BIGFLOAT routines that
 ;; make working with Maxima's bfloat objects somewhat easier by
 ;; extending the standard CL numeric functions to work with BIGFLOAT
 ;; and COMPLEX-BIGFLOAT objects.  See src/numeric.lisp for the
 ;; implementation.
 (defpackage bigfloat-impl
   (:use :cl)
-  #+gcl
-  (:shadowing-import-from #:system #:define-compiler-macro)
   (:shadow #:+
 	   #:-
 	   #:*
@@ -161,7 +156,7 @@
 	   #:coerce
 	   )
   ;; If any of these exported symbols are updated, update the
-  ;; shadowing-import-from list for BIGFLOAT-USER too!
+  ;; shadowing-import-from list for BIGFLOAT too!
   
   ;; Export types
   (:export #:bigfloat
@@ -244,8 +239,6 @@
 ;; using the routines from the BIGFLOAT-IMPL.
 (defpackage bigfloat
   (:use :cl :bigfloat-impl)
-  #+gcl
-  (:shadowing-import-from #:system #:define-compiler-macro)
   ;; This list should match the SHADOWING-IMPORT-FROM list in
   ;; BIGFLOAT-IMPL.
   (:shadowing-import-from #:bigfloat-impl
@@ -354,9 +347,7 @@
 	   #:ngettext #:dngettext
            #:*translatable-dump-stream* #:*locale*
 	   #:*locale-directories*
-	   #:read-translatable-string)
-  #+gcl
-  (:shadowing-import-from #:system #:define-compiler-macro))
+	   #:read-translatable-string))
 
 ;; (getalias '$lambda) => CL:LAMBDA, which implies that Maxima parses lambda as CL:LAMBDA.
 ;; Unlocking the :common-lisp package seems to be the simplest way to avoid an error.

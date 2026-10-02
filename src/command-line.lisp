@@ -15,8 +15,7 @@
 
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with command-line.lisp; see the file COPYING.  If not,
-;;;; write to the Free Software Foundation, Inc., 59 Temple Place -
-;;;; Suite 330, Boston, MA 02111-1307, USA.
+;;;; write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 ;; Defined in maxima-package.
 ;; (defpackage "COMMAND-LINE"
@@ -40,70 +39,64 @@
 	    (t (format nil "~a ~a" name arg)))
       name))
 
-(defun list-cl-options (cl-option-list)
-  (format t "options:~%")
+(defvar *wrap-help-string* t
+  "Wrap the help string when non-NIL")
+
+(defun print-help-string (help-string)
+  "Print the help string neatly by breaking long lines as needed.
+  This assumes that the HELP-STRING doesn't have any kind of manually
+  inserted formatting."
+  (cond
+    (*wrap-help-string*
+     ;; Break the help string into a list of words and print the list
+     ;; of words individually with a single space after, and inserting
+     ;; a newline as needed.
+     (let ((words (pregexp::pregexp-split "\\s+" help-string)))
+       ;; This format string is a modified version of the example in
+       ;; https://www.lispworks.com/documentation/HyperSpec/Body/22_cfb.htm.
+       ;; Each line is prefixed by 8 spaces and we wrap the line at 80
+       ;; columns.
+       (format t "        ~{~<~%        ~1,80:; ~A~>~^~}" words)))
+    (t
+     (format t "        ~a" help-string))))
+
+(defun list-cl-options (cl-option-list &key texi-table-form)
+  "Prints all the command line options for Maxima in a neat form.  If
+  :TEXI-TABLE-FORM is non-NIL, the output is suitable for adding a
+  table to commandline-options.texi."
+  (if texi-table-form
+      (format t "@need 100~%@table @code~%")
+      (format t "options:~%"))
   (dolist (opt cl-option-list)
     (let ((help-string (cl-option-help-string opt))
 	  (names (cl-option-names opt))
 	  (arg (cl-option-argument opt)))
-      (format t "    ~a" (cl-option-description (first names) arg))
-      (dolist (name (rest names))
-	(format t ", ~a" (cl-option-description name arg)))
-      (terpri)
-      (if help-string
-	  (format t "        ~a" help-string))
+      (when texi-table-form
+        (format t "@need 150~%@item "))
+      (let ((options (mapcar #'(lambda (name)
+                                 (cl-option-description name arg))
+                             names)))
+        ;; Wrap any long list of options, except we don't when
+        ;; producing output for the texi file.
+        (cond (texi-table-form
+               (format t "~{~A~^, ~}~%" options))
+              (t
+               ;; The output is 4 spaces, then each of the options
+               ;; separated by a ", ".  The output is wrapped at
+               ;; column 80.  This format string is a modified version
+               ;; of the example from
+               ;; https://www.lispworks.com/documentation/HyperSpec/Body/22_cfb.htm.
+               (format t "    ~{~<~%      ~1,80:;~A~>~^, ~}~%"
+                       options))))
+
+      (when help-string
+	(print-help-string help-string))
+      (when texi-table-form
+        (format t "~2%"))
       (terpri)))
+  (when texi-table-form
+    (format t "@end table~%"))
   (finish-output))
-
-;; Old argument processing.  Leaving this here for now, but if getopts
-;; works well enough, then these should be removed.
-#+(or)
-(progn
-(defun parse-args (args cl-option-list)
-  (if (null args)
-      nil
-      (let ((arg (pop args))
-	    (arg-matched nil))
-	(dolist (opt cl-option-list)
-	  (when (member arg (cl-option-names opt) :test #'equal)
-	    (cond ((and (cl-option-action opt) (cl-option-argument opt))
-		   (funcall (cl-option-action opt) (pop args)))
-		  ((cl-option-action opt)
-		   (funcall (cl-option-action opt)))
-		  ((cl-option-argument opt)
-		   (pop args)))
-	    (setf arg-matched t)
-	    (return t)))
-	(unless (or arg-matched (equal arg ""))
-	  (format t "Warning: argument ~a not recognized~%" arg))
-	(parse-args args cl-option-list))))
-
-(defun expand-compound-arg (arg)
-  (map 'list  #'(lambda (char) (concatenate 'string "-" (string char)))
-       (subseq arg 1)))
-
-(defun expand-equals-arg (arg)
-  (let ((equals-position (search "=" arg)))
-    (list (subseq arg 0 equals-position) (subseq arg (+ 1 equals-position)))))
-
-(defun expand-args (args)
-  (if (null args)
-      nil
-      (let* ((arg (car args))
-	     (rest (expand-args (cdr args)))
-	     (listarg (list arg)))
-	(cond ((< (length arg) 2) nil)
-	      ((and (equal (subseq arg 0 2) "--") (search "=" arg))
-	       (setf listarg (expand-equals-arg arg)))
-	      ((equal (subseq arg 0 2) "--") nil)
-	      ((equal (char arg 0) #\-)
-	       (if (> (length arg) 2)
-		   (setf listarg (expand-compound-arg arg)))))
-	(append listarg rest))))
-
-(defun process-args (args cl-option-list)
-  (parse-args (expand-args args) cl-option-list))
-)
 
 (defun process-args (args cl-option-list)
   (flet ((fixup (options)
@@ -173,9 +166,6 @@
 	 ext::*command-line-application-arguments*
 	 (rest ext:*command-line-strings*))
      
-     #+scl
-     (rest ext:*command-line-strings*)
-
      #+sbcl
      (rest sb-ext:*posix-argv*)
 

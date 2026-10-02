@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,32 +14,19 @@
 
 (load-macsyma-macros ratmac strmac)
 
-(declare-top (special expsumsplit $dispflag checkfactors *g
-		      $algebraic equations ;List of E-labels
-		      *power *varb *flg $derivsubst
-		      $%emode genvar genpairs varlist broken-not-freeof
+(declare-top (special expsumsplit *g
+		      equations ;List of E-labels
+		      *power *varb *flg
+		      broken-not-freeof
 		      mult    ;Some crock which tracks multiplicities.
 		      *roots ;alternating list of solutions and multiplicities
 		      *failures	;alternating list of equations and multiplicities
-		      *myvar $listconstvars
-		      *has*var *var $dontfactor
-		      $keepfloat $ratfac
+		      *myvar
+		      *has*var *var
 		      xm* xn* mul*))
-
-(defmvar $breakup t
-  "Causes solutions to cubic and quartic equations to be expressed in
-	 terms of common subexpressions.")
-
-(defmvar $multiplicities '$not_set_yet
-  "Set to a list of the multiplicities of the individual solutions
-	 returned by SOLVE, REALROOTS, or ALLROOTS.")
 
 (defmvar $linsolvewarn t
   "Needs to be documented.")
-
-(defmvar $programmode t
-  "Causes SOLVE to return its answers explicitly as elements
-	 in a list rather than printing E-labels.")
 
 (defmvar $solvedecomposes t
   "Causes `solve' to use `polydecomp' in attempting to solve polynomials.")
@@ -47,24 +34,10 @@
 (defmvar $solveexplicit nil
   "Causes `solve' to return implicit solutions i.e. of the form F(x)=0.")
 
-(defmvar $solvefactors t
-  "If T, then SOLVE will try to factor the expression.  The FALSE
-	 setting may be desired in zl-SOME cases where factoring is not
-	 necessary.")
-
 (defmvar $solvenullwarn t
   "Causes the user will be warned if SOLVE is called with either a
 	 null equation list or a null variable list.  For example,
 	 SOLVE([],[]); would print two warning messages and return [].")
-
-(defmvar $solvetrigwarn t
-  "Causes SOLVE to print a warning message when it is uses
-	 inverse trigonometric functions to solve an equation,
-	 thereby losing solutions.")
-
-(defmvar $solveradcan nil
-  "SOLVE will use RADCAN which will make SOLVE slower but will allow
-	 certain problems containing exponentials and logs to be solved.")
 
 ;; Utility macros
 
@@ -103,7 +76,7 @@
              ;; If we have a list of equations, move everything over
              ;; to one side, so x=5 -> x-5=0.
              ((eq (g-rep-operator *eql) 'mlist)
-              (mapcar 'meqhk (mapcar 'meval (cdr *eql))))
+              (mapcar 'meqhk (cdr *eql)))
              ;; We can't solve inequalities
              ((member (g-rep-operator *eql)
                       '(mnotequal mgreaterp mlessp mgeqp mleqp) :test #'eq)
@@ -121,13 +94,12 @@
                 (cdr ($listofvars *eql))))
         (if varl (setq varl (remc varl)))) ; Remove all constants
 
-       ;; If we have got a variable list then if it's a list apply
-       ;; meval to each entry and then weed out duplicates. Else, just
-       ;; cons it.
+       ;; If VARL is a list of variables, filter out duplicates.
+       ;; Otherwise, just cons it.
        (t
         (setq varl
               (cond (($listp varl) (remove-duplicates
-                                    (mapcar #'meval (cdr varl))))
+                                    (cdr varl) :test #'equal))
                     (t (list varl))))))
 
      ;; Some sanity checks and warning messages.
@@ -200,8 +172,9 @@
 ;; Solve a single equation for a single unknown.
 ;; Obtains roots via solve and prints them.
 
-(defun ssolve (exp *var &aux equations multi)
-  (let (($solvetrigwarn $solvetrigwarn))
+(defun ssolve (exp *var)
+  (let (($solvetrigwarn $solvetrigwarn)
+	equations multi)
     (cond ((null *var) '$all)
 	  (t (solve exp *var 1)
 	     (cond ((not (or *roots *failures)) (make-mlist))
@@ -212,12 +185,15 @@
 							   *roots
 							   (nconc *roots *failures)))))
 		      (setq $multiplicities (make-mlist-l (nreverse multi)))))
-		   (t (when (and *failures (not $solveexplicit))
+		   (t
+		      (when (and *failures (not $solveexplicit))
 			(when $dispflag (mtell (intl:gettext "solve: the roots of:~%")))
-			(solve2 *failures))
+			(setq equations (nth-value 1
+			  (solve2 *failures equations))))
 		      (when *roots
 			(when $dispflag (mtell (intl:gettext "solve: solution:~%")))
-			(solve2 *roots))
+			(setq equations (nth-value 1
+			  (solve2 *roots equations))))
 		      (make-mlist-l equations)))))))
 
 ;; Solve takes three arguments, the expression to solve for zero, the variable
@@ -233,7 +209,7 @@
 (defun solve (*exp *var mult &aux (genvar nil) ($derivsubst nil)
 		     (exp (float2rat (mratcheck *exp)))
 		     (*myvar *var) ($savefactors t))
-  (prog (factors *has*var genpairs $dontfactor temp symbol *g checkfactors 
+  (prog (factors *has*var genpairs $dontfactor temp symbol *g *checkfactors* 
 	 varlist expsumsplit)
      (let (($ratfac t))
        (setq exp (ratdisrep (ratf exp))))
@@ -260,7 +236,7 @@
 		       (setq *var symbol)
 		       (setq *myvar *var))) ;keep *MYVAR up-to-date
 	      
-		(cond ($solveradcan (setq exp (radcan1 exp))
+		(cond ($solveradcan (setq exp (radcan1 exp *var))
 				    (if (atom exp) (go a))))
 	      
 		(cond ((easy-cases exp *var mult)
@@ -331,9 +307,9 @@
 	   (solve (car terms) *var mult))
 	 'mtimes)
 
-	((eq (caar *exp) 'mabs)		;; abs(x) = 0  <=>  x = 0
+	((member (caar *exp) '(mabs %signum))		;; abs(x) = 0, signum(x) = 0  <=>  x = 0
 	 (solve (cadr *exp) *var mult)
-	 'mabs)
+	 (caar *exp))
 
 	((eq (caar *exp) 'mexpt)
 	 (cond ((and (freeof *var (cadr *exp))
@@ -367,7 +343,7 @@
 
 ;; Predicate to see when obviously not to substitute for trigs.
 ;; A hack in the direction of expression properties-table driven
-;; substition. The "measure" of the expression is the total number
+;; substitution. The "measure" of the expression is the total number
 ;; of different kinds of trig functions in the expression.
 
 (defun trig-not-subst-p (vlist)
@@ -864,13 +840,63 @@
 			 (member op '(%sin %cos %tan %sec %csc %cot %cosh %sech) :test #'eq))
 		(mtell (intl:gettext "~&solve: using arc-trig functions to get a solution.~%Some solutions will be lost.~%"))
 		(setq $solvetrigwarn nil))
+          ;; Sanity check: return NIL (no solutions) if either
+          ;; - simplifying INVERSE(EXP) causes an error
+          ;;   (e.g., tan(%pi/2) when solving atan(x) = %pi/2)
+          ;; - simplifying OP(INVERSE(EXP)) causes an error
+          ;; - MEQP says that OP(INVERSE(EXP)) is definitely not equal to EXP
+          ;;   (e.g., tan(2) as a solution to atan(x) = 2)
+          (let* ((inverse-exp-l (errcatch (ftake* inverse exp)))
+                 (check-l (and inverse-exp-l (errcatch (ftake op (car inverse-exp-l))))))
+            (if (or (null inverse-exp-l)
+                    (null check-l)
+                    (not (meqp (car check-l) exp)))
+              (return nil)
 	      `((mplus) ((mminus) ,(cadr *myvar))
-		((,inverse) ,exp)))
+		,(car inverse-exp-l)))))
 	     ((eq op '%log)
 	      `((mplus) ((mminus) ,(cadr *myvar))
 		((mexpt) $%e ,exp)))
+         ((eq op 'mabs)
+           (let ((exp-sign ($csign exp)))
+             (cond
+               ((eq exp-sign '$zero)
+                 ;; abs(z) = 0 <=> z = 0
+                 (solve (cadr *myvar) *var mult)
+                 (return nil))
+               ((or (member exp-sign '($neg $imaginary))
+                    (eq t (mnqp 0 ($imagpart exp))))
+                 ;; abs(z) can't be negative or complex; no solution.
+                 (return nil))
+               ((not (member ($csign (cadr *myvar)) '($complex $imaginary)))
+                 ;; abs(real) = EXP <=> real +- EXP = 0.
+                 (solve (add (cadr *myvar) exp) *var mult)
+                 (solve (sub (cadr *myvar) exp) *var mult)
+                 (return nil))
+               (t
+                 (go fail)))))
+         ((eq op '%signum)
+           (cond
+             ((eq ($csign exp) '$zero)
+               ;; signum(z) = 0 <=> z = 0
+               (solve (cadr *myvar) *var mult)
+               (return nil))
+             ((and (not (member ($csign (cadr *myvar)) '($complex $imaginary)))
+                   (not (meqp exp -1))
+                   (not (meqp exp 0))
+                   (not (meqp exp 1)))
+               ;; signum(real) can only be -1, 0, 1; no solution.
+               (return nil))
+             (t
+               (go fail))))
 	     (t (go fail))))
-     (return (solve (simplify inverse) *var mult))
+
+     ;; Return NIL (no solutions) if simplification causes an error.
+     ;; Otherwise, keep solving.
+     (setq inverse (errcatch (simplify inverse)))
+     (return (if inverse
+               (solve (car inverse) *var mult)))
+
      fail (return (setq *failures
 			(cons (simplify `((mequal) ,*myvar ,exp))
 			      (cons mult *failures))))))

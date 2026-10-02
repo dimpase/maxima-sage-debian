@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,11 +12,6 @@
 (macsyma-module inmis)
 
 (declare-top (special listofvars))
-
-(defmvar $listconstvars nil
-  "Causes LISTOFVARS to include %E, %PI, %I, and any variables declared
-   constant in the list it returns if they appear in exp.  The default is
-   to omit these." boolean see-also $listofvars)
 
 (defmvar $listdummyvars t)
 
@@ -70,7 +65,6 @@
 ;; No attempt is made to handle variables declare with DEFVAR or by other means.
 
 (defun maybe-reset (key val actually-reset reset-verbose)
-  (declare (special munbindp))
   ; MAYBE DEFMVAR VALUES SHOULD ONLY BE MAXIMA EXPRESSIONS ??
   (let ((non-maxima (and (consp val) (not (consp (car val))))))
     (when

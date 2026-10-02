@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -13,86 +13,6 @@
 (in-package :maxima)
 
 (macsyma-module system)
-
-(defmvar $showtime nil
-  "When T, the computation time is printed with each output expression.")
-
-;;; Standard Kinds of Input Prompts
-
-(defmvar $prompt '_
-  "Prompt symbol of the demo function, playback, and the Maxima break loop.")
-
-
-;; A prefix and suffix that are wrapped around every prompt that Maxima
-;; emits. This is designed for use with text-based interfaces that drive Maxima
-;; through standard input and output and need to decorate prompts to make the
-;; output easier to parse. There are some more notes in
-;; doc/implementation/external-interface.txt.
-(defvar *prompt-prefix* "")
-(defvar *prompt-suffix* "")
-(defvar *general-display-prefix* "")
-(defvar $alt_format_prompt nil "If NIL, use DEFAULT-FORMAT-PROMPT to print input prompt; if a function, use it to print input prompt.")
-
-(defun format-prompt (destination control-string &rest arguments)
-  "If $ALT_FORMAT_PROMPT is NIL, use DEFAULT-FORMAT-PROMPT to print
-prompt; otherwise MFUNCALL $ALT_FORMAT_PROMPT to print prompt."
-  (funcall (if $alt_format_prompt #'alt-format-prompt #'default-format-prompt)
-	   destination control-string arguments))
-
-(defun alt-format-prompt (destination control-string arguments)
-  "MFUNCALL $ALT_FORMAT_PROMPT with a heavy coating of error protection."
-  (handler-bind ((error (lambda(msg) (setq $alt_format_prompt nil)
-			       (format t (intl:gettext "Error in printing prompt; reverting to default.~%~a") msg)
-			       (throw 'macsyma-quit 'maxima-error))))
-    (with-$error (let ((prompt (mfuncall $alt_format_prompt destination control-string arguments)))
-		   (if (stringp prompt) prompt (merror "alt_format_prompt returned an object of type ~a, needed a string." (type-of prompt)))))))
-
-(defun default-format-prompt (destination control-string arguments)
-  "Like AFORMAT, but add the prefix and suffix configured for a prompt. This
-function deals correctly with the ~M control character, but only when
-DESTINATION is an actual stream (rather than nil for a string)."
-  (let ((*print-circle* nil))
-    (if (null destination)
-	;; return value string is important
-	(concatenate 'string
-		     *prompt-prefix*		     
-		     (apply #'aformat destination
-			    control-string
-			    arguments)
-		     *prompt-suffix*)
-      (progn
-	(format destination "~A~A~A"
-		*prompt-prefix*		     
-		(apply #'aformat nil
-		       control-string
-		       arguments)
-		*prompt-suffix*)))))
-    
-
-(defvar $default_format_prompt (symbol-function 'default-format-prompt))
-
-;;  "When time began" (or at least the start of version control history),
-;;  the following comment was made at this point:
-;;
-;;     instead of using this STRIPDOLLAR hackery, the
-;;     MREAD function should call MFORMAT to print the prompt,
-;;     and take a format string and format arguments.
-;;     Even easier and more general is for MREAD to take
-;;     a FUNARG as the prompt. -gjc
-;;
-;;  I guess we're still failing miserably, but unfortunately MFORMAT/AFORMAT
-;;  don't deal correctly with ~M plus a string output stream.
-(defun main-prompt ()
-  (declare (special *display-labels-p*))
-  (if *display-labels-p*
-      (format-prompt nil "(~A~A) "
-                     (print-invert-case (stripdollar $inchar))
-                     $linenum)
-      ""))
-
-(defun break-prompt ()
-  (format-prompt nil "~A"
-                 (print-invert-case (stripdollar $prompt))))
 
 (defun toplevel-macsyma-eval (x)
   ;; Catch rat-err's here.
@@ -107,10 +27,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
   ;; them and continue, via *debugger-hook*.
   (rat-error-to-merror (meval* x)))
 
-(defmvar $_ '$_ "last thing read in, corresponds to lisp +")
-(defmvar $__ '$__ "thing read in which will be evaluated, corresponds to -")
-
-(declare-top (special *mread-prompt*  $file_search_demo))
+(declare-top (special *mread-prompt*))
 
 (defvar accumulated-time 0.0)
 
@@ -236,7 +153,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 	(if (eq r eof) (return '$done))
 	(setq $__ (caddr r))
 	(unless $nolabels (setf (symbol-value c-tag) $__))
-	(cond (batch-or-demo-flag
+	(cond ((and batch-or-demo-flag (not *suppress-input-echo*))
 	  (let (($display2d nil))
 	    (displa `((mlabel) ,c-tag , $__)))))
 	(setq time-before (get-internal-run-time)
@@ -349,22 +266,34 @@ DESTINATION is an actual stream (rather than nil for a string)."
   (or (eq flag 'noprint) (setq print? t))
   (cond ((not print?)
 	 (setq print? t)
-         (format-prompt t ""))
+         (format-prompt *query-io* ""))
 	((null msg)
-         (format-prompt t ""))
+         (format-prompt *query-io* ""))
 	((atom msg)
-         (format-prompt t "~A" msg)
-	 (mterpri))
+         (format-prompt *query-io* "~A" msg)
+	 (mterpri *query-io*))
 	((eq flag t)
-         (format-prompt t "~{~A~}" (cdr msg))
-	 (mterpri))
+         (format-prompt *query-io* "~{~A~}" (cdr msg))
+	 (mterpri *query-io*))
 	(t
-         (format-prompt t "~M" msg)
-	 (mterpri)))
-  (let ((res (mread-noprompt #+(or sbcl cmu) *standard-input*
-                             #-(or sbcl cmu) *query-io* nil)))
-    (princ *general-display-prefix*)
-    res))
+         (format-prompt *query-io* "~M" msg)
+	 (mterpri *query-io*)))
+  (let ((res (mread-noprompt *query-io* nil)))
+    (princ *general-display-prefix* *query-io*)
+    (if (null res) (merror "RETRIEVE: End of file encountered.")
+	res)))
+
+(defmfun $eval_string_lisp (string)
+  (unless (stringp string)
+    (merror (intl:gettext "eval_string_lisp: Expected a string, got ~M.") string))
+  (let ((eof (cons 0 0)))
+    (with-input-from-string (s string)
+      ; We do some consing for each form, but I think that'll be OK
+      (do ((input (read s nil eof) (read s nil eof))
+           (values nil (multiple-value-list (eval input))))
+          ((eq input eof)
+           ; Mark the list as simplified
+           (cons (list 'mlist 'simp) values))))))
 
 (defmfun $read (&rest l)
   (meval (apply #'$readonly l)))
@@ -379,39 +308,24 @@ DESTINATION is an actual stream (rather than nil for a string)."
     (third (mread #+(or sbcl cmu) *standard-input*
                   #-(or sbcl cmu) *query-io*))))
 
-;; FUNCTION BATCH APPARENTLY NEVER CALLED. OMIT FROM GETTEXT SWEEP AND DELETE IT EVENTUALLY
-(defun batch (filename &optional demo-p
-	      &aux (orig filename) list
-	      file-obj (accumulated-time 0.0) (abortp t))
-  (setq list (if demo-p '$file_search_demo '$file_search_maxima))
-  (setq filename ($file_search filename (symbol-value list)))
-  (or filename (merror "Could not find ~M in ~M: ~M"
-		       orig list (symbol-value list)))
-
-  (unwind-protect
-       (progn (batch-internal (setq file-obj (open filename)) demo-p)
-	      (setq abortp nil)
-	      (when $showtime
-		(format t "~&Batch spent ~,4F seconds in evaluation.~%"
-			accumulated-time)))
-    (if file-obj (close file-obj))
-    (when abortp (format t "~&(Batch of ~A aborted.)~%" filename))))
-
-
-(defun batch-internal (fileobj demo-p)
-  (continue :stream (make-echo-stream fileobj *standard-output*)
-	    :batch-or-demo-flag (if demo-p ':demo ':batch)))
-
-(defmfun $demo (filename)
-  (let ((tem ($file_search filename $file_search_demo)))
-    (or tem (merror (intl:gettext "demo: could not find ~M in ~M.")
-		    filename '$file_search_demo))
-    ($batch tem	'$demo)))
-
 (defmfun $bug_report ()
-  (format t (intl:gettext "~%Please report bugs to:~%"))
+  (if $maxima_frontend
+      (format t (intl:gettext
+		 "~%Please report bugs in maxima, the tool that does the actual maths, to:~%"))
+      (format t (intl:gettext "~%Please report bugs to:~%")))
   (format t "    https://sourceforge.net/p/maxima/bugs~%")
   (format t (intl:gettext "To report a bug, you must have a Sourceforge account.~%"))
+  (if $maxima_frontend
+      (progn
+	(format t
+		(intl:gettext
+		 "~%Bugs affecting UI and display should be reported to the frontend's homepage.~%")
+		(if $maxima_frontend_bugreportinfo
+		    (format t (intl:gettext "The front end provides the following info:~%~a~%")
+			    $maxima_frontend_bugreportinfo)
+		    (format t (intl:gettext
+			       "The front end doesn't provide any additional bug report info.~%"))
+		    ))))
   (format t (intl:gettext "Please include the following information with your bug report:~%"))
   (format t "-------------------------------------------------------------~%")
   ; Display the 2D-formatted build information
@@ -424,7 +338,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
 ;; Declare a build_info structure, then remove it from the list of user-defined structures.
 (defstruct1 '((%build_info) $version $timestamp $host $lisp_name $lisp_version
 	      $maxima_userdir $maxima_tempdir $maxima_objdir $maxima_frontend $maxima_frontend_version))
-(let nil (declare (special $structures))
+(let nil
   (setq $structures (cons '(mlist) (remove-if #'(lambda (x) (eq (caar x) '%build_info)) (cdr $structures)))))
 
 (defvar *maxima-build-info* nil)
@@ -445,71 +359,60 @@ DESTINATION is an actual stream (rather than nil for a string)."
           '$new
           `((%build_info)
             ,*autoconf-version*
-            ,(format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d" year month day hour minute seconds)
+            ,(format nil "~4,'0d-~2,'0d-~2,'0d ~2,'0d:~2,'0d:~2,'0d"
+		     year month day hour minute seconds)
             ,*autoconf-host*
-            ,#+sbcl (ensure-readably-printable-string (lisp-implementation-type)) #-sbcl (lisp-implementation-type)
-            ,#+sbcl (ensure-readably-printable-string (lisp-implementation-version)) #-sbcl (lisp-implementation-version)
+            ,(ensure-readably-printable-string (lisp-implementation-type))
+            ,(ensure-readably-printable-string (lisp-implementation-version))
 	    ,$maxima_userdir
 	    ,$maxima_tempdir
 	    ,$maxima_objdir
 	    ,$maxima_frontend
 	    ,$maxima_frontend_version))))))
 
-;; SBCL base strings aren't readably printable.
-;; Attempt a work-around. Yes, this is terribly ugly.
-#+sbcl (defun ensure-readably-printable-string (x)
-  (coerce x `(simple-array character (,(length x)))))
+;; SBCL base strings aren't readably printable.  Attempt a work-around
+;; by coercing the string to be an array of characters instead of
+;; base-chars. Yes, this is terribly ugly.  For other Lisps, we can
+;; just return the arg.
+(defun ensure-readably-printable-string (x)
+  #+sbcl
+  (coerce x '(simple-array character (*)))
+  #-sbcl
+  x)
 
 (defun dimension-build-info (form result)
   (declare (special bkptht bkptdp lines break))
   ;; Usually the result of (MFUNCALL '$@ ...) is a string,
   ;; but ensure that output makes sense even if it is not.
-  (let
-    ((version-string (format nil (intl:gettext "Maxima version: ~a")
-       (coerce (mstring (mfuncall '$@ form '$version)) 'string)))
-     (timestamp-string (format nil (intl:gettext "Maxima build date: ~a")
-       (coerce (mstring (mfuncall '$@ form '$timestamp)) 'string)))
-     (host-string (format nil (intl:gettext "Host type: ~a")
-       (coerce (mstring (mfuncall '$@ form '$host)) 'string)))
-     (lisp-name-string (format nil (intl:gettext "Lisp implementation type: ~a")
-       (coerce (mstring (mfuncall '$@ form '$lisp_name)) 'string)))
-     (lisp-version-string (format nil (intl:gettext "Lisp implementation version: ~a")
-       (coerce (mstring (mfuncall '$@ form '$lisp_version)) 'string)))
-     (maxima-userdir-string (format nil (intl:gettext "User dir: ~a")
-       (coerce (mstring (mfuncall '$@ form '$maxima_userdir)) 'string)))
-     (maxima-tempdir-string (format nil (intl:gettext "Temp dir: ~a")
-       (coerce (mstring (mfuncall '$@ form '$maxima_tempdir)) 'string)))
-     (maxima-objdir-string (format nil (intl:gettext "Object dir: ~a")
-       (coerce (mstring (mfuncall '$@ form '$maxima_objdir)) 'string)))
-     (maxima-frontend-string (format nil (intl:gettext "Frontend: ~a")
-       (coerce (mstring (mfuncall '$@ form '$maxima_frontend)) 'string)))
-     (maxima-frontend-version-string (format nil (intl:gettext "Frontend version: ~a")
-       (coerce (mstring (mfuncall '$@ form '$maxima_frontend_version)) 'string)))
-     (bkptht 1)
-     (bkptdp 1)
-     (lines 0)
-     (break 0))
-    (forcebreak result 0)
-    (forcebreak (reverse (coerce version-string 'list)) 0)
-    (forcebreak (reverse (coerce timestamp-string 'list)) 0)
-    (forcebreak (reverse (coerce host-string 'list)) 0)
-    (forcebreak (reverse (coerce lisp-name-string 'list)) 0)
-    (forcebreak (reverse (coerce lisp-version-string 'list)) 0)
-    (forcebreak (reverse (coerce maxima-userdir-string 'list)) 0)
-    (forcebreak (reverse (coerce maxima-tempdir-string 'list)) 0)
-    (forcebreak (reverse (coerce maxima-objdir-string 'list)) 0)
-    (forcebreak (reverse (coerce maxima-frontend-string 'list)) 0)
-    (if $maxima_frontend (forcebreak (reverse (coerce maxima-frontend-version-string 'list)) 0)))
-  nil)
+  (flet ((display-item (item item-label)
+	   (let ((s (format nil
+			    "~A: ~A"
+			    (intl:gettext item-label)
+			    (coerce (mstring (mfuncall '$@ form item)) 'string))))
+	     (forcebreak (reverse (coerce s 'list)) 0))))
+    (let ((bkptht 1)
+	  (bkptdp 0)
+	  (lines 0)
+	  (break 0))
+      (forcebreak result 0)
+      (display-item '$version "Maxima-version")
+      (display-item '$timestamp "Maxima build date")
+      (display-item '$host "Host type")
+      (display-item '$lisp_name "Lisp implementation type")
+      (display-item '$lisp_version "Lisp implementation version")
+      (display-item '$maxima_userdir "User dir")
+      (display-item '$maxima_tempdir "Temp dir")
+      (display-item '$maxima_objdir "Object dir")
+      (display-item '$maxima_frontend "Frontend")
+      (when $maxima_frontend
+	(display-item '$maxima_frontend_version "Frontend version"))
+      nil)))
 
 (setf (get '%build_info 'dimension) 'dimension-build-info)
 
 (defvar *maxima-started* nil)
 
 (defvar *maxima-prolog* "")
-(defvar *maxima-epilog* "")
-
-(declare-top (special *maxima-initmac* *maxima-initlisp*))
 
 (defvar *maxima-quiet* nil)
 
@@ -523,20 +426,17 @@ DESTINATION is an actual stream (rather than nil for a string)."
 	  (if (not *maxima-quiet*) (maxima-banner))
 	  (setq *maxima-started* t)))
     
-    (if ($file_search *maxima-initlisp*) ($load ($file_search *maxima-initlisp*)))
-    (if ($file_search *maxima-initmac*) ($batchload ($file_search *maxima-initmac*)))
-
     (catch 'quit-to-lisp
       (in-package :maxima)
       (loop
 	 do
-	 (catch #+kcl si::*quit-tag*
-		#+(or cmu scl sbcl openmcl lispworks) 'continue
-		#-(or kcl cmu scl sbcl openmcl lispworks) nil
-		(catch 'macsyma-quit
-		  (continue :stream input-stream :batch-or-demo-flag batch-flag)
-		  (format t *maxima-epilog*)
-		  (bye)))))))
+	   (catch #+gcl si::*quit-tag*
+		  #+(or cmu scl sbcl openmcl lispworks) 'continue
+		  #-(or gcl cmu scl sbcl openmcl lispworks) nil
+		  (catch 'macsyma-quit
+		    (continue :stream input-stream :batch-or-demo-flag batch-flag)
+		    (format t *maxima-epilog*)
+		    (bye)))))))
 
 (defun maxima-banner ()
   (format t *maxima-prolog*)
@@ -550,7 +450,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
   (format t (intl:gettext "Dedicated to the memory of William Schelter.~%"))
   (format t (intl:gettext "The function bug_report() provides bug reporting information.~%")))
 
-#+kcl
+#+gcl
 (si::putprop :t 'throw-macsyma-top 'si::break-command)
 
 (defun throw-macsyma-top ()
@@ -655,7 +555,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
          (body (cdr arg))
          result)
         (dolist (v body)
-          (setq result (meval* v)))
+          (setq result (meval v)))
         result)
       (let*
         ((fname (namestring (maxima-string output)))
@@ -668,7 +568,7 @@ DESTINATION is an actual stream (rather than nil for a string)."
           `(with-open-file ,filespec
              (let ((body ',(cdr arg)) result)
                (dolist (v body)
-                 (setq result (meval* v)))
+                 (setq result (meval v)))
                result)))))))
 
 (defmfun $sconcat (&rest x)
@@ -683,36 +583,54 @@ DESTINATION is an actual stream (rather than nil for a string)."
 
 (defmfun $system (&rest args)
   ;; If XMaxima is running, direct output from command into *SOCKET-CONNECTION*.
-  ;; From what I can tell, GCL, ECL, and Clisp cannot redirect the output into an existing stream. Oh well.
   (let ((s (and (boundp '*socket-connection*) *socket-connection*))
 	shell shell-opt)
-    #+(or gcl ecl lispworks)
-    (declare (ignore s))
-    (declare (ignorable shell shell-opt))
-
+    #-(or ecl cmu scl sbcl openmcl)
+    (declare (ignore shell shell-opt))
+    #+(or ecl cmu scl sbcl openmcl)
     (cond ((string= *autoconf-windows* "true")
 	   (setf shell "cmd") (setf shell-opt "/c"))
 	  (t (setf shell "/bin/sh") (setf shell-opt "-c")))
 
-    #+gcl (system::system (apply '$sconcat args))
-    #+ecl (si:system (apply '$concat args))
-    #+clisp (let ((output (ext:run-shell-command (apply '$sconcat args)
-                                                 :wait t :output :stream)))
+    #+gcl (let ((output (si:run-process (first args) (rest args))))
               (loop for line = (read-line output nil)
                  while line do
-                   (format (or s t) "~a~%" line)))
-    #+(or cmu scl) (ext:run-program shell (list shell-opt (apply '$sconcat args)) :output (or s t))
-    #+allegro (excl:run-shell-command (apply '$sconcat args) :wait t :output (or s nil))
-    #+sbcl (sb-ext:run-program shell
-			       #+(or win32 win64) (cons shell-opt (mapcar '$sconcat args))
-			       #-(or win32 win64) (list shell-opt (apply '$sconcat args))
-			       :search t :output (or s t))
-    #+openmcl (ccl::run-program shell
-				#+windows (cons shell-opt (mapcar '$sconcat args))
-				#-windows (list shell-opt (apply '$sconcat args))
-				:output (or s t))
-    #+abcl (extensions::run-shell-command (apply '$sconcat args) :output (or s *standard-output*))
-    #+lispworks (system:run-shell-command (apply '$sconcat args) :wait t)))
+                   (format (or s *standard-output*) "~a~%" line)))
+    #+ecl (ext:run-program shell (list shell-opt (format nil "~{~a~^ ~}" args)) :output (or s *standard-output*))
+    #+clisp (let ((output (ext:run-shell-command (format nil "~{~a~^ ~}" args) :wait t :output :stream)))
+              (loop for line = (read-line output nil)
+                 while line do
+                   (format (or s *standard-output*) "~a~%" line)))
+    #+(or cmu scl) (ext:run-program shell (list shell-opt (format nil "~{~a~^ ~}" args)) :output (or s *standard-output*))
+    #+allegro (multiple-value-bind (output-stream error-stream pid)
+                (excl:run-shell-command (format nil "~{~a~^ ~}" args) :wait nil :output :stream)
+                (declare (ignore error-stream pid))
+                (loop for line = (read-line output-stream nil)
+                      while line do (format (or s *standard-output*) "~a~%" line)))
+    #+sbcl (let*
+             ((process (sb-ext:run-program shell
+                                           #+(or win32 win64) (cons shell-opt (mapcar '$sconcat args))
+                                           #-(or win32 win64) (list shell-opt (format nil "~{~a~^ ~}" args))
+                                           :search t :output :stream))
+              (output-stream (sb-ext:process-output process)))
+             (loop for line = (read-line output-stream nil)
+                   while line do (format (or s *standard-output*) "~a~%" line)))
+    #+openmcl (let ((process (ccl::run-program shell
+                               #+windows (cons shell-opt (mapcar '$sconcat args))
+                               #-windows (list shell-opt (format nil "~{~a~^ ~}" args))
+                               :wait nil :output :stream)))
+                (let ((output-stream (ccl:external-process-output-stream process)))
+                  (loop for line = (read-line output-stream nil)
+                        while line do (format (or s *standard-output*) "~a~%" line))))
+    #+abcl (extensions::run-shell-command (format nil "~{~a~^ ~}" args) :output (or s *standard-output*))
+    #+lispworks (multiple-value-bind (output-stream error-stream pid)
+                  (system:run-shell-command (format nil "~{~a~^ ~}" args) :wait nil :output :stream)
+                  (declare (ignore error-stream pid))
+                  (loop for line = (read-line output-stream nil)
+                        while line do (format (or s *standard-output*) "~a~%" line))))
+
+    #-(or gcl ecl clisp cmu scl allegro sbcl openmcl abcl lispworks)
+      (merror (intl:gettext "system: not defined for this Lisp implementation (~m)") (lisp-implementation-type)))
 
 (defmfun $room (&optional (arg nil arg-p))
   (if (and arg-p (member arg '(t nil) :test #'eq))

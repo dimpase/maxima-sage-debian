@@ -1,9 +1,10 @@
+@c -*- mode: texinfo -*-
 @menu
 * Introduction to orthogonal polynomials::
 * Functions and Variables for orthogonal polynomials::
 @end menu
 
-@node Introduction to orthogonal polynomials, Functions and Variables for orthogonal polynomials, orthopoly-pkg, orthopoly-pkg
+@node Introduction to orthogonal polynomials, Functions and Variables for orthogonal polynomials, Package orthopoly, Package orthopoly
 @section Introduction to orthogonal polynomials
 
 @code{orthopoly} is a package for symbolic and numerical evaluation of
@@ -34,7 +35,7 @@ Barton Willis of the University of Nebraska at Kearney (UNK) wrote
 the @code{orthopoly} package and its documentation. The package 
 is released under the GNU General Public License (GPL).
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Orthogonal polynomials}
 @category{Share packages}
 @category{Package orthopoly}
@@ -102,7 +103,7 @@ center and @var{r} is the radius of the interval. Since Maxima
 does not support arithmetic on intervals, in some situations, such
 as graphics, you want to suppress the error and output only the 
 center of the interval. To do this, set the option
-variable @code{orthopoly_returns_intervals} to @code{false}.
+variable @mref{orthopoly_returns_intervals} to @mref{false}.
 
 @c ===beg===
 @c orthopoly_returns_intervals : false;
@@ -278,7 +279,7 @@ For a specific @var{n}, we can reduce the expression to zero.
 Generally, the polynomial form of an orthogonal polynomial is ill-suited
 for floating point evaluation. Here's an example.
 
-@c ACTUALLY NEEDS load(orthopoly); BEFORE ANYTHING ELSE
+@c ACTUALLY NEEDS load("orthopoly"); BEFORE ANYTHING ELSE
 @c ===beg===
 @c p : jacobi_p (100, 2, 3, x)$
 @c subst (0.2, x, p);
@@ -344,8 +345,8 @@ fully. Consider
 
 The expression in (%o3) will not evaluate to a float; @code{orthopoly} doesn't
 recognize floating point values where it requires an integer. Similarly, 
-numerical evaluation of the @code{pochhammer} function for orders that
-exceed @code{pochhammer_max_index} can be troublesome; consider
+numerical evaluation of the @mref{pochhammer} function for orders that
+exceed @mref{pochhammer_max_index} can be troublesome; consider
 
 @c ===beg===
 @c x :  pochhammer (1, 10), pochhammer_max_index : 5;
@@ -369,7 +370,7 @@ Applying @code{float} doesn't evaluate @var{x} to a float
 @end example
 
 To evaluate @var{x} to a float, you'll need to bind
-@code{pochhammer_max_index} to 11 or greater and apply @code{float} to @var{x}.
+@mref{pochhammer_max_index} to 11 or greater and apply @code{float} to @var{x}.
 
 @c CONTINUING PREVIOUS EXAMPLE HERE
 @c ===beg===
@@ -380,7 +381,7 @@ To evaluate @var{x} to a float, you'll need to bind
 (%o3)                       3628800.0
 @end example
 
-The default value of @code{pochhammer_max_index} is 100;
+The default value of @mref{pochhammer_max_index} is 100;
 change its value after loading @code{orthopoly}.
 
 Finally, be aware that reference books vary on the definitions of the 
@@ -533,7 +534,7 @@ To plot expressions that involve the orthogonal polynomials, you
 must do two things:
 @enumerate
 @item 
-Set the option variable @code{orthopoly_returns_intervals} to @code{false},
+Set the option variable @mref{orthopoly_returns_intervals} to @mref{false},
 @item
 Quote any calls to @code{orthopoly} functions.
 @end enumerate
@@ -552,14 +553,12 @@ a Legendre polynomial.
 (%o1)
 @end example
 
-@ifnotinfo
-@image{figures/orthopoly1,8cm}
-@end ifnotinfo
+@altfigure{orthopoly1,Plot of the Legrende polynomial of order 5}
 
 The @i{entire} expression @code{legendre_p (5, x)} is quoted; this is 
 different than just quoting the function name using @code{'legendre_p (5, @var{x})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Plotting}
 @closecatbox
 
@@ -567,7 +566,7 @@ different than just quoting the function name using @code{'legendre_p (5, @var{x
 @subsection Miscellaneous Functions
 
 The @code{orthopoly} package defines the
-Pochhammer symbol and an unit step function. @code{orthopoly} uses 
+Pochhammer symbol and a unit step function. @code{orthopoly} uses
 the Kronecker delta function and the unit step function in
 @code{gradef} statements.
 
@@ -650,7 +649,7 @@ The unit step function is left-continuous; thus
 (%o1)                       [0, 0, 1]
 @end example
 
-If you need an unit step function that is neither left or right continuous
+If you need a unit step function that is neither left or right continuous
 at zero, define your own using @code{signum}; for example,
 
 @c ===beg===
@@ -686,18 +685,100 @@ and the associated Legendre function of the second kind. Numerically,
 the half-integer Bessel functions are evaluated using the SLATEC code.
 
 
-@node Functions and Variables for orthogonal polynomials,  , Introduction to orthogonal polynomials, orthopoly-pkg
+@node Functions and Variables for orthogonal polynomials,  , Introduction to orthogonal polynomials, Package orthopoly
 @section Functions and Variables for orthogonal polynomials
 
 @anchor{assoc_legendre_p}
 @deffn {Function} assoc_legendre_p (@var{n}, @var{m}, @var{x})
-The associated Legendre function of the first kind of degree @var{n} and
-order @var{m}.
+The associated Legendre function of the first kind of degree @math{n} and
+order @math{m}, 
+@html
+\(P_{n}^{m}(z),\)
+@end html
+@ifinfo
+@math{assoc_legendre_p(n,m,z),}
+@end ifinfo
+@iftex
+@math{P_{n}^{m}(z),}
+@end iftex
+is a solution of the differential equation:
 
-Reference: Abramowitz and Stegun, equations 22.5.37, page 779, 8.6.6
-(second equation), page 334, and 8.2.5, page 333.
+@html
+$$
+(1-z^2){d^2 w\over dz^2} - 2z{dw\over dz} + \left[n(n+1)-{m^2\over 1-z^2}\right] w = 0
+$$
+@end html
+@ifinfo
+(1-z^2)*diff(w,z,2) - 2*z*diff(w,z) + (n*(n+1)-m^2/(1-z^2))*w = 0
+@end ifinfo
+@tex
+$$(1-z^2){d^2 w\over dz^2} - 2z{dw\over dz} + \left[n(n+1)-{m^2\over 1-z^2}\right] w = 0$$
+@end tex
 
-@opencatbox
+
+This is related to the Legendre polynomial, 
+@html
+\(P_n(x)\)
+@end html
+@ifinfo
+@math{legendre_p(n,x)}
+@end ifinfo
+@iftex
+@math{P_n(x)}
+@end iftex
+via
+
+@html
+$$
+P_n^m(x) = (-1)^m\left(1-x^2\right)^{m/2} {d^m\over dx^m} P_n(x)
+$$
+@end html
+@ifinfo
+assoc_legendre_p(n,m,x) = (-1)^m*(1-x^2)^(m/2) diff(legendre_p(n,x),x,m)
+@end ifinfo
+@tex
+$$P_n^m(x) = (-1)^m\left(1-x^2\right)^{m/2} {d^m\over dx^m} P_n(x)$$
+@end tex
+
+
+Reference: @urlaands{eqn 22.5.37, 779}, @urlaands{eqn 8.6.6, 334}, and @urlaands{eqn 8.2.5, 333}.
+
+Some examples:
+@c ===beg===
+@c assoc_legendre_p(2,0,x);
+@c factor(%);
+@c factor(assoc_legendre_p(2,1,x));
+@c (-1)^1*(1-x^2)^(1/2)*diff(legendre_p(2,x),1);
+@c factor(%);
+@c ===end===
+@example
+(%i1) assoc_legendre_p(2,0,x);
+                                                 2
+                                        3 (1 - x)
+(%o1)                   (- 3 (1 - x)) + ---------- + 1
+                                            2
+(%i2) factor(%);
+                                      2
+                                   3 x  - 1
+(%o2)                              --------
+                                      2
+(%i3) factor(assoc_legendre_p(2,1,x));
+                                              2
+(%o3)                         - 3 x sqrt(1 - x )
+
+(%i4) (-1)^1*(1-x^2)^(1/2)*diff(legendre_p(2,x),x);
+                                                    2
+(%o4)                   - (3 - 3 (1 - x)) sqrt(1 - x )
+
+(%i5) factor(%);
+                                              2
+(%o5)                         - 3 x sqrt(1 - x )
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -705,12 +786,64 @@ Reference: Abramowitz and Stegun, equations 22.5.37, page 779, 8.6.6
 
 @anchor{assoc_legendre_q}
 @deffn {Function} assoc_legendre_q (@var{n}, @var{m}, @var{x})
-The associated Legendre function of the second kind of degree @var{n}
-and order @var{m}.
+The associated Legendre function of the second kind of degree @math{n}
+and order @math{m}, 
+@html
+\(Q_{n}^{m}(z),\)
+@end html
+@ifinfo
+@math{assoc_legendre_q(n,m,z),}
+@end ifinfo
+@iftex
+@math{Q_{n}^{m}(z),}
+@end iftex 
+is a solution of the differential equation:
+
+@html
+$$
+(1-z^2){d^2 w\over dz^2} - 2z{dw\over dz} + \left[n(n+1)-{m^2\over 1-z^2}\right] w = 0
+$$
+@end html
+@ifinfo
+(1-z^2)*diff(w,z,2) - 2*z*diff(w,z) + (n*(n+1)-m^2/(1-z^2))*w = 0
+@end ifinfo
+@tex
+$$(1-z^2){d^2 w\over dz^2} - 2z{dw\over dz} + \left[n(n+1)-{m^2\over 1-z^2}\right] w = 0$$
+@end tex
+
 
 Reference: Abramowitz and Stegun, equation 8.5.3 and 8.1.8.
 
-@opencatbox
+Some examples:
+@c ===beg===
+@c assoc_legendre_q(0,0,x);
+@c assoc_legendre_q(1,0,x);
+@c assoc_legendre_q(1,1,x);
+@c ===end===
+@example
+(%i1) assoc_legendre_q(0,0,x);
+                                       x + 1
+                                 log(- -----)
+                                       x - 1
+(%o1)                            ------------
+                                      2
+(%i2) assoc_legendre_q(1,0,x);
+                                    x + 1
+                              log(- -----) x - 2
+                                    x - 1
+(%o2)/R/                      ------------------
+                                      2
+(%i3) assoc_legendre_q(1,1,x);
+(%o3)/R/ 
+          x + 1            2   2               2            x + 1            2
+    log(- -----) sqrt(1 - x ) x  - 2 sqrt(1 - x ) x - log(- -----) sqrt(1 - x )
+          x - 1                                             x - 1
+  - ---------------------------------------------------------------------------
+                                        2
+                                     2 x  - 2
+@end example
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -718,11 +851,124 @@ Reference: Abramowitz and Stegun, equation 8.5.3 and 8.1.8.
 
 @anchor{chebyshev_t}
 @deffn {Function} chebyshev_t (@var{n}, @var{x})
-The Chebyshev polynomial of the first kind of degree @var{n}.
+The Chebyshev polynomial of the first kind of degree @math{n}, 
+@html
+\(T_n(x).\)
+@end html
+@ifinfo
+@math{chebyshev_t(n,x).}
+@end ifinfo
+@iftex
+@math{T_n(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equation 22.5.47, page 779.
+Reference: @urlaands{eqn 22.5.47, 779}.
 
-@opencatbox
+The polynomials 
+@html
+\(T_n(x)\)
+@end html
+@ifinfo
+@math{chebyshev_t(n,x)}
+@end ifinfo
+@iftex
+@math{T_n(x)}
+@end iftex 
+can be written in terms of a hypergeometric function:
+
+@html
+$$
+T_n(x) = {_{2}}F_{1}\left(-n, n; {1\over 2}; {1-x\over 2}\right)
+$$
+@end html
+@ifinfo
+hypergeometric([-n,n],[1/2],(1-x)/2)
+@end ifinfo
+@tex
+$$T_n(x) = {_{2}}F_{1}\left(-n, n; {1\over 2}; {1-x\over 2}\right)$$
+@end tex
+
+
+The polynomials can also be defined in terms of the sum
+
+@html
+$$
+T_n(x) = {n\over 2} \sum_{r=0}^{\lfloor {n/2}\rfloor} {(-1)^r\over n-r} {n-r\choose k}(2x)^{n-2r}
+$$
+@end html
+@ifinfo
+chebyshev_t(n,x) = n/2*sum((-1)^r/(n-r)*binomial(n-r,r)*(2*x)^(n-2*r), r, 0, floor(n/2))
+@end ifinfo
+@tex
+$$T_n(x) = {n\over 2} \sum_{r=0}^{\lfloor {n/2}\rfloor} {(-1)^r\over n-r} {n-r\choose k}(2x)^{n-2r}$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+T_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)(1-x^2)^n\right)
+$$
+@end html
+@ifinfo
+@math{chebyshev_t(n,x) = 1/(k(n)*w(x))*diff(w(x)*(1-x^2)^n, x, n)}
+
+@end ifinfo
+@tex
+$$T_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)(1-x^2)^n\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= 1/\sqrt{1-x^2} \cr
+\kappa_n &= (-2)^n\left(1\over 2\right)_n
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = 1/sqrt(1-x^2)}
+
+@math{k_n = (-2)^n*pochhammer(1/2,n)}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= 1/\sqrt{1-x^2} \cr
+\kappa_n &= (-2)^n\left(1\over 2\right)_n
+}$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c chebyshev_t(2,x);
+@c factor(%);
+@c factor(chebyshev_t(3,x));
+@c factor(hgfred([-3,3],[1/2],(1-x)/2));
+@c ===end===
+@example
+(%i1) chebyshev_t(2,x);
+                                                 2
+(%o1)                   (- 4 (1 - x)) + 2 (1 - x)  + 1
+(%i2) factor(%);
+                                      2
+(%o2)                              2 x  - 1
+(%i3) factor(chebyshev_t(3,x));
+                                       2
+(%o3)                            x (4 x  - 3)
+(%i4) factor(hgfred([-3,3],[1/2],(1-x)/2));
+                                       2
+(%o4)                            x (4 x  - 3)
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -730,11 +976,125 @@ Reference: Abramowitz and Stegun, equation 22.5.47, page 779.
 
 @anchor{chebyshev_u}
 @deffn {Function} chebyshev_u (@var{n}, @var{x})
-The Chebyshev polynomial of the second kind of degree @var{n}.
+The Chebyshev polynomial of the second kind of degree @math{n}, 
+@html
+\(U_n(x).\)
+@end html
+@ifinfo
+@math{chebyshev_u(n,x).}
+@end ifinfo
+@iftex
+@math{U_n(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equation 22.5.48, page 779.
+Reference: @urlaands{eqn 22.5.48,779}.
 
-@opencatbox
+The polynomials 
+@html
+\(U_n(x)\)
+@end html
+@ifinfo
+@math{chebyshev_u(n,x)}
+@end ifinfo
+@iftex
+@math{U_n(x)}
+@end iftex 
+can be written in terms of a hypergeometric function:
+
+@html
+$$
+U_n(x) = (n+1)\; {_{2}F_{1}}\left(-n, n+2; {3\over 2}; {1-x\over 2}\right)
+$$
+@end html
+@ifinfo
+chebyshev_u(n,x) = (n+1)*hypergeometric([-n,n+1],[3/2],(1-x)/2)
+@end ifinfo
+@tex
+$$U_n(x) = (n+1)\; {_{2}F_{1}}\left(-n, n+2; {3\over 2}; {1-x\over 2}\right)$$
+@end tex
+
+
+The polynomials can also be defined in terms of the sum
+
+@html
+$$
+U_n(x) = \sum_{r=0}^{\lfloor n/2 \rfloor} (-1)^r {n-r \choose r} (2x)^{n-2r}
+$$
+@end html
+@ifinfo
+chebyshev_u(n,x) = sum((-1)^r*binomial(n-r,r)*(2*x)^(n-2*r), r, 0, floor(n/2))
+@end ifinfo
+@tex
+$$U_n(x) = \sum_{r=0}^{\lfloor n/2 \rfloor} (-1)^r {n-r \choose r} (2x)^{n-2r}$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+U_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)(1-x^2)^n\right)
+$$
+@end html
+@ifinfo
+@math{chebyshev_u(n,x) = 1/(k(n)*w(x))*diff(w(x)*(1-x^2)^n, x, n)}
+
+@end ifinfo
+@tex
+$$U_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)(1-x^2)^n\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= \sqrt{1-x^2} \cr
+\kappa_n &= {(-2)^n\left({3\over 2}\right)_n \over n+1}
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = sqrt(1-x^2)}
+
+@math{k(n) = (-2)^n*pochhammer(3/2,n)/(n+1)}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= \sqrt{1-x^2} \cr
+\kappa_n &= {(-2)^n\left({3\over 2}\right)_n \over n+1}
+}$$
+@end tex
+.
+
+@c ===beg===
+@c chebyshev_u(2,x);
+@c expand(%);
+@c expand(chebyshev_u(3,x));
+@c expand(4*hgfred([-3,5],[3/2],(1-x)/2));
+@c ===end===
+@example
+(%i1) chebyshev_u(2,x);
+                                                  2
+                            8 (1 - x)    4 (1 - x)
+(%o1)                 3 ((- ---------) + ---------- + 1)
+                                3            3
+(%i2) expand(%);
+                                      2
+(%o2)                              4 x  - 1
+(%i3) expand(chebyshev_u(3,x));
+                                     3
+(%o3)                             8 x  - 4 x
+(%i4) expand(4*hgfred([-3,5],[3/2],(1-x)/2));
+                                     3
+(%o4)                             8 x  - 4 x
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -742,11 +1102,120 @@ Reference: Abramowitz and Stegun, equation 22.5.48, page 779.
 
 @anchor{gen_laguerre}
 @deffn {Function} gen_laguerre (@var{n}, @var{a}, @var{x})
-The generalized Laguerre polynomial of degree @var{n}.
+The generalized Laguerre polynomial of degree @math{n}, 
+@html
+\(L_n^{(\alpha)}(x).\)
+@end html
+@ifinfo
+@math{gen_laguerre(n,a,x).}
+@end ifinfo
+@iftex
+@math{L_n^{(\alpha)}(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equation 22.5.54, page 780.
+These can be defined by
 
-@opencatbox
+@html
+$$
+L_n^{(\alpha)}(x) = {n+\alpha \choose n}\; {_1F_1}(-n; \alpha+1; x)
+$$
+@end html
+@ifinfo
+gen_laguerre(n, a, x) = binomial(n+a,n)*hypergeometric([-n], [a+1], x)
+@end ifinfo
+@tex
+$$L_n^{(\alpha)}(x) = {n+\alpha \choose n}\; {_1F_1}(-n; \alpha+1; x)$$
+@end tex
+
+
+The polynomials can also be defined by the sum
+
+@html
+$$
+L_n^{(\alpha)}(x) = \sum_{k=0}^n {(\alpha + k + 1)_{n-k} \over (n-k)! k!} (-x)^k
+$$
+@end html
+@ifinfo
+@math{gen_laguerre(n, a, x) = sum(pochhammer(a+k+1,n-k)/((n-k)!*k!)*(-x)^k, k, 0, n)}
+@end ifinfo
+@tex
+$$L_n^{(\alpha)}(x) = \sum_{k=0}^n {(\alpha + k + 1)_{n-k} \over (n-k)! k!} (-x)^k$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+L_n^{(\alpha)}(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)x^n\right)
+$$
+@end html
+@ifinfo
+@math{gen_laguerre(n, a, x) = 1/(k(n)*w(x))*diff(w(x)*x^n, x, n)}
+
+@end ifinfo
+@tex
+$$L_n^{(\alpha)}(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)x^n\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= e^{-x}x^{\alpha} \cr
+\kappa_n &= n!
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = %e^(-x)*x^a}
+
+@math{k(n) = n!}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= e^{-x}x^{\alpha} \cr
+\kappa_n &= n!
+}$$
+@end tex
+
+
+Reference: @urlaands{eqn 22.5.54,780}.
+
+Some examples:
+@c ===beg===
+@c gen_laguerre(1,k,x);
+@c gen_laguerre(2,k,x);
+@c binomial(2+k,2)*hgfred([-2],[1+k],x);
+@c ===end===
+@example
+(%i1) gen_laguerre(1,k,x);
+                                             x
+(%o1)                         (k + 1) (1 - -----)
+                                           k + 1
+(%i2) gen_laguerre(2,k,x);
+                                         2
+                                        x            2 x
+                 (k + 1) (k + 2) (--------------- - ----- + 1)
+                                  (k + 1) (k + 2)   k + 1
+(%o2)            ---------------------------------------------
+                                       2
+(%i3) binomial(2+k,2)*hgfred([-2],[1+k],x);
+                                         2
+                                        x            2 x
+                 (k + 1) (k + 2) (--------------- - ----- + 1)
+                                  (k + 1) (k + 2)   k + 1
+(%o3)            ---------------------------------------------
+                                       2
+
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -754,11 +1223,120 @@ Reference: Abramowitz and Stegun, equation 22.5.54, page 780.
 
 @anchor{hermite}
 @deffn {Function} hermite (@var{n}, @var{x})
-The Hermite polynomial of degree @var{n}.
+The Hermite polynomial of degree @math{n}, 
+@html
+\(H_n(x).\)
+@end html
+@ifinfo
+@math{hermite(n,x).}
+@end ifinfo
+@iftex
+@math{H_n(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equation 22.5.55, page 780.
+These polynomials may be defined by a hypergeometric function
 
-@opencatbox
+@html
+$$
+H_n(x) = (2x)^n\; {_2F_0}\left(-{1\over 2} n, -{1\over 2}n+{1\over 2};;-{1\over x^2}\right)
+$$
+@end html
+@ifinfo
+hermite(n,x) = (2*x)^n * hypergeometric([-n/2, -n/2+1/2],[], -1/x^2)
+@end ifinfo
+@tex
+$$H_n(x) = (2x)^n\; {_2F_0}\left(-{1\over 2} n, -{1\over 2}n+{1\over 2};;-{1\over x^2}\right)$$
+@end tex
+
+
+or by the series
+
+@html
+$$
+H_n(x) = n! \sum_{k=0}^{\lfloor n/2 \rfloor} {(-1)^k(2x)^{n-2k} \over k! (n-2k)!}
+$$
+@end html
+@ifinfo
+hermite(n,x) = n!*sum((-1)^k*(2*x)^(n-2*k)/(k!*(n-2*k)!), k, 0, floor(n/2))
+@end ifinfo
+@tex
+$$H_n(x) = n! \sum_{k=0}^{\lfloor n/2 \rfloor} {(-1)^k(2x)^{n-2k} \over k! (n-2k)!}$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+H_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\right)
+$$
+@end html
+@ifinfo
+@math{hermite(n,x) = 1/(k(n)*w(x))*diff(w(x), x, n)}
+
+@end ifinfo
+@tex
+$$H_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= e^{-{x^2/2}} \cr
+\kappa_n &= (-1)^n
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = %e(-x^2/2)}
+
+@math{k(n) = (-1)^n}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= e^{-{x^2/2}} \cr
+\kappa_n &= (-1)^n
+}$$
+@end tex
+
+
+Reference: @urlaands{eqn 22.5.55,780}.
+
+Some examples:
+@c ===beg===
+@c hermite(3,x);
+@c expand(%);
+@c expand(hermite(4,x));
+@c expand((2*x)^4*hgfred([-2,-2+1/2],[],-1/x^2));
+@c expand(4!*sum((-1)^k*(2*x)^(4-2*k)/(k!*(4-2*k)!),k,0,floor(4/2)));
+@c ===end===
+@example
+(%i1) hermite(3,x);
+                                              2
+                                           2 x
+(%o1)                          - 12 x (1 - ----)
+                                            3
+(%i2) expand(%);
+                                     3
+(%o2)                             8 x  - 12 x
+(%i3) expand(hermite(4,x));
+                                  4       2
+(%o3)                         16 x  - 48 x  + 12
+(%i4) expand((2*x)^4*hgfred([-2,-2+1/2],[],-1/x^2));
+                                  4       2
+(%o4)                         16 x  - 48 x  + 12
+(%i5) expand(4!*sum((-1)^k*(2*x)^(4-2*k)/(k!*(4-2*k)!),k,0,floor(4/2)));
+                                  4       2
+(%o5)                         16 x  - 48 x  + 12
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -768,7 +1346,7 @@ Reference: Abramowitz and Stegun, equation 22.5.55, page 780.
 @deffn {Function} intervalp (@var{e})
 Return @code{true} if the input is an interval and return false if it isn't. 
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Predicate functions}
 @closecatbox
@@ -777,16 +1355,115 @@ Return @code{true} if the input is an interval and return false if it isn't.
 
 @anchor{jacobi_p}
 @deffn {Function} jacobi_p (@var{n}, @var{a}, @var{b}, @var{x})
-The Jacobi polynomial.
+The Jacobi polynomial, 
+@html
+\(P_n^{(a,b)}(x).\)
+@end html
+@ifinfo
+@math{jacobi_p(n,a,b,x).}
+@end ifinfo
+@iftex
+@math{P_n^{(a,b)}(x).}
+@end iftex
 
 The Jacobi polynomials are actually defined for all
-@var{a} and @var{b}; however, the Jacobi polynomial
-weight @code{(1 - @var{x})^@var{a} (1 + @var{x})^@var{b}} isn't integrable for @code{@var{a} <= -1} or
-@code{@var{b} <= -1}. 
+@math{a} and @math{b}; however, the Jacobi polynomial
+weight @math{(1 - x)^a (1 + x)^b} isn't integrable
+for 
+@html
+\(a \le -1\)
+@end html
+@ifinfo
+@math{a <= -1}
+@end ifinfo
+@iftex
+@math{a \le -1}
+@end iftex 
+or 
+@html
+\(b \le -1.\)
+@end html
+@ifinfo
+@math{b <= -1.}
+@end ifinfo
+@iftex
+@math{b \le -1.}
+@end iftex 
 
-Reference: Abramowitz and Stegun, equation 22.5.42, page 779.
+Reference: @urlaands{eqn 22.5.42,779}.
 
-@opencatbox
+The polynomial may be defined in terms of hypergeometric functions:
+
+@html
+$$
+P_n^{(a,b)}(x) = {n+a\choose n} {_1F_2}\left(-n, n + a + b + 1; a+1; {1-x\over 2}\right)
+$$
+@end html
+@ifinfo
+jacobi_p(n,a,b,x) = binomial(n+a,n)*hypergeometric([-n,n+a+b+1],[a+1],(1-x)/2)
+@end ifinfo
+@tex
+$$P_n^{(a,b)}(x) = {n+a\choose n} {_1F_2}\left(-n, n + a + b + 1; a+1; {1-x\over 2}\right)$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+P_n^{(a, b)}(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\left(1-x^2\right)^n\right)
+$$
+@end html
+@ifinfo
+@math{jacobi_p(n,a,b,x) = 1/(k(n)*w(x))*diff(w(x)*(1-x^2)^n, x, n)}
+
+@end ifinfo
+@tex
+$$P_n^{(a, b)}(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\left(1-x^2\right)^n\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= (1-x)^a(1-x)^b \cr
+\kappa_n &= (-2)^n n!
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = (1-x)^a*(1-x)^b}
+
+@math{k(n) = (-2)^n*n!}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= (1-x)^a(1-x)^b \cr
+\kappa_n &= (-2)^n n!
+}$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c jacobi_p(0,a,b,x);
+@c jacobi_p(1,a,b,x);
+@c ===end===
+@example
+(%i1) jacobi_p(0,a,b,x);
+(%o1)                                  1
+(%i2) jacobi_p(1,a,b,x);
+                                    (b + a + 2) (1 - x)
+(%o2)                  (a + 1) (1 - -------------------)
+                                         2 (a + 1)
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -794,11 +1471,81 @@ Reference: Abramowitz and Stegun, equation 22.5.42, page 779.
 
 @anchor{laguerre}
 @deffn {Function} laguerre (@var{n}, @var{x})
-The Laguerre polynomial of degree @var{n}.
+The Laguerre polynomial, 
+@html
+\(L_n(x)\)
+@end html
+@ifinfo
+@math{laguerre(n,x)}
+@end ifinfo
+@iftex
+@math{L_n(x)}
+@end iftex 
+of degree @math{n}.
 
-Reference: Abramowitz and Stegun, equations 22.5.16 and 22.5.54, page 780.
+Reference: @urlaands{eqn 22.5.16, 778} and @urlaands{eqn 22.5.54, 780}.
 
-@opencatbox
+These are related to the generalized Laguerre polynomial by
+
+@html
+$$
+L_n(x) = L_n^{(0)}(x)
+$$
+@end html
+@ifinfo
+laguerre(n,x) = gen_laguerre(n,0,x)
+@end ifinfo
+@tex
+$$L_n(x) = L_n^{(0)}(x)$$
+@end tex
+
+
+The polynomials are given by the sum
+
+@html
+$$
+L_n(x) = \sum_{k=0}^{n} {(-1)^k\over k!}{n \choose k} x^k
+$$
+@end html
+@ifinfo
+laguerre(n,x) = sum((-1)^k/k!*binomial(n,k)*x^k,k,0,n)
+@end ifinfo
+@tex
+$$L_n(x) = \sum_{k=0}^{n} {(-1)^k\over k!}{n \choose k} x^k$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c laguerre(1,x);
+@c laguerre(2,x);
+@c gen_laguerre(2,0,x);
+@c sum((-1)^k/k!*binomial(2,k)*x^k,k,0,2);
+@c ===end===
+@example
+(%i1) laguerre(1,x);
+(%o1)                                1 - x
+(%i2) laguerre(2,x);
+                                  2
+                                 x
+(%o2)                            -- - 2 x + 1
+                                 2
+(%i3) gen_laguerre(2,0,x);
+                                  2
+                                 x
+(%o3)                            -- - 2 x + 1
+                                 2
+(%i4) sum((-1)^k/k!*binomial(2,k)*x^k,k,0,2);
+                                  2
+                                 x
+(%o4)                            -- - 2 x + 1
+                                 2
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -806,11 +1553,111 @@ Reference: Abramowitz and Stegun, equations 22.5.16 and 22.5.54, page 780.
 
 @anchor{legendre_p}
 @deffn {Function} legendre_p (@var{n}, @var{x})
-The Legendre polynomial of the first kind of degree @var{n}.
+The Legendre polynomial of the first kind, 
+@html
+\(P_n(x),\)
+@end html
+@ifinfo
+@math{legendre(n,x),}
+@end ifinfo
+@iftex
+@math{P_n(x),}
+@end iftex 
+of degree @math{n}.
 
-Reference: Abramowitz and Stegun, equations 22.5.50 and 22.5.51, page 779.
+Reference: @urlaands{eqn 22.5.50, 779} and @urlaands{eqn 22.5.51, 779}.
 
-@opencatbox
+The Legendre polynomial is related to the Jacobi polynomials by
+
+@html
+$$
+P_n(x) = P_n^{(0,0)}(x)
+$$
+@end html
+@ifinfo
+legendre_p(n,x) = jacobi_p(n,0,0,x)
+@end ifinfo
+@tex
+$$P_n(x) = P_n^{(0,0)}(x)$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+P_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\left(1-x^2\right)^n\right)
+$$
+@end html
+@ifinfo
+@math{legendre_p(n,x) = 1/(k(n)*w(x))*diff(w(x)*(1-x^2)^n, x, n)}
+
+@end ifinfo
+@tex
+$$P_n(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\left(1-x^2\right)^n\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= 1 \cr
+\kappa_n &= (-2)^n n!
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = 1}
+
+@math{k(n) = (-2)^n*n!}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= 1 \cr
+\kappa_n &= (-2)^n n!
+}$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c legendre_p(1,x);
+@c legendre_p(2,x);
+@c expand(%);
+@c expand(legendre_p(3,x));
+@c expand(jacobi_p(3,0,0,x));
+@c ===end===
+@example
+(%i1) legendre_p(1,x);
+(%o1)                                  x
+(%i2) legendre_p(2,x);
+                                                 2
+                                        3 (1 - x)
+(%o2)                   (- 3 (1 - x)) + ---------- + 1
+                                            2
+(%i3) expand(%);
+                                      2
+                                   3 x    1
+(%o3)                              ---- - -
+                                    2     2
+(%i4) expand(legendre_p(3,x));
+                                     3
+                                  5 x    3 x
+(%o4)                             ---- - ---
+                                   2      2
+(%i5) expand(jacobi_p(3,0,0,x));
+                                     3
+                                  5 x    3 x
+(%o5)                             ---- - ---
+                                   2      2
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -818,11 +1665,73 @@ Reference: Abramowitz and Stegun, equations 22.5.50 and 22.5.51, page 779.
 
 @anchor{legendre_q}
 @deffn {Function} legendre_q (@var{n}, @var{x})
-The Legendre function of the second kind of degree @var{n}.
+The Legendre function of the second kind, 
+@html
+\(Q_n(x)\)
+@end html
+@ifinfo
+@math{legendre_q(n,x)}
+@end ifinfo
+@iftex
+@math{Q_n(x)}
+@end iftex 
+of degree @math{n}.
 
 Reference: Abramowitz and Stegun, equations 8.5.3 and 8.1.8.
 
-@opencatbox
+These are related to 
+@html
+\(Q_n^m(x)\)
+@end html
+@ifinfo
+@math{assoc_legendre_q(n,m,x)}
+@end ifinfo
+@iftex
+@math{Q_n^m(x)}
+@end iftex 
+by
+
+@html
+$$
+Q_n(x) = Q_n^0(x)
+$$
+@end html
+@ifinfo
+legendre_q(n,x) = assoc_legendre_q(n,0,x)
+@end ifinfo
+@tex
+$$Q_n(x) = Q_n^0(x)$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c legendre_q(0,x);
+@c legendre_q(1,x);
+@c assoc_legendre_q(1,0,x);
+@c ===end===
+@example
+(%i1) legendre_q(0,x);
+                                       x + 1
+                                 log(- -----)
+                                       x - 1
+(%o1)                            ------------
+                                      2
+(%i2) legendre_q(1,x);
+                                    x + 1
+                              log(- -----) x - 2
+                                    x - 1
+(%o2)/R/                      ------------------
+                                      2
+(%i3) assoc_legendre_q(1,0,x);
+                                    x + 1
+                              log(- -----) x - 2
+                                    x - 1
+(%o3)/R/                      ------------------
+                                      2
+@end example
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -872,21 +1781,22 @@ A recursion relation for foo isn't known to Maxima
  -- an error.  Quitting.  To debug this try debugmode(true);
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
 @end deffn
 
+@anchor{orthopoly_returns_intervals}
 @defvr {Variable} orthopoly_returns_intervals
 Default value: @code{true}
 
-When @code{orthopoly_returns_intervals} is @code{true}, floating point results are returned in
+When @code{orthopoly_returns_intervals} is @mref{true}, floating point results are returned in
 the form @code{interval (@var{c}, @var{r})}, where @var{c} is the center of an interval
 and @var{r} is its radius. The center can be a complex number; in that
 case, the interval is a disk in the complex plane.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -917,7 +1827,7 @@ of the interval of orthogonality. For example,
 The main variable of @var{f} must be a symbol; if it isn't, Maxima
 signals an error. 
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -925,12 +1835,75 @@ signals an error.
 
 @anchor{pochhammer}
 @deffn {Function} pochhammer (@var{x}, @var{n})
-The Pochhammer symbol. For nonnegative integers @var{n} with
-@code{@var{n} <= pochhammer_max_index}, the expression @code{pochhammer (@var{x}, @var{n})} 
-evaluates to the product @code{@var{x} (@var{x} + 1) (@var{x} + 2) ... (@var{x} + n - 1)}
-when @code{@var{n} > 0} and
-to 1 when @code{@var{n} = 0}. For negative @var{n},
-@code{pochhammer (@var{x}, @var{n})} is defined as @code{(-1)^@var{n} / pochhammer (1 - @var{x}, -@var{n})}.
+The Pochhammer symbol, 
+@html
+\((x)_n.\)
+@end html
+@ifinfo
+@math{pochhammer(x,n).}
+@end ifinfo
+@iftex
+@math{(x)_n.}
+@end iftex
+(See @urlaands{eqn 6.1.22, 256} and @urldlmf{5.2.iii}).
+
+For nonnegative
+integers @var{n} with @code{@var{n} <= pochhammer_max_index}, the
+expression 
+@html
+\((x)_n\)
+@end html
+@ifinfo
+@math{pochhammer(x, n)}
+@end ifinfo
+@iftex
+@math{(x)_n}
+@end iftex 
+evaluates to the
+product 
+@html
+\(x(x+1)(x+2)\cdots(x+n-1)\)
+@end html
+@ifinfo
+@math{x (x + 1) (x + 2) ... (x +
+n - 1)}
+@end ifinfo
+@iftex
+@math{x(x+1)(x+2)\cdots(x+n-1)}
+@end iftex 
+when
+@html
+\(n > 0\)
+@end html
+@ifinfo
+@math{n > 0}
+@end ifinfo
+@iftex
+@math{n > 0}
+@end iftex 
+and
+to 1 when @math{n = 0}.
+For negative @math{n}, 
+@html
+\((x)_n\)
+@end html
+@ifinfo
+@math{pochhammer (x, n)}
+@end ifinfo
+@iftex
+@math{(x)_n}
+@end iftex 
+is
+defined as 
+@html
+\((-1)^n/(1-x)_{-n}.\)
+@end html
+@ifinfo
+@math{(-1)^n / pochhammer (1 - x, -n).}
+@end ifinfo
+@iftex
+@math{(-1)^n/(1-x)_{-n}.}
+@end iftex
 Thus
 
 @c ===beg===
@@ -947,7 +1920,7 @@ Thus
 @end example
 
 To convert a Pochhammer symbol into a quotient of gamma functions,
-(see Abramowitz and Stegun, equation 6.1.22) use @code{makegamma}; for example 
+(see @urlaands{eqn 6.1.22, 256}) use @code{makegamma}; for example 
 
 @c ===beg===
 @c makegamma (pochhammer (x, n));
@@ -959,8 +1932,8 @@ To convert a Pochhammer symbol into a quotient of gamma functions,
                             gamma(x)
 @end example
 
-When @var{n} exceeds @code{pochhammer_max_index} or when @var{n} 
-is symbolic, @code{pochhammer} returns a noun form.
+When @var{n} exceeds @mref{pochhammer_max_index} or when @var{n} 
+is symbolic, @mref{pochhammer} returns a noun form.
 
 @c ===beg===
 @c pochhammer (x, n);
@@ -971,13 +1944,14 @@ is symbolic, @code{pochhammer} returns a noun form.
                                  n
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Gamma and factorial functions}
 @closecatbox
 
 @end deffn
 
+@anchor{pochhammer_max_index}
 @defvr {Variable} pochhammer_max_index
 Default value: 100
 
@@ -998,9 +1972,9 @@ Examples:
                                  4
 @end example
 
-Reference: Abramowitz and Stegun, equation 6.1.16, page 256.
+Reference: @urlaands{eqn 6.1.16,256}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Gamma and factorial functions}
 @closecatbox
@@ -1009,11 +1983,67 @@ Reference: Abramowitz and Stegun, equation 6.1.16, page 256.
 
 @anchor{spherical_bessel_j}
 @deffn {Function} spherical_bessel_j (@var{n}, @var{x})
-The spherical Bessel function of the first kind.
+The spherical Bessel function of the first kind, 
+@html
+\(j_n(x).\)
+@end html
+@ifinfo
+@math{spherical_bessel_j(n,x).}
+@end ifinfo
+@iftex
+@math{j_n(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equations 10.1.8, page 437 and 10.1.15, page 439.
+Reference: @urlaands{eqn 10.1.8, 437} and @urlaands{eqn 10.1.15, 439}.
 
-@opencatbox
+It is related to the Bessel function by
+
+@html
+$$
+j_n(x) = \sqrt{\pi\over 2x} J_{n+1/2}(x)
+$$
+@end html
+@ifinfo
+spherical_bessel_j(n,x) = sqrt(%pi/(2*x))*bessel_j(n+1/2,x)
+@end ifinfo
+@tex
+$$j_n(x) = \sqrt{\pi\over 2x} J_{n+1/2}(x)$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c spherical_bessel_j(1,x);
+@c spherical_bessel_j(2,x);
+@c expand(%);
+@c expand(sqrt(%pi/(2*x))*bessel_j(2+1/2,x)),besselexpand:true;
+@c ===end===
+@example
+(%i1) spherical_bessel_j(1,x);
+                                sin(x)
+                                ------ - cos(x)
+                                  x
+(%o1)                           ---------------
+                                       x
+(%i2) spherical_bessel_j(2,x);
+                                3             3 cos(x)
+                        (- (1 - --) sin(x)) - --------
+                                 2               x
+                                x
+(%o2)                   ------------------------------
+                                      x
+(%i3) expand(%);
+                          sin(x)    3 sin(x)   3 cos(x)
+(%o3)                  (- ------) + -------- - --------
+                            x           3          2
+                                       x          x
+(%i4) expand(sqrt(%pi/(2*x))*bessel_j(2+1/2,x)),besselexpand:true;
+                          sin(x)    3 sin(x)   3 cos(x)
+(%o4)                  (- ------) + -------- - --------
+                            x           3          2
+                                       x          x
+@end example
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Bessel functions}
 @closecatbox
@@ -1022,11 +2052,66 @@ Reference: Abramowitz and Stegun, equations 10.1.8, page 437 and 10.1.15, page 4
 
 @anchor{spherical_bessel_y}
 @deffn {Function} spherical_bessel_y (@var{n}, @var{x})
-The spherical Bessel function of the second kind. 
+The spherical Bessel function of the second kind, 
+@html
+\(y_n(x).\)
+@end html
+@ifinfo
+@math{<spherical_bessel_y(n,x).}
+@end ifinfo
+@iftex
+@math{y_n(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equations 10.1.9, page 437 and 10.1.15, page 439.
+Reference: @urlaands{eqn 10.1.9, 437} and @urlaands{eqn 10.1.15, 439}.
 
-@opencatbox
+It is related to the Bessel function by
+
+@html
+$$
+y_n(x) = \sqrt{\pi\over 2x} Y_{n+1/2}(x)
+$$
+@end html
+@ifinfo
+spherical_bessel_y(n,x) = sqrt(%pi/(2*x))*bessel_y(n+1/2,x)
+@end ifinfo
+@tex
+$$y_n(x) = \sqrt{\pi\over 2x} Y_{n+1/2}(x)$$
+@end tex
+
+
+@c ===beg===
+@c spherical_bessel_y(1,x);
+@c spherical_bessel_y(2,x);
+@c expand(%);
+@c expand(sqrt(%pi/(2*x))*bessel_y(2+1/2,x)),besselexpand:true;
+@c ===end===
+@example
+(%i1) spherical_bessel_y(1,x);
+                                           cos(x)
+                              (- sin(x)) - ------
+                                             x
+(%o1)                         -------------------
+                                       x
+(%i2) spherical_bessel_y(2,x);
+                           3 sin(x)        3
+                           -------- - (1 - --) cos(x)
+                              x             2
+                                           x
+(%o2)                    - --------------------------
+                                       x
+(%i3) expand(%);
+                          3 sin(x)    cos(x)   3 cos(x)
+(%o3)                  (- --------) + ------ - --------
+                              2         x          3
+                             x                    x
+(%i4) expand(sqrt(%pi/(2*x))*bessel_y(2+1/2,x)),besselexpand:true;
+                          3 sin(x)    cos(x)   3 cos(x)
+(%o4)                  (- --------) + ------ - --------
+                              2         x          3
+                             x                    x
+@end example
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Bessel functions}
 @closecatbox
@@ -1036,11 +2121,38 @@ Reference: Abramowitz and Stegun, equations 10.1.9, page 437 and 10.1.15, page 4
 @anchor{spherical_hankel1}
 @deffn {Function} spherical_hankel1 (@var{n}, @var{x})
 The spherical Hankel function of the
-first kind.
+first kind, 
+@html
+\(h_n^{(1)}(x).\)
+@end html
+@ifinfo
+@math{spherical_hankel1(n,x).}
+@end ifinfo
+@iftex
+@math{h_n^{(1)}(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equation 10.1.36, page 439.
+Reference: @urlaands{eqn 10.1.36,439}.
 
-@opencatbox
+This is defined by
+
+@html
+$$
+h_n^{(1)}(x) = j_n(x) + iy_n(x)
+$$
+@end html
+@ifinfo
+spherical_hankel1(n,x) = spherical_bessel_j(n,x) + %i*spherical_bessel_y(n,x)
+@end ifinfo
+@tex
+$$h_n^{(1)}(x) = j_n(x) + iy_n(x)$$
+@end tex
+
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Bessel functions}
 @closecatbox
@@ -1049,11 +2161,39 @@ Reference: Abramowitz and Stegun, equation 10.1.36, page 439.
 
 @anchor{spherical_hankel2}
 @deffn {Function} spherical_hankel2 (@var{n}, @var{x})
-The spherical Hankel function of the second kind.
+The spherical Hankel function of the
+second kind, 
+@html
+\(h_n^{(2)}(x).\)
+@end html
+@ifinfo
+@math{spherical_hankel2(n,x).}
+@end ifinfo
+@iftex
+@math{h_n^{(2)}(x).}
+@end iftex
 
-Reference: Abramowitz and Stegun, equation 10.1.17, page 439.
+Reference: @urlaands{eqn 10.1.17,439}.
 
-@opencatbox
+This is defined by
+
+@html
+$$
+h_n^{(2)}(x) = j_n(x) + iy_n(x)
+$$
+@end html
+@ifinfo
+spherical_hankel2(n,x) = spherical_bessel_j(n,x) - %i*spherical_bessel_y(n,x)
+@end ifinfo
+@tex
+$$h_n^{(2)}(x) = j_n(x) + iy_n(x)$$
+@end tex
+
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Bessel functions}
 @closecatbox
@@ -1061,12 +2201,122 @@ Reference: Abramowitz and Stegun, equation 10.1.17, page 439.
 @end deffn
 
 @anchor{spherical_harmonic}
-@deffn {Function} spherical_harmonic (@var{n}, @var{m}, @var{x}, @var{y})
-The spherical harmonic function.
+@deffn {Function} spherical_harmonic (@var{n}, @var{m}, @var{theta}, @var{phi})
+The spherical harmonic function, 
+@html
+\(Y_n^m(\theta, \phi).\)
+@end html
+@ifinfo
+@math{spherical_harmonic(n,m,theta,phi).}
+@end ifinfo
+@iftex
+@math{Y_n^m(\theta, \phi).}
+@end iftex
+
+Spherical harmonics satisfy the angular part of Laplace's equation in spherical coordinates.
+
+For integers @math{n} and @math{m} such
+that 
+@html
+\(n \geq |m|\)
+@end html
+@ifinfo
+@math{n <= abs(m)}
+@end ifinfo
+@iftex
+@math{n \geq |m|}
+@end iftex 
+and
+for 
+@html
+\(\theta \in [0, \pi].\)
+@end html
+@ifinfo
+@math{theta in [0, %pi].}
+@end ifinfo
+@iftex
+@math{\theta \in [0, \pi].}
+@end iftex 
+Maxima’s
+spherical harmonic function can be defined by
+
+@html
+$$
+Y_n^m(\theta, \phi) = (-1)^m \sqrt{{2n+1\over 4\pi} {(n-m)!\over (n+m)!}} P_n^m(\cos\theta) e^{im\phi}
+$$
+@end html
+@ifinfo
+@math{spherical_harmonic(n, m, theta, phi)  :=  (-1)^m *  (((n-m)!*(2*n+1))/(4*%pi*(n+m)!))^(1/2)* exp(%i*m*phi)*assoc_legendre_p(n,m,cos(theta))}
+@end ifinfo
+@tex
+$$Y_n^m(\theta, \phi) = (-1)^m \sqrt{{2n+1\over 4\pi} {(n-m)!\over (n+m)!}} P_n^m(\cos\theta) e^{im\phi}$$
+@end tex
+
+ 
+
+Further, when 
+@html
+\(n < |m|,\)
+@end html
+@ifinfo
+@math{n < abs(m),}
+@end ifinfo
+@iftex
+@math{n < |m|,}
+@end iftex 
+the
+spherical harmonic function vanishes.
+
+The factor @math{(-1)^m}, frequently used in Quantum mechanics, is
+called the @url{https://en.wikipedia.org/wiki/Spherical_harmonics#Condon%E2%80%93Shortley_phase, Condon-Shortely phase}.
+Some references, including @emph{NIST Digital Library of Mathematical Functions} omit
+this factor; see @url{http://dlmf.nist.gov/14.30.E1}.
 
 Reference: Merzbacher 9.64.
 
-@opencatbox
+Some examples:
+@c ===beg===
+@c spherical_harmonic(1,0,theta,phi);
+@c spherical_harmonic(1,1,theta,phi);
+@c spherical_harmonic(1,-1,theta,phi);
+@c spherical_harmonic(2,0,theta,phi);
+@c factor(%);
+@c ===end===
+@example
+(%i1) spherical_harmonic(1,0,theta,phi);
+                              sqrt(3) cos(theta)
+(%o1)                         ------------------
+                                 2 sqrt(%pi)
+(%i2) spherical_harmonic(1,1,theta,phi);
+                                    %i phi
+                          sqrt(3) %e       sin(theta)
+(%o2)                     ---------------------------
+                                 3/2
+                                2    sqrt(%pi)
+(%i3) spherical_harmonic(1,-1,theta,phi);
+                                    - %i phi
+                          sqrt(3) %e         sin(theta)
+(%o3)                   - -----------------------------
+                                  3/2
+                                 2    sqrt(%pi)
+(%i4) spherical_harmonic(2,0,theta,phi);
+                                                              2
+                                            3 (1 - cos(theta))
+          sqrt(5) ((- 3 (1 - cos(theta))) + ------------------- + 1)
+                                                     2
+(%o4)     ----------------------------------------------------------
+                                 2 sqrt(%pi)
+(%i5) factor(%);
+                                        2
+                          sqrt(5) (3 cos (theta) - 1)
+(%o5)                     ---------------------------
+                                  4 sqrt(%pi)
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 
@@ -1081,7 +2331,7 @@ The left-continuous unit step function; thus
 If you want a unit step function that takes on the value 1/2 at zero,
 use @mrefdot{hstep}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @category{Mathematical functions}
 @closecatbox
@@ -1090,11 +2340,117 @@ use @mrefdot{hstep}
 
 @anchor{ultraspherical}
 @deffn {Function} ultraspherical (@var{n}, @var{a}, @var{x})
-The ultraspherical polynomial (also known as the Gegenbauer polynomial).
+The ultraspherical polynomial, 
+@html
+\(C_n^{(a)}(x)\)
+@end html
+@ifinfo
+@math{ultraspherical(n,a,x)}
+@end ifinfo
+@iftex
+@math{C_n^{(a)}(x)}
+@end iftex 
+(also known as the Gegenbauer polynomial).
 
-Reference: Abramowitz and Stegun, equation 22.5.46, page 779.
+Reference: @urlaands{eqn 22.5.46,779}.
 
-@opencatbox
+These polynomials can be given in terms of Jacobi polynomials:
+
+@html
+$$
+C_n^{(\alpha)}(x) = {\Gamma\left(\alpha + {1\over 2}\right) \over \Gamma(2\alpha)}
+   {\Gamma(n+2\alpha) \over \Gamma\left(n+\alpha + {1\over 2}\right)}
+   P_n^{(\alpha-1/2, \alpha-1/2)}(x)
+$$
+@end html
+@ifinfo
+ultraspherical(n,a,x) = gamma(a+1/2)/gamma(2*a)*gamma(n+2*a)/gamma(n+a+1/2)*jacobi_p(n,a-1/2,a-1/2,x)
+@end ifinfo
+@tex
+$$C_n^{(\alpha)}(x) = {\Gamma\left(\alpha + {1\over 2}\right) \over \Gamma(2\alpha)}
+   {\Gamma(n+2\alpha) \over \Gamma\left(n+\alpha + {1\over 2}\right)}
+   P_n^{(\alpha-1/2, \alpha-1/2)}(x)$$
+@end tex
+
+
+or the series
+
+@html
+$$
+C_n^{(\alpha)}(x) = \sum_{k=0}^{\lfloor n/2 \rfloor} {(-1)^k (\alpha)_{n-k} \over k! (n-2k)!}(2x)^{n-2k}
+$$
+@end html
+@ifinfo
+@math{ultraspherical(n,a,x) = sum((-1)^k*pochhammer(a,n-k)/k!/(n-2*k)!*(2*x)^(n-2*k),k, 0, floor(n/2))}
+@end ifinfo
+@tex
+$$C_n^{(\alpha)}(x) = \sum_{k=0}^{\lfloor n/2 \rfloor} {(-1)^k (\alpha)_{n-k} \over k! (n-2k)!}(2x)^{n-2k}$$
+@end tex
+
+
+or the Rodrigues formula
+
+@html
+$$
+C_n^{(\alpha)}(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\left(1-x^2\right)^n\right)
+$$
+@end html
+@ifinfo
+@math{ultraspherical(n,x) = 1/(k(n)*w(x))*diff(w(x)*(1-x^2)^n, x, n)}
+
+@end ifinfo
+@tex
+$$C_n^{(\alpha)}(x) = {1\over \kappa_n  w(x)} {d^n\over dx^n}\left(w(x)\left(1-x^2\right)^n\right)$$
+@end tex
+
+
+where
+
+@html
+$$
+\eqalign{
+w(x) &= \left(1-x^2\right)^{\alpha-{1\over 2}} \cr
+\kappa_n &= {(-2)^n\left(\alpha + {1\over 2}\right)_n n!\over (2\alpha)_n} \cr
+}
+$$
+@end html
+@ifinfo
+@math{w(x) = (1-x^2)^(a-1/2)}
+
+@math{k(n) = (-2)^n*pochhammer(a+1/2,n)*n!/pochhammer(2*a,n)}
+@end ifinfo
+@tex
+$$\eqalign{
+w(x) &= \left(1-x^2\right)^{\alpha-{1\over 2}} \cr
+\kappa_n &= {(-2)^n\left(\alpha + {1\over 2}\right)_n n!\over (2\alpha)_n} \cr
+}$$
+@end tex
+
+
+Some examples:
+@c ===beg===
+@c ultraspherical(1,a,x);
+@c factor(%);
+@c factor(ultraspherical(2,a,x));
+@c ===end===
+@example
+(%i1) ultraspherical(1,a,x);
+                                   (2 a + 1) (1 - x)
+(%o1)                     2 a (1 - -----------------)
+                                              1
+                                       2 (a + -)
+                                              2
+(%i2) factor(%);
+(%o2)                                2 a x
+(%i3) factor(ultraspherical(2,a,x));
+                                     2      2
+(%o3)                        a (2 a x  + 2 x  - 1)
+@end example
+
+See also @mref{orthopoly_returns_intervals} for how numerical results
+are returned.
+
+@opencatbox{Categories:}
 @category{Package orthopoly}
 @closecatbox
 

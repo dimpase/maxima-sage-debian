@@ -13,12 +13,12 @@ install-maxima-info: $(wildcard $(infoname).info* $(infoname)-index.lisp)
 	  if test -f $(builddir)/$$b; then \
 	    t=`dirname $$d/$$b`; \
             test -d $$t || $(mkinstalldirs) $$t; \
-	    echo " $(INSTALL_DATA) BUILDDIR/$$b $$d/$$b"; \
+	    echo " $(INSTALL_DATA) $(builddir)/$$b $$d/$$b"; \
 	    $(INSTALL_DATA) $(builddir)/$$b $$d/$$b; \
 	  elif test -f $(srcdir)/$$s; then \
 	    t=`dirname $$d/$$s`; \
             test -d $$t || $(mkinstalldirs) $$t; \
-	    echo " $(INSTALL_DATA) SRCDIR/$$s $$d/$$s"; \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$s $$d/$$s"; \
 	    $(INSTALL_DATA) $(srcdir)/$$s $$d/$$s; \
 	  elif test -f $$p; then \
 	    t=`dirname $$d/$$p`; \
@@ -36,8 +36,8 @@ uninstall-maxima-info:
 dist-hook: dist-maxima-info
 dist-maxima-info:
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
-	list="$(srcdir)/$(infoname).info*" ; \
+	list="$(infoname).info*" ; \
 	for p in $$list; do \
 	  f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`; \
-	  test -f $(distdir)/$$f || cp -p $(srcdir)/$$f $(distdir)/$$f; \
+	  test -f $(distdir)/$$f || cp -p $(builddir)/$$f $(distdir)/$$f; \
 	done

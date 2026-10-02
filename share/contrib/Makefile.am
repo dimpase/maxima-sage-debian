@@ -1,1 +1,1 @@
-SUBDIRS = integration maxima-odesolve
+SUBDIRS = integration lurkmathml maxima-odesolve symplectic_ode guess

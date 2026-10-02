@@ -20,8 +20,9 @@ endif()
 set(CMAKE_C_COMPILER   ${HOST}-gcc)
 set(CMAKE_CXX_COMPILER ${HOST}-g++)
 set(CMAKE_RC_COMPILER  ${HOST}-windres)
+
+cmake_minimum_required(VERSION 3.16)
 project(maxima)
-cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/ ${CMAKE_BINARY_DIR}/)
 
@@ -67,7 +68,7 @@ string(REPLACE "Function .onInit" "Function .onInit
 
 " MYNSISTEMPLATE "${MYNSISTEMPLATE}")
 file(WRITE ${CMAKE_BINARY_DIR}/NSIS.template.in "${MYNSISTEMPLATE}")
-message(STATUS "Copied and patched ${CMAKE_ROOT}/Modules/NSIS.template.in to ${CMAKE_BINARY_DIR}/NSIS.template.in")
+message(STATUS "Copied and patched ${NSISTEMPLATE_IN} to ${CMAKE_BINARY_DIR}/NSIS.template.in")
 
 option(USE_WXMAXIMA_GIT "Use wxMaxima development snapshot." NO)
 option(USE_VTK "Use VTK." YES)
@@ -76,13 +77,17 @@ option(USE_VTK "Use VTK." YES)
 # sets the installation directory to ${WINDOWS_DRIVELETTER}:\maxima-current
 option(BUILD_CURRENT "Build a installer for current Maxima/wxMaxima." NO)
 
+option(WITH_CLISP "Include CLISP in the installer." YES)
+option(WITH_SBCL "Include SBCL in the installer." YES)
 option(WITH_ABCL "Include ABCL in the installer." NO)
+option(WITH_CCL64 "Include CCL64 in the installer." NO)
+option(WITH_ECL "Include ECL in the installer." NO)
 
-# SBCL and CLISP have both advantages and disadvantages:
+# Concerning the used Lisp versions:
 #  - SBCL is fast, but sometimes runs out of memory in places it really shouldn't
 #    (Loading LAPACK on IA32, for example) and isn't too happy with changing to
 #    non-ascii-non-unicode pathnames (which wxMaxima works around by now, though,
-#    and which Xmaxima doesn't evven try to do)
+#    and which Xmaxima doesn't even try to do)
 #  - CLISP is slow. And version 2.49 only sends valid output over the network
 #    if the front-end is slow enough. Test cases: Running a demo, all commands
 #    with loads of compiler output (load("draw"); for the first time) or just
@@ -90,28 +95,50 @@ option(WITH_ABCL "Include ABCL in the installer." NO)
 #    front-ends use have evolved in the last years it has become easy to
 #    trigger this => Setting SBCL to be the default.
 #  - ABCL (optional) is a Java based Lisp.
+#  - CCL64 (optional) support is very new.
+
+# $lisp_STYLE is used for licenses.html
+# $lisp_ENABLED for lispselector.tcl
+if(WITH_CLISP)
+    set(CLISP_STYLE "")
+    set(CLISP_ENABLED 1)
+else()
+    set(CLISP_STYLE "display: none;")
+    set(CLISP_ENABLED 0)
+endif()
+
+if(WITH_SBCL)
+    set(SBCL_STYLE "")
+    set(SBCL_ENABLED 1)
+else()
+    set(SBCL_STYLE "display: none;")
+    set(SBCL_ENABLED 0)
+endif()
+
 if(WITH_ABCL)
-    set(WITH_DEFAULT_LISP "sbcl" CACHE STRING "Which Lisp should be used by default (clisp/sbcl/abcl)?")
-    set_property(CACHE WITH_DEFAULT_LISP PROPERTY STRINGS "clisp" "sbcl" "abcl")
-    set(ABCL_LICENSE_INFORMATION "<li><a href=\"https://www.abcl.org/\">ABCL Website</a>, <a href=\"https://www.abcl.org/faq.shtml#license\">ABCL license</a></li>")
+    set(ABCL_STYLE "")
     set(ABCL_ENABLED 1)
 else()
-    set(WITH_DEFAULT_LISP "sbcl" CACHE STRING "Which Lisp should be used by default (clisp/sbcl)?")
-    set_property(CACHE WITH_DEFAULT_LISP PROPERTY STRINGS "clisp" "sbcl")
+    set(ABCL_STYLE "display: none;")
     set(ABCL_ENABLED 0)
 endif()
+
+if(WITH_CCL64)
+    set(CCL64_STYLE "")
+    set(CCL64_ENABLED 1)
+else()
+    set(CCL64_STYLE "display: none;")
+    set(CCL64_ENABLED 0)
+endif()
+
+set(WITH_DEFAULT_LISP "sbcl" CACHE STRING "Which Lisp should be used by default?")
+set_property(CACHE WITH_DEFAULT_LISP PROPERTY STRINGS "clisp" "sbcl" "abcl" "ccl64" "ecl")
 
 # If you want to use a updated version of a program,
 # update the version number and the checksum.
 # If no further patches are needed, you should get a
 # updated setup-file automatically.
 
-# current program versions
-set(CLISPVERSION 2.49)
-
-
-# MD5 checksums for the current program versions.
-set(CLISP_MD5 "8d58d64f83dd7ad01c054aecc16c1f52")
 
 if(BUILD_CURRENT)
     set(USE_WXMAXIMA_GIT YES)
@@ -119,24 +146,52 @@ if(BUILD_CURRENT)
 else()
     # Get Maxima version from configure.ac
     file(STRINGS "${CMAKE_SOURCE_DIR}/../configure.ac" CONFIGUREAC REGEX "AC_INIT\\(.*\\)")
-    string(REGEX REPLACE "AC_INIT\\(\\[maxima\\], \\[(.*)\\]\\)" "\\1" MAXIMAVERSION ${CONFIGUREAC})
+    string(REGEX REPLACE "AC_INIT\\(\\[maxima\\],[ \t\r\n]*\\[(.*)\\]\\)" "\\1" MAXIMAVERSION ${CONFIGUREAC})
     message(STATUS "Maxima version (from configure.ac): ${MAXIMAVERSION}")
+endif()
+
+# The HTML documentation is installed in a directory depending on "git describe",
+# when building from Git, e.g.:
+# share/maxima/branch_5_45_base_99_g0b3357e40_dirty/doc/html/maxima_singlepage.html
+# Otherwise the version number is included, e.g something like:
+# share/maxima/5.45.1/doc/html/maxima_singlepage.html
+# Set it first to the second variant, if Git is found and we are building
+# from a Git tree use the result of "git describe --dirty" in the path instead - where
+# "-" are changed to "_" (see commit d5d04f2 and the file '../configure.ac').
+set(MAXIMA_SINGLEPAGE_HTML "share/maxima/${MAXIMAVERSION}/doc/html/maxima_singlepage.html")
+find_package(Git)
+if(Git_FOUND)
+    execute_process(COMMAND ${GIT_EXECUTABLE} describe --dirty
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    OUTPUT_VARIABLE GIT_DESCRIBE
+                    ERROR_QUIET
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(GIT_DESCRIBE)
+        string(REPLACE "-" "_" GIT_DESCRIBE ${GIT_DESCRIBE})
+        set(MAXIMA_SINGLEPAGE_HTML "share/maxima/${GIT_DESCRIBE}/doc/html/maxima_singlepage.html")
+    endif()
 endif()
 
 
 
-# download URLs
-set(CLISP_URL "http://downloads.sourceforge.net/project/clisp/clisp/${CLISPVERSION}/clisp-${CLISPVERSION}-win32-mingw-big.zip")
-
-
 # Where are libgcc and libstdc++?
+# Seems difficult. On Ubuntu 22.04 and 20.04 (64bit) the library libgcc is called libgcc_s_seh-1.dll.
+# On Ubuntu 20.04 (32bit) it is libgcc_s_sjlj-1.dll - that file does not exist in Ubuntu 22.04, there it is most likely libgcc_s_dw2-1.dll
 if(BUILD_64BIT)
     execute_process(COMMAND "${CMAKE_CXX_COMPILER}" -print-file-name=libgcc_s_seh-1.dll OUTPUT_VARIABLE MINGW_LIBGCC    OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
     execute_process(COMMAND "${CMAKE_CXX_COMPILER}" -print-file-name=libgcc_s_sjlj-1.dll OUTPUT_VARIABLE MINGW_LIBGCC    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if("${MINGW_LIBGCC}" STREQUAL "libgcc_s_sjlj-1.dll")
+        # "${CMAKE_CXX_COMPILER}" -print-file-name=libgcc_s_sjlj-1.dll prints the string, if the file was not found. Otherwise the full path to the file.
+        execute_process(COMMAND "${CMAKE_CXX_COMPILER}" -print-file-name=libgcc_s_dw2-1.dll OUTPUT_VARIABLE MINGW_LIBGCC    OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
 endif()
 
 execute_process(COMMAND "${CMAKE_CXX_COMPILER}" -print-file-name=libstdc++-6.dll     OUTPUT_VARIABLE MINGW_LIBSTDCPP OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# wxMaxima and ECL uses C++ threads, include the required mingw library.
+execute_process(COMMAND "${CMAKE_CXX_COMPILER}" -print-file-name=libwinpthread-1.dll OUTPUT_VARIABLE MINGW_LIBWINPTHREAD OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "Found libwinpthread at ${MINGW_LIBWINPTHREAD}")
 
 message(STATUS "Found libstdc++ at ${MINGW_LIBSTDCPP}")
 
@@ -152,28 +207,25 @@ else()
     message(FATAL_ERROR "7z not found. It is required for crosscompiling Maxima.")
 endif()
 
+
+# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake >= 3.24:
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 include(ExternalProject)
 
-
-# Clisp (already a binary package just extract it...)
-#
-# What is the difference between clisp-2.49-win32-mingw-big.zip and clisp-2.49-win32-mingw-small.zip?
-# What should be used for running Maxima?
-externalproject_add(clisp
-  URL "${CLISP_URL}"
-  DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/downloads
-  URL_MD5 ${CLISP_MD5}
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/clisp-prefix/src/clisp/ DESTINATION clisp-${CLISPVERSION} COMPONENT Clisp)
-
-add_subdirectory("sbcl/")
 
 add_subdirectory("gnuplot/")
 
 add_subdirectory("tcltk/")
+
+# the MSWEBVIEW version is needed for the subdirectory mswebview and wxwidgets - set it here.
+
+set(MSWEBVIEWVERSION "1.0.4129.50")
+set(MSWEBVIEW_MD5 "d54d1416f5617fc564df3683b9642def")
+
+add_subdirectory("mswebview/")
 
 add_subdirectory("wxwidgets/")
 
@@ -181,38 +233,92 @@ add_subdirectory("wxmaxima/")
 
 if(USE_VTK)
     add_subdirectory("vtk/")
+    set(VTK_STYLE "")
+else()
+    set(VTK_STYLE "display: none;")
+endif()
+
+if(WITH_CLISP)
+    add_subdirectory("clisp/")
+    set(CLISP_CONFIGURE --enable-clisp --with-clisp=${CMAKE_BINARY_DIR}/wine-clisp.sh --with-clisp-runtime=${CMAKE_BINARY_DIR}/wine-lisp.sh)
+    set(CLISP_DEPENDS "clisp")
+    set(CLISP_ENABLED 1)
+else()
+    set(CLISP_CONFIGURE "")
+    set(CLISP_DEPENDS "")
+    set(CLISP_ENABLED 0)
+endif()
+
+if(WITH_SBCL)
+    add_subdirectory("sbcl/")
+    set(SBCL_CONFIGURE --enable-sbcl --with-sbcl=${CMAKE_BINARY_DIR}/wine-sbcl.sh)
+    set(SBCL_DEPENDS "sbcl")
+    set(SBCL_ENABLED 1)
+else()
+    set(SBCL_CONFIGURE "")
+    set(SBCL_DEPENDS "")
+    set(SBCL_ENABLED 0)
 endif()
 
 if(WITH_ABCL)
     add_subdirectory("abcl/")
-    set(ABCL_ENABLE "--enable-abcl")
+    set(ABCL_CONFIGURE --enable-abcl --with-abcl-jar=${CMAKE_BINARY_DIR}/abcl/abcl-prefix/src/abcl/abcl.jar)
     set(ABCL_DEPENDS "abcl")
-    set(ABCL_JAR "--with-abcl-jar=${CMAKE_BINARY_DIR}/abcl/abcl-prefix/src/abcl/abcl.jar")
+    set(ABCL_ENABLED 1)
 else()
-    set(ABCL_ENABLE "")
+    set(ABCL_CONFIGURE "")
     set(ABCL_DEPENDS "")
-    set(ABCL_JAR "")
+    set(ABCL_ENABLED 0)
+endif()
+
+if(WITH_CCL64)
+    add_subdirectory("ccl/")
+    set(CCL64_CONFIGURE --enable-ccl64 --with-ccl64=${CMAKE_BINARY_DIR}/wine-ccl.sh)
+    set(CCL64_DEPENDS "ccl")
+    set(CCL_ENABLED 1)
+else()
+    set(CCL64_CONFIGURE "")
+    set(CCL64_DEPENDS "")
+    set(CCL_ENABLED 0)
+endif()
+if(WITH_ECL)
+    add_subdirectory("gmplib/")
+    add_subdirectory("ecl/")
+    add_subdirectory("w64devkit/")
+    set(ECL_CONFIGURE --enable-ecl --with-ecl=${CMAKE_BINARY_DIR}/wine-ecl.sh)
+    set(ECL_DEPENDS ecl w64devkit)
+    set(ECL_ENABLED 1)
+else()
+    set(ECL_CONFIGURE "")
+    set(ECL_DEPENDS "")
+    set(ECL_ENABLED 1)
 endif()
 
 configure_file("${CMAKE_SOURCE_DIR}/wine-clisp.sh.tmpl" "${CMAKE_BINARY_DIR}/wine-clisp.sh")
 configure_file("${CMAKE_SOURCE_DIR}/wine-lisp.sh.tmpl" "${CMAKE_BINARY_DIR}/wine-lisp.sh")
 configure_file("${CMAKE_SOURCE_DIR}/wine-sbcl.sh.tmpl" "${CMAKE_BINARY_DIR}/wine-sbcl.sh")
+configure_file("${CMAKE_SOURCE_DIR}/wine-ccl.sh.tmpl" "${CMAKE_BINARY_DIR}/wine-ccl.sh")
+configure_file("${CMAKE_SOURCE_DIR}/wine-ecl.sh.tmpl" "${CMAKE_BINARY_DIR}/wine-ecl.sh")
 
 externalproject_add(maxima
   # first copy the maxima source to a build directory, since out-of-source-builds do not work
   DOWNLOAD_COMMAND rsync -a --exclude=crosscompile-windows/build/ "${CMAKE_SOURCE_DIR}/../"  "${CMAKE_BINARY_DIR}/maxima-prefix/src/maxima"
-  DEPENDS clisp sbcl tcl tk ${ABCL_DEPENDS}
+  DEPENDS  tcl tk ${CLISP_DEPENDS} ${SBCL_DEPENDS} ${ABCL_DEPENDS} ${CCL64_DEPENDS} ${ECL_DEPENDS}
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND sh -c "test -x ./bootstrap && ./bootstrap || return 0"
-            COMMAND ./configure --host=${HOST} --enable-clisp --with-clisp=${CMAKE_BINARY_DIR}/wine-clisp.sh --with-clisp-runtime=${CMAKE_BINARY_DIR}/wine-lisp.sh --enable-sbcl --with-sbcl=${CMAKE_BINARY_DIR}/wine-sbcl.sh ${ABCL_ENABLE} "${ABCL_JAR}" --with-default-lisp=${WITH_DEFAULT_LISP} --prefix=${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}
-  # clisp-depends.mk is generated with "\" as path separator, not "/" - correct that...
-  BUILD_COMMAND LANG=C $(MAKE) -C src clisp-depends.mk
-        COMMAND sed -i s+\\\\+/+g src/clisp-depends.mk
-        COMMAND LANG=C $(MAKE)
+            COMMAND LANG=C ./configure --host=${HOST} ${CLISP_CONFIGURE} ${SBCL_CONFIGURE} ${ABCL_CONFIGURE} ${CCL64_CONFIGURE} ${ECL_CONFIGURE} --with-default-lisp=${WITH_DEFAULT_LISP} --prefix=${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}
+  # during the crosscompiling procedure, we call configure with shell scripts (wine-xyz.sh) to use the Windows versions.
+  # change that after compiliation to the real binaries (clisp.exe for CLISP, sbcl.exe for SBCL, wx86cl64.exe for CCL64).
+  BUILD_COMMAND LANG=C $(MAKE)
         COMMAND LANG=C $(MAKE) pdf
+        COMMAND sed -i s+^.*wine-clisp.sh+clisp.exe+g src/maxima.bat
+        COMMAND sed -i s+^.*wine-sbcl.sh+sbcl.exe+g src/maxima.bat
+        COMMAND sed -i s+^.*wine-ccl.sh+wx86cl64.exe+g src/maxima.bat
+        COMMAND sed -i s+^.*wine-ecl.sh+ecl.exe+g src/maxima.bat
   INSTALL_COMMAND LANG=C $(MAKE) install DESTDIR=${CMAKE_BINARY_DIR}/maxima-installroot/
           COMMAND LANG=C $(MAKE) extradocinstall DESTDIR=${CMAKE_BINARY_DIR}/maxima-installroot/
 )
+
 
 option(STRIP_HELPERPROGRAMS "Strip the included helper programs (winkill, winkill_lib, maxima_longnames)." YES)
 
@@ -236,10 +342,31 @@ install(FILES "${CMAKE_SOURCE_DIR}/../interfaces/xmaxima/win32/win_signals.lisp"
 
 
 install(DIRECTORY ${CMAKE_BINARY_DIR}/maxima-installroot/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/
-        DESTINATION . COMPONENT Maxima PATTERN "binary-abcl" EXCLUDE)
+        DESTINATION . COMPONENT Maxima
+        PATTERN "binary-clisp" EXCLUDE
+        PATTERN "binary-sbcl" EXCLUDE
+        PATTERN "binary-abcl" EXCLUDE
+        PATTERN "binary-ccl64" EXCLUDE
+        PATTERN "binary-ecl" EXCLUDE)
 if(WITH_ABCL)
     install(DIRECTORY ${CMAKE_BINARY_DIR}/maxima-installroot/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/
             DESTINATION . COMPONENT ABCL PATTERN "binary-abcl")
+endif()
+if(WITH_CLISP)
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/maxima-installroot/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/
+            DESTINATION . COMPONENT CLISP PATTERN "binary-clisp")
+endif()
+if(WITH_ECL)
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/maxima-installroot/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/
+            DESTINATION . COMPONENT ECL PATTERN "binary-ecl")
+endif()
+if(WITH_SBCL)
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/maxima-installroot/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/
+            DESTINATION . COMPONENT SBCL PATTERN "binary-sbcl")
+endif()
+if(WITH_CCL64)
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/maxima-installroot/${WINDOWS_DRIVELETTER}:/maxima-${MAXIMAVERSION}/
+            DESTINATION . COMPONENT CCL64 PATTERN "binary-ccl64")
 endif()
 
 install(FILES "${CMAKE_SOURCE_DIR}/xmaxima.bat" DESTINATION bin/ COMPONENT Maxima)
@@ -270,13 +397,13 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "maxima-${CPACK_PACKAGE_VERSION}")
 set(CPACK_NSIS_INSTALL_ROOT "${WINDOWS_DRIVELETTER}:")
 set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/maxima-icon.bmp")
-set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/../interfaces/xmaxima\\\\maxima-icon.ico")
+set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}\\\\maxima-icon.ico")
 set(CPACK_NSIS_MUI_UNIICON "${CPACK_NSIS_MUI_ICON}")
 set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\maxima-command.ico")
 set(CPACK_NSIS_DISPLAY_NAME "Maxima computer algebra system")
 set(CPACK_PACKAGE_EXECUTABLES "..\\\\bin\\\\wxmaxima" "wxMaxima (GUI for Maxima)")
 set(CPACK_NSIS_URL_INFO_ABOUT "https://maxima.sourceforge.io")
-set(CPACK_NSIS_MENU_LINKS "bin/maxima.bat" "Maxima (command line)" "bin/xmaxima.bat" "XMaxima (simple GUI)" "https://maxima.sourceforge.io" "About Maxima" "http://wxmaxima-developers.github.io/wxmaxima/" "About wxMaxima" "share/doc/maxima.pdf" "Maxima documentation"  "share/doc/licenses.html" "Maxima and included software licenses" "bin/lispselector.bat" "Configure default LISP for Maxima")
+set(CPACK_NSIS_MENU_LINKS "bin/maxima.bat" "Maxima (command line)" "bin/xmaxima.bat" "XMaxima: graphical interface for Maxima" "https://maxima.sourceforge.io" "About Maxima" "https://wxmaxima-developers.github.io/wxmaxima/" "About wxMaxima" "${MAXIMA_SINGLEPAGE_HTML}" "Maxima documentation"  "share/doc/licenses.html" "Maxima and included software licenses" "bin/lispselector.bat" "Configure default LISP for Maxima")
 set(CPACK_PACKAGE_FILE_NAME "maxima-${CPACK_PACKAGE_VERSION}-${INSTALLERSUFFIX}")
 set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
 
@@ -285,8 +412,7 @@ set(CPACK_NSIS_MUI_WELCOMEFINISHPAGE_BITMAP "${CMAKE_SOURCE_DIR}/maxima-installe
 include(CPack)
 
 cpack_add_component(Maxima
-                    DESCRIPTION "The Maxima computer algebra system.\nRequired."
-                    REQUIRED)
+                    DESCRIPTION "The Maxima computer algebra system.\nRequired." REQUIRED)
 
 if(USE_VTK)
     cpack_add_component(VTK
@@ -298,20 +424,27 @@ cpack_add_component(Gnuplot
 
 cpack_add_component(wxMaxima
                     DESCRIPTION "wxMaxima is an advanced GUI for Maxima based on wxWidgets.\nInstallation is strongly recommended.")
-
-cpack_add_component(Clisp
-                    DESCRIPTION "The CLISP Lisp compiler.\nRequired."
-                    REQUIRED)
-
-cpack_add_component(SBCL
-                    DESCRIPTION "The SBCL Lisp compiler.\nRequired."
-                    REQUIRED)
+if(WITH_CLISP)
+    cpack_add_component(Clisp
+                        DESCRIPTION "The CLISP Lisp compiler.\nOne Lisp compiler is required.")
+endif()
+if(WITH_SBCL)
+    cpack_add_component(SBCL
+                        DESCRIPTION "The SBCL Lisp compiler.\nOne Lisp compiler is required.")
+endif()
+if(WITH_ABCL)
+    cpack_add_component(ABCL
+                        DESCRIPTION "The ABCL Lisp compiler.\nA Java installation is required.\nOne Lisp compiler is required.")
+endif()
+if(WITH_CCL64)
+    cpack_add_component(CCL64
+                        DESCRIPTION "The CCL (64Bit) Lisp compiler.\nOne Lisp compiler is required.")
+endif()
+if(WITH_ECL)
+    cpack_add_component(ECL
+                        DESCRIPTION "The ECL Lisp compiler.\nOne Lisp compiler is required.")
+endif()
 
 cpack_add_component(TclTk
                     DISPLAY_NAME "Tcl/Tk"
-                    DESCRIPTION "The TCL/TK scripting language.\nRequired."
-                    REQUIRED)
-if(WITH_ABCL)
-    cpack_add_component(ABCL
-                        DESCRIPTION "The ABCL Lisp compiler.\nA Java installation is required.\nOptional.")
-endif()
+                    DESCRIPTION "The TCL/TK scripting language.\nRequired." REQUIRED)

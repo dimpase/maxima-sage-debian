@@ -19,14 +19,15 @@
 
 (defun xercnt (librar subrou messg nerr level kontrl)
   (declare (type (f2cl-lib:integer4) kontrl level nerr)
-           (type (simple-string *) messg subrou librar))
+           (type (simple-string *) messg subrou librar)
+           (ignore librar subrou messg nerr level kontrl))
   (prog ()
     (declare)
     (go end_label)
    end_label
     (return (values nil nil nil nil nil nil))))
 
-(in-package #-gcl #:cl-user #+gcl "CL-USER")
+(in-package #:cl-user)
 #+#.(cl:if (cl:find-package '#:f2cl) '(and) '(or))
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (setf (gethash 'fortran-to-lisp::xercnt

@@ -1,4 +1,4 @@
-;;  Copyright 2002-2003 by
+;;  Copyright 2002-2003, 2026 by
 ;;  Stavros Macrakis (macrakis@alum.mit.edu) and
 ;;  Barton Willis (willisb@unk.edu)
 
@@ -90,7 +90,7 @@
 ;; isn't a list, signal an error. 
 
 (defmfun $setify (a)
-  (simplifya `(($set) ,@(require-list a '$setify)) nil))
+  (simplifya `(($set) ,@(copy-list (require-list a '$setify))) t))
 
 ;; When a is a list, convert a and all of its elements that are lists
 ;; into sets.  When a isn't a list, return a.
@@ -104,7 +104,7 @@
 ;; list, return a.
 
 (defmfun $listify (a)
-  (if ($setp a) `((mlist simp) ,@(cdr a)) a))
+  (if ($setp a) (simplifya `((mlist) ,@(cdr a)) t) a))
 
 ;; full_listify(a) converts all sets in a into lists.
 
@@ -120,7 +120,9 @@
 
 (defun simp-set (a yy z)
   (declare (ignore yy))
-  (setq a (mapcar #'(lambda (x) (simplifya x z)) (cdr a)))
+  (setq a (if z 
+            (copy-list (cdr a))
+            (mapcar #'(lambda (x) (simplifya x nil)) (cdr a))))
   (setq a (sorted-remove-duplicates (stable-sort a '$orderlessp)));FIXME consider a total order function with #'sort
   `(($set simp) ,@a))
 
@@ -620,7 +622,7 @@
 	   (setq a (cdr a))
 	   (dolist (ai a)
 	     (setq x (mul s (mfuncall f ai)))
-	     (cond ((mevalp_tr (mgrp x mx) t nil)
+	     (cond ((mevalp_tr (mgrp x mx) t)
 		    (setq mx x
 			  max-subset `(,ai)))
 		   ((like x mx)
@@ -771,14 +773,13 @@
 	   (if len `(($integer_partitions simp) ,n ,len) `(($integer_partitions simp) ,n))))))
 	 
 (defun integer-partitions (n)
-  (let ((p `(,n)) (acc nil) (d) (k) (j) (r))
+  (let ((p `(,n)) (acc nil) (d) (k) (r))
     (while (> (car (last p)) 1)
       (setq acc (cons (copy-list (reverse p)) acc))
       (setq p (member t p :key #'(lambda (x) (> x 1))))
       (setq k (- (nth 0 p) 1))
       (setf (nth 0 p) k)
       (setq d (- n (reduce #'+ p)))
-      (setq j k)
       (while (and (> k 0) (> d 0))
       	(multiple-value-setq (d r) (floor d k))
 	(setq p (append (make-list d :initial-element k) p))
@@ -953,8 +954,8 @@
 (defun simp-stirling1 (l yy z)
   (declare (ignore yy))
   (let* ((fn (car (pop l)))
-	 (n (if l (simplifya (pop l) z) (wna-err fn)))
-	 (k (if l (simplifya (pop l) z) (wna-err fn)))
+	 (n (if l (maybe-simplifya (pop l) z) (wna-err fn)))
+	 (k (if l (maybe-simplifya (pop l) z) (wna-err fn)))
 	 (n-is-nonnegative-int (nonnegative-integerp n)))
     (if l (wna-err fn))
     (cond ((and (integerp n) (integerp k) (> n -1) (> k -1))
@@ -1014,8 +1015,8 @@
 (defun simp-stirling2 (l yy z)
   (declare (ignore yy))
   (let* ((fn (car (pop l)))
-	 (n (if l (simplifya (pop l) z) (wna-err fn)))
-	 (k (if l (simplifya (pop l) z) (wna-err fn)))
+	 (n (if l (maybe-simplifya (pop l) z) (wna-err fn)))
+	 (k (if l (maybe-simplifya (pop l) z) (wna-err fn)))
 	 (n-is-nonnegative-int (nonnegative-integerp n))
 	 (n-is-positive-int (nonnegative-integerp (sub n 1))))
     (if l (wna-err fn))
@@ -1172,8 +1173,10 @@
 	     (funcall opfn s)))
 
 	  (op-props
-	   ($apply f ($listify s)))
-	  
+	   (setq s (require-list-or-set s '$xreduce))
+	   (unless (eq init 'no-init)
+	     (setq s (cons init s)))
+	   ($apply f (cons '(mlist) s)))
 	  (t
 	   (rl-reduce f ($listify s) nil init '$xreduce)))))
 
@@ -1295,7 +1298,6 @@
 
 (defun ignore-errors-mfuncall (f x)
   (let ((errcatch t))
-    (declare (special errcatch))
     (errset (mfuncall f x))))
 
 (defmfun $every (f &rest x)

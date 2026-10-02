@@ -676,6 +676,30 @@ errcatch (block ([x, x], x))$
 errcatch (block ([x, x:foo], x))$
 [];
 
+/* Verify some WNA checks
+ *
+ * The ev tests are significant.  Previously missing args were
+ * effectively replaced with false and extra args were ignored.
+ */
+
+errcatch (define ());
+[];
+
+errcatch (ev (define ()));
+[];
+
+errcatch (define (f (x)));
+[];
+
+errcatch (ev (define (f (x))));
+[];
+
+errcatch (define (f (x), foo, bar, baz));
+[];
+
+errcatch (ev (define (f (x), foo, bar, baz)));
+[];
+
 /* try to verify that save(...) handles arrays correctly */
 
 (kill (all),
@@ -722,10 +746,16 @@ listarray (mydeclared);
 arrayinfo (myvalue);
 [declared, 4, [1, 1, 1, 1]]; /* "declared" seems wrong here ... oh well */
 
+apply (arrayinfo, [myvalue]);
+[declared, 4, [1, 1, 1, 1]]; /* "declared" seems wrong here ... oh well */
+
 listarray (myvalue);
 [%pi + 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, %e - 1];
 
 (arrayinfo (myfast), [%%[1], %%[2], sort (rest (%%, 2))]);
+[hash_table, true, [["mumble", "abc", "xy", "Z"], [foo, bar, baz], [sin(foo), 1 - baz]]];
+
+(apply (arrayinfo, [myfast]), [%%[1], %%[2], sort (rest (%%, 2))]);
 [hash_table, true, [["mumble", "abc", "xy", "Z"], [foo, bar, baz], [sin(foo), 1 - baz]]];
 
 sort (listarray (myfast));
@@ -1092,4 +1122,142 @@ arraymake (foo + bar, [baz]);
 
 arraymake (foo(bar), [baz]);
 foo(bar)[baz];
+
+/* A bug in MARRAYREF caused things like arrayapply to return
+ * MQAPPLY expressions with an incorrect header.
+ */
+
+arrayapply (foo (), [1]);
+foo () [1];
+
+arrayapply (foo (), [1, 2, 3]);
+foo () [1, 2, 3];
+
+/* A bug in MARRAYREF caused bogus indexing into hash tables and fast
+ * arrays.  This affected things like arrayapply.
+ */
+
+block ([use_fast_arrays : true,
+        arr],
+  arr[false] : 'wtf,
+  arr[1] : 2,
+  [arr[1], arrayapply (arr, [1])]);
+[2, 2];
+
+/* A bug in MARRAYREF caused things like arrayapply to return array
+ * references with an incorrect header.
+ */
+
+block ([use_fast_arrays : false,
+        arr],
+  local (arr),
+  array (arr, complete, 5),
+  [arr[3], arrayapply (arr, [3])]);
+[arr[3], arr[3]];
+
+/* SF bug #4097: "Bad string representation of integers in the first argument of `save`" */
+
+(kill (xyz),
+ xyz: 123,
+ expected_filename: "tmpsave123.lisp",
+ expected_path: sconcat (maxima_tempdir, "/", expected_filename),
+ save (sconcat (maxima_tempdir, "/tmpsave", xyz, ".lisp"), xyz),
+ /* call SUBSEQ to extract the filename from the path returned by 'save' */
+ ?subseq (%%, ?length (%%) - ?length (expected_filename)));
+''expected_filename;
+
+(kill (xyz),
+ load (expected_path),
+ xyz);
+123;
+
+/* SF bug #4350: "arrayinfo complains 'not an array' when supplied a Lisp array or hash table" */
+
+(kill (aa, bb, L),
+ aa: make_array (fixnum, 4),
+ bb: make_array (hashed, 1),
+ L: [aa, bb],
+ 0);
+0;
+
+arrayinfo (aa);
+[declared, 1, [3]];
+
+arrayinfo (bb);
+[hash_table, 1];
+
+/* arrayinfo complains if argument is neither a symbol nor an array value -- OK */
+errcatch (arrayinfo (L[1]));
+[];
+
+apply (arrayinfo, [L[1]]);
+[declared, 1, [3]];
+
+apply (arrayinfo, [L[2]]);
+[hash_table, 1];
+
+/* SF bug #4471: "with_stdout doesn't capture output of command executed via system" */
+
+(S: make_string_output_stream (),
+ with_stdout (S, system ("echo", "Hello")),
+ S1: get_output_stream_string (S),
+ close (S),
+ readline (make_string_input_stream (S1)));
+"Hello";
+
+(S: openw (hello_file: sconcat (maxima_tempdir, "/hello.txt")),
+ with_stdout (S, system ("echo", "Hello")),
+ close (S),
+ S: openr (hello_file),
+ S1: readline (S),
+ close (S),
+ S1);
+"Hello";
+
+(with_stdout (hello_file: sconcat (maxima_tempdir, "/hello.txt"), system ("echo", "Hello")),
+ S: openr (hello_file),
+ S1: readline (S),
+ close (S),
+ S1);
+"Hello";
+
+/* tests for function 'has_key' */
+
+(kill (aa), 0);
+0;
+
+/* argument aa isn't an undeclared array or hash table */
+errcatch (has_key (aa, [1111]));
+[];
+
+(reset (use_fast_arrays), aa["abc"]: 123, 0);
+0;
+
+/* need to supply key as a list */
+errcatch (has_key (aa, "abc"));
+[];
+
+has_key (aa, ["abc"]);
+true;
+
+has_key (aa, ["abcd"]);
+false;
+
+(kill (bb), bb: make_array ('hashed), bb[1234]: "blurf", 0);
+0;
+
+has_key (bb, [1234]);
+true;
+
+has_key (bb, [3456]);
+false;
+
+(kill (cc), use_fast_arrays: true, cc["abc", 123]: 555, 0);
+0;
+
+has_key (cc, ["abc", 123]);
+true;
+
+has_key (cc, [333, "xyz"]);
+false;
 

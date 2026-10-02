@@ -110,7 +110,7 @@
 ;; Starts multiplying coset i times the relations.  Basic fact is i . rel = i.
 ;; This gives a condition on the multiplication table.  Once we have made it all
 ;; the way through the relations for a given coset i, and NOT had any
-;; incosistency in our current multiplication table, then we go on the the next
+;; inconsistency in our current multiplication table, then we go on the the next
 ;; coset.  The coset 1 denotes H.  so for generators h of H we we have 1 . h = 1.
 ;; So when we do row 1, we add to the relations the generators of H.
 
@@ -280,7 +280,7 @@
       (list (* neg (position rel vars)))
       (case (caar rel)
 	(mnctimes (apply #'append (mapcar #'(lambda (rel) (coerce-rel neg vars rel)) (cdr rel))))
-	(mncexpt (let* ((n (meval* (third rel)))
+	(mncexpt (let* ((n (meval (third rel)))
 			(neg (signum n))
 			(v (coerce-rel neg vars (second rel))))
 		   (loop for i below (abs (third rel))

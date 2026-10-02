@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,11 +14,35 @@
 
 (load-macsyma-macros defcal mopers)
 
-(defmvar *alphabet* (list #\_ #\%))
-(defmvar *whitespace-chars*
-         '(#\tab #\space #\linefeed #\return #\page #\newline
-           #+(or (and unicode (not lispworks))
-                 sb-unicode openmcl-unicode-strings) #\no-break_space))
+(defvar *ascii-space-chars-for-maxima* '(#\tab #\space #\linefeed #\return #\page #\newline))
+
+(defvar *unicode-space-char-codes-for-maxima*
+      ;; Adapted from the list given by: https://jkorpela.fi/chars/spaces.html
+      ;; omitting SPACE, OGHAM SPACE MARK, MONGOLIAN VOWEL SEPARATOR, IDEOGRAPHIC SPACE,
+      ;; and ZERO WIDTH NO-BREAK SPACE.
+  '(
+    #x00A0 ;; NO-BREAK SPACE
+    #x2000 ;; EN QUAD
+    #x2001 ;; EM QUAD
+    #x2002 ;; EN SPACE
+    #x2003 ;; EM SPACE
+    #x2004 ;; THREE-PER-EM SPACE
+    #x2005 ;; FOUR-PER-EM SPACE
+    #x2006 ;; SIX-PER-EM SPACE
+    #x2007 ;; FIGURE SPACE
+    #x2008 ;; PUNCTUATION SPACE
+    #x2009 ;; THIN SPACE
+    #x200A ;; HAIR SPACE
+    #x200B ;; ZERO WIDTH SPACE
+    #x202F ;; NARROW NO-BREAK SPACE
+    #x205F ;; MEDIUM MATHEMATICAL SPACE
+    ))
+
+(defvar *unicode-space-chars-for-maxima*
+    #-lisp-unicode-capable nil
+    #+lisp-unicode-capable (mapcar 'code-char *unicode-space-char-codes-for-maxima*))
+
+(defmvar *whitespace-chars* (append *ascii-space-chars-for-maxima* *unicode-space-chars-for-maxima*))
 
 (defun alphabetp (n)
   (and (characterp n)
@@ -45,11 +69,25 @@
 (defmvar $report_synerr_line t "If T, report line number where syntax error occurs; otherwise, report FILE-POSITION of error.")
 (defmvar $report_synerr_info t "If T, report the syntax error details from all sources; otherwise, only report details from standard-input.")
 
+;; Maxima lets us refer to a Lisp symbol by prefixing it with "?", e.g. "?foo".
+;; To make that work, DBM-READ consumes the leading "?" and then hands the
+;; parser the input wrapped like
+;; (make-concatenated-stream (make-string-input-stream "?") *standard-input*)
+;; so *PARSE-STREAM* is no longer EQ to *STANDARD-INPUT*, even though the input
+;; still comes from the interactive terminal. FILE-POSITION is meaningless for
+;; terminal input, and on SBCL querying it on this wrapper even signals a Lisp
+;; error. Therefore, recognize such a wrapper and treat it like *STANDARD-INPUT*.
+(defun parse-stream-standard-input-p (stream)
+  (or (eq stream *standard-input*)
+      (and (typep stream 'concatenated-stream)
+           (member *standard-input* (concatenated-stream-streams stream)))))
+
 (defun mread-synerr (format-string &rest l)
-  (let ((fp (and (not (eq *parse-stream* *standard-input*))
+  (let ((fp (and (not (parse-stream-standard-input-p *parse-stream*))
                  (file-position *parse-stream*)))
-	(file (and (not (eq *parse-stream* *standard-input*))
-                   (cadr *current-line-info*))))
+	(file (and (not (parse-stream-standard-input-p *parse-stream*))
+                   (cadr *current-line-info*)))
+	(*standard-output* *error-output*))
     (flet ((line-number ()
 	     ;; Fix me: Neither batch nor load track the line number
 	     ;; correctly. batch, via dbm-read, does not track the
@@ -64,7 +102,8 @@
 			 (p (file-position *parse-stream*)     (file-position *parse-stream*))
 			 (n 1                                  (1+ n)))
 			((or (null p) (>= p fp))
-			 (cons n (- fp o)))))
+			 (cons n (- fp o)))
+            (declare (ignorable l))))
 		   (t '())))
 	   (column ()
 	     (let ((n (get '*parse-window* 'length))
@@ -72,7 +111,8 @@
 	       (loop for i from (1- n) downto (- n 20)
 	     	  while (setq ch (nth i *parse-window*))
 		  do
-		    (cond ((char= ch #\newline)
+		    (cond ((or (eql ch *parse-stream-eof*)
+			       (char= ch #\newline))
 			   (return-from column some))
 			  (t (push ch some))))
 	       some))
@@ -94,13 +134,13 @@
 	 (format t "~&~:[~;~:*~a:~a:~]" file fp)))
       (format t (intl:gettext "incorrect syntax: "))
       (apply 'format t format-string (mapcar #'printer l))
-      (cond ((or $report_synerr_info (eql *parse-stream* *standard-input*))
+      (cond ((or $report_synerr_info (parse-stream-standard-input-p *parse-stream*))
 	     (let ((some (column)))
-	       (format t "~%~{~c~}~%~vt^" some (- (length some) 2))
+	       (format t "~%~{~c~}~%~vt^" some (max 0 (- (length some) 2)))
 	       (read-line *parse-stream* nil nil))))
       (terpri)
       (finish-output)
-      (throw-macsyma-top))))
+      (if *quit-on-error* ($quit 1.) (throw-macsyma-top)))))
 
 (defun tyi-parse-int (stream eof)
   (or *parse-window*
@@ -131,6 +171,24 @@
 ;;;;;                                                                    ;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+#+gcl
+(defun gobble-whitespace (&aux (ch (parse-tyipeek)) (cd (if (eql -1 ch) 0 (char-code (the character ch)))) l i r)
+  (declare (dynamic-extent l) (fixnum r) ((integer 0 5) i) ((integer 0 255) cd))
+  (cond ((>= cd 128)
+	 (do ((j 5 (1- j))) ((or (< j 3) (zerop (logand cd (the fixnum (ash 1 (the (integer 0 5) j)))))) (setq i j))
+	   (declare ((integer 0 5) j)))
+	 (setq r (logand cd (the fixnum (1- (the fixnum (ash 1 (the (integer 0 5) i)))))) l (cons (parse-tyi) l))
+	 (do ((i i (1+ i))) ((= i 6))
+	   (declare (fixnum i))
+	   (setq ch (parse-tyi) l (cons ch l) cd (if (eql -1 ch) 0 (char-code (the character ch))) r (logior (the fixnum (ash r 6)) (logand cd #.(1- (ash 1 6))))))
+	 (if (member r *unicode-space-char-codes-for-maxima*)
+	     (gobble-whitespace)
+	     (dolist (l l) (unparse-tyi l))))
+	((member ch *whitespace-chars*)
+	 (parse-tyi)
+	 (gobble-whitespace))))
+
+#-gcl
 (defun gobble-whitespace ()
   (do ((ch (parse-tyipeek) (parse-tyipeek)))
       ((not (member ch *whitespace-chars*)))
@@ -200,6 +258,27 @@
 ;;it could not handle things produced by the extensions
 ;;the following was broken for prefixes 
 
+(defun operator-terminated-p (sym)
+  ;; When we have an operator, which starts with a literal, we check if the
+  ;; operator is followed by a whitespace. With this code, Maxima parses an
+  ;; expression grad x or grad(x) as '(($GRAD) $X) and gradef(x) as
+  ;; '(($GRADEF) $X) when grad is defined as a prefix operator. See bug #1925.
+  ;;
+  ;; Both cases of READ-COMMAND-TOKEN-AUX need this test: the leaf case, when
+  ;; no longer operator starts with this name, and the general case, when one
+  ;; does, e.g. %or and %ore, or %or declared twice. Otherwise, %orb is read
+  ;; as the operator %or applied to b instead of as the symbol %orb.
+  ;;
+  ;; SYMBOL-NAME rather than EXPLODEN: the name is "$%or", "$<", ... and only
+  ;; its first character is of interest, so there is no reason to cons up a
+  ;; fresh list on every operator token. EXPLODEN prints the symbol through an
+  ;; :INVERT readtable, which only ever changes case, and ALPHABETP does not
+  ;; distinguish case, so the two agree.
+  (let ((name (symbol-name sym)))
+    (or (< (length name) 2)
+        (not (alphabetp (char name 1)))
+        (member (parse-tyipeek) *whitespace-chars*))))
+
 (defun read-command-token-aux (obj)
   (let* (result
 	 (ch (parse-tyipeek))
@@ -224,18 +303,14 @@
 		  ;; starting with this.
 		  (setq result
 		        (and (eql (car (cadr lis)) 'ans)
-		             ;; When we have an operator, which starts with a
-		             ;; literal, we check, if the operator is
-		             ;; followed with a whitespace. With this code
-		             ;; Maxima parses an expression grad x or grad(x)
-		             ;; as (($grad) x) and gradef(x) as (($gradef) x),
-		             ;; when grad is defined as a prefix operator.
-		             ;; See bug report ID: 2970792.
-		             (or (not (alphabetp (cadr (exploden (cadr (cadr lis))))))
-		                 (member (parse-tyipeek) *whitespace-chars*))
+		             (operator-terminated-p (cadr (cadr lis)))
 		             (cadr (cadr lis)))))
 	         (t
+		  ;; LIS is something like (#\< (ANS $<) (#\= (ANS $<=))):
+		  ;; An answer here and at least one longer operator starting with it, so the
+		  ;; answer needs the same delimiter check as in the leaf case above.
 		  (let ((res   (and (eql (car (cadr lis)) 'ans)
+				    (operator-terminated-p (cadr (cadr lis)))
 				    (cadr (cadr lis))))
 			(com-token (read-command-token-aux (cddr lis) )))
 		    (setq result (or com-token res
@@ -350,9 +425,9 @@
   ;; (except when we have a bigfloat, of course!).  So convert exponent
   ;; markers to the flonum-exponent-marker.
   (let ((marker (car (nth 3 data))))
-    (unless (eql marker flonum-exponent-marker)
+    (unless (eql marker +flonum-exponent-marker+)
       (when (member marker '(#\E #\F #\S #\D #\L #+cmu #\W))
-        (setf (nth 3 data) (list flonum-exponent-marker)))))
+        (setf (nth 3 data) (list +flonum-exponent-marker+)))))
   (if (not (equal (nth 3 data) '(#\B)))
       (readlist (apply #'append data))
       (let*
@@ -456,7 +531,7 @@
 ;;;	Implementation Notes ....
 ;;;
 ;;;	JPG	Chars like ^A, ^B, ... get left around after interrupts and
-;;;		should be thrown away by the scanner if not used as editting
+;;;		should be thrown away by the scanner if not used as editing
 ;;;		commands.
 ;;;
 ;;;	KMP	There is RBP stuff in DISPLA, too. Probably this sort of
@@ -531,7 +606,7 @@
 	   (cond  ((eql test *parse-stream-eof*)
 		   (parse-tyi)
 		   (if eof-ok? eof-obj
-		       (maxima-error (intl:gettext "parser: end of file while scanning expression."))))
+		       (mread-synerr (intl:gettext "end of file while scanning expression."))))
 		  ((eql test #\/)
 		   (parse-tyi)
 		   (cond ((char= (parse-tyipeek) #\*)
@@ -569,7 +644,7 @@
 	(parse-tyi)
 	(cond ((= depth 0) (return t)))
 	(cond ((eql c *parse-stream-eof*)
-	       (error (intl:gettext "parser: end of file in comment.")))
+	       (mread-synerr (intl:gettext "end of file in comment.")))
 	      ((char= c #\*)
 	       (cond ((char= (parse-tyipeek) #\/)
 		      (decf depth)
@@ -625,8 +700,7 @@
 ;;;
 
 (eval-when
-  #+gcl (eval compile load)
-  #-gcl (:execute :compile-toplevel :load-toplevel)
+  (:execute :compile-toplevel :load-toplevel)
   (defmacro def-nud-equiv (op equiv)
     (list 'putprop (list 'quote op) (list 'function equiv)
           (list 'quote 'nud)))
@@ -748,15 +822,15 @@
 (defun collision-check (op active-bitmask key)
   (let ((key-bitmask (get key op)))
     (if (not key-bitmask)
-	(mread-synerr "~A is an unknown keyword in a ~A statement."
+	(mread-synerr "`~A' is an unknown keyword in a `~A' statement."
 		      (mopstrip key) (mopstrip op)))
     (let ((collision (collision-lookup op active-bitmask key-bitmask)))
       (if collision
 	  (if (eq collision key)
-	      (mread-synerr "This ~A's ~A slot is already filled."
-			    (mopstrip op)
-			    (mopstrip key))
-	      (mread-synerr "A ~A cannot have a ~A with a ~A field."
+              (mread-synerr "The `~A' slot for `~A' is already filled."
+			    (mopstrip key)
+                            (mopstrip op))
+	      (mread-synerr "A `~A' cannot have a `~A' with a `~A' field."
 			    (mopstrip op)
 			    (mopstrip key)
 			    (mopstrip collision))))
@@ -804,15 +878,6 @@
 (defun mheader (op) (add-lineinfo (or (safe-get op 'mheader) (ncons op))))
 
 (defmacro def-mheader (op header) `(defprop ,op ,header mheader))
-
-
-(defmvar $parsewindow 10.
-	 "The maximum number of 'lexical tokens' that are printed out on
-each side of the error-point when a syntax (parsing) MAXIMA-ERROR occurs.  This
-option is especially useful on slow terminals.  Setting it to -1 causes the
-entire input string to be printed out when an MAXIMA-ERROR occurs."
-	 fixnum)
-
 
 ;;;; Misplaced definitions
 
@@ -908,7 +973,7 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
 ;;;
 
 (defun parse (mode rbp)
-  (do ((left (nud-call (pop-c))		; Envoke the null left denotation
+  (do ((left (nud-call (pop-c))		; Invoke the null left denotation
 	     (led-call (pop-c) left)))	;  and keep calling LED ops as needed
       ((>= rbp (lbp (first-c)))		; Until next op lbp too low
        (convert left mode))))		;  in which case, return stuff seen
@@ -1096,6 +1161,8 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
 
 ;;;; Operator Specific Data
 
+(def-mheader $box (mbox))
+
 (def-nud-equiv |$]| delim-err)
 (def-led-equiv |$]| erb-err)
 (def-lbp     |$]| 5.)
@@ -1247,15 +1314,6 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
 (def-lpos	|$!| $expr)
 ;No RPOS
 (def-mheader	|$!| (mfactorial))
-
-(def-mheader |$!!| ($genfact))
-
-(def-led (|$!!| 160.) (op left)
-  (list '$expr
-	(mheader '$!!)
-	(convert left '$expr)
-	(list (mheader '$/) (convert left '$expr) 2)
-	2))
 
 (def-lbp     |$^| 140.)
 (def-rbp     |$^| 139.)
@@ -1525,7 +1583,7 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
   ($do	   . ())
   ($for    . ($for))
   ($from   . ($in $from))
-  ($in     . ($in $from $step $next))
+  ($in     . ($in $from $step $next $thru))
   ($step   . ($in       $step $next))
   ($next   . ($in	$step $next))
   ($thru   . ($in $thru)) ;$IN didn't used to get checked for
@@ -1680,7 +1738,6 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
       (getopr op))))
 
 (defun op-setup (op)
-  (declare (special *mopl*))
   (let ((dummy (or (get op 'op)
                    (coerce (string* op) 'string))))
     (putprop op    dummy 'op )
@@ -1704,9 +1761,11 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
   		     lbp rbp			; Binding power info
   		     lpos rpos pos		; Part-Of-Speech info
   		     grind dimension dissym	; Display info
-  		     op))			; Operator info
+  		     op			; Operator info
+             verb))
       (mapc #'(lambda (x) (remprop noun-form x))
-   	  '(dimension dissym lbp rbp)))))
+   	  '(dimension dissym lbp rbp noun))
+      )))
 
 
 
@@ -1790,8 +1849,9 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
 ;; STRIP-LINEINFO does not modify EXPR.
 
 (defun strip-lineinfo (expr)
-  (if (atom expr) expr
-    (cons (strip-lineinfo-op (car expr)) (mapcar #'strip-lineinfo (cdr expr)))))
+  (if (or (atom expr) (specrepp expr))
+      expr
+      (cons (strip-lineinfo-op (car expr)) (mapcar #'strip-lineinfo (cdr expr)))))
 
 ;; If something in the operator looks like debugging stuff, remove it.
 ;; It is assumed here that debugging stuff is a list comprising an integer and a string
@@ -1799,3 +1859,66 @@ entire input string to be printed out when an MAXIMA-ERROR occurs."
 
 (defun strip-lineinfo-op (maxima-op)
   (remove-if #'(lambda (x) (and (consp x) (integerp (first x)) (stringp (second x)))) maxima-op))
+
+(defun getalias (x)
+  (cond ((get x 'alias))
+	((eq x '$false) nil)
+	(t x)))
+
+(defun amperchk (name)
+  (cond
+    ((symbolp name) name)
+    ((stringp name)
+     (getalias (or (getopr0 name) (implode (cons #\$ (coerce name 'list))))))
+    (t name)))
+
+
+;; Code for handling #$...$ in Lisp code that parses a Maxima
+;; expression and returns the corresponding internal Lisp
+;; representation.
+(defun macsyma-read-string (a-string &aux answer)
+  (cond ((not (or (search "$" a-string :test #'char-equal)
+		  (search ";" a-string :test #'char-equal)))
+	 (vector-push-extend #\$ a-string)))
+  (with-input-from-string (stream a-string)
+    (setq answer (third (mread stream)))
+    answer))
+
+(defvar *sharp-read-buffer*
+  (make-array 140 :element-type ' #.(array-element-type "a") :fill-pointer 0 :adjustable t))
+
+(defun $-read-aux (arg stream &aux (meval-flag t) (*mread-prompt* ""))
+  (declare (special *mread-prompt*)
+	   (ignore arg))
+  (setf (fill-pointer *sharp-read-buffer*) 0)
+  (cond ((eql #\$ (peek-char t stream))
+	 (tyi stream)
+	 (setq meval-flag nil)))
+  (with-output-to-string (st *sharp-read-buffer*)
+    (let (char)
+      (loop while (not (eql char #\$))
+	     do
+	     (setq char (tyi stream))
+	     (write-char char st))))
+  (if meval-flag
+      (list 'meval* (list 'quote (macsyma-read-string *sharp-read-buffer*)))
+      (list 'quote (macsyma-read-string *sharp-read-buffer*))))
+
+(defun x$-cl-macro-read (stream sub-char arg)
+  (declare (ignore arg))
+  ($-read-aux sub-char stream))
+
+(defvar *macsyma-readtable*)
+
+(defun find-lisp-readtable-for-macsyma ()
+  (cond ((and (boundp '*macsyma-readtable*)
+	      (readtablep *macsyma-readtable*))
+	 *macsyma-readtable*)
+	(t (setq *macsyma-readtable* (copy-readtable nil))
+	   (set-dispatch-macro-character #\# #\$ 'x$-cl-macro-read *macsyma-readtable*)
+	   *macsyma-readtable*)))
+
+(defun set-readtable-for-macsyma ()
+  (setq *readtable* (find-lisp-readtable-for-macsyma)))
+
+(set-dispatch-macro-character #\# #\$ #'x$-cl-macro-read)

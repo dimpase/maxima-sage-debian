@@ -1,6 +1,15 @@
 ;;Autoloads for maxima
 (in-package :maxima)
 
+($auto_mexpr '$ordering "list_operations.mac")
+($auto_mexpr '$ranks "list_operations.mac")
+($auto_mexpr '$find_runs "list_operations.mac")
+
+($auto_mexpr '$accumulate "accumulate.mac")
+
+($auto_mexpr '$guess_exact_value "pslq")
+(setf (get '$pslq_integer_relation 'autoload) "pslq")
+
 ($auto_mexpr '$lratsubst "lrats")
 ($auto_mexpr '$fullratsubst "lrats")
 
@@ -50,6 +59,29 @@
 ;villate
 ($auto_mexpr '$similaritytransform "eigen.mac")
 ($auto_mexpr '$simtran "eigen.mac")
+
+(dolist (f
+    '($cyclep
+      $permp
+      $permult
+      $perm_inverse
+      $permute
+      $apply_cycles
+      $perm_undecomp
+      $perm_cycles
+      $perm_lex_rank
+      $perm_lex_unrank
+      $perm_length
+      $perm_decomp
+      $perm_parity
+      $perms_lex
+      $perm_lex_next
+      $perm_rank
+      $perm_unrank
+      $perms
+      $perm_next
+      $random_perm))
+  (setf (get f 'autoload) "combinatorics"))
 
 (dolist (v       
 	  '($arite
@@ -156,10 +188,14 @@
        $sequal
        $sequalignore
        $sexplode
+       $sgreaterp
+       $sgreaterpignore
        $simplode
        $sinsert
        $sinvertcase
        $slength
+       $slessp
+       $slesspignore
        $smake
        $smismatch
        $split
@@ -355,14 +391,22 @@
 (autof 'simp-pochhammer "orthopoly")
 
 (dolist (f
-  '($draw
+  '($activate_window
+    $add_zeroes
+    $draw
     $draw2d
     $draw3d
-    $set_draw_defaults
-    $multiplot_mode
+    $draw_file
+    $get_pixel
     $make_level_picture
     $make_rgb_picture
-    $get_pixel
+    $multiplot_mode
+    $negative_picture
+    $picture_equalp
+    $picturep
+    $read_xpm
+    $rgb2level
+    $set_draw_defaults
     $take_channel))
   (setf (get f 'autoload) "draw"))
 
@@ -385,8 +429,8 @@
 
 (setf (get '$scene 'autoload) "visualization")
 
-(defprop $hypergeometric simp-hypergeometric operators)
-(autof 'simp-hypergeometric "hypergeometric")
+($auto_mexpr '$abramowitz_id "abramowitz_id")
+($auto_mexpr '$hypergeometric_simp "hypergeometric_mac")
 
 (dolist (f
   '($cl_eval
@@ -395,6 +439,5 @@
   (setf (get f 'autoload) "tocl"))
 
 (dolist (f
-  '($hstep
-    $pwilt))
+  '($pwilt))
   (setf (get f 'autoload) "pwilt"))

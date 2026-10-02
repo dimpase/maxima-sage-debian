@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -18,10 +18,10 @@
 
 (load-macsyma-macros ratmac)
 
-(declare-top (special tra* trl* *xn var intbs* plim many* split* alc ind p l))
+(declare-top (special tra* trl* *xn var intbs* plim many* split* alc ind))
 
 (defun ziredup (p)
-  (let ((modulus nil) (alpha nil) (minpoly* nil) (algfac* nil)
+  (let ((modulus nil) (*alpha* nil) (minpoly* nil) (algfac* nil)
 	(gauss nil) (tellratlist nil) (many* nil)
 	(mm* 1)
 	($gcd '$ez))
@@ -70,7 +70,7 @@
 	   j (cdr j))
      tag2 (setq u (cadr factors))
      (setq w (pgcdu vj u))
-     (when (or (numberp w) (and alpha (alg w))(= (cadr u) (cadr w)))
+     (when (or (numberp w) (and *alpha* (alg w))(= (cadr u) (cadr w)))
        (go nextfac))
      (setq y (car (pmodquo u w)))
      (setq fnq (cons w fnq))
@@ -212,7 +212,7 @@
 		 (return (cons f1 (cons f f2)))))
      (setq trm (pdifference tr (ptimes m alc)))
      (setq g (pgcdu trm f))
-     (cond ((or (numberp g) (and alpha (alg g)))
+     (cond ((or (numberp g) (and *alpha* (alg g)))
 	    (incf m)
 	    (go bk)))
      (setq f (car (pmodquo f g)))
@@ -267,8 +267,8 @@
 					(cons (car x) (pgcd1 (cdr x) (cdr q)))) trl*))))
      (cond (tra* (go tag))
 	   (t (setq l (cdr trl*)
-		    tra* (list alpha)
-		    a alpha)))
+		    tra* (list *alpha*)
+		    a *alpha*)))
      loop (when (null l) (go tag))
      (setq l (cdr l)
 	   a (pexpt a modulus)

@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,8 +12,8 @@
 
 (macsyma-module nrat4)
 
-(declare-top (special $ratsimpexpons *exp *exp2 *radsubst *loglist $radsubstflag
-		      $logsimp *v *var radcanp))
+(declare-top (special *exp *exp2 *radsubst *loglist $radsubstflag
+		      *v *var))
 
 (defmvar $radsubstflag nil
   "`radsubstflag' `t' makes `ratsubs' call `radcan' when it appears useful")
@@ -28,8 +28,6 @@
 (defun rdis* (x) `((mrat simp ,varlist ,genvar) . ,x))
 
 (defun rform (x) (cdr (ratf x)))
-
-(setq radcanp nil)
 
 (defmfun $ratcoef (e x &optional (n 1))
   (ratcoeff e x n)) ; The spelling "ratcoeff" is nicer.
@@ -126,7 +124,7 @@
 	 (setq *exp2 (cdr (ratrep* c)))
 	 ;; since *radsubst is t, both *exp and *exp2 will be radcan simplified
 	 (setq *radsubst t)
-	 (spc0)
+	 (spc0 *var)
 	 (setq b (rdis *exp) c (rdis *exp2))
 	 (setq varlist nil))
 	(progn 
@@ -171,7 +169,7 @@
 	    (setq b (cons (car b) 1))))
      (setq c
 	   (cond ((member (car b) '(0 1) :test #'equal)
-		  (ratf (maxima-substitute (rdis a) b (rdis c))))
+		  (ratf (maxima-substitute (rdis a) (rdis b) (rdis c))))
 		 (t (cons (list 'mrat 'simp varlist genvar)
 			  (if (equal (cdr a) 1)
 			      (ratreduce (everysubst0 (car a) (car b) (car c))
@@ -364,53 +362,53 @@
      (if (freeof (getopr (car l)) e) (go loop))
      (return nil)))
 
-(defun freeof (var e)
-  (cond ((alike1 var e) nil)
+(defun freeof (var2 e)
+  (cond ((alike1 var2 e) nil)
 	((atom e) t)
 	((and (not argsfreeofp)
-              (or (alike1 var ($verbify (caar e)))
-                  (alike1 var ($nounify (caar e)))))
+              (or (alike1 var2 ($verbify (caar e)))
+                  (alike1 var2 ($nounify (caar e)))))
          nil)
 	((and (or (member (caar e) '(%product %sum %laplace) :test #'eq)
 		  (and (eq (caar e) '%integrate) (cdddr e))
 		  (and (eq (caar e) '%limit) (cddr e)))
-	      (alike1 var (caddr e)))
-	 (freeofl var (cdddr e)))
+	      (alike1 var2 (caddr e)))
+	 (freeofl var2 (cdddr e)))
 	((eq (caar e) '%at)
-	 (cond ((not (freeofl var (hand-side (caddr e) 'r))) nil)
-	       ((not (freeofl var (hand-side (caddr e) 'l))) t)
-	       (t (freeof var (cadr e)))))
+	 (cond ((not (freeofl var2 (hand-side (caddr e) 'r))) nil)
+	       ((not (freeofl var2 (hand-side (caddr e) 'l))) t)
+	       (t (freeof var2 (cadr e)))))
         ((and (eq (caar e) 'lambda)
               (not (member 'array (cdar e) :test #'eq))
               ($listp (cadr e))
-              ; Check if var appears in the lambda list in any of the
-              ; following ways: var, 'var, [var] or ['var].
+              ; Check if var2 appears in the lambda list in any of the
+              ; following ways: var2, 'var2, [var2] or ['var2].
               (some (lambda (v)
-                      (or (eq v var)
-                          (alike1 v `((mquote) ,var))
-                          (alike1 v `((mlist) ,var))
-                          (alike1 v `((mlist) ((mquote) ,var)))))
+                      (or (eq v var2)
+                          (alike1 v `((mquote) ,var2))
+                          (alike1 v `((mlist) ,var2))
+                          (alike1 v `((mlist) ((mquote) ,var2)))))
                     (cdadr e)))
          t)
         ;; Check for a local variable in a block.
         ((and (eq (caar e) 'mprog)
               ($listp (cadr e))
-              ; Check if var appears in the variable list alone or
+              ; Check if var2 appears in the variable list alone or
               ; in an assignment
               (some (lambda (v)
-                      (or (eq v var)
+                      (or (eq v var2)
                           (and (msetqp v)
-                               (eq (cadr v) var))))
+                               (eq (cadr v) var2))))
                     (cdadr e)))
          t)
         ;; Check for a loop variable.
         ((and (member (caar e) '(mdo mdoin) :test #'eq)
-              (alike1 var (cadr e)))
+              (alike1 var2 (cadr e)))
          t)
-	(argsfreeofp (freeofl var (margs e)))
-	(t (freeofl var (cdr e)))))
+	(argsfreeofp (freeofl var2 (margs e)))
+	(t (freeofl var2 (cdr e)))))
 
-(defun freeofl (var l) (loop for x in l always (freeof var x)))
+(defun freeofl (var2 l) (loop for x in l always (freeof var2 x)))
 
 (defun hand-side (e flag)
   (setq e (if (eq (caar e) 'mequal) (ncons e) (cdr e)))
@@ -418,13 +416,13 @@
 
 ;; subtitle radcan
 
-(defmfun $radcan (exp)
+(defmfun ($radcan :properties ((evfun t))) (exp)
   (cond ((mbagp exp) (cons (car exp) (mapcar '$radcan (cdr exp))))
 	(t (let (($ratsimpexpons t))
 	     (simplify (let (($expop 0) ($expon 0))
-			 (radcan1 (fr1 exp nil))))))))
+			 (radcan1 (fr1 exp nil) *var)))))))
 
-(defun radcan1 (*exp)
+(defun radcan1 (*exp *var)
   (cond ((atom *exp) *exp)
 	(t (let (($factorflag t) varlist genvar $ratfac $norepeat
 		 ($gcd (or $gcd (car *gcdl*)))
@@ -436,12 +434,14 @@
 		    #'(lambda (x) (cond
 				    ((atom x) x)
 				    (t (cons (car x)
-					     (mapcar 'radcan1 (cdr x))))))
+					     (mapcar #'(lambda (e)
+							 (radcan1 e *var))
+						     (cdr x))))))
 		    varlist))
-	     (spc0)
+	     (spc0 *var)
 	     (fr1 (rdis *exp) nil)))))
 
-(defun spc0 ()
+(defun spc0 (*var)
   (prog (*v *loglist)
      (if (allatoms varlist) (return nil))
      (setq varlist (mapcar #'spc1 varlist)) ;make list of logs
@@ -451,13 +451,15 @@
      (mapc #'spc4 varlist)		   ;make exponent list
      (desetq (varlist . genvar) (spc5 *v varlist genvar))
 					;find expon dependencies
-     (setq varlist (mapcar #'rjfsimp varlist)) ;restore radicals
+     (setq varlist (mapcar #'(lambda (x)
+			       (rjfsimp x *var))
+			   varlist)) ;restore radicals
      (mapc #'spc7 varlist)))		       ;simplify radicals
 
 (defun allatoms (l)
   (loop for x in l always (atom x)))
 
-(defun rjfsimp (x &aux expon)
+(defun rjfsimp (x *var &aux expon)
   (cond ((and *radsubst $radsubstflag) x)
 	((not (m$exp? (setq x (let ($logsimp) (resimplify x))))) x)
 	((mlogp (setq expon (caddr x))) (cadr expon))
@@ -595,7 +597,7 @@
      (dolist (log l)
        (setq log
 	     (cons log (goodform
-			(ratfact (rform (radcan1 (cadr log)))
+			(ratfact (rform (radcan1 (cadr log) *var))
 				 #'pfactor))))
        (cond ((equal (caadr log) -1) (push log negl))
 	     (t (push log posl))))

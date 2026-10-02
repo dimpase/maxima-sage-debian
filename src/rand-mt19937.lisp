@@ -83,7 +83,7 @@
 
 ;; Initialize from an array.
 ;;
-;; Here is the algorithm, in C.  init_genrand is the initalizer above,
+;; Here is the algorithm, in C.  init_genrand is the initializer above,
 ;; init_key is the seed vector of length key_length.
 ;;
 ;;     init_genrand(19650218UL);
@@ -198,7 +198,7 @@
 
 ;;; random-chunk -- Internal
 ;;;
-;;; This function generaters a 32bit integer between 0 and #xffffffff
+;;; This function generates a 32bit integer between 0 and #xffffffff
 ;;; inclusive.
 ;;;
 (declaim (inline random-chunk))

@@ -11,16 +11,16 @@
 # updated setup-file automatically.
 
 if(BUILD_64BIT)
-    set(SBCLVERSION "2.0.0")
-    set(SBCL_MD5 "7b9b9767f597fc3e9686ea2f6dd3d502")
+    set(SBCLVERSION "2.6.7")
+    set(SBCL_MD5 "9aae508b70495b4c3e0d0568da5d7f56")
     set(SBCL_INSTALLERNAME "sbcl-${SBCLVERSION}-x86-64-windows-binary.msi")
 else()
-    set(SBCLVERSION "1.4.14")
-    set(SBCL_MD5 "01f1927c4dea0d9a9322c28c58fadb7d")
+    set(SBCLVERSION "2.3.2")
+    set(SBCL_MD5 "d909b01d9f520df639dbd49709735ee6")
     set(SBCL_INSTALLERNAME "sbcl-${SBCLVERSION}-x86-windows-binary.msi")
 endif()
 
-set(SBCL_URL "http://prdownloads.sourceforge.net/sbcl/${SBCL_INSTALLERNAME}")
+set(SBCL_URL "https://prdownloads.sourceforge.net/sbcl/${SBCL_INSTALLERNAME}")
 
 externalproject_add(sbcl
   URL "${SBCL_URL}"

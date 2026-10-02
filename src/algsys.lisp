@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -32,20 +32,13 @@
 ;;in an effort to reduce extraneous solutions, or Reducing to a linear
 ;;equation before taking resultants.
 
-(declare-top (special $algdelta $ratepsilon $algepsilon $keepfloat
-		     varlist genvar *roots *failures $ratprint $numer $ratfac
-		     $solvefactors $dispflag $breakup
-		     *tvarxlist* errorsw $programmode *ivar* errset $polyfactor
-		     bindlist loclist $float $infeval))
+(declare-top (special $algdelta
+		     *roots *failures $ratprint
+		     *tvarxlist* *ivar* errset))
 
 ;;note if $algepsilon is too large you may lose some roots.
 
 (defmvar $algdelta 1e-5 )
-
-(defmvar $%rnum_list '((mlist))
-  "Upon exit from ALGSYS this is bound to a list of the %RNUMS
-	 which where introduced into the expression. Useful for mapping
-	 over and using as an argument to SUBST.")
 
 (defmvar $realonly nil "If t only real solutions are returned.")
 
@@ -76,10 +69,7 @@
 	((not ($listp varxlist))
 	 (merror (intl:gettext "algsys: second argument must be a list; found ~M") varxlist)))
   (let ((tlhslist nil) (*tvarxlist* nil) (solnlist nil) ($ratprint nil)
-        ;; GCL seems to read 1e-7 as zero, but only when compiling. Incantations
-        ;; based on 1d-7, 1l-7 etc. don't seem to make any difference.
-	($ratepsilon #-gcl 1e-7
-	             #+gcl (float 1/10000000))
+	($ratepsilon 1e-7)
 	($keepfloat nil)
 	(varlist (reverse (cdr varxlist)))
 	(genvar nil) ($ratfac nil) ($breakup nil)
@@ -224,6 +214,12 @@
 						param var
 						(addmlist asolnsetl)))))))))))
 
+;; Do not remove this (and the unspecial below).  While the functions
+;; that reference *vardegs* have special declarations for it,
+;; something is missing.  If this is removed, then the testsuite fails
+;; where algsys produces the same solutions but in a different order.
+;; More troubling is that tests from rtest_odelin produces incorrect
+;; results and appears to hang somewhere after problem 57.
 (declare-top (special *vardegs*))
 
 ;;; (FINDLEASTVAR LHSL)
@@ -616,7 +612,13 @@
        (bakalevel (callsolve poly-and-var)
                   (remove (car poly-and-var) lhsl :test #'equal)
                   var)))
-    (t (callsolve (cons (car lhsl) var)))))
+    ;; LHSL contains one polynomial and we try to solve in one variable VAR.
+    ;; CALLSOLVE can miss solutions when the coefficient of the highest order
+    ;; term in VAR contains other variables in *TVARXLIST**.
+    ;; BAKALEVELSOLVE looks for these missed solutions.
+    (t (nconc (callsolve (cons (car lhsl) var))
+	      (bakalevelsolve (car lhsl) var)))))
+
 
 ;; (EVERY-ATOM PRED X)
 ;;
@@ -798,3 +800,110 @@
 	 (exclude l1 (cdr l2)))
 	(t
 	 (cons (car l2) (exclude l1 (cdr l2))))))
+
+;;; (BAKALEVELSOLVE P VAR)
+;;;
+;;; P is a polynomial in VAR.  VAR may not be the main variable.
+;;; We are trying to solve P in terms of the single variable VAR, so
+;;; the other solution variables (in *TVARXLIST*) are treated as constants.
+;;;
+;;; CALLSOLVE can miss solutions when the leading (highest order)
+;;; coefficient C of VAR contains other variables in *TVARXLIST*.
+;;; Apparently C is implicitly assumed to be non-zero.
+;;;
+;;; Seek these missing solutions by:
+;;; - finding N, the highest power of VAR in P
+;;; - separating P into C*VAR^N + D (VAR may not be the main variable in P)
+;;; - look for solutions of form (C=0,D=0)
+;;;
+;;; An example is solving a*b-c*d in terms of [a,b,c,d]
+;;;
+(defun bakalevelsolve (p var)
+  (let (n c d)
+    (cond
+     ;; a bare coefficient isn't an equation
+     ((pcoefp p) nil)
+     ;; N is highest power of VAR in polynomial P.
+     ;; No equation in VAR if N=0.  No solution.
+     ((= (setq n (p-hipow-var p var)) 0) nil)
+    (t
+      ;; express P as C*VAR^N + D
+      (setf (values c d) (p-coef-x p var n))
+      (if (p-allvars c)   ; Does C contain any variables from *TVARXLIST*
+        (algsys `(,c ,d)) ; Try and solve C=0 and D=0 using algsys
+	 nil)))))        ; C is freeof of *TVARXLIST*.  No solution.
+
+;;; De-duplicated list of variables in polynomial P
+(defun p-allvars (p)
+  (unless (pcoefp p) (remove-duplicates (p-allvars1 p))))
+
+;;; List of variables in polynomial P.  May contain duplicates.
+(defun p-allvars1 (p)
+  (unless (pcoefp p)
+    (cons
+     (p-var p)       ; the main variable of poly
+     (loop           ; Recursively extract variables from coefficients.
+      for (nil ci) on (p-terms p) by #'cddr
+      if (not (pcoefp ci)) append (p-allvars1 ci)))))
+
+;;; Maximum degree of variable V in polynomial P
+;;; V may not be the main variable in P
+(defun p-hipow-var (p v)
+  (cond
+    ((pcoefp p) 0)              ; bare coefficient has degree 0
+    ((eq (p-var p) v) (p-le p)) ; V is main variable - return leading exponent
+    (t
+      (loop              ; Recursively search through coefficients of p
+        for (nil c) on (p-terms p) by #'cddr
+        maximize (p-hipow-var c v)))))
+
+;;; (P-COEF-X P X N)
+;;;
+;;; Separate multivariable polynomial P with main variable V into C*x^n + D
+;;; where X may be different to V.  Return (values C D)
+;;; Assumes terms of P are in decending order
+(defun p-coef-x (p x n)
+  (cond
+   ((pcoefp p)                  ; p is a bare coefficient
+     (if (= n 0)
+       (values p (pzero))       ; c = bare coef, d = 0
+       (values (pzero) p)))     ; c = 0,         d = bare coef
+   ((eq (p-var p) x)            ; main variable V in P is X
+     (p-coef-main p n))
+   (t
+     ;; P is polynomial with main variable V other than X
+     ;; iterate over coefficients ai
+     ;; find (ci di) such that ai = ci*x^n + di
+     ;; C = ck*v^k + ... + c0*v^0, a polynomial in v
+     ;; D = dk*v^k + ... + d0*v^0, a polynomial in v
+     (loop
+       with terms = (p-terms p) with v = (p-var p) with ci with di
+       for (i ai) on terms by #'cddr
+       do (setf (values ci di) (p-coef-x ai x n))
+       unless (pzerop ci) append `(,i ,ci) into cterms
+       unless (pzerop di) append `(,i ,di) into dterms
+       finally (return (values (psimp v cterms) (psimp v dterms)))))))
+
+
+;;; (P-COEF-MAIN P N)
+;;;
+;;; Separate multivariable polynomial P with main variable X into C*x^n + D
+;;; Return (values C D)
+;;; Assumes terms of P are in decending order
+(defun p-coef-main (p n)
+  (if (pcoefp p)              ; bare coefficient
+    (if (= n 0)
+      (values p 0)             ; c = bare coef & d = 0
+      (values 0 p))            ; c = 0         & d = bare coef
+    (loop                      ; proper polynomial
+      with L = (p-terms p)     ; list of terms in polynomial
+      with var = (p-var p)     ; main variable
+      for i  = (pop L)         ; power of term
+      for ai = (pop L)         ; coefficient of term x^i
+      while (>= i n)           ; exit via finally if n-th power not present
+      if (> i n)
+        append `(,i ,ai) into terms       ; accumulate higher order terms
+      else                ; have i==n so C=ai.  Construct D and return
+        do (return (values ai (psimp var (append terms L))))
+      while L          ; exit via finally if all coefficients examined
+      finally (return (values 0 p)))))

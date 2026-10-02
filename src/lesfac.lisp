@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -117,6 +117,7 @@
 
 (defun lgcd1 (a b)
   (prog (ptlist g bj c t1 d1 d2 dummy)
+    (declare (ignorable dummy))
      (setq ptlist (mapcar #'(lambda (ig) (declare (ignore ig)) b) a))
      (do ((a a (cdr a))
 	  (ptlist ptlist (cdr ptlist)))
@@ -186,6 +187,7 @@
 	(c (car y))
 	(d (cdr y))
         dummy)
+    (declare (ignorable dummy))
     (multiple-value-setq (x a c) (dopgcdcofacts a c))
     (multiple-value-setq (y b d) (fpgcdco b d))
     (setq a (makprod (pplus (pflatten (ptimeschk a d))

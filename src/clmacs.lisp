@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -121,6 +121,18 @@
 (defun string<$ (str1 str2)
   (string< str1 str2))
 
+(declaim (inline char-invert-case))
+(defun char-invert-case (c)
+  "Returns the character C with inverted case."
+  ;; This implementation is faster than first checking whether C is uppercase
+  ;; or lowercase and then using CHAR-DOWNCASE or CHAR-UPCASE, at least on SBCL.
+  ;; Try downcasing first, because the expected case for symbols is uppercase,
+  ;; as in $X, $Y, ...
+  (let ((downcased (char-downcase c)))
+    (if (eql downcased c)
+      (char-upcase c)
+      downcased)))
+
 ;;numbers<strings<symbols<lists<?
 (defun alphalessp (x y)
   (cond ((numberp x)
@@ -133,19 +145,70 @@
 	((symbolp x)
 	 (cond ((or (numberp y) (stringp y)) nil)
 	       ((symbolp y)
-		(let ((nx (print-invert-case x))
-		      (ny (print-invert-case y)))
-		  (declare (string nx ny))
-		  (cond ((string<$ nx ny)
-			 t)
-			((string= nx ny)
-			 (cond ((eq nx ny) nil)
-			       ((null (symbol-package x)) nil)
-			       ((null (symbol-package y)) nil)
-			       (t (string<
-				   (package-name (symbol-package x))
-				   (package-name (symbol-package y))))))
-			(t nil))))
+             ;; Local helper function that returns T if the case of the string
+             ;; STR (length LEN) must be inverted while comparing, i.e., if its
+             ;; letters are either all uppercase or all lowercase.
+             ;; Must be inverted:     a, A, ab, AB, $a, $b, $ab, $AB
+             ;; Must not be inverted: aB, Ab
+             (flet ((invert-case-p (str len)
+                      ;; Quickly handle the common case of length 2 with $ prefix,
+                      ;; e.g. $a or $A. Always invert these. (If the second
+                      ;; character is non-case, e.g. %, it doesn't matter.)
+                      (if (and (= 2 len) (eql (char str 0) #\$))
+                        t
+                        (let (upper lower)
+                          ;; Loop over the characters C of STR, remembering
+                          ;; whether we have seen any uppercase/lowercase
+                          ;; characters. Minimize the number of calls to
+                          ;; UPPER-CASE-P/LOWER-CASE-P: If we have already
+                          ;; seen an uppercase/lowercase character, there's
+                          ;; no need to test again. Abort when we have seen both.
+                          (loop
+                            for c across str
+                            do (cond ((and (not upper) (upper-case-p c))
+                                       (setq upper t)
+                                       (when lower (return)))
+                                     ((and (not lower) (lower-case-p c))
+                                       (setq lower t)
+                                       (when upper (return)))))
+                          (not (eq upper lower)))))) ; = UPPER XOR LOWER
+               (declare (inline invert-case-p))
+               (let* ((nx (symbol-name x))
+                      (ny (symbol-name y))
+                      (len-nx (length nx))
+                      (len-ny (length ny))
+                      (inv-nx (invert-case-p nx len-nx))  ; Need to invert NX?
+                      (inv-ny (invert-case-p ny len-ny))) ; Need to invert NY?
+                 (loop
+                   ;; Loop over the characters CX, CY of NX, NY in parallel.
+                   for cx across nx
+                   for cy across ny
+                   ;; If CX and CY are the same character and both have or both
+                   ;; don't have to be inverted, we don't need to do anything
+                   ;; in this iteration.
+                   do (unless (and (eql cx cy) (eq inv-nx inv-ny))
+                        (let ((cx* (if inv-nx (char-invert-case cx) cx))
+                              (cy* (if inv-ny (char-invert-case cy) cy)))
+                          ;; If the characters differ, after inverting if needed,
+                          ;; we can return the answer immediately.
+                          (unless (char= cx* cy*)
+                            (return-from alphalessp (char< cx* cy*))))))
+                 ;; If we're still here, the substrings (after inverting if needed)
+                 ;; are identical up to the minimum of both lengths.
+                 ;; Look at the string lengths.
+                 (cond
+                   ((= len-nx len-ny)
+                     ;; Same length means same symbol name. Let the name of the
+                     ;; symbol's package decide. (The symbols could also be EQ,
+                     ;; but that never seems to occur in practice.)
+                     (let ((px (symbol-package x))
+                           (py (symbol-package y)))
+                       (if (and px py)
+                         (string< (package-name px) (package-name py))
+                         nil)))
+                   (t
+                     ;; The symbol with the shorter name is "less".
+                     (< len-nx len-ny))))))
 	       ((consp y) t)))
 	((listp x)
 	 (cond ((or (numberp y) (stringp y)(symbolp y )) nil)
@@ -200,11 +263,6 @@
 
 ;;actually this was for lists too.
 
-(defun putprop (sym val  indic)
-  (if (consp sym)
-      (setf (getf (cdr sym) indic) val)
-      (setf (get sym indic) val)))
-
 (defmacro defprop (sym val indic)
   (if (eq indic 'expr)
       `(setf (symbol-function ',sym) #',val)
@@ -240,14 +298,28 @@
   (cond ((symbolp sym) (get sym tag))
 	((consp sym) (getf (cdr sym) tag))))
 
+(defun zl-remprop (sym indicator)
+  (if (symbolp sym)
+      (remprop sym indicator)
+      (unless (atom sym)
+        (remf (cdr sym) indicator))))
+
 (defun getl (plist indicator-list )
   (cond ((symbolp plist)
 	 (setq plist (symbol-plist plist)))
 	((consp plist) (setq plist (cdr plist)))
 	(t (return-from getl nil)))
+  (cond ((null indicator-list) nil)
+	((null (cdr indicator-list))
+	 ;; Fast path for the common case of a single-element INDICATOR-LIST:
+	 (let ((indicator (car indicator-list)))
+	   (loop for tail on plist by #'cddr
+		 when (and (cadr tail) (eq (car tail) indicator))
+		 do (return tail))))
+	(t
   (loop for tail on plist by #'cddr
-	 when (member (car tail) indicator-list :test #'eq)
-	 do (return tail)))
+	 when (and (cadr tail) (member (car tail) indicator-list :test #'eq))
+	 do (return tail)))))
 
 (declaim (inline safe-get safe-getl))
 (defun safe-get (sym prop)
@@ -339,165 +411,6 @@
 
 ;;; exp is shadowed to save trouble for other packages--its declared special
 (deff exp #'cl:exp)
-
-#+clisp
-(progn
-  ;; This used to be enabled, but
-  ;; http://clisp.cons.org/impnotes/num-dict.html seems to indicate
-  ;; that the result of float, coerce, sqrt, etc., on a rational will
-  ;; return a float of the specified type.  But ANSI CL says we must
-  ;; return a single-float.  I (rtoy) am commenting this out for now.
-
-  ;; (setq custom:*default-float-format* 'double-float)
-
-  ;; We currently don't want any warnings about floating-point contagion.
-  (setq custom::*warn-on-floating-point-contagion* nil)
-
-  ;; We definitely want ANSI-style floating-point contagion.
-  (setq custom:*floating-point-contagion-ansi* t)
-
-  ;; Set custom:*floating-point-rational-contagion-ansi* so that
-  ;; contagion is done as per the ANSI CL standard. Has an effect only
-  ;; in those few cases when the mathematical result is exact although
-  ;; one of the arguments is a floating-point number, such as (* 0
-  ;; 1.618), (/ 0 1.618), (atan 0 1.0), (expt 2.0 0)
-  (setq custom:*floating-point-rational-contagion-ansi* t)
-
-  ;; When building maxima using with 'flonum being a 'long-float it may be
-  ;; useful to adjust the number of bits of precision that CLISP uses for
-  ;; long-floats.
-  #+nil
-  (setf (ext:long-float-digits) 128)
-
-  ;; We want underflows not to signal errors.
-  (ext:without-package-lock ()
-    (setq sys::*inhibit-floating-point-underflow* t))
-  )
-
-#+abcl
-(progn
-  ;; We want underflows not to signal errors
-  (when (fboundp (find-symbol "FLOAT-UNDERFLOW-MODE" "SYS"))
-    (funcall (find-symbol "FLOAT-UNDERFLOW-MODE" "SYS") nil))
-  )
-
-;; Make the maximum exponent larger for CMUCL.  Without this, cmucl
-;; will generate a continuable error when raising an integer to a
-;; power greater than this.
-#+cmu
-(setf ext::*intexp-maximum-exponent* 100000)
-;;;; Setup the mapping from the Maxima 'flonum float type to a CL float type.
-;;;;
-;;;; Add :flonum-long to *features* if you want flonum to be a
-;;;; long-float.  Or add :flonum-double-double if you want flonum to
-;;;; be a double-double (currently only for CMUCL).  Otherwise, you
-;;;; get double-float as the flonum type.
-;;;;
-;;;; Default double-float flonum.
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (setq *read-default-float-format* 'double-float))
-
-#-(or flonum-long flonum-double-double)
-(progn
-;; Tell Lisp the float type for a 'flonum.
-#-(or clisp abcl)
-(deftype flonum (&optional low high)
-  (cond (high
-	 `(double-float ,low ,high))
-	(low
-	 `(double-float ,low))
-	(t
-	 'double-float)))
-
-;; Some versions of clisp and ABCL appear to be buggy: (coerce 1 'flonum)
-;; signals an error.  So does (coerce 1 '(double-float 0d0)).  But
-;; (coerce 1 'double-float) returns 1d0 as expected.  So for now, make
-;; flonum be exactly the same as double-float, without bounds.
-#+(or clisp abcl)
-(deftype flonum (&optional low high)
-  (declare (ignorable low high))
-  'double-float)
-
-(defconstant most-positive-flonum most-positive-double-float)
-(defconstant most-negative-flonum most-negative-double-float)
-(defconstant least-positive-flonum least-positive-double-float)
-(defconstant least-negative-flonum least-negative-double-float)
-(defconstant flonum-epsilon double-float-epsilon)
-(defconstant least-positive-normalized-flonum least-positive-normalized-double-float)
-(defconstant least-negative-normalized-flonum least-negative-normalized-double-float)
-
-(defconstant flonum-exponent-marker #\D)
-)
-
-#+flonum-long
-(progn
-;;;; The Maxima 'flonum can be a CL 'long-float on the Scieneer CL or CLISP,
-;;;; but should be the same as 'double-float on other CL implementations.
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (setq *read-default-float-format* 'long-float))
-
-;; Tell Lisp the float type for a 'flonum.
-(deftype flonum (&optional low high)
-  (cond (high
-	 `(long-float ,low ,high))
-	(low
-	 `(long-float ,low))
-	(t
-	 'long-float)))
-
-(defconstant most-positive-flonum most-positive-long-float)
-(defconstant most-negative-flonum most-negative-long-float)
-(defconstant least-positive-flonum least-positive-long-float)
-(defconstant least-negative-flonum least-negative-long-float)
-(defconstant flonum-epsilon long-float-epsilon)
-(defconstant least-positive-normalized-flonum least-positive-normalized-long-float)
-
-(defconstant flonum-exponent-marker #\L)
-
-)
-
-#+flonum-double-double
-(progn
-
-;;;; The Maxima 'flonum can be a 'kernel:double-double-float on the CMU CL.
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (setq *read-default-float-format* 'kernel:double-double-float))
-
-;; Tell Lisp the float type for a 'flonum.
-(deftype flonum (&optional low high)
-  (cond (high
-	 `(kernel:double-double-float ,low ,high))
-	(low
-	 `(kernel:double-double-float ,low))
-	(t
-	 'kernel:double-double-float)))
-
-;; While double-double can represent number as up to
-;; most-positive-double-float, it can't really do operations on them
-;; due to the way multiplication and division are implemented.  (I
-;; don't think there's any workaround for that.)
-;;
-;; So, the largest number that can be used is the float just less than
-;; 2^1024/(1+2^27).  This is the number given here.
-(defconstant most-positive-double-double-hi
-  (scale-float (cl:float (1- 9007199187632128) 1d0) 944))
-
-(defconstant most-positive-flonum (cl:float most-positive-double-double-hi 1w0))
-(defconstant most-negative-flonum (cl:float (- most-positive-double-double-hi 1w0)))
-(defconstant least-positive-flonum (cl:float least-positive-double-float 1w0))
-(defconstant least-negative-flonum (cl:float least-negative-double-float 1w0))
-;; This is an approximation to a double-double epsilon.  Due to the
-;; way double-doubles are represented, epsilon is actually zero
-;; because 1+x = 1 only when x is zero.  But double-doubles only have
-;; 106 bits of precision, so we use that as epsilon.
-(defconstant flonum-epsilon (scale-float 1w0 -106))
-(defconstant least-positive-normalized-flonum (cl:float least-positive-normalized-double-float 1w0))
-
-(defconstant flonum-exponent-marker #\W)
-
-)
 
 ;;;;
 (defmacro float (x &optional (y 1e0))

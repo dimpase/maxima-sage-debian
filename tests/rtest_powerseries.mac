@@ -220,7 +220,7 @@ factor(powerseries((1+x)/(1-2*x^2), x, 0));
       -1*(1/(1/sqrt(2)))*(-1/sqrt(2)-1)*(1/(4/sqrt(2)))*(1/(1/sqrt(2)))^i3 ) * x^i3,i3,0,inf);
 */
 
-'sum(2^(i3/2-3/2)*((sqrt(2)-1)*(-1)^i3+sqrt(2)+1)*x^i3,i3,0,inf);
+'sum((((-1)^i3+1)*sqrt(2)-(-1)^i3+1)*2^(i3/2-3/2)*x^i3,i3,0,inf);
 
 /* multiple root */
 powerseries((1+x)/(1-x)^2, x, 0);
@@ -350,6 +350,26 @@ niceindices(powerseries(log(1-a*x), x, 0));
 */
 niceindices(powerseries(log(1-z*exp(-4)), z, 0));
 -sum(exp(-4*i)*z^i/i, i, 1, inf)$
+
+/* verify power series for lambert_w */
+
+ps: niceindices (powerseries (lambert_w(x), x, 0));
+-'sum(i^(i - 1)*(-1)^i*x^i/i!, i, 1, inf);
+
+(subst (inf = 5, ps), ev (%%, nouns));
+x - x^2 + 3*x^3/2 - 8*x^4/3 + 125*x^5/24;
+
+/* Test that gensumnum:false works */
+gensumnum:false;
+false;
+
+powerseries(log(1+x),x,0);
+-'sum(((-1)^i*x^i)/i,i,1,inf);
+
+powerseries(1/x, x, -inf) - powerseries(1/x, x, minf);
+0;
+powerseries(1/x, x, -minf) - powerseries(1/x, x, inf);
+0;
 
 (kill(all), 0);
 0$

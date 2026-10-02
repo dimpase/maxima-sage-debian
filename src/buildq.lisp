@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -56,7 +56,7 @@
   (declare (ignore ignored simp-flags))
   (cons '($buildq simp) (cdr x)))
 
-;; Note that supression of simplification is very important to the semantics
+;; Note that suppression of simplification is very important to the semantics
 ;; of BUILDQ.  Consider BUILDQ([A:'[B,C,D]],SPLICE(A)+SPLICE(A));
 
 ;; If no simplification takes place, $BUILDQ returns B+C+D+B+C+D.
@@ -131,7 +131,8 @@
 	    (cond ((eq new-car (caar expression))
 		   (setq new-car (car expression)))
 		  ((atom new-car)
-		   (setq new-car (cons new-car (cdar expression))))
+		   ;; Be careful to verbify a string before substituting into the operator.
+		   (setq new-car (cons (or (and (stringp new-car) ($verbify new-car)) new-car) (cdar expression))))
 		  (t (return
 		       `(,(cons 'mqapply (cdar expression))
 			 ,new-car

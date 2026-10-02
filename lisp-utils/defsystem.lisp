@@ -998,8 +998,10 @@
 #+(or clisp cormanlisp ecl (and gcl defpackage) sbcl ccl)
 (defpackage "MAKE" (:use "COMMON-LISP") (:nicknames "MK"))
 
-#-(or :sbcl :cltl2 :lispworks :ecl :scl :abcl :ccl)
+#-(or :gcl :sbcl :cltl2 :lispworks :ecl :scl :abcl :ccl)
 (in-package :make :nicknames '("MK"))
+#+gcl
+(in-package :make)
 
 ;;; For CLtL2 compatible lisps...
 #+(and :excl :allegro-v4.0 :cltl2)
@@ -4533,7 +4535,7 @@ the system definition, if provided."
 ;;; Fortran Language definitions.
 ;;; From Matlisp.
 
-(export '(*fortran-compiler* *fortran-options*))
+#-allegro (export '(*fortran-compiler* *fortran-options*))
 
 (defparameter *fortran-compiler* "g77")
 (defparameter *fortran-options* '("-O"))
@@ -4558,7 +4560,7 @@ the system definition, if provided."
 ;;; AR support.
 ;; How to create a library (archive) of object files
 
-(export '(*ar-program* build-lib))
+#-allegro (export '(*ar-program* build-lib))
 
 (defparameter *ar-program* "ar")
 
@@ -4826,10 +4828,36 @@ or does not contain valid compiled code."
 	    ((and binary-exists load-binary)
 	     (with-tell-user ("Loading binary"   component :binary)
 	       (or *oos-test*
+               (if source-exists
+                 ;; Source file exists. If loading the binary fails, try to recompile and load once.
+                 ;; This is to handle corrupt or incomplete binary files.
+                 ;; Catching errors during compilation isn't always possible.
+                 (handler-case
+                   (progn
+                     (funcall (load-function component) binary-pname)
+                     (setf (component-load-time component)
+                           (file-write-date binary-pname)))
+                   (error (condition)
+                     (format *error-output*
+                             "MK:DEFSYSTEM: Error loading ~A: ~A~%; Deleting binary and recompiling...~%"
+                             binary-pname condition)
+                     ;; Catch and report deletion errors without halting recovery
+                     (handler-case (delete-file binary-pname)
+                       (error (del-err)
+                         (format *error-output*
+                                 "MK:DEFSYSTEM: Warning: Could not delete ~A: ~A~%; Recompiling anyways...~%"
+                                 binary-pname del-err)))
+                     ;; Force recompilation
+                     (compile-file-operation component t)
+                     ;; Final load attempt
+                     (funcall (load-function component) binary-pname)
+                     (setf (component-load-time component)
+                           (file-write-date binary-pname))))
+		   ;; No source file - can't do anything if loading the binary fails.
 		   (progn
 		     (funcall (load-function component) binary-pname)
 		     (setf (component-load-time component)
-			   (file-write-date binary-pname)))))
+			   (file-write-date binary-pname))))))
 	     t)
 	    ((and (not binary-exists) (not source-exists))
 	     (tell-user-no-files component :force)

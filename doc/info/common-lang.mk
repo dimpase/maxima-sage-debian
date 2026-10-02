@@ -1,80 +1,56 @@
 info_TEXINFOS = maxima.texi
-if CHM
-MAXIMA_CHM = maxima.chm
-INSTALL_CHM = install-chm
-UNINSTALL_CHM = uninstall-chm
-CLEAN_CHM = clean-chm
-genericdir = $(dochtmldir)$(langsdir)
-genericdirDATA = \
-contents.hhc index.hhk header.hhp maxima.hhp
-endif
 
-all-local: maxima-index.lisp maxima.html contents.hhc $(MAXIMA_CHM)
-
-install-data-local: $(INSTALL_CHM)
-
-uninstall-local: $(UNINSTALL_CHM)
+all-local: maxima-index.lisp maxima-index-html.lisp index.html
 
 maxima-index.lisp: maxima.info $(srcdir)/../build_index.pl
-	/usr/bin/env perl $(srcdir)/../build_index.pl maxima.info ':crlf' > maxima-index.lisp
+	/usr/bin/env perl $(srcdir)/../build_index.pl maxima.info > maxima-index.lisp
 
-maxima.html: maxima.texi $(maxima_TEXINFOS)
-	/usr/bin/env perl $(srcdir)/../texi2html -split_chapter --lang=$(lang) --output=. --css-include=$(srcdir)/../manual.css --init-file $(srcdir)/texi2html.init $(srcdir)/maxima.texi 
+# Really depends on all the individual html files, but let's assume
+# that if index.html is done, we have all the remaining html
+# files.
+#
+# Load build-html-index.lisp and run the builder to create
+# maxima-index-html.lisp.  In a clean directory, there won't be a
+# maxima-index-html.lisp, so we don't want to try to verify the html
+# index to prevent spurious warnings.  Then after it's done, run
+# maxima to verify the index.
+maxima-index-html.lisp : index.html $(top_srcdir)/doc/info/build-html-index.lisp
+	$(MAKE) -C $(top_builddir)/src
+	MAXIMA_LANG_SUBDIR=$(lang) $(top_builddir)/maxima-local --no-init --no-verify-html-index --preload=$(top_srcdir)/doc/info/build-html-index.lisp --batch-string='build_and_dump_html_index("./*.html", lang = "$(lang)");'
+	MAXIMA_LANG_SUBDIR=$(lang) $(top_builddir)/maxima-local --no-init --batch-string="quit();"
 
-maxima.pdf: maxima_pdf.texi maxima.texi $(maxima_TEXINFOS)
-	$(TEXI2PDF) $(AM_V_texinfo) -o maxima.pdf $(srcdir)/maxima_pdf.texi
-	rm -f maxima_pdf.fns maxima_pdf.vr maxima_pdf.tp maxima_pdf.pg maxima_pdf.ky maxima_pdf.cp \
-	maxima_pdf.toc maxima_pdf.fn maxima_pdf.aux maxima_pdf.log maxima_pdf.vrs
+maxima_singlepage.html index.html: maxima.texi $(maxima_TEXINFOS) $(figurefiles) $(top_srcdir)/doc/info/manual.css $(top_builddir)/doc/info/texi2html.init
+	../build_html.sh -l $(lang)
 
-contents.hhc: maxima.html
-	/usr/bin/env perl $(srcdir)/../create_index `grep -l name..SEC_Contents maxima*.html`
+maxima.pdf: maxima.texi $(maxima_TEXINFOS)
+	$(TEXI2PDF) $(AM_V_texinfo) -I $(srcdir)/.. -o maxima.pdf $(srcdir)/maxima.texi
+	rm -f maxima.fns maxima.vr maxima.tp maxima.pg maxima.ky maxima.cp \
+	maxima.toc maxima.fn maxima.aux maxima.log maxima.vrs
 
 include $(top_srcdir)/common.mk
 
-htmlname = maxima
+# The basename for the html files for the manual.  Since we don't
+# rename the html files, the html file names can basically have any
+# name.
+htmlname = *
 htmlinstdir = $(dochtmldir)$(langsdir)
 include $(top_srcdir)/common-html.mk
 
-clean-local: clean-info clean-html $(CLEAN_CHM)
+clean-local: clean-info clean-html
 
 clean-info:
 	rm -f maxima.info
 	rm -f maxima.info*
 	rm -f maxima-index.lisp
+	rm -f maxima-index-html.lisp
 
 clean-html:
-	rm -f maxima.html maxima_*.html
-	rm -f maxima_singlepage.html
-	rm -f contents.hhc
-	rm -f index.hhk
+	rm -f *.html
 
-EXTRA_DIST = maxima-index.lisp $(genericdirDATA)
-
-# This builds the Windows help file maxima.chm
-maxima.chm: maxima.html maxima.hhp contents.hhc index.hhk
-	$(MKDIR_P) chm
-	$(MKDIR_P) chm/figures
-	for hfile in *.html ; do \
-	  sed -e 's|$(srcdir)/../figures|figures|g' < $$hfile > chm/$$hfile; \
-	done
-	cp maxima.hhp contents.hhc index.hhk chm
-	cp $(srcdir)/../figures/*.gif chm/figures
-	-(cd chm; "$(HHC)" maxima.hhp)
-	mv chm/maxima.chm .
-
-install-chm: maxima.chm
-	test -z "$(DESTDIR)$(docchmdir)$(langsdir)" || mkdir -p -- "$(DESTDIR)$(docchmdir)$(langsdir)"
-	$(INSTALL_DATA) maxima.chm "$(DESTDIR)$(docchmdir)$(langsdir)/maxima.chm"
-
-uninstall-chm:
-	rm -f "$(DESTDIR)$(docchmdir)"
-
-clean-chm:
-	rm -f maxima.chm
-	rm -rf chm
+EXTRA_DIST = maxima-index.lisp maxima-index-html.lisp $(genericdirDATA) index.html
 
 
-install-info-am: $(INFO_DEPS) maxima-index.lisp
+install-info-am: $(INFO_DEPS) maxima-index.lisp maxima-index-html.lisp
 	test -z "$(infodir)$(langsdir)" || mkdir -p -- "$(DESTDIR)$(infodir)$(langsdir)"
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	list='$(INFO_DEPS)'; \
@@ -94,6 +70,7 @@ install-info-am: $(INFO_DEPS) maxima-index.lisp
 	  done; \
 	done
 	$(INSTALL_DATA) maxima-index.lisp "$(DESTDIR)$(infodir)$(langsdir)/maxima-index.lisp"
+	$(INSTALL_DATA) maxima-index-html.lisp "$(DESTDIR)$(infodir)$(langsdir)/maxima-index-html.lisp"
 
 uninstall-info-am:
 	@list='$(INFO_DEPS)'; \
@@ -106,3 +83,4 @@ uninstall-info-am:
 	   else :; fi); \
 	done
 	rm -f "$(DESTDIR)$(infodir)$(langsdir)/maxima-index.lisp"
+	rm -f "$(DESTDIR)$(infodir)$(langsdir)/maxima-index-html.lisp"

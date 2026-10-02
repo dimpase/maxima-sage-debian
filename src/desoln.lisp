@@ -4,7 +4,8 @@
 
 (defmfun $desolve (eqns vars)
   (let (teqns tvars ovar (lvar ($gensym)) (flag nil) ($dispflag nil))
-    (declare (special $dispflag))
+    (if ($mapatom vars)
+	(merror (intl:gettext "desolve(<eqn>,<depvar>): dependent variable <depvar> cannot be a mapatom, found: ~M") vars))
     (unless ($listp vars)
       (setq eqns (list '(mlist) eqns))
       (setq vars (list '(mlist) vars))
@@ -14,15 +15,9 @@
       (merror (intl:gettext "desolve: more than one independent variable: ~M") ovar))
     (setq ovar (simplify ($inpart ovar 1)))
     (setq teqns
-     (simplify (map1 (getopr (m-tlambda&env (($z) (ovar lvar))
-					    nil
-					    (simplify ($laplace $z ovar lvar))))
-		     eqns)))
+     (simplify (map1 (lambda (z) (simplify ($laplace z ovar lvar))) eqns)))
     (setq tvars
-     (simplify (map1 (getopr (m-tlambda&env (($z) (ovar lvar))
-					    nil
-					    (simplify `((%laplace) ,$z ,ovar ,lvar))))
-		     vars)))
+     (simplify (map1 (lambda (z) (simplify `((%laplace) ,z ,ovar ,lvar))) vars)))
     (setq teqns
 	  (let ((errcatch (cons bindlist loclist))
 		(ret (errset (simplify ($solve teqns tvars)))))
@@ -37,10 +32,7 @@
     (unless (like flag t)
       (setq teqns (simplify ($first teqns))))
     (setq teqns
-     (simplify (map1 (getopr (m-tlambda&env (($z) (lvar ovar))
-					    nil
-					    (simplify ($ilt $z lvar ovar))))
-		     teqns)))
+     (simplify (map1 (lambda (z) (simplify ($ilt z lvar ovar))) teqns)))
     (if (and flag (= ($length tvars) 1))
 	(maref teqns 1)
 	teqns)))

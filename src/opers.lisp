@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -58,8 +58,6 @@
 (defun addn (terms simp-flag)
   (cond ((null terms) 0)
 	(t (simplifya `((mplus) . ,terms) simp-flag))))
-
-(declare-top (special $negdistrib))
 
 (defun neg (x)
   (cond ((numberp x) (- x))
@@ -157,10 +155,7 @@
   (cond ((=1 power) (simplifya *base nil))
 	(t (simplifya `((mexpt) ,*base ,power) nil))))
 
-(defun ncpower (x y)
-  (cond ((=0 y) 1)
-	((=1 y) x)
-	(t (simplifya `((mncexpt) ,x ,y) t))))
+(defun ncpower (x y) (simplifya `((mncexpt) ,x ,y) t))
 
 ;; [Add something for constructing equations here at some point.]
 

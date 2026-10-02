@@ -1,4 +1,4 @@
-;;  Copyright 2005, 2006, 2020, 2021 by Barton Willis
+;;  Copyright 2005, 2006, 2020, 2021, 2024 by Barton Willis
 
 ;;  This is free software; you can redistribute it and/or
 ;;  modify it under the terms of the GNU General Public License,
@@ -15,24 +15,39 @@
 ;; Let's remove built-in symbols from list for user-defined properties.
 (setq $props (remove '$conjugate $props))
 
-(defprop $conjugate tex-postfix tex)
-(defprop $conjugate ("^\\star") texsym)
-(defprop $conjugate 160. tex-lbp)
+(setf (get 'conjugate-superscript-star 'tex-lbp) (tex-lbp 'mexpt))
+(setf (get 'conjugate-superscript-star 'tex-rbp) (tex-rbp 'mexpt))
+
+(defun tex-conjugate (x l r)
+  ;; Punt to TeX output for MEXPT, but defeat the special case for
+  ;; powers of trig functions, e.g. sin(x)^2 which is set as sin^2 x,
+  ;; by supplying an expression which has a different operator
+  ;; (namely CONJUGATE-SUPERSCRIPT-STAR) instead of MEXPT.
+  (tex-mexpt `((conjugate-superscript-star) ,(second x) "\\ast") l r))
+
+(defprop $conjugate tex-conjugate tex)
+(defprop $conjugate 121. tex-lbp)
+(defprop $conjugate 120. tex-rbp)
+
 (defprop $conjugate simp-conjugate operators)
+
+;; As an alternative to using the commutes-with-conjugate property for collections,
+;; equations and inequations, let the simplifier distribute $conjugate over them.
+;; Use commutes-with-conjugate only for number-valued operators.
+(defprop $conjugate (mlist $matrix mequal $set mnotequal %transpose) distribute_over)
 
 ;; Maybe $conjugate should have a msimpind property. But with some Maxima versions,
 ;; kill(conjugate) eliminates the msimpind property; after that, conjugate gives rubbish.
 ;; Until this is resolved, $conjugate doesn't have a msimpind property.
 
 (eval-when
-    #+gcl (load eval)
-    #-gcl (:load-toplevel :execute)
+    (:load-toplevel :execute)
     (let (($context '$global) (context '$global))
       (meval '(($declare) $conjugate $complex))
       ;; Let's remove built-in symbols from list for user-defined properties.
       (setq $props (remove '$conjugate $props))))
 
-;; When a function commutes with the conjugate, give the function the
+;; When a number-valued function commutes with the conjugate, give the function the
 ;; commutes-with-conjugate property. The log function commutes with
 ;; the conjugate on all of C except on the negative real axis. Thus
 ;; log does not get the commutes-with-conjugate property.  Instead,
@@ -60,7 +75,7 @@
 (setf (get '%sec 'commutes-with-conjugate) t)
 (setf (get '%csc 'commutes-with-conjugate) t)
 (setf (get '%cot 'commutes-with-conjugate) t)
-(setf (get '$atan2 'commutes-with-conjugate) t)
+(setf (get '%atan2 'commutes-with-conjugate) t)
 
 (setf (get '%jacobi_cn 'commutes-with-conjugate) t)
 (setf (get '%jacobi_sn 'commutes-with-conjugate) t)
@@ -70,16 +85,22 @@
 (setf (get '$pochhammer 'commutes-with-conjugate) t)
 
 ;; Collections
+;;
+;; These used to have the commutes-with-conjugate property,
+;; but this caused problems with $rectform (see bug #4500: "rectform of set").
+;; Distributing over $set and mnotequal has been disabled for consistency with
+;; other operators that only distribute over lists, matrices and equations.
 
-(setf (get '$matrix 'commutes-with-conjugate) t)
-(setf (get 'mlist 'commutes-with-conjugate) t)
-(setf (get '$set 'commutes-with-conjugate) t)
+;(setf (get '$matrix 'commutes-with-conjugate) t)
+;(setf (get 'mlist 'commutes-with-conjugate) t)
+;(setf (get '$set 'commutes-with-conjugate) t)
 
 ;; Relations
+;; (see comment above)
 
-(setf (get 'mequal 'commutes-with-conjugate) t)
-(setf (get 'mnotequal 'commutes-with-conjugate) t)
-(setf (get '%transpose 'commutes-with-conjugate) t)
+;(setf (get 'mequal 'commutes-with-conjugate) t)
+;(setf (get 'mnotequal 'commutes-with-conjugate) t)
+;(setf (get '%transpose 'commutes-with-conjugate) t)
 
 ;; Oddball functions
 
@@ -170,7 +191,7 @@
   (setq x (car x))
   (cond ((off-negative-real-axisp x)
 	 (take '(%plog) (take '($conjugate) x)))
-	((on-negative-real-axisp x)
+	((on-negative-real-axisp x) ; simplified away--never happens
 	 (add (take '(%plog) (neg x)) (mul -1 '$%i '$%pi)))
 	(t (list '($conjugate simp)  (take '(%plog) x)))))
 
@@ -301,13 +322,19 @@
 		   (take '(%log_gamma) (take '($conjugate) z)) 
 		(list '($conjugate simp) (take '(%log_gamma) z))))
 
-;; conjugate of polylogarithm li[s](x), where z = (s,x). We have li[s](x) = x+x^2/2^s+x^3/3^s+...
-;; Since for all integers k, we have conjugate(x^k/k^s) = conjugate(x)^k/k^conjugate(s), we 
-;; commute conjugate with li.
+;; For z in C \ [1,infinity) and n in {1,2,3,...}, replace conjugate(li[n](z)) by li[n](conjugate(z)).
+;; For all other cases, return a conjugate nounform.
 (defun conjugate-li (z)
-	(let ((s (take '($conjugate) (first z))) (x (take '($conjugate) (second z))))
-	   (take '(mqapply) `(($li array) ,s) x)))
-
+   (let ((n (first z)) (zz (risplit (second z))))
+          (if (and ($featurep n '$integer)
+                   (eq t (mgrp n 0))
+                   ;; either the imagpart(z) <> 0 or the realpart(z) < 1
+                   (or (eq t (mnqp (cdr zz) 0)) (eq t (mgrp 1 (car zz)))))
+                       (subftake '$li (list n) (list (ftake '$conjugate (second z))))
+                       ;; give up and return conjugate nounform
+                       (list (list '$conjugate 'simp)
+                          (subftake '$li (list n) (list (second z)))))))
+             
 (defun conjugate-psi (z)
 	(let ((s (take '($conjugate) (first z))) (x (take '($conjugate) (second z))))
 	   (take '(mqapply) `(($psi array) ,s) x)))
@@ -321,7 +348,7 @@
          (t
            (list '($conjugate simp) (simplifya (cons (list '%derivative) z) t)))))
           
-(setf (get '%derivative 'conjugate-function) #'conjugate-derivative)     
+(setf (get '%derivative 'conjugate-function) 'conjugate-derivative)     
   
 ;; When a function maps "everything" into the reals, put real-valued on the
 ;; property list of the function name. This duplicates some knowledge that
@@ -405,11 +432,12 @@
 	((and (symbolp (mop e)) (get (mop e) 'commutes-with-conjugate))
 	 (simplify (cons (list (mop e)) (mapcar #'(lambda (s) (take '($conjugate) s)) (margs e)))))
 
-	((setq f (and (symbolp (mop e)) (get (mop e) 'conjugate-function)))
+    ;; non-subscripted functions (operator doesn't have the specsimp property)
+	((setq f (and (symbolp (mop e)) (not (get (mop e) 'specsimp)) (get (mop e) 'conjugate-function)))
       (funcall f (margs e)))
 	  
-  ;;subscripted functions	  
-	((setq f (and ($subvarp (mop e)) (get (caar (mop e)) 'conjugate-function)))
+  ;;subscripted functions (operator has the specsimp property)
+	((setq f (and ($subvarp (mop e)) (get (caar (mop e)) 'specsimp) (get (caar (mop e)) 'conjugate-function)))
 	 	 (funcall f (append (margs (mop e)) (margs e))))
 
 	(t 

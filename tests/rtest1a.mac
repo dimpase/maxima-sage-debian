@@ -91,7 +91,6 @@ block ([use_fast_arrays : true,
  ?putprop (nounify ('erf_generalized), 222, 'bar),
  ?putprop ('beta, 333, 'baz),
  ?putprop ('nset, 444, 'quux),
- ?putprop ('trylevel, 555, 'mumble),
  ?putprop ('maxmin, 666, 'blurf),
  ?putprop ('nummod, 777, 'barf),
  0);
@@ -104,15 +103,14 @@ done;
  ?get (nounify ('erf_generalized), 'bar),
  ?get ('beta, 'baz),
  ?get ('nset, 'quux),
- ?get ('trylevel, 'mumble),
  ?get ('maxmin, 'blurf),
  ?get ('nummod, 'barf)];
-[111, 222, 333, 444, 555, 666, 777];
+[111, 222, 333, 444, 666, 777];
 
 (kill (conjugate),
  apply (kill, [nounify ('erf_generalized)]),
  kill (beta),
- kill (nset, trylevel, maxmin, nummod),
+ kill (nset, maxmin, nummod),
  0);
 0;
 
@@ -120,10 +118,9 @@ done;
  ?get (nounify ('erf_generalized), 'bar),
  ?get ('beta, 'baz),
  ?get ('nset, 'quux),
- ?get ('trylevel, 'mumble),
  ?get ('maxmin, 'blurf),
  ?get ('nummod, 'barf)];
-[false, false, false, false, false, false, false];
+[false, false, false, false, false, false];
 
 /* verify that props is empty after kill(all) -- pre-bugfix behavior is that props
  * has several built-in symbols before and after kill(all)
@@ -136,8 +133,103 @@ done;
 /* workaround bug #3289 */
 (kill(all),
  not some (lambda ([x], member (x, props)),
-           ['conjugate, nounify ('erf_generalized), 'beta, 'nset, 'trylevel, 'maxmin, 'nummod]));
+           ['conjugate, nounify ('erf_generalized), 'beta, 'nset, 'maxmin, 'nummod]));
 true;
 
 (reset(use_fast_arrays),1);
 1;
+
+/* tests for at_difference */
+
+kill (functions, values);
+done;
+
+(saved_display2d:display2d,
+ display2d:true,
+ 0)$
+0$
+
+at_difference (sin(x), x, a, b);
+sin(b) - sin(a);
+
+'at_difference (sin(x), x, a, b);
+'at_difference (sin(x), x, a, b);
+
+block([display2d_unicode: false], printf (false, "~m", 'at_difference (sin(x), x, a, b)));
+"      |x = b
+sin(x)|
+      |x = a
+";
+
+block([display2d_unicode: false], I: 'integrate (f(x), x, a, b) = 'at_difference ('integrate (f(x), x), x, a, b),
+ printf (false, "~m", I));
+" b                    |x = b
+/            /        |
+|            |        |
+|  f(x) dx = | f(x) dx|
+|            |        |
+/            /        |
+ a                    |x = a
+";
+
+I1: subst (f(x) = cos(h*x), I);
+'integrate (cos(h*x), x, a, b) = 'at_difference ('integrate (cos(h*x), x), x, a, b);
+
+block([display2d_unicode: false], printf (false, "~m", I1));
+" b                            |x = b
+/                /            |
+|                |            |
+|  cos(h x) dx = | cos(h x) dx|
+|                |            |
+/                /            |
+ a                            |x = a
+";
+
+I1a: ev (I1, at_difference);
+'integrate (cos(h*x), x, a, b) = 'at ('integrate (cos(h*x), x), x = b) - 'at ('integrate (cos(h*x), x), x = a);
+
+I1b: ev (I1a, integrate);
+sin(h*b)/h - sin(h*a)/h = 'at (sin(h*x)/h, x = b) - 'at (sin(h*x)/h, x = a);
+
+I1c: ev (I1b, at);
+sin(h*b)/h - sin(h*a)/h = sin(h*b)/h - sin(h*a)/h;
+
+is (I1c);
+true;
+
+I1d: ev (I1, integrate);
+sin(h*b)/h - sin(h*a)/h = 'at_difference (sin(h*x)/h, x, a, b);
+
+I1e: ev (I1d, at_difference);
+sin(h*b)/h - sin(h*a)/h = sin(h*b)/h - sin(h*a)/h;
+
+is (I1e);
+true;
+
+I1f: ev (I1, nouns);
+sin(h*b)/h - sin(h*a)/h = sin(h*b)/h - sin(h*a)/h;
+
+is (I1f);
+true;
+
+block([display2d_unicode: false], aa: abs (box ('at_difference ((1 - g(u[k]))/(1 + g(u[k])), u[k], 2/3, 5/7))),
+ printf (false, "~m", aa));
+"|\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"|
+|\"               5\"|
+|\"         |u  = -\"|
+|\"1 - g(u )| k   7\"|
+|\"       k |      \"|
+|\"---------|      \"|
+|\"g(u ) + 1|      \"|
+|\"   k     |     2\"|
+|\"         |u  = -\"|
+|\"           k   3\"|
+|\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"|
+";
+
+ev (aa, at_difference);
+/* ensure following result is simplified so that MMINUS and MQUOTIENT are replaced by simplified expressions */
+''(abs (box ((1 - g(5/7))/(g(5/7) + 1) - (1 - g(2/3))/(g(2/3) + 1))));
+
+(display2d:saved_display2d, 0)$
+0$

@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -11,8 +11,6 @@
 (in-package :maxima)
 
 (macsyma-module sumcon)
-
-(declare-top (special $genindex $niceindicespref $sumexpand))
 
 (defmfun $sumcontract (e)	       ; e is assumed to be simplified
   (cond ((atom e) e)
@@ -117,17 +115,6 @@
 		   '(t t t t))
 	   t))
     (cons new-sum extracted)))
-
-(defmvar $niceindicespref '((mlist simp) $i $j $k $l $m $n))
-
-(putprop '$niceindicespref 'assign-nonempty-list 'assign)
-
-(defun assign-nonempty-list (n v)
-  (declare (ignore n))
-  (unless (and ($listp v) (not ($emptyp v)))
-    (merror
-      (intl:gettext "niceindicespref: value must be a nonempty list; found: ~:M")
-      v)))
 
 (defun get-free-index (llist &optional i)
   (or (do ((try-list (cdr $niceindicespref) (cdr try-list)))

@@ -4,30 +4,60 @@
 * Examples for cobyla::  
 @end menu
 
-@node Introduction to cobyla, Functions and Variables for cobyla, cobyla-pkg, cobyla-pkg
+@node Introduction to cobyla, Functions and Variables for cobyla, Package cobyla, Package cobyla
 @section Introduction to cobyla
 
 @code{fmin_cobyla} is a Common Lisp translation (via @code{f2cl}) of the
 Fortran constrained optimization routine COBYLA by Powell[1][2][3].  
 
-COBYLA minimizes an objective function F(X) subject to M inequality
-constraints of the form @code{g(X) >= 0} on X, where X is a vector of
-variables that has N components.
+COBYLA minimizes an objective function @math{F(X)} subject to @math{M} inequality
+constraints of the form 
+@html
+\(g(X) \ge 0\)
+@end html
+@ifinfo
+@math{@math{g(X) >= 0}}
+@end ifinfo
+@iftex
+@math{g(X) \ge 0}
+@end iftex 
+on @math{X},
+where @math{X} is a vector of variables that has @math{N} components.
 
-Equality constraints g(X)=0 can often be implemented by a pair of inequality 
-constraints @code{g(X)>=0} and @code{-g(X)>= 0}.  Maxima's interface to COBYLA
+Equality constraints @math{g(X) = 0} can often be implemented by a pair of inequality 
+constraints 
+@html
+\(g(X) \ge 0\)
+@end html
+@ifinfo
+@math{@math{g(X)>=0}}
+@end ifinfo
+@iftex
+@math{g(X) \ge 0}
+@end iftex 
+and 
+@html
+\(-g(X) \ge 0.\)
+@end html
+@ifinfo
+@math{@math{-g(X)>= 0}.}
+@end ifinfo
+@iftex
+@math{-g(X) \ge 0.}
+@end iftex  
+Maxima's interface to COBYLA
 allows equality constraints and internally converts the equality
 constraints to a pair of inequality constraints.
 
 The algorithm employs linear approximations to the
 objective and constraint functions, the approximations being formed by
-linear interpolation at N+1 points in the space of the variables.
+linear interpolation at @math{N+1} points in the space of the variables.
 The interpolation points are regarded as vertices of a simplex. The
-parameter RHO controls the size of the simplex and it is reduced
-automatically from RHOBEG to RHOEND. For each RHO the subroutine tries
+parameter @var{RHO} controls the size of the simplex and it is reduced
+automatically from @var{RHOBEG} to @var{RHOEND}. For each @var{RHO} the subroutine tries
 to achieve a good vector of variables for the current size, and then
-RHO is reduced until the value RHOEND is reached. Therefore, RHOBEG and
-RHOEND should be set to reasonable initial changes to and the required   
+@var{RHO} is reduced until the value @var{RHOEND} is reached. Therefore, @var{RHOBEG} and
+@var{RHOEND} should be set to reasonable initial changes to and the required   
 accuracy in the variables respectively, but this accuracy should be
 viewed as a subject for experimentation because it is not guaranteed.
 The routine treats each constraint individually when calculating
@@ -40,18 +70,18 @@ References:
 
 [1] Fortran Code is from @url{http://plato.asu.edu/sub/nlores.html#general}
 
-[2] M. J. D. Powell, "A direct search optimization method that models the objective and constraint functions by linear interpolation," in Advances in Optimization and Numerical Analysis, eds. S. Gomez and J.-P. Hennart (Kluwer Academic: Dordrecht, 1994), p. 51-67. 
+[2] M. J. D. Powell, "A direct search optimization method that models the objective and constraint functions by linear interpolation," in Advances in Optimization and Numerical Analysis, eds. S. Gomez and J.-P. Hennart (Kluwer Academic: Dordrecht, 1994), p. 51-67.  @url{https://doi.org/10.1007/978-94-015-8330-5_4, doi:10.1007/978-94-015-8330-5_4}
 
-[3] M. J. D. Powell, "Direct search algorithms for optimization calculations," Acta Numerica 7, 287-336 (1998).  Also available as University of Cambridge, Department of Applied Mathematics and Theoretical Physics,  Numerical Analysis Group, Report NA1998/04 from @url{http://www.damtp.cam.ac.uk/user/na/reports.html}
+[3] M. J. D. Powell, "Direct search algorithms for optimization calculations," Acta Numerica 7, 287-336 (1998).  @url{https://doi.org/10.1017/S0962492900002841, doi:10.1017/S0962492900002841} Also available as University of Cambridge, Department of Applied Mathematics and Theoretical Physics,  Numerical Analysis Group, Report NA1998/04 from @url{https://web.archive.org/web/20160607190705/http://www.damtp.cam.ac.uk:80/user/na/reports.html}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Numerical methods} 
 @category{Optimization}
 @category{Share packages}
 @category{Package cobyla}
 @closecatbox
 
-@node Functions and Variables for cobyla, Examples for cobyla, Introduction to cobyla, cobyla-pkg
+@node Functions and Variables for cobyla, Examples for cobyla, Introduction to cobyla, Package cobyla
 @section Functions and Variables for cobyla
 
 @anchor{fmin_cobyla}
@@ -73,11 +103,39 @@ The optional arguments recognized are:
 @item constraints
 List of inequality and equality constraints that must be satisfied by
 @var{X}.  The inequality constraints must be actual inequalities of
-the form @code{g(@var{X}) >= h(@var{X})} or @code{g(@var{X}) <=
-h(@var{X})}.  The equality constraints must be of the form
-@code{g(@var{X}) = h(@var{X})}. 
+the form 
+@html
+\(g(X) \ge h(X)\)
+@end html
+@ifinfo
+@math{@math{g(@var{X}) >= h(@var{X})}}
+@end ifinfo
+@iftex
+@math{g(X) \ge h(X)}
+@end iftex 
+or 
+@html
+\(g(X) \le h(X).\)
+@end html
+@ifinfo
+@math{@math{g(@var{X}) <= h(@var{X})}.}
+@end ifinfo
+@iftex
+@math{g(X) \le h(X).}
+@end iftex  
+The equality constraints must be of the
+form 
+@html
+\(g(X) = h(X).\)
+@end html
+@ifinfo
+@math{@math{g(@var{X}) = h(@var{X})}.}
+@end ifinfo
+@iftex
+@math{g(X) = h(X).}
+@end iftex 
 @item rhobeg
-Initial value of the internal RHO variable which controls 
+Initial value of the internal @var{RHO} variable which controls 
 the size of simplex.  (Defaults to 1.0)
 @item rhoend 
 The desired final value rho parameter.  It is approximately
@@ -152,33 +210,86 @@ See @mref{fmin_cobyla} for more information.
 
 @end deffn
 
-@node Examples for cobyla, , Functions and Variables for cobyla, cobyla-pkg
+@node Examples for cobyla, , Functions and Variables for cobyla, Package cobyla
 @section Examples for cobyla
 
-Minimize x1*x2 with @code{1-x1^2-x2^2 >= 0}.  
-The theoretical solution is x1 = 1/sqrt(2), x2 = -1/sqrt(2).
+Minimize 
+@html
+\(x_1 x_2\)
+@end html
+@ifinfo
+@math{@math{x_1 x_2}}
+@end ifinfo
+@iftex
+@math{x_1 x_2}
+@end iftex 
+with 
+@html
+\(1-x_1^2-x_2^2 \ge 0.\)
+@end html
+@ifinfo
+@math{@math{1-x1^2-x2^2 >= 0}.}
+@end ifinfo
+@iftex
+@math{1-x_1^2-x_2^2 \ge 0.}
+@end iftex  
+The theoretical solution is
+@html
+$$
+\eqalign{
+x_1 &= {1\over \sqrt{2}} \cr
+x_2 &= -{1\over \sqrt{2}}
+}
+$$
+@end html
+@ifinfo
+
+@math{x_1 = 1/sqrt(2)}
+
+@math{x_2 = -1/sqrt(2)}
+
+
+@end ifinfo
+@tex
+$$\eqalign{
+x_1 &= {1\over \sqrt{2}} \cr
+x_2 &= -{1\over \sqrt{2}}
+}$$
+@end tex
+
 
 @c ===beg===
 @c load("fmin_cobyla")$
 @c fmin_cobyla(x1*x2, [x1, x2], [1,1], 
 @c             constraints = [x1^2+x2^2<=1], iprint=1);
 @c ===end===
-@example
+@example maxima
 (%i1) load("fmin_cobyla")$
 @group
-(%i2) fmin_cobyla(x1*x2, [x1, x2], [1,1], 
-                  constraints = [x1^2+x2^2<=1], iprint=1);
-@end group
+(%i2) fmin_cobyla(x1*x2, [x1, x2], [1,1],
+            constraints = [x1^2+x2^2<=1], iprint=1);
    Normal return from subroutine COBYLA
 
-   NFVALS =   66   F =-5.000000E-01    MAXCV = 1.999845E-12
-   X = 7.071058E-01  -7.071077E-01
-(%o2) [[x1 = 0.70710584934848, x2 = - 0.7071077130248], 
-       - 0.49999999999926, [[-1.999955756559757e-12],[]], 66]
+   NFVALS =   64   F =-5.000000E-01    MAXCV = 2.000122E-12
+   X = 7.071076E-01  -7.071060E-01
+(%o2) [[x1 = 0.707107555323284, x2 = - 0.7071060070503778], 
+                                     - 0.4999999999998015, 64, 0]
+@end group
 @end example
 
-Here is the same example but the constraint is @math{x1^2+x2^2 <= -1}
-which is impossible over the reals.
+Here is the same example but the constraint
+is 
+@html
+\(x_1^2+x_2^2 \le -1\)
+@end html
+@ifinfo
+@math{@math{x1^2+x2^2 <= -1}}
+@end ifinfo
+@iftex
+@math{x_1^2+x_2^2 \le -1}
+@end iftex 
+which
+is impossible over the reals.
 
 @example
 @group
@@ -200,6 +311,13 @@ constraints may not be satisfied.  Substituting the solution into the
 constraint equation as shown in @code{%o2} shows that the constraint
 is, of course, violated.
 
-There are additional examples in the share/cobyla/ex directory and in
-share/cobyla/rtest_cobyla.mac.
+There are additional examples in the
+@url{https://sourceforge.net/p/maxima/code/ci/master/tree/share/cobyla/ex,
+share/cobyla/ex} directory and in
+@url{https://sourceforge.net/p/maxima/code/ci/master/tree/share/cobyla/rtest_cobyla.mac,
+share/cobyla/rtest_cobyla.mac}.
 
+@c Local Variables: 
+@c mode: texinfo
+@c TeX-master: "include-maxima"
+@c End: 

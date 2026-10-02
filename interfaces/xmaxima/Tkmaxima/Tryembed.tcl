@@ -1,11 +1,8 @@
-# -*-mode: tcl; fill-column: 75; tab-width: 8; coding: iso-latin-1-unix -*-
-#
-#       $Id: Tryembed.tcl,v 1.7 2004-10-13 12:08:58 vvzhy Exp $
-#
-###### Tryembed.tcl ######
 ############################################################
-# Netmath       Copyright (C) 1998 William F. Schelter     #
+# Tryembed.tcl                                             #
+# Copyright (C) 1998 William F. Schelter                   #
 # For distribution under GNU public License.  See COPYING. #
+#                                                          #
 ############################################################
 
 ## the following worked to have an entry box that spoke...
@@ -15,7 +12,7 @@
 # jack
 # %     safe::interpInit $slave
 # jack
-# %     interp eval $slave set env(DISPLAY) $env(DISPLAY)
+# %     interp eval $slave set ::env(DISPLAY) $::env(DISPLAY)
 # :0.0
 # %     load {} Tk $slave
 # % interp eval jack {entry .ja ; pack .ja}
@@ -25,14 +22,11 @@
 # %     setupPrintVariables $slave
 # % interp eval jack plot2d -xfun {sin(x)}
 
-
-
-
 proc makeEmbedWin { parent width height } {
-    global maxima_priv env auto_index
-    set win $parent.embed[incr maxima_priv(counter)]
+    global auto_index
+    set win $parent.embed[incr ::xmaxima_priv(counter)]
     set fr [frame $win -width $width -height $height -container 1]
-    set slave tclet$maxima_priv(counter)
+    set slave tclet$::xmaxima_priv(counter)
     safe::interpCreate $slave
     # make it exist somehow the autoload stuff doesn't make it a command
     if { [info exists auto_index(::safe::allowTk) ]  } {
@@ -45,8 +39,8 @@ proc makeEmbedWin { parent width height } {
 	interp eval $slave [list set argv [list -use [winfo id $fr]]]	
     }
 
-    if { [info exists env(DISPLAY)] } {
-	interp eval $slave set env(DISPLAY) $env(DISPLAY)
+    if { [info exists ::env(DISPLAY)] } {
+	interp eval $slave set ::env(DISPLAY) $::env(DISPLAY)
     }
     interp eval $slave { proc policy {args } {} }
     #    $slave alias bgerror bgerror
@@ -58,7 +52,6 @@ proc makeEmbedWin { parent width height } {
     return $fr
 }
 
-
 proc setupUnknown { slave } {
     interp eval $slave {rename auto_load auto_load-orig}
     interp alias $slave auto_load1 {} auto_load1 $slave
@@ -68,8 +61,6 @@ proc setupUnknown { slave } {
     }
     }
 }
-
-
 
 proc auto_load1 { slave name {namespace ""} } {
     if { "[info proc $name ]" != "" } {
@@ -89,39 +80,17 @@ proc auto_load1 { slave name {namespace ""} } {
 }
 
 proc setupPrintVariables { slave } {
-    global printOption fontSize show_balloons getOp parse_table Parser     axisGray plot2dOptions plot3dOptions paperSizes  printOptions writefile     doExit  fontCourier8   plotdfOptions ftpInfo  maxima_priv
+    global printOption fontSize show_balloons getOp parse_table Parser \
+        axisGray paperSizes printOptions \
+        doExit fontCourier8
     foreach v {printOption fontSize show_balloons getOp parse_table Parser
-	axisGray plot2dOptions plot3dOptions paperSizes  printOptions writefile
-	doExit  fontCourier8   plotdfOptions ftpInfo maxima_priv} {
+	axisGray ::plot2dOptions ::plot3dOptions paperSizes printOptions
+	doExit  fontCourier8 ::plotdfOptions ::xmaxima_priv} {
 	if { [array exists  $v] } {
 	    interp eval $slave [list array set $v [array get $v *] ]
-	} else {
-	    interp eval $slave [list set $v [set $v ]]
-	}
-    }
+	} else {interp eval $slave [list set $v [set $v ]]}}}
 
-}
-# proc tryit {{win .}} {
-#  global  maxima_priv
-#     if { ![info exists maxima_priv(counter)] } {
-# 	set maxima_priv(counter) 0
-#     }
-#     set width [winfo width $win]
-#     set height [winfo height $win]
-#     if { $width <=1 } {set width 200}
-#     if { $height <=1 } {set height 200}
-#     set ff [makeEmbedWin $win $width $height]
-
-#     return [list $ff [oget $ff slave]]
-# }
-
-if { "[info command policy]" != "policy" } {
-    proc policy { args } { }
-}
-
-proc browser_log { args } {
-    # puts "$args"
-}
+if { "[info command policy]" != "policy" } {proc policy { args } { }}
 
 ## source nsafesock.tcl
 
@@ -179,15 +148,12 @@ proc Safesock_PolicyInit {slave {version 1.0}} {
     set browser_state($slave,safesock,permissions) unknown
 
     # Save the homebase for this Tclet:
-
     set browser_state($slave,safesock,homebase) $server
-    set browser_state($slave,safesock,homeport) [list $port 1025- ftp ping]
 
     # Tell the slave about itself:
-
-    interp eval $slave [list set env(SERVER) $server]
-    interp eval $slave [list set env(PORT) $port]
-    interp eval $slave [list set env(URL) $url]
+    interp eval $slave [list set ::env(SERVER) $server]
+    interp eval $slave [list set ::env(PORT) $port]
+    interp eval $slave [list set ::env(URL) $url]
 
     browser_log $slave security installed policy Safesock
 }
@@ -284,7 +250,7 @@ proc SafesockServerAnswer { slave command sock host port } {
 	interp transfer {} $sock $slave
 	interp eval $slave $command $sock $host $port
     } else {
-	interp eval $slave [list error [M [mc "connection from %s and %s disallowed"] "$host" "$port" ] ]
+	interp eval $slave [list error [mc "connection from %s and %s disallowed" $host $port] ]
     }
 }
 

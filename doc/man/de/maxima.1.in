@@ -1,4 +1,4 @@
-.TH "MAXIMA" "1" "2020-03-30"
+.TH "MAXIMA" "1" "2022-07-18"
 .SH "NAME" 
 Maxima \- Eine Common Lisp Version von MACSYMA, einem Programm f\(:ur symbolische Mathematik, ver\(:offentlicht unter der GNU Public License.
 .LP
@@ -100,6 +100,12 @@ Unterdr\(:uckt Ausdrucksmarken und Startmeldungen.
 .TP
 \fB\-X\fR \fILisp-Optionen\fR, \fB\-\-lisp-options=\fR\fILisp-Optionen\fR
 Optionen, die an das verwendete Lisp weitergereicht werden.
+.TP
+\fB\-\-no\-init\fR, \fB\-\-norc\fR
+Initialisierungsdateien beim Start nicht laden.
+.TP
+\fB\-\-suppress\-input\-echo\fR
+Im nicht-interaktiven Betrieb die Eingaben nicht ausgeben.
 
 .SH EINF\(:UHRENDE ANMERKUNGEN
 Nach dem Start von
@@ -291,7 +297,7 @@ Maxima Hilfs-Skripte.
 .SH UMGEBUNGSVARIABLEN
 .TP
 \fBMAXIMA_USERDIR\fR
-Directory f\(:ur benutzerspezifische Einstellgungsdateien.
+Directory f\(:ur benutzerspezifische Einstellungsdateien.
 Der standardm\(:assige Suchpfad von Maxima beinhaltet \fBMAXIMA_USERDIR\fR.
 Standardwert: \fB$HOME/.maxima\fR.
 .TP
@@ -321,8 +327,8 @@ Skript und dem Lisp-Abbild. Alle diese Variablen starten mit
 .I maxima
 Skript beim Start eingelesen. Es sollte im Verzeichnis, auf das die Variable
 \fB$MAXIMA_USERDIR\fR zeigt (siehe oben) vorhanden sein. \fBmaximarc\fR kann verwendet werden,
- um beispielsweise die standardm\(:assige Lisp-Implementation zu \(:andern, z.B. durch die Zeile "MAXIMA_LISP=cmucl"
- (um CMUCL Lisp auszuw\(:ahlen).
+um beispielsweise die standardm\(:assige Lisp-Implementation zu \(:andern, z.B. durch die Zeile "MAXIMA_LISP=cmucl"
+(um CMUCL Lisp auszuw\(:ahlen).
 .TP
 \fBmaxima-init.lisp\fR
 Beim Programmstart wird die Lisp-Datei \fBmaxima-init.lisp\fR eingelesen, falls sie
@@ -345,6 +351,13 @@ Maxima hat \(:ublicherweise eine systemweite
 Alternativ kann man eine Maxima-Initialisierungs-Datei mit den Kommandozeilenoptionen
 \fB\-\-init-mac\fR oder \fB\-\-init\fR
 laden.
+.TP
+\fB~/.xmaximarc\fR
+Xmaxima speichert hier userspezifische Einstellungen.
+.TP
+\fB~/.xmaxima_history\fR
+Xmaxima speichert hier die Kommando-Historie.
+
 
 .SH REFERENZEN
 Alte Refererenz:  

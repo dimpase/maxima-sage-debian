@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -27,7 +27,7 @@
 ;; and should not be called externally.
 
 ;; I have added the macro DEFGRAD as an interface to the $DERIVATIVE function
-;; for use by macsyma programers who want to do a bit of lisp programming. -GJC
+;; for use by macsyma programmers who want to do a bit of lisp programming. -GJC
 
 (defmacro =0 (x) `(equal ,x 0))
 (defmacro =1 (x) `(equal ,x 1))
@@ -90,6 +90,11 @@
       `(ncmuln (list ,@factors) t)))
 
 ;; (TAKE '(%TAN) X) = tan(x)
+;;
+;; Stavros says it's named take:
+;;   "Take as in 'take the sine of ...'.  call or apply might imply
+;;   it's a function call, which it isn't."
+;;
 ;; This syntax really loses.  Not only does this syntax lose, but this macro
 ;; has to look like a subr.  Otherwise, the definition would look like
 ;; (DEFMACRO TAKE ((NIL (OPERATOR)) . ARGS) ...)
@@ -98,23 +103,33 @@
 ;; (TAKE '(%SIN) A) --> (SIMP-%SIN (LIST '(%SIN) A) 1 T)
 
 (defmacro take (operator &rest args)
-; Cutting out the code which bypasses the simplifier.
-;  (let ((simplifier (and (not (atom operator))
-;			 (eq (car operator) 'quote)
-;			 (cdr (assoc (caadr operator) '((%atan  . simp-%atan)
-;							(%tan   . simp-%tan)
-;							(%log   . simpln)
-;							(mabs   . simpabs)
-;							(%sin   . simp-%sin)
-;							(%cos   . simp-%cos)
-;							($atan2 . simpatan2)) :test #'eq)))))
-;    (if simplifier
-;	`(,simplifier (list ,operator ,@args) 1 t)
 	`(simplifya (list ,operator ,@args) t))
 
 ;; take* does not assume that the arguments are simplified.
 (defmacro take* (operator &rest args)
   `(simplifya (list ,operator ,@args) nil))
+
+;; Like TAKE, but you only need to specify then name.  So
+;;
+;; (ftake name x y) => (take '(name) x y)
+;;
+;; The name should be the verb form, like %foo.
+(defmacro ftake (name &rest args)
+  `(simplifya (list (list ,name) ,@args)
+	      t))
+
+(defmacro ftake* (name &rest args)
+  `(simplifya (list (list ,name) ,@args)
+	      nil))
+
+;; Apply a function f to a list of its arguments 'args' and simplify the result. Assume
+;; that the list args is simplified.
+(defmacro fapply (f args)
+	`(simplifya (cons (list ,f) ,args) t))
+
+;; Same as fapply, but don't assume that the list of arguments is simplified.
+(defmacro fapply* (f args)
+	`(simplifya (cons (list ,f) ,args) nil))        
 
 (declaim (inline simplify))
 (defun simplify (x)
@@ -135,5 +150,103 @@
 (defmacro mdo-unless (x) `(seventh ,x))
 (defmacro mdo-body (x)	 `(eighth ,x))
 
+(defvar *defgrad-syms* nil
+  "A list of all the symbols whose derivatives are defined by DEFGRAD")
+
+(defun check-defgrad (a g)
+  ;; See if the arg A exists somewhere in the expression G.
+  (cond ((atom g)
+         (eq a g))
+        ((consp g)
+         (some #'identity
+               (mapcar #'(lambda (g)
+                           (check-defgrad a g))
+                       g)))
+        (t nil)))
+
+;; DEFGRAD defines derivatives for the function NAME having arguments ARGUMENTS.
+;;
+;;   NAME       - the noun-form (%foo) of the function
+;;   ARGUMENTS  - A list of the arguments of the function.
+;;   BODY       - The derivatives of the function.  This should be a list of
+;;                derivatives arranged in the same order as the ARGUMENTS.
+;;
+;; The derivatives can be expressed using #$$...$.  In this case the
+;; names of the arguments MUST start with "$" because #$$ read
+;; expressions that way.
+;;
+;; Use of #$$ is not required.  In that case, each derivative must be
+;; a quoted list of the maxima internal representation of the
+;; derivative.
+;;
+;; In general do NOT use #$...$ because this calls the simplifier and
+;; requires basically all of maxima to be available to simplify the
+;; expression.  It might work, but it's best just to use #$$...$.
+;;
+;; For example here are two ways to define the derivatives of atan2:
+;;
+;;   (defgrad %atan2 ($x $y)
+;;     #$$y/(y^2+x^2)$
+;;     #$$-(x/(y^2+x^2))$)
+;;  
+;;   (defgrad %atan2 (x y)
+;;     '((mtimes) y
+;;       ((mexpt) ((mplus) ((mexpt) x 2) ((mexpt) y 2)) -1))
+;;     '((mtimes) -1 x
+;;       ((mexpt) ((mplus) ((mexpt) x 2) ((mexpt) y 2)) -1)))
+;;
+;; The first form is clearly easier to read and understand, but either
+;; scheme will work.
+;;
+;; The derivative forms can also be lambda's.  See gamma_incomplete.
+;; But if the lambda also uses #$$...$, it MUST call meval* itself to
+;; make sure the result is appropriately simplified.
+
 (defmacro defgrad (name arguments &body body)
-  `(defprop ,name (,arguments ,@body) grad))
+  "DEFGRAD defines derivatives for the function NAME having arguments ARGUMENTS.
+
+    NAME       - the noun-form (%foo) of the function
+    ARGUMENTS  - A list of the arguments of the function.
+    BODY       - The derivatives of the function.  This should be a list of
+                 derivatives arranged in the same order as the ARGUMENTS.
+
+  The derivatives can be expressed using #$$...$.  In this case the
+  names of the arguments MUST start with \"$\" because #$$ read
+  expressions that way.
+
+  Use of #$$ is not required.  In that case, each derivative must be a
+  quoted list of the maxima internal representation of the derivative.
+
+  The derivative may also be a lambda expression that returns the
+  derivative or NIL."
+  ;; Check that the argument variables show up somewhere in the body.
+  ;; Otherwise, the defintion of the derivative is potentially
+  ;; incorrect.
+  (loop for arg in arguments
+        unless (check-defgrad arg body)
+          do
+             (progn
+               ;; Print a warning that the definition is wrong
+               ;; and exit the loop.  Don't use MWARNING for this
+               ;; because DISPLA may not be defined yet to print
+               ;; the message.
+               (warn "DEFGRAD ~A: Argument ~S not used in derivative expressions."
+                     name arg)
+               (return nil)))
+  `(progn
+     (push ',name *defgrad-syms*)
+     (setf (get ',name 'grad)
+           `(,',arguments
+             ,,@body))))
+
+;; When DEFGRAD uses #$$ to define derivatives, we MUST call MEVAL* on
+;; them to get them simplified appropriately.  It's ok to call MEVAL*
+;; if we didn't use #$$.
+(defun process-defgrad ()
+  (dolist (sym *defgrad-syms*)
+    (destructuring-bind (args &rest glist)
+        (get sym 'grad)
+      (setf (get sym 'grad)
+            (list* args
+                   (mapcar #'meval*
+                           glist))))))

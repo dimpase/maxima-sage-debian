@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -96,10 +96,11 @@
 
 (defmvar tstack nil " stack of local variable modes ")
 
-(defmvar local nil "T if a $local statement is in the body.")
+(defmvar *local* nil "T if a $local statement is in the body.")
 (defmvar tr-progret t)
 (defmvar inside-mprog nil)
-(defmvar returns nil "list of `translate'd return forms in the block.")
+(defmvar *go-forms* nil "list of `translate'd go forms in the block.")
+(defmvar *returns* nil "list of `translate'd return forms in the block.")
 (defmvar return-mode nil "the highest(?) mode of all the returns.")
 (defmvar need-prog? nil)
 (defmvar assigns nil "These are very-special variables which have a Maxima
@@ -121,26 +122,31 @@
 	be useful in translation for MAXIMA-ERROR checking.")
 
 (defmvar tr-unique (gensym)
-  "this is just a unque object used for random purposes,
+  "this is just a unique object used for random purposes,
 	such as the second (file end) argument of READ.")
 
 
 (defmvar $tr_warn_undeclared '$compile
-  "When to send warnings about undeclared variables to the TTY")
+  "When to send warnings about undeclared variables to the TTY"
+  :setting-list ($all $compile $compfile $translate))
 
 (defmvar $tr_warn_meval '$compfile
-  "If `meval' is called that indicates problems in the translation")
+  "If `meval' is called that indicates problems in the translation"
+  :setting-list ($all $compile $compfile $translate))
 
 (defmvar $tr_warn_fexpr
     '$compfile
   "FEXPRS should not normally be output in translated code, all legitimate
-special program forms are translated.")
+special program forms are translated."
+  :setting-list ($all $compile $compfile $translate))
 
 (defmvar $tr_warn_mode '$all
-  "Warn when variables are assigned values out of their mode.")
+  "Warn when variables are assigned values out of their mode."
+  :setting-list ($all $compile $compfile $translate))
 
 (defmvar $tr_warn_undefined_variable '$all
-  "Warn when undefined global variables are seen.")
+  "Warn when undefined global variables are seen."
+  :setting-list ($all $compile $compfile $translate))
 
 
 (defmvar *warned-un-declared-vars* nil "Warning State variable")
@@ -163,6 +169,8 @@ APPLY means like APPLY.")
 (defmvar $tr_numer nil
   "If `true' numer properties are used for atoms which have them, e.g. %pi")
 
+(defvar *tr-free-vars-to-capture* '())
+
 (defvar boolean-object-table
   '(($true . ($boolean . t))
     ($false . ($boolean . nil))
@@ -179,18 +187,27 @@ APPLY means like APPLY.")
 (defvar tr-lambda-punt-assigns nil
   "Kludge argument to `tr-lambda' due to lack of keyword argument passing")
 
-(or (boundp '*in-compile*)
-    (setq *in-compile* nil))
+(defvar defined_variables ())
+
+(defvar $define_variable ())
+
+;; FIXME: AFAICT (rtoy), *in-compile* is only used in this file and no
+;; one ever changes the value of *in-compile* to anything other than
+;; NIL.  Perhaps remove this and the only other use of it below.
+(defvar *in-compile* nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defun tr-abort ()
+  (setq tr-abort t)
+  nil)
 
 (defun barfo (msg)
-  (tr-format (intl:gettext "translator: internal error. Message: ~:M~%") msg)
+  (tr-format (intl:gettext "Internal translator error: ~M~%") msg)
   (cond (*transl-debug*
 	 (break "transl barfo"))
 	(t
-	 (setq tr-abort t)
+	 (tr-abort)
 	 nil)))
 
 (defun specialp (var)
@@ -304,9 +321,6 @@ APPLY means like APPLY.")
 (defun macsyma-special-op-p (f)
   (getl f '(fsubr fexpr mfexpr* mfexpr*s *fexpr)))
 
-(defun possible-predicate-op-p (f)
-  (member f '(mnotequal mequal $equal mgreaterp mgeqp mlessp mleqp) :test #'eq))
-
 ;;;***************************************************************;;;
 
 ;;; This function is the way to call the TRANSLATOR on an expression with
@@ -325,6 +339,20 @@ APPLY means like APPLY.")
     (let ((mode (car loc))
 	  (exp (car (last loc))))
       (cons mode exp))))
+
+; Returns (UNION-MODE . TARGS) where TARGS are the translated ARGS
+; (with individual mode info present) and UNION-MODE is the union
+; of their modes as determined by *UNION-MODE.
+;
+; If ARGS is NIL then both UNION-MODE and TARGS will be NIL.
+(defun translate-args/union-mode (args)
+  (do ((l args (cdr l))
+       (args '())
+       (mode nil))
+      ((null l)
+       (cons mode (nreverse args)))
+    (setq args (cons (translate (car l)) args)
+          mode (*union-mode (car (car args)) mode))))
 
 (defun tr-args (form)
   (mapcar #'(lambda (x) (dconvx (translate x))) form))
@@ -370,7 +398,7 @@ APPLY means like APPLY.")
 (defun tr-mfun (name &aux (*transl-backtrace* nil))
   (let ((def-form (consfundef name nil nil)))
     (cond ((null def-form)
-	   (setq tr-abort t))
+	   (tr-abort))
 	  (t
 	   (tr-mdefine-toplevel def-form)))))
 
@@ -411,28 +439,36 @@ APPLY means like APPLY.")
 	   ;; like this allows all legal forms and also catches
 	   ;; errors. However, certain generalizations are also
 	   ;; allowed. They won't get passed the interpreter, but
-	   ;; interesting things may happen here. Thats what you
+	   ;; interesting things may happen here. That's what you
 	   ;; get from too much syntax, so don't sweat it.
-	   (tr-mdefine-toplevel
-	    `(,(car form) ,(car args)
-	      ((lambda) ((mlist) ,@(cdr args)) ,body))))
+	   ;;
+	   ;; the allowed generalizations aren't necessarily subscripted
+	   ;; functions, but we'll act like they are when determining
+	   ;; the free vars to capture.
+	   ;; don't sweat this either.
+	   (let ((*tr-free-vars-to-capture* (union (cdar args) *tr-free-vars-to-capture*)))
+	     (tr-mdefine-toplevel
+	       `(,(car form) ,(car args)
+		  ((lambda) ((mlist) ,@(cdr args)) ,body)))))
 	  ((member tr-unique a-args :test #'eq)
 	   ;; WHAT IS "BAD" ABOUT THE ARGUMENT LIST HERE ??
 	   (tr-format (intl:gettext "error: unhandled argument list in function definition: ~:M~%") `((mlist),@args))
-	   (setq tr-abort t)
+	   (tr-abort)
 	   nil)
 	  ((member (caar form) '(mdefine mdefmacro) :test #'eq)
 	   (setq kind (cond ((eq (caar form) 'mdefmacro) 'macro)
 			    ((member 'array flags :test #'eq) 'array)
 			    (t 'func)))
-	   (let* ((t-form
-		   (tr-lambda `((lambda) ((mlist) ,@a-args) ,body)))
+	   (let* ((t-expr `((lambda) ((mlist) ,@a-args) ,body))
+		  (t-form
+                   (let ((once (get name 'once-translated)))
+                     (setf (get name 'once-translated) t)
+                     (unwind-protect (tr-lambda t-expr)
+                       (setf (get name 'once-translated) once))))
 		  (desc-header
 		   `(,name ,(car t-form) ,(caar form)
 		     ,and-restp ,(eq kind 'array))))
 	     (cond ((eq kind 'func)
-		    (push-pre-transl-form
-		     `(defmtrfun-external ,desc-header))
 		    (and (not (member (car t-form) '($any nil) :test #'eq))
 			 (putprop name (car t-form) 'function-mode)))
 		   ((eq kind 'array)
@@ -465,9 +501,8 @@ APPLY means like APPLY.")
 				   (func 'mexpr)))
 			  out-forms)))
 	     ;;once a function has been translated we want to make sure mfunction-call is eliminated.
-	     (progn
-	       (remprop (car desc-header) 'undefined-warnp)
-	       (setf (get (car desc-header) 'once-translated) "I was once translated"))
+	     (remprop (car desc-header) 'undefined-warnp)
+	     (setf (get (car desc-header) 'once-translated) "I was once translated")
 	     `(progn
 		,@(nreverse out-forms)
 		(defmtrfun ,desc-header ,@(cdr (cdr t-form))))))
@@ -486,17 +521,20 @@ APPLY means like APPLY.")
 	    (if delete-subr? (remprop name 'subr))
 	    (if (mget name 'trace) (macsyma-untrace name))
 	    (if (not $savedef) (meval `(($remfunction) ,name)))
-	    (let ((lisp-action
-					; apply EVAL so it is easy to TRACE.
-					; ERRSET is crude, but...
-		   (errset (apply 'eval (list lisp-def-form)))))
-	      (cond ((not lisp-action)
-		     (trfail name))
-		    (t name))))))))
+	    (handler-case (eval lisp-def-form)
+	      (error (e)
+		(tr-abort)
+		(trfail name e)
+		(return-from translate-function nil)))
+	    name)))))
 
+(defun punt-to-meval (form &optional (mode '$any))
+  (cons mode `(meval ',form)))
 
-(defun trfail (x)
-  (tr-format (intl:gettext "error: failed to translate ~:@M~%") x)
+(defun trfail (x &optional msg)
+  (tr-format (intl:gettext "Error: failed to translate ~:@M~%") x)
+  (when msg
+    (tr-format (intl:gettext "Message: ~A~%") msg))
   nil)
 
 (defun translate-and-eval-macsyma-expression (form)
@@ -510,7 +548,16 @@ APPLY means like APPLY.")
 (defun translator-eval (x)
   (eval x))
 
-;; This basically tells the msetq def%tr to use defparameter insetad
+(defun tr-eval-when-situation (situation)
+  (ecase situation
+    (($compile compile :compile-toplevel)
+     :compile-toplevel)
+    (($load load :load-toplevel)
+     :load-toplevel)
+    (($eval eval :execute)
+     :execute)))
+
+;; This basically tells the msetq def%tr to use defparameter instead
 ;; of setq because we're doing a setq at top-level, which isn't
 ;; specified by ANSI CL.
 (defvar *macexpr-top-level-form-p* nil)
@@ -525,33 +572,24 @@ APPLY means like APPLY.")
   (cond ((atom form) nil)
 	((eq (caar form) '$eval_when)
 	 (let ((whens (cadr form))
-	       (body (cddr form)) tr-whens)
+	       (body (cddr form)))
 	   (setq whens (cond (($listp whens) (cdr whens))
 			     ((atom whens) (list whens))
 			     (t
 			      (tr-format (intl:gettext "error: 'eval_when' argument must be a list or atom; found: ~:M~%") (cadr form))
 			      nil)))
-	   (setq tr-whens (mapcar 'stripdollar whens))
 	   (cond ((member '$translate whens :test #'eq)
 		  (mapc 'meval body)))
 	   (cond ((member '$loadfile whens :test #'eq)
 		  `(progn
 		     ,@(mapcar 'translate-macexpr-toplevel body)))
-		 ((setq tr-whens (intersect tr-whens '(:compile-toplevel :load-toplevel :execute)))
-		  `(eval-when
-		       ,tr-whens
-		     ,@(mapcar 'translate-macexpr-toplevel body)))
-		 ((member '$compile whens :test #'eq)
-		  ;; strictly for the knowledgeable user.
-		  `(eval-when
-		       #+gcl (compile)
-		       #-gcl (:compile-toplevel)
-		       ,@(mapcar 'translate-macexpr-toplevel body))))))
+		 ((setq whens (intersect whens '($compile $load $eval)))
+		  `(eval-when ,(mapcar #'tr-eval-when-situation whens)
+		     ,@(mapcar 'translate-macexpr-toplevel body))))))
 	((member (caar form) translate-time-evalables :test #'eq)
 	 (meval1 form)
 	 `(eval-when
-	      #+gcl (compile load eval)
-	      #-gcl (:compile-toplevel :load-toplevel :execute)
+	      (:compile-toplevel :load-toplevel :execute)
 	      (meval* ',form)))
 	((member  (caar form) '(mdefine mdefmacro) :test #'eq)
 	 (let ((name (caaadr form))
@@ -610,7 +648,7 @@ APPLY means like APPLY.")
 	     ;; to check for mobylossage.
 	     ((> kount $tr_optimize_max_loop)
 	      (tr-format (intl:gettext "warning: I've looped ~A times in macro expansion; just give up and return ~:@M~%")
-	       $tr_optimize_max_loop (caar form))
+	       $tr_optimize_max_loop form)
 	      form)
 	   (setq new-form (toplevel-optimize-1 form))
 	   (cond ((atom new-form)
@@ -671,8 +709,10 @@ APPLY means like APPLY.")
 	 (cdr temp))
 	((and (setq temp (mget form '$numer)) $tr_numer)
 	 `($float . ,temp))
-	((setq temp (implied-quotep form))
-	 `($any . ',temp))
+	((implied-quotep form)
+	 `($any . ',form))
+	((self-evaluating-lisp-object-p form)
+	 `($any . ,form))
 	((tboundp form)
 	 (setq form (teval form))
 	 `(,(value-mode form) . ,form))
@@ -754,7 +794,7 @@ APPLY means like APPLY.")
 	(t
 	 ;; This case used to be the most common, a real loser.
 	 (warn-meval form)
-	 `(,(function-mode (caar form)) . (meval ',form)))))
+	 (punt-to-meval form (function-mode (caar form))))))
 
 
 (defun attempt-translate-random-macro-op (form)
@@ -763,7 +803,7 @@ APPLY means like APPLY.")
 
 (defun attempt-translate-random-special-op (form)
   (warn-fexpr form)
-  `(,(function-mode (caar form)) . (meval ',form)))
+  (punt-to-meval form (function-mode (caar form))))
 
 
 (defun tr-lisp-function-call (form type)
@@ -807,22 +847,12 @@ APPLY means like APPLY.")
 	(args (tr-args (cdr form))))
     `($any . (simplify (list ',op ,@args)))))
 
-
-
 ;;; Some atoms, solely by usage, are self evaluating. 
+(defun implied-quotep (x)
+  (safe-get x 'implied-quotep))
 
-(defun implied-quotep (atom)
-  (cond
-	((stringp atom)
-	 (cond
-       ;; I WONDER IF THIS NEXT CONDITION CAN BE CUT OUT ?? !!
-       ((equal atom "**") ;;; foolishness. The PARSER should do this.
-		;; Losing Fortran hackers.
-		(tr-format "~% `**' is obsolete, use `^' !!!")
-		"^")
-       (t atom)))
-    ((get atom 'implied-quotep) atom)
-	(t nil)))
+(defun self-evaluating-lisp-object-p (x)
+  (not (or (symbolp x) (consp x))))
 
 ;;; the Translation Properties. the heart of TRANSL.
 
@@ -850,13 +880,10 @@ APPLY means like APPLY.")
 	(pushnew v *declared-translated-functions*)
 	else do (merror (intl:gettext "declare_translated: arguments must be symbols or strings; found: ~:M") v)))
 
-(def%tr $declare (form)
-  `($any . (meval ',form)))
-
 (def%tr $eval_when (form)
   (tr-format (intl:gettext "error: found 'eval_when' in a function or expression: ~:M~%") form)
   (tr-format (intl:gettext "note: 'eval_when' can appear only at the top level in a file.~%"))
-  (setq tr-abort t)
+  (tr-abort)
   '($any . nil))
 
 (def%tr mdefmacro (form)
@@ -866,19 +893,19 @@ APPLY means like APPLY.")
   ; translation without being cleaned it up afterward, but simply
   ; removing this breaks things.
   (meval form)
-  `($any . (meval ',form)))
+  (punt-to-meval form))
 
 (def%tr $local (form)
-  (cond (local
-	 (tr-format (intl:gettext "error: there is already a 'local' in this block.~%"))
-	 (setq tr-abort t))
-	(t
-	 (setq local t)))
+  (when *local*
+    (tr-format (intl:gettext "error: there is already a 'local' in this block.~%"))
+    (tr-abort)
+    (return-from $local nil))
+  (setq *local* t)
   ; We can't just translate to a call to MLOCAL here (which is
   ; what used to happen).  That would push onto LOCLIST and bind
   ; MLOCP at the "wrong time".  The push onto LOCLIST and the
   ; binding of MLOCP are handled in TR-LAMBDA.
-  (cons '$any `(meval ',form)))
+  (punt-to-meval form))
 
 
 (def%tr mquote (form)
@@ -889,7 +916,7 @@ APPLY means like APPLY.")
 		  &aux
 		  (arglist (mparams (cadr form)))
 		  (easy-assigns nil)
-		  (local nil))
+		  (*local* nil))
   ;; This function is defined to take a simple macsyma lambda expression and
   ;; return a simple lisp lambda expression. The optional TR-BODY hook
   ;; can be used for translating other special forms that do lambda binding.
@@ -903,7 +930,7 @@ APPLY means like APPLY.")
   (mapc #'tbind arglist)
   (destructuring-let* (((mode . nbody) (apply tr-body (cddr form) tr-body-argl))
 		       (local-declares (make-declares arglist t))
-		       (body (if local
+		       (body (if *local*
 				 `((let ((mlocp t))
 				     (push nil loclist)
 				     (unwind-protect
@@ -957,7 +984,7 @@ APPLY means like APPLY.")
 				  arglist))))))))
 
 
-(defun make-declares (varlist localp &aux (dl) (fx) (fl) specs)
+(defun make-declares (varlist localp &aux (dl) (fx) (fl) (bl) specs)
   (do ((l varlist (cdr l))
        (mode) (var))
       ((null l))
@@ -974,9 +1001,11 @@ APPLY means like APPLY.")
       (setq specs (cons var specs))
 
       (cond ((eq '$fixnum mode) (pushnew var fx :test #'eq))
-	    ((eq '$float mode)  (pushnew var fl :test #'eq)))))
+	    ((eq '$float mode)  (pushnew var fl :test #'eq))
+	    ((eq '$boolean mode)  (pushnew var bl :test #'eq)))))
   (if fx (pushnew `(fixnum  . ,fx) dl :test #'eq))
   (if fl (pushnew `(type flonum  . ,fl) dl :test #'eq))
+  (if bl (pushnew `(type boolean  . ,bl) dl :test #'eq))
   (if specs (pushnew `(special  . ,specs) dl :test #'eq))
   (if dl `(declare . ,dl)))
 
@@ -1018,29 +1047,29 @@ APPLY means like APPLY.")
     (let ((dup (find-duplicate arglist :test #'eq)))
       (when dup
         (tr-format (intl:gettext "error: ~M occurs more than once in block variable list") dup)
-        (setq tr-abort t)))
-    (unless tr-abort
-      (setq form
-	    (tr-lambda
-	     ;; [2] call the lambda translator.
-	     `((lambda) ((mlist) ,@arglist) ,@body)
-	     ;; [3] supply our own body translator.
-	     #'tr-mprog-body
-	     val-list
-	     arglist))
-      (cons (car form) `(,(cdr form) ,@val-list)))))
+        (tr-abort)
+        (return-from mprog nil)))
+    (setq form
+	  (tr-lambda
+	   ;; [2] call the lambda translator.
+	   `((lambda) ((mlist) ,@arglist) ,@body)
+	   ;; [3] supply our own body translator.
+	   #'tr-mprog-body
+	   val-list
+	   arglist))
+    (cons (car form) `(,(cdr form) ,@val-list))))
 
 (defun tr-mprog-body (body val-list arglist
 		      &aux 
 		      (inside-mprog t)
 		      (return-mode nil)
 		      (need-prog? nil)
-		      (returns nil) ;; not used but must be bound.
+		      (*go-forms* nil)
+		      (*returns* nil) ;; not used but must be bound.
 		      )
   (do ((l nil))
       ((null body)
        ;; [5] hack the val-list for the mode context.
-       ;; Perhaps the only use of the function MAP in all of macsyma.
        (mapl #'(lambda (val-list arglist)
 		 (cond ((atom (car val-list))
 			(rplaca val-list
@@ -1062,45 +1091,59 @@ APPLY means like APPLY.")
     ;; [4] translate a form in the body
     (let ((form (pop body)))
       (cond ((null body)
-	     ;; this is a really bad case.
-	     ;; we don't really know if the return mode
-	     ;; of the expression is for the value of the block.
-	     ;; Some people write RETURN at the end of a block
-	     ;; and some don't. In any case, the people not
-	     ;; use the PROG programming style won't be screwed
-	     ;; by this.
-	     (setq form (translate form))
-	     (setq return-mode (*union-mode (car form) return-mode))
-	     (setq form (cdr form))
-	     (if (and need-prog?
-		      (or (atom form)
-			  (not (eq (car form) 'return))))
-		 ;; put a RETURN on just in case.
-		 (setq form `(return ,form))))
-	    ((go-tag-p form))
-	    (t
-	     (setq form (dtranslate form))))
+             (cond ((and (go-tag-p form) (find form *go-forms* :key #'cadr))
+                    ; we treat the last expression in the body as a go tag
+                    ; if (1) it looks like a go tag, and (2) we have seen a
+                    ; go form with this tag.
+                    (push form l)
+                    (setq form '(return '$done)))
+                   (t
+                    ;; this is a really bad case.
+                    ;; we don't really know if the return mode
+                    ;; of the expression is for the value of the block.
+                    ;; Some people write RETURN at the end of a block
+                    ;; and some don't. In any case, the people not
+                    ;; use the PROG programming style won't be screwed
+                    ;; by this.
+                    (setq form (translate form))
+                    (setq return-mode (*union-mode (car form) return-mode))
+                    (setq form (cdr form))
+                    (if (and need-prog?
+                             (or (atom form)
+                                 (not (memq (car form) '(go return)))))
+                        ;; put a RETURN on just in case.
+                        (setq form `(return ,form))))))
+            ((go-tag-p form))
+            (t
+             (setq form (dtranslate form))))
       (push form l))))
 
 (def%tr mreturn (form)
-  (if (null inside-mprog)
-      (tr-format (intl:gettext "warning: 'return' not within 'block' or 'do': ~:M~%") form))
+  (unless inside-mprog
+    (tr-format (intl:gettext "error: 'return' not within 'block' or 'do': ~:M~%") form)
+    (tr-abort)
+    (return-from mreturn nil))
   (setq need-prog? t)
   (setq form (translate (cadr form)))
-  (setq return-mode (if return-mode (*union-mode (car form) return-mode)
-			(car form)))
+  (setq return-mode (*union-mode (car form) return-mode))
   (setq form `(return ,(cdr form)))
-  (push form returns) ;; USED by lusing MDO etc not yet re-written.
+  (push form *returns*) ;; USED by lusing MDO etc not yet re-written.
   ;; MODE here should be $PHANTOM or something.
   `($any . ,form))
 
 (def%tr mgo (form)
-  (if (null inside-mprog)
-      (tr-format (intl:gettext "warning: 'go' not within 'block' or 'do': ~:M~%") form))
-  (if (not (go-tag-p (cadr form)))
-      (tr-format (intl:gettext "warning: 'go' tag must be a symbol or an integer: ~:M~%") form))
+  (unless inside-mprog
+    (tr-format (intl:gettext "error: 'go' not within 'block' or 'do': ~:M~%") form)
+    (tr-abort)
+    (return-from mgo nil))
+  (unless (go-tag-p (cadr form))
+    (tr-format (intl:gettext "error: 'go' tag must be a symbol or an integer: ~:M~%") form)
+    (tr-abort)
+    (return-from mgo nil))
   (setq need-prog? t)
-  `($any . (go ,(cadr form))))
+  (setq form `(go ,(cadr form)))
+  (push form *go-forms*)
+  `($any . ,form))
 
 (def%tr mqapply (form)
   (let     ((fn (cadr form)) (args (cddr form)) 
@@ -1108,90 +1151,78 @@ APPLY means like APPLY.")
     (cond ((atom fn) 
 	   ;; I'm guessing (ATOM FN) is a parser error or other Lisp error,
 	   ;; so don't bother to translate the following error message.
-	   (tr-format "translator: MQAPPLY operator must be a cons; found: ~:M" form)
+	   (tr-format "translator: MQAPPLY operator must be a cons; found: ~:M~%" form)
+	   (tr-abort)
 	   nil)
 	  ((eq (caar fn) 'mquote) 
 	   `($any list ',(cons (cadr fn) aryp) ,@(tr-args args)))
 	  ((eq (caar fn) 'lambda)
-	   ;; LAMBDA([X,'Y,[L]],...)(A,B,C) is a bogus form. Don't bother with it.
-	   ;; ((LAMBDA) ((MLIST) ....) ....)
-	   (cond ((member 'bogus (mapcar #'(lambda (arg)
-					   (cond ((or (mquotep arg)
-						      ($listp arg))
-						  'bogus)))
-				       (cdr (cadr fn))) :test #'eq)
-		  (tr-format (intl:gettext "error: quote or list arguments are not allowed in MQAPPLY; found: ~:M~%") form)
-		  (setq tr-abort t)
-		  nil)
-		 (t
-		  (setq 	fn (tr-lambda fn)
-				args (tr-args args))
-		  `(,(car fn) ,(cdr fn) ,@args))))
+	   (let ((args (tr-args args))
+		 (fn (translate fn)))
+	     (cons (car fn) `(mfuncall ,(cdr fn) ,@args))))
 	  ((not aryp)
 	   `($any simplify (mapply ,(dconvx (translate fn))
 			    (list ,@(tr-args args))
 			    ',fn)))
 	  (t
 	   (warn-meval form)
-	   `($any meval ',form)))))
+	   (punt-to-meval form)))))
 
-
+(defun mcond-eval-symbols-tr (form)
+  (mcond-eval-symbols #'maybe-msymeval form))
 
 (def%tr mcond (form) 
-  (prog (dummy mode nl) 
-     (setq dummy (translate (caddr form)) 
-	   mode (car dummy) 
-	   nl (list dummy (translate-predicate (cadr form))))
-     (do ((l (cdddr form) (cddr l))) ((null l))
-       ; Optimize the else-if case: if we're at the else case at the end
-       ; and the body is just another conditional, then we just continue
-       ; directly with the clauses of the inner conditional instead of
-       ; nesting.
-       (when (and (null (cddr l))
-		  (eq (car l) t)
-		  (consp (cadr l))
-		  (eq (caaadr l) 'mcond))
-	 (setq l (cdadr l)))
-       (setq dummy (translate (cadr l)) 
-	     mode (*union-mode mode (car dummy)) 
-	     nl (cons dummy
-		      (cons (translate-predicate (car l))
-			    nl))))
-     ; We leave off the final clause if the condition is true
-     ; and the consequent is false.
-     (when (and (eq t (cadr nl)) (null (cdar nl)))
-       (setq nl (cddr nl)))
-     (setq form nil)
-     (do ((l nl (cddr l))) ((null l))
-       (setq form
-             (cons (cons (cadr l)
-                         (cond ((and (not (atom (cdar l)))
-                                     (cddar l)
-                                     (eq (cadar l) 'progn))
-                                (nreverse 
-                                 (cons (dconv (cons (caar l)
-                                                    (car (reverse (cddar l))))
-                                              mode)
-                                       (cdr (reverse (cddar l))))))
-                               ((and (equal (cdar l) (cadr l))
-                                     (atom (cdar l))) nil)
-                               (t (list (cdr (car l))))))
-                   form)))
-     ;; Wrap (LET (($PREDERROR T)) ...) around translation of MCOND.
-     ;; Nested MCOND expressions (e.g. if x > 0 then if y > 0 then ...)
-     ;; will therefore yield nested (LET (($PREDERROR T)) ... (LET (($PREDERROR T)) ...)).
-     ;; I suppose only the topmost one is needed, but there is very little harm
-     ;; in the redundant ones, so I'll let it stand.
-     (return (cons mode (list 'let '(($prederror t)) (cons 'cond form))))))
-
-
+  (let ((g (tr-gensym))
+        (nl nil)
+        (mode nil))
+    (do ((l (cdr form) (cddr l))) ((null l))
+      ; Optimize the else-if case: if we're at the else case at the end
+      ; and the body is just another conditional, then we just continue
+      ; directly with the clauses of the inner conditional instead of
+      ; nesting.
+      (when (and (null (cddr l))
+                 (eq (car l) t)
+                 (consp (cadr l))
+                 (eq (caaadr l) 'mcond))
+        (setq l (cdadr l)))
+      (let ((wrap-a-pred 'mcond))
+        (declare (special wrap-a-pred))
+        (destructuring-let (((pred-mode . pred-tr) (translate-predicate (car l)))
+                            ((body-mode . body-tr) (translate (cadr l))))
+          (setq mode (*union-mode mode body-mode))
+          (if (eq pred-mode '$boolean)
+              (setq nl (list* body-tr pred-tr nl))
+              (setq nl (list* `(list* '(mcond) ,g (mapcar #'mcond-eval-symbols-tr ',(cdr l)))
+                              `(not (null ,g))
+                              body-tr
+                              `(eq t (setq ,g ,pred-tr))
+                              nl))))))
+    ; We leave off the final clause if the condition is true
+    ; and the consequent is false.
+    (when (and (eq t (cadr nl)) (null (car nl)))
+      (setq nl (cddr nl)))
+    (setq form nil)
+    (do ((l nl (cddr l))) ((null l))
+      (setq form
+            (cons (cons (cadr l)
+                        (cond ((and (not (atom (car l)))
+                                    (cdr l)
+                                    (eq (caar l) 'progn))
+                               (cdar l))
+                              ((and (equal (car l) (cadr l))
+                                    (atom (car l))) nil)
+                              (t (list (car l)))))
+                  form)))
+    (if (among g form)
+        (cons '$any `(let (,g) (cond ,@form)))
+        (cons mode `(cond ,@form)))))
 
 ;; The MDO and MDOIN translators should be changed to use the TR-LAMBDA.
 ;; Perhaps a mere expansion into an MPROG would be best.
 
 (def%tr mdo (form)
-  (let (returns assigns return-mode (inside-mprog t) need-prog?)
-    (let (mode var init next test action varmode)
+  (let (*returns* *go-forms* assigns return-mode (inside-mprog t) need-prog?)
+    (let (mode var init next test-form action varmode)
       (setq var (cond ((cadr form)) (t 'mdo)))
       (tbind var)
       (setq init (if (caddr form) (translate (caddr form)) '($fixnum . 1)))
@@ -1207,34 +1238,38 @@ APPLY means like APPLY.")
 	     (declvalue var (*union-mode (car init) (car next)) t))
 	    (t
 	     (warn-mode var varmode (*union-mode (car init) (car next)))))
-      (setq test (translate-predicate
-		  (list '(mor)
-			(cond ((null (cadr (cddddr form)))  nil)
-			      ((and (cadddr form)
-				    (mnegp ($numfactor (simplify (cadddr form)))))
-			       (list '(mlessp) var (cadr (cddddr form))))
-			      (t (list '(mgreaterp) var (cadr (cddddr form)))))
-			(caddr (cddddr form)))))
+      (destructuring-bind (test-mode . test-pred)
+          (translate-predicate
+              (list '(mor)
+                    (cond ((null (cadr (cddddr form)))  nil)
+                          ((and (cadddr form)
+                                (mnegp ($numfactor (simplify (cadddr form)))))
+                           (list '(mlessp) var (cadr (cddddr form))))
+                          (t (list '(mgreaterp) var (cadr (cddddr form)))))
+                    (caddr (cddddr form))))
+        (if (eq test-mode '$boolean)
+            (setq test-form test-pred)
+            (setq test-form `(let (($prederror t)) ,test-pred))))
       (setq action (translate (cadddr (cddddr form)))
-	    mode (cond ((null returns) '$any)
+	    mode (cond ((null *returns*) '$any)
 		       (t return-mode)))
       (setq var (tunbind (cond ((cadr form)) (t 'mdo))))
       `(,mode do ((,var ,(cdr init) ,(cdr next)))
-	      (,test '$done) . ((declare (special ,var)) .
+	      (,test-form '$done) . ((declare (special ,var)) .
 	      ,(cond ((atom (cdr action)) nil)
 		     ((eq 'progn (cadr action)) (cddr action))
 		     (t (list (cdr action)))))))))
 
 (def%tr mdoin (form)
-  (let (returns assigns return-mode (inside-mprog t) need-prog?)
+  (let (*returns* *go-forms* assigns return-mode (inside-mprog t) need-prog?)
     (prog (mode var init action)
        (setq var (tbind (cadr form))) (tbind 'mdo)
        (setq init (dtranslate (caddr form)))
        (cond ((or (cadr (cddddr form)) (caddr (cddddr form)))
 	      (tunbind 'mdo) (tunbind (cadr form))
-	      (return `($any meval '((mdoin) . ,(cdr form))))))
+	      (return (punt-to-meval `((mdoin) . ,(cdr form))))))
        (setq action (translate (cadddr (cddddr form)))
-	     mode (cond ((null returns) '$any)
+	     mode (cond ((null *returns*) '$any)
 			(t return-mode)))
        (tunbind 'mdo) (tunbind (cadr form))
        (return
@@ -1322,7 +1357,7 @@ APPLY means like APPLY.")
 	  (list '(mlist) . ,(mapcar 'dconvx arglist))))))
 
 
-;;; mode acessing, binding, handling. Super over-simplified.
+;;; mode accessing, binding, handling. Super over-simplified.
 
 (defun tr-class (x)
   (cond ((integerp x) '$fixnum)
@@ -1336,6 +1371,8 @@ APPLY means like APPLY.")
   (cond ((eq mode1 mode2) mode1)
 	((null mode1) mode2)
 	((null mode2) mode1)
+	((eq '$boolean mode1) '$any)
+	((eq '$boolean mode2) '$any)
 	((member mode2 *$any-modes* :test #'eq) '$any)
 	((member mode1 *$any-modes* :test #'eq) '$any)
 	((eq '$fixnum mode1) mode2)

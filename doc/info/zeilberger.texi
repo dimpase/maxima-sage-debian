@@ -1,9 +1,12 @@
+@c -*- mode: texinfo -*-
 @menu
 * Introduction to zeilberger::
 * Functions and Variables for zeilberger::
+* General global variables::
+* Variables related to the modular test::
 @end menu
 
-@node Introduction to zeilberger, Functions and Variables for zeilberger, zeilberger-pkg, zeilberger-pkg
+@node Introduction to zeilberger, Functions and Variables for zeilberger, Package zeilberger, Package zeilberger
 @section Introduction to zeilberger
 
 @code{zeilberger} is an implementation of Zeilberger's algorithm
@@ -17,7 +20,7 @@ summation.
 
 @code{load ("zeilberger")} loads this package.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Sums and products}
 @category{Share packages}
 @category{Package zeilberger}
@@ -29,57 +32,80 @@ summation.
 Given a hypergeometric term @math{F_k} in @math{k} we want to find its hypergeometric
 anti-difference, that is, a hypergeometric term @math{f_k} such that
 
+@html
+$$
+F_k = f_{k+1} - f_k.
+$$
+@end html
+@ifinfo
+@math{F_k = f_(k+1) - f_k}.
+@end ifinfo
 @tex
 $$F_k = f_{k+1} - f_k.$$
 @end tex
-@ifnottex
-@math{F_k = f_(k+1) - f_k}.
-@end ifnottex
+
 
 @subsection The definite summation problem
 
 @code{zeilberger} implements Zeilberger's algorithm for definite hypergeometric summation.
-Given a proper hypergeometric term (in @math{n} and @math{k})
-@tex
-$F_{n,k}$
-@end tex
-@ifnottex
-@math{F_(n,k)}
-@end ifnottex
-and a positive integer @math{d} we want to find a @math{d}-th order linear
-recurrence with polynomial coefficients (in @math{n}) for
-@tex
-$F_{n,k}$
-@end tex
-@ifnottex
-@math{F_(n,k)}
-@end ifnottex
-and a rational function @math{R} in @math{n} and @math{k} such that
+Given a proper hypergeometric term (in @math{n} and @math{k}) 
+@html
+\(F_{n,k}\)
+@end html
+@ifinfo
+@math{@math{F_(n,k)}}
+@end ifinfo
+@iftex
+@math{F_{n,k}}
+@end iftex 
+and
+a positive integer @math{d} we want to find a @math{d}-th order linear
+recurrence with polynomial coefficients (in @math{n}) for 
+@html
+\(F_{n,k}\)
+@end html
+@ifinfo
+@math{@math{F_(n,k)}}
+@end ifinfo
+@iftex
+@math{F_{n,k}}
+@end iftex 
+and
+a rational function @math{R} in @math{n} and @math{k} such that
 
+@html
+$$
+a_0 \, F_{n,k} + \ldots + a_d \, F_{n+d,k} = \Delta_K \left(R\left(n,k\right) F_{n,k}\right),
+$$
+@end html
+@ifinfo
+@math{a_0 F_(n,k) + ... + a_d F_(n+d,k) = Delta_k(R(n,k) F_(n,k))},
+@end ifinfo
 @tex
-$$a_0 \, F_{n,k} + \ldots + a_d \, F_{n+d}, ~ k = \Delta_K \left(R\left(n,k\right) F_{n,k}\right),$$
+$$a_0 \, F_{n,k} + \ldots + a_d \, F_{n+d,k} = \Delta_K \left(R\left(n,k\right) F_{n,k}\right),$$
 @end tex
-@ifnottex
-@math{a_0 F_(n,k) + ... + a_d F_(n+d),k = Delta_k(R(n,k) F_(n,k))},
-@end ifnottex
 
-@tex
-\noindent
-@end tex
-where
-@tex
-$\Delta_k$
-@end tex
-@ifnottex
-@math{Delta_k}
-@end ifnottex
-is the @math{k}-forward difference operator, i.e.,
-@tex
-$\Delta_k \left(t_k\right) \equiv t_{k+1} - t_k$.
-@end tex
-@ifnottex
-@math{Delta_k(t_k) := t_(k+1) - t_k}.
-@end ifnottex
+where 
+@html
+\(\Delta_k\)
+@end html
+@ifinfo
+@math{@math{Delta_k}}
+@end ifinfo
+@iftex
+@math{\Delta_k}
+@end iftex 
+is the @math{k}-forward difference
+operator, i.e., 
+@html
+\(\Delta_k \left(t_k\right) \equiv t_{k+1} - t_k.\)
+@end html
+@ifinfo
+@math{@math{Delta_k(t_k) := t_(k+1) - t_k}.}
+@end ifinfo
+@iftex
+@math{\Delta_k \left(t_k\right) \equiv t_{k+1} - t_k.}
+@end iftex
 
 @subsection Verbosity levels
 
@@ -103,7 +129,7 @@ For example:@*
 @code{ZeilbergerExtra}, @code{AntiDifferenceSummary}.
 
 
-@node Functions and Variables for zeilberger, , Introduction to zeilberger, zeilberger-pkg
+@node Functions and Variables for zeilberger, , Introduction to zeilberger, Package zeilberger
 @section Functions and Variables for zeilberger
 
 @anchor{AntiDifference}
@@ -112,7 +138,7 @@ For example:@*
 Returns the hypergeometric anti-difference of @math{F_k}, if it exists.@*
 Otherwise @code{AntiDifference} returns @code{no_hyp_antidifference}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -121,17 +147,21 @@ Otherwise @code{AntiDifference} returns @code{no_hyp_antidifference}.
 @anchor{Gosper}
 @deffn {Function} Gosper (@math{F_k}, @var{k})
 Returns the rational certificate @math{R(k)} for @math{F_k}, that is,
-a rational function such that
-@tex
-$F_k = R\left(k+1\right) \, F_{k+1} - R\left(k\right) \, F_k$,
-@end tex
-@ifnottex
-@math{F_k = R(k+1) F_(k+1) - R(k) F_k},
-@end ifnottex
+a rational function such
+that 
+@html
+\(F_k = R\left(k+1\right) \, F_{k+1} - R\left(k\right) \, F_k,\)
+@end html
+@ifinfo
+@math{@math{F_k = R(k+1) F_(k+1) - R(k) F_k},}
+@end ifinfo
+@iftex
+@math{F_k = R\left(k+1\right) \, F_{k+1} - R\left(k\right) \, F_k,}
+@end iftex 
 if it exists.
 Otherwise, @code{Gosper} returns @code{no_hyp_sol}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -160,10 +190,9 @@ Examples:
 (%i1) load ("zeilberger")$
 @group
 (%i2) GosperSum ((-1)^k*k / (4*k^2 - 1), k, 1, n);
-Dependent equations eliminated:  (1)
-                           3       n + 1
-                      (n + -) (- 1)
-                           2               1
+                           n + 1      3
+                      (- 1)      (n + -)
+                                      2    1
 (%o2)               - ------------------ - -
                                   2        4
                       2 (4 (n + 1)  - 1)
@@ -186,14 +215,13 @@ Dependent equations eliminated:  (1)
 @end group
 @group
 (%i5) GosperSum ((-1)^k*a! / (k!*(a - k)!), k, 1, n);
-                                n + 1
-                a! (n + 1) (- 1)              a!
+                     n + 1
+                (- 1)      a! (n + 1)         a!
 (%o5)       - ------------------------- - ----------
-              a (- n + a - 1)! (n + 1)!   a (a - 1)!
+              a (- n + a - 1)! (n + 1)!   (a - 1)! a
 @end group
 @group
 (%i6) GosperSum (k*k!, k, 1, n);
-Dependent equations eliminated:  (1)
 (%o6)                     (n + 1)! - 1
 @end group
 @group
@@ -208,7 +236,7 @@ Dependent equations eliminated:  (1)
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -232,7 +260,7 @@ $$\left[R\left(n, k\right), \left[a_0, a_1, \ldots, a_d\right]\right].$$
 
 @code{parGosper} returns @code{[]} if it fails to find a recurrence.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -252,7 +280,7 @@ Each solution has the form
 
 @code{parGosper} returns @code{[]} if it fails to find a recurrence.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -284,7 +312,7 @@ $$\left[R\left(n, k\right), \left[a_0, a_1, \ldots, a_d\right]\right].$$
 
 @code{Zeilberger} invokes @code{Gosper} only if @code{Gosper_in_Zeilberger} is @code{true}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -311,7 +339,7 @@ Each solution has the form
 
 @code{Zeilberger} invokes @code{Gosper} only if @code{Gosper_in_Zeilberger} is @code{true}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -319,7 +347,7 @@ Each solution has the form
 @end ifnottex
 
 
-
+@node General global variables, Variables related to the modular test, Functions and Variables for zeilberger
 @section General global variables
 
 @anchor{MAX_ORD}
@@ -328,7 +356,7 @@ Default value: 5
 
 @code{MAX_ORD} is the maximum recurrence order attempted by @code{Zeilberger}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -342,7 +370,7 @@ When @code{simplified_output} is @code{true},
 functions in the @code{zeilberger} package attempt
 further simplification of the solution.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -355,7 +383,7 @@ Default value: @code{linsolve}
 @code{linear_solver} names the solver which is used to solve the system
 of equations in Zeilberger's algorithm.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -369,7 +397,7 @@ When @code{warnings} is @code{true},
 functions in the @code{zeilberger} package print
 warning messages during execution.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -383,7 +411,7 @@ When @code{Gosper_in_Zeilberger} is @code{true},
 the @code{Zeilberger} function calls @code{Gosper} before calling @code{parGosper}.
 Otherwise, @code{Zeilberger} goes immediately to @code{parGosper}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -397,12 +425,13 @@ When @code{trivial_solutions} is @code{true},
 @code{Zeilberger} returns solutions
 which have certificate equal to zero, or all coefficients equal to zero.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
 @end defvr
 
+@node Variables related to the modular test, , General global variables
 @section Variables related to the modular test
 
 @anchor{mod_test}
@@ -413,7 +442,7 @@ When @code{mod_test} is @code{true},
 @code{parGosper} executes a
 modular test for discarding systems with no solutions.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -425,7 +454,7 @@ Default value: @code{linsolve}
 
 @code{modular_linear_solver} names the linear solver used by the modular test in @code{parGosper}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -438,7 +467,7 @@ Default value: @code{big_primes[10]}
 @code{ev_point} is the value at which the variable @var{n} is evaluated
 when executing the modular test in @code{parGosper}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -450,7 +479,7 @@ Default value: @code{big_primes[1]}
 
 @code{mod_big_prime} is the modulus used by the modular test in @code{parGosper}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 
@@ -463,7 +492,7 @@ Default value: 4
 @code{mod_threshold} is the
 greatest order for which the modular test in @code{parGosper} is attempted.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package zeilberger}
 @closecatbox
 

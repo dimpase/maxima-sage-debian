@@ -1,8 +1,10 @@
-MAKEINFOFLAGS = --enable-encoding
+MAKEINFOFLAGS = --enable-encoding -I . -I .. -I ../.. -I $(srcdir)/..
 
+TEXINFO_TEX = ../texinfo.tex
 lang = de
 langsdir = /de
 
 include ../common-lang.mk
 
-EXTRA_DIST += extract_categories1.awk extract_categories1.sed extract_categories.sh manual.css texi2html.init include-maxima.de.texi
+maxima_TEXINFOS = $(wildcard *.texi)
+EXTRA_DIST += manual.css include-maxima.texi.in

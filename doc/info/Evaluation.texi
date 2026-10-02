@@ -12,10 +12,8 @@
 
 @c -----------------------------------------------------------------------------
 @anchor{quote}
-@deffn {Operator} '
-@ifinfo
 @fnindex Quote operator
-@end ifinfo
+@deffn {Operator} '
 
 The single quote operator @code{'} prevents evaluation.
 
@@ -195,7 +193,7 @@ quote.
 (%i14)
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation}
 @category{Operators}
 @closecatbox
@@ -203,10 +201,8 @@ quote.
 
 @c -----------------------------------------------------------------------------
 @anchor{quote-quote}
-@deffn {Operator} ''
-@ifinfo
 @fnindex Quote-quote operator
-@end ifinfo
+@deffn {Operator} ''
 
 The quote-quote operator @code{'@w{}'} (two single quote marks) modifies
 evaluation in input expressions.
@@ -390,7 +386,7 @@ quote @code{'}.
                     3    3    2    2    1    1
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation}
 @category{Operators}
 @closecatbox
@@ -590,7 +586,7 @@ Solution
 (%o11)                               true
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation}
 @closecatbox
 @end deffn
@@ -624,7 +620,7 @@ Example:
 (%o5)                                  e
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @closecatbox
 @end defvr
@@ -714,7 +710,7 @@ Examples:
 (%o12)                         YES
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @category{Simplification flags and variables}
 @closecatbox
@@ -816,7 +812,7 @@ Examples:
 (%o15)                      G(F(cc))
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @closecatbox
 @end defvr
@@ -833,7 +829,7 @@ being evaluated away in this mode, simply include @code{X='X} as an argument to
 @code{ev}.  Of course expressions such as @code{ev (X, X=X+1, infeval)} will
 generate an infinite loop.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @closecatbox
 @end defvr
@@ -849,7 +845,7 @@ generate an infinite loop.
 conjunction with other switches and in causing expressions      
 to be resimplified without being reevaluated.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @closecatbox
 @end defvr
@@ -865,7 +861,7 @@ command, @code{nouns} converts all "noun" forms occurring in the expression
 being @code{ev}'d to "verbs", i.e., evaluates them.  See also
 @mrefcomma{noun} @mrefcomma{nounify} @code{verb}, and @mrefdot{verbify}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @category{Nouns and verbs}
 @closecatbox
@@ -892,7 +888,7 @@ Example:
 (%o2)                                true
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @closecatbox
 @end defvr

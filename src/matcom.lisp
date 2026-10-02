@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,13 +14,35 @@
 
 ;; This is the Match Compiler.
 
-(declare-top (special $rules $props boundlist reflist topreflist program))
+(declare-top (special boundlist reflist topreflist program))
 
 (defmvar $announce_rules_firing nil)
+
+(defvar *current-rule-symbols* nil
+  "Serves as an accumulator for collecting symbols used by a rule while it's
+  being created.")
 
 (defmspec $matchdeclare (form)
   (let ((meta-prop-p nil))
     (proc-$matchdeclare (cdr form))))
+
+(defun get-rule-symbol ()
+  "Generates a new interned symbol for the rule system or returns a recycled
+  existing one from the symbol pool (*RULE-SYMBOL-POOL*)."
+  (let ((sym (if *rule-symbol-pool*
+                (pop *rule-symbol-pool*)
+                (intern (symbol-name (gensym "RULE-SYMBOL-")) :maxima))))
+    (push sym *current-rule-symbols*)
+    sym))
+
+(defun free-rule-symbols (symbols)
+  "Frees the symbols SYMBOLS by clearing their values, functions and property lists,
+  then adding them to the symbol pool (*RULE-SYMBOL-POOL*) for recycling."
+  (dolist (sym symbols)
+    (makunbound sym)
+    (fmakunbound sym)
+    (setf (symbol-plist sym) nil)
+    (push sym *rule-symbol-pool*)))
 
 (defun proc-$matchdeclare (x)
   (if (oddp (length x))
@@ -32,7 +54,7 @@
 			   (member (caaadr x) '(mand mor mnot mcond mprog) :test #'eq)))
 		  (improper-arg-err (cadr x) '$matchdeclare)))
 	   (meta-add2lnc (car x) '$props)
-	   (meta-mputprop (car x) (ncons (cadr x)) 'matchdeclare))
+	   (meta-mputprop (car x) (list (cadr x)) 'matchdeclare))
 	  ((not ($listp (car x)))
 	   (improper-arg-err (car x) '$matchdeclare))
 	  (t (do ((l (cdar x) (cdr l))) ((null l))
@@ -66,10 +88,10 @@
 (defun makepreds (l gg) 
   (cond ((null l) nil)
 	(t (cons (cond ((atom (car l))
-			(list 'lambda (list (setq gg (gensym)))
+			(list 'lambda (list (setq gg (get-rule-symbol)))
 			      `(declare (special ,gg))
 			      (getdec (car l) gg)))
-		       (t (defmatch1 (car l) (gensym))))
+		       (t (defmatch1 (car l) (get-rule-symbol))))
 		 (makepreds (cdr l) nil)))))
 
 (defun defmatch1 (pt e) 
@@ -313,6 +335,7 @@
     (proc-$defmatch (cdr form))))
 
 (defun proc-$defmatch (l) 
+ (let (*current-rule-symbols*)
   (prog (pt pt* args a boundlist reflist topreflist program name tem) 
      (setq name (car l))
      (setq pt (copy-tree (setq pt* (simplify (cadr l)))))
@@ -325,6 +348,7 @@
      (setq boundlist args)
      (setq a (genref))
      (cond ((atom (errset (compilematch a pt)))
+	    (free-rule-symbols *current-rule-symbols*)
 	    (merror (intl:gettext "defmatch: failed to compile match for pattern ~M") pt))
 	   (t (meta-fset name
 			 (list 'lambda
@@ -334,6 +358,13 @@
 				     (nconc (list 'prog)
 					    (list (setq tem  (cdr (reverse topreflist))))
 					    `((declare (special ,@ tem)))
+
+                                            (when (not (atom pt))
+					      ;; Ensure that the expression to be matched is an array expression iff the pattern is.
+					      (if (member 'array (car pt))
+					        (list `(when (not (member 'array (kar ,a))) (matcherr)))
+					        (list `(when (member 'array (kar ,a)) (matcherr)))))
+
 					    program
 					    (list (list 'return
 							(cond (boundlist (cons 'retlist
@@ -341,9 +372,12 @@
 							      (t t))))))))
 	      (meta-add2lnc name '$rules) 
 	      (meta-mputprop name (list '(mlist) pt* (cons '(mlist) args)) '$rule)
-	      (return name)))))
+          (free-rule-symbols (get name 'rule-symbols))
+          (putprop name *current-rule-symbols* 'rule-symbols)
+	      (return name))))))
 
 (defmspec $tellsimp (form)
+  (twoargcheck form)
   (let ((meta-prop-p nil))
     (proc-$tellsimp (cdr form))))
 
@@ -353,6 +387,7 @@
 	 do (setf (mget v 'rulenum) nil)))
 
 (defun proc-$tellsimp (l) 
+ (let (*current-rule-symbols*)
   (prog (pt rhs boundlist reflist topreflist a program name tem
 	 oldstuff pgname oname rulenum) 
      (setq pt (copy-tree (simplifya (car l) nil)))
@@ -366,6 +401,7 @@
 	    (mtell (intl:gettext "tellsimp: warning: rule will treat '~M' as noncommutative and nonassociative.~%") name)))
      (setq a (genref))
      (cond ((atom (errset (compileeach a (cdr pt))))
+	    (free-rule-symbols *current-rule-symbols*)
 	    (merror (intl:gettext "tellsimp: failed to compile match for pattern ~M") (cdr pt))))
      (setq oldstuff (get name 'operators))
      (setq rulenum (mget name 'rulenum))
@@ -400,6 +436,12 @@
 					  (list (setq tem (nconc boundlist
 								 (cdr (reverse topreflist)))))
 					  `((declare (special ,@ tem)))
+
+					  ;; Ensure that the expression to be matched is an array expression iff the pattern is.
+					  (if (member 'array (car pt))
+					    (list '(when (not (member 'array (kar x))) (matcherr)))
+					    (list '(when (member 'array (kar x)) (matcherr))))
+
 					  program
 					  (list (list 'return
 						      (list 'values (memqargs rhs) t))))))
@@ -435,19 +477,23 @@
 			   (list (get name 'operators))
 			   'oldrules)))
      (meta-putprop name pgname 'operators)
+     (free-rule-symbols (get pgname 'rule-symbols))
+     (putprop pgname *current-rule-symbols* 'rule-symbols)
      (return (cons '(mlist)
 		   (meta-mputprop name
 				  (cons pgname (mget name 'oldrules))
-				  'oldrules)))))
+				  'oldrules))))))
 
 (defun %to$ (l) (cond ((eq (car l) '%) (rplaca l '$)) (l)))
 
 
 (defmspec $tellsimpafter (form)
+  (twoargcheck form)
   (let ((meta-prop-p nil))
     (proc-$tellsimpafter (cdr form))))
 
 (defun proc-$tellsimpafter (l) 
+ (let (*current-rule-symbols*)
   (prog (pt rhs boundlist reflist topreflist a program name oldstuff plustimes pgname oname tem
 	 rulenum my*afterflag) 
      (setq pt (copy-tree (simplifya (car l) nil)))
@@ -459,8 +505,9 @@
 	    (merror (intl:gettext "tellsimpafter: main operator of pattern must not be match variable; found: ~A") (fullstrip1 (getop name)))))
      (setq a (genref))
      (setq plustimes (member name '(mplus mtimes) :test #'eq))
-     (if (atom (if plustimes (errset (compilematch a pt))
+     (when (atom (if plustimes (errset (compilematch a pt))
 		   (errset (compileeach a (cdr pt)))))
+	 (free-rule-symbols *current-rule-symbols*)
 	 (merror (intl:gettext "tellsimpafter: failed to compile match for pattern ~M") (cdr pt)))
      (setq oldstuff (get name 'operators))
      (setq rulenum (mget name 'rulenum))
@@ -468,7 +515,7 @@
      (setq oname (getop name))
      (setq pgname (implode (append (%to$ (explodec oname))
 				   '(|r| |u| |l| |e|) (mexploden rulenum))))
-     (setq my*afterflag (gensym "*AFTERFLAG-"))
+     (setq my*afterflag (get-rule-symbol))
      (proclaim `(special ,my*afterflag))
      (setf (symbol-value my*afterflag) nil)
      (meta-mputprop pgname name 'ruleof)
@@ -484,6 +531,7 @@
          (list 'setq 'x (list 'simpargs1 'x 'ans 'a3)))
        (list
 	'cond
+
 	`(,my*afterflag x)
 	(list 't
 	      (nconc (list 'prog)
@@ -504,6 +552,12 @@
 					      (list (setq tem(nconc boundlist
 								    (cdr (reverse topreflist)))))
 					      `((declare (special ,@ tem)))
+
+                                              ;; Ensure that the expression to be matched is an array expression iff the pattern is.
+                                              (if (member 'array (car pt))
+                                                (list '(when (not (member 'array (kar x))) (matcherr)))
+                                                (list '(when (member 'array (kar x)) (matcherr))))
+
 					      program
                           (cond
                             ($announce_rules_firing
@@ -515,10 +569,12 @@
      (cond ((null (mget name 'oldrules))
 	    (meta-mputprop name (list (get name 'operators)) 'oldrules)))
      (meta-putprop name pgname 'operators)
+     (free-rule-symbols (get pgname 'rule-symbols))
+     (putprop pgname *current-rule-symbols* 'rule-symbols)
      (return (cons '(mlist)
 		   (meta-mputprop name
 				  (cons pgname (mget name 'oldrules))
-				  'oldrules)))))
+				  'oldrules))))))
 
 (defun announce-rule-firing (rulename expr simplified-expr)
   (let (($display2d nil) ($stringdisp nil))
@@ -531,15 +587,17 @@
 
 ;;(defvar *match-specials* nil);;Hell lets declare them all special, its safer--wfs
 (defun proc-$defrule (l) 
+ (let (*current-rule-symbols*)
   (prog (pt rhs boundlist reflist topreflist name a program lhs* rhs*   tem) 
      (if (not (= (length l) 3)) (wna-err '$defrule))
      (setq name (car l))
-     (if (or (not (symbolp name)) (mopp name) (member name '($all $%) :test #'eq))
-	 (merror (intl:gettext "defrule: rule name must be a symbol, and not an operator or 'all' or '%'; found: ~M") name))
+     (if (or (not (symbolp name)) (eq t name) (eq nil name) (mopp name) (member name '($all $%) :test #'eq))
+       (merror (intl:gettext "defrule: rule name must be a symbol other than 'true', 'false', an operator, 'all' or '%'; found: ~M") name))
      (setq pt (copy-tree (setq lhs* (simplify (cadr l)))))
      (setq rhs (copy-tree (setq rhs* (simplify (caddr l)))))
      (setq a (genref))
      (cond ((atom (errset (compilematch a pt)))
+        (free-rule-symbols *current-rule-symbols*)
 	    (merror (intl:gettext "defrule: failed to compile match for pattern ~M") pt))
 	   (t (meta-fset name
 			 (list 'lambda
@@ -550,13 +608,22 @@
 					    (list (setq tem (nconc boundlist
 								   (cdr (reverse topreflist)))))
 					    `((declare (special ,@ tem)))
+
+                                            (when (not (atom pt))
+					      ;; Ensure that the expression to be matched is an array expression iff the pattern is.
+					      (if (member 'array (car pt))
+					        (list `(when (not (member 'array (kar ,a))) (matcherr)))
+					        (list `(when (member 'array (kar ,a)) (matcherr)))))
+
 					    program
 					    (list (list 'return
 							(list 'values (memqargs rhs) t)))))))
 	      (meta-add2lnc name '$rules)
 	      (meta-mputprop name (setq l (list '(mequal) lhs* rhs*)) '$rule)
 	      (meta-mputprop name '$defrule '$ruletype)
-	      (return (list '(msetq) name (cons '(marrow) (cdr l))))))))
+          (free-rule-symbols (get name 'rule-symbols))
+          (putprop name *current-rule-symbols* 'rule-symbols)
+	      (return (list '(msetq) name (cons '(marrow) (cdr l)))))))))
 
 ; GETDEC constructs an expression of the form ``if <match> then <assign value> else <match failed>''.
 
@@ -625,8 +692,8 @@
                 (if (atom p-op)
                   ; P-OP is the name of a function. Try to generate a Lisp function call.
                   (if (and (fboundp p-op) (not (get p-op 'translated)))   ; WHY THE TEST FOR TRANSLATED PROPERTY ??
-                    `(eq t (,p-op ,@(ncons match-against)))
-                    `(definitely-so '((,p-op) ,@(ncons match-against))))
+                    `(eq t (,p-op ,match-against))
+                    `(definitely-so '((,p-op) ,match-against)))
 
                   ; Otherwise P-OP is something like ((<op>) <args>).
                   (progn
@@ -635,12 +702,12 @@
                       ((eq (caar p-op) 'lambda)
                        `(definitely-so (mapply1 ',p-op (list ,match-against) t nil)))
                       ((eq (caar p-op) 'mqapply)
-                       `(definitely-so (meval ',(append p-op (ncons match-against)))))
+                       `(definitely-so (meval ',(append p-op (list match-against)))))
                       ; Otherwise P-OP must be a function call with the last arg missing.
                       (t
                         (if (and (consp (car p-op)) (mget (caar p-op) 'mmacro))
-                          `(definitely-so (cons ',(car p-op) ,(append '(list) (mapcar 'memqargs p-args) (ncons match-against))))
-                          `(definitely-so (cons ',(car p-op) ',(append (mapcar 'memqargs p-args) (ncons match-against))))))))))
+                          `(definitely-so (cons ',(car p-op) ,(append '(list) (mapcar 'memqargs p-args) (list match-against))))
+                          `(definitely-so (cons ',(car p-op) ',(append (mapcar 'memqargs p-args) (list match-against))))))))))
 
           `(cond
              (,test-expr (msetq ,pattern-variable ,match-against))
@@ -669,7 +736,7 @@
 
 (defun genref nil 
   (prog (a) 
-     (setq a (tr-gensym))
+     (setq a (get-rule-symbol))
      (setq topreflist (cons a topreflist))
      (return (car (setq reflist (cons a reflist))))))
 (defun compileeach (elist plist) 

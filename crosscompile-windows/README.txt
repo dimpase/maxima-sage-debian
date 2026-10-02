@@ -1,41 +1,45 @@
 Crosscompiling Maxima for Windows
 =================================
 
-On a Ubuntu/Debian System just install some tools for crosscompiling:
+On a Ubuntu/Debian System enable the 32bit support and install some tools for crosscompiling:
 
-apt-get install g++-mingw-w64-x86-64 cmake nsis wine automake texinfo texlive texlive-plain-generic texlive-xetex rsync p7zip-full g++ gettext python3 tcl pandoc po4a
+dpkg --add-architecture i386
+
+apt-get install g++-mingw-w64-x86-64 cmake nsis wine wine64 automake texlive texlive-plain-generic texlive-xetex rsync p7zip-full g++ gettext python3 tcl pandoc po4a wine32 libgcc-s1:i386 libstdc++6:i386 bsdutils mingw-w64-tools
+
+If you want to include CCL64 support, a recent wine installation (from winehq.org)
+is necessary.
 
 The Mingw compiler comes in two flavors for threading (win32 and posix threads).
 wxMaxima requires posix threads, so you must reconfigure mingw and select the posix
 version, on Debian/Ubuntu Linux using:
-update-alternatives --config x86_64-w64-mingw32-g++
-update-alternatives --config x86_64-w64-mingw32-gcc
+update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
 
-You will need CMake >= 3.10, if that is not included in your distribution,
-download a recent CMake from https://cmake.org/files/
 
 Then you can extract the Maxima sourcecode or clone the git repository
 and start the crosscompiling-process:
 
 mkdir crosscompile-windows/build
 cd crosscompile-windows/build # change to the build directory
-cmake ..  # use the right CMake executable (CMake >= 3.10)
+cmake ..  # use the right CMake executable (CMake >= 3.16)
 make
 make package
 
 The build directory should be called "build", because the Maxima code
 is copied during the build and this directory will be excluded.
+Be sure, that the Maxima sourcetree is 'clean', i.e. that no (in-source)
+build for another operating system has been done before.
 
 This will download the required Software (CLISP, SBCL, Gnuplot, wxMaxima,
-wxWidgets, Tcl, Tk, VTK) from the Internet into the directory
-"crosscompile-windows/download".
+wxWidgets, Tcl, Tk, VTK, Texinfo, maybe ABCL and CCL) from the Internet
+into the directory "crosscompile-windows/download".
 
 The packages will be compiled (if necessary) and a Windows 
 installer for Maxima is generated.
 
 This should work (at least) on Ubuntu and Debian (I hope on other
 Linux-Distributions too...).
-(if you want you may even omit the first "make")
 
 Instead of "make clean" just remove everything in the build directory.
 
@@ -49,10 +53,18 @@ than without VTK).
 
 One can also include ABCL - a Java based Lisp compiler - with the option
 -DWITH_ABCL=YES
-Of course you will need a Java installation.
+Of course you will need a Java installation, that is not included
+in the installer.
+
+One can also include CCL64 (Clozure Common Lisp) with the option:
+-DWITH_CCL64=YES
+
+By default CLISP and SBCL will be included, if you want, you can exclude
+them with -DWITH_SBCL=NO or -DWITH_CLISP=NO. Of course you need to select
+at least one Lisp.
 
 If you want to change the default Lisp, which will be used, you can
-use the option "-DWITH_DEFAULT_LISP=clisp" (or abcl) in the cmake call
+use the option "-DWITH_DEFAULT_LISP=clisp" (or abcl/ccl64) in the cmake call
 (otherwise SBCL would be the default).
 
 
@@ -60,21 +72,34 @@ In case a new release of a software is released (and no new patches are needed),
 it should be sufficient to just increase the version number and MD5-checksum
 for the new release in CMakeLists.txt.
 
+The build step of Maxima needs some sort of 'terminal access', so it will *not* work
+as cron job or a non-interactive shell.
+For an automated run on Github (see below), this can be solved by building
+Maxima using 'script', which seems to simulate the terminal access.
+See the Github workflows referenced below.
 
 Building a 32 bit installer
 ===========================
 
 By default a 64 bit installer will be generated.
 If you want to crosscompile a 32 bit installer, install the 32 bit
-crosscompiler package (g++-mingw-w64-i686-g++) - and reconfigure it
+crosscompiler package (i686-w64-mingw32-g++) - and reconfigure it
 for posix threads.
-It might be necessary to add the i386 architecture:
-https://wiki.debian.org/Multiarch/HOWTO
 
 Then use the following commands to build a 32 bit installer:
 cmake -DBUILD_64BIT=NO ..
 make
 make package
+
+
+Example with Github actions
+===========================
+
+If you want to see every required step and how it works:
+On Github there is a repository, where I set up everything which is
+needed to crosscompile Maxima using Github workflows (currently
+using Ubuntu 24.04).
+https://github.com/daute/maxima-crosscompilation/
 
 
 Installing the package
@@ -170,7 +195,7 @@ More packages could be included in the Windows installer.
   (and neither termcap nor ncurses can be crosscompiled here...)
 - Other Lisp versions: 
   Must have a Windows port or be crosscompileable and be usable in Wine.
-  I tried other Lisps, but currently only CLISP, SBCL and ABCL work.
+  I tried other Lisps, but currently only CLISP, SBCL, CCL64 and ABCL work.
   And including many more Lisp versions might confuse ordinary users.
 
 

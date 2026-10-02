@@ -1,5 +1,5 @@
 ;; Maxima functions for floor, ceiling, and friends
-;; Copyright (C) 2004, 2005, 2007 Barton Willis
+;; Copyright (C) 2004, 2005, 2007, 2025 Barton Willis
 
 ;; Barton Willis
 ;; Department of Mathematics
@@ -35,8 +35,11 @@
   ;; Let's remove built-in symbols from list for user-defined properties.
   (setq $props (remove '$nummod $props)))
 
+;; Ideally this should be removed in favor of ftake* (in mopers.lisp),
+;; which is identical to what opcons used to do.  But some share files
+;; use this, we need to keep this until those are fixed.
 (defmacro opcons (op &rest args)
-  `(simplify (list (list ,op) ,@args)))
+  `(ftake* ,op ,@args))
 
 ;; charfun(pred) evaluates to 1 when the predicate 'pred' evaluates
 ;; to true; it evaluates to 0 when 'pred' evaluates to false; otherwise,
@@ -48,7 +51,7 @@
 (defun simp-charfun (e yy z)
   (declare (ignore yy))
   (oneargcheck e)
-  (setq e (take '($is) (simplifya (specrepcheck (second e)) z)))
+  (setq e (take '($is) (maybe-simplifya (specrepcheck (second e)) z)))
   (let* (($prederror nil)
 	 (bool (mevalp e)))
     (cond ((eq t bool) 1)
@@ -66,7 +69,7 @@
 	     (setq n-sum (add ei n-sum)))
 	    (t
 	     (setq o-sum (add ei o-sum)))))
-    (setq n (opcons '$floor n-sum))
+    (setq n (ftake* '$floor n-sum))
     (setq i-sum (add i-sum n))
     (setq o-sum (add o-sum (sub n-sum n)))
     (values i-sum o-sum)))
@@ -91,7 +94,7 @@
 ;; For an example, see pretty-good-floor-or-ceiling. Code courtesy of Stavros Macrakis.
 
 (defmacro bind-fpprec (val &body exprs)
-  `(let (fpprec bigfloatzero bigfloatone bfhalf bfmhalf)
+  `(let (fpprec *bigfloatzero* *bigfloatone* *bfhalf* *bfmhalf*)
      (let (($fpprec (fpprec1 nil ,val)))
        ,@exprs)))
 
@@ -186,7 +189,7 @@
 
 (defun simp-floor (e e1 z)
   (oneargcheck e)
-  (setq e (simplifya (specrepcheck (nth 1 e)) z))
+  (setq e (maybe-simplifya (specrepcheck (nth 1 e)) z))
 
   (cond ((numberp e) (floor e))
 
@@ -201,12 +204,11 @@
 	((maxima-integerp e) e)
 
 	(($orderlessp e (neg e))
-	 (sub 0 (opcons '$ceiling (neg e))))
+	 (sub 0 (ftake* '$ceiling (neg e))))
 
 	((and (setq e1 (mget e '$numer)) (floor e1)))
 
-	((or (member e infinities) (eq e '$und) (eq e '$ind)) '$und)
-	;;((member e '($inf $minf $ind $und)) e) ; Proposed code
+	((member e '($inf $minf $ind $und)) e)
 	;; leave floor(infinity) as is
 	((or (eq e '$zerob)) -1)
 	((or (eq e '$zeroa)) 0)
@@ -217,7 +219,7 @@
 	 (let ((i-sum) (o-sum))
 	   (multiple-value-setq (i-sum o-sum) (integer-part-of-sum e))
 	   (setq o-sum (if (equal i-sum 0) `(($floor simp) ,o-sum)
-			 (opcons '$floor o-sum)))
+			 (ftake* '$floor o-sum)))
 	   (add i-sum o-sum)))
 
 	;; handle 0 <= e < 1 implies floor(e) = 0 and
@@ -239,8 +241,8 @@
   (let ((f (take '($ceiling) x)))
     (mul f (div 1 2) (add 1 (mul 2 x) (neg f)))))
 
-(putprop '$floor `((x) ,#'floor-integral) 'integral)
-(putprop '$ceiling `((x) ,#'ceiling-integral) 'integral)
+(putprop '$floor `((x) ,'floor-integral) 'integral)
+(putprop '$ceiling `((x) ,'ceiling-integral) 'integral)
 
 (defprop $ceiling simp-ceiling operators)
 
@@ -249,9 +251,14 @@
 (defun simplim%floor (expr var val)
   (let* ((arg (cadr expr))
 	 (b (behavior arg var val))
-	 (arglimab (limit arg var val 'think)) ; with $zeroa $zerob
+	 (arglimab (let ((*preserve-direction* t)) (limit arg var val 'think))) ; with $zeroa $zerob
 	 (arglim (ridofab arglimab)))
-    (cond ((and (= b -1)
+    (cond 
+	  ((eq arglim '$ind) (throw 'limit nil))
+	  ((eq arglim '$infinity) (throw 'limit nil))
+	  ((eq arglim '$minf) '$minf)
+	  ((eq arglim '$inf) '$inf)
+	  ((and (= b -1)
 		(maxima-integerp arglim))
 	   (m- arglim 1))
 	  ((and (= b 1)
@@ -259,7 +266,7 @@
 	   arglim)
 	  ((and ($constantp arglim)
 		(not (maxima-integerp arglim)))
-	   (simplify (list '($floor) arglim)))
+	   (ftake '$floor arglim))
 	  (t
 	   (throw 'limit nil)))))
 
@@ -271,22 +278,23 @@
 
 (defun simp-ceiling (e e1 z)
   (oneargcheck e)
-  (setq e (simplifya (specrepcheck (nth 1 e)) z))
+  (setq e (maybe-simplifya (specrepcheck (nth 1 e)) z))
   (cond ((numberp e) (ceiling e))
 
 	((ratnump e) (ceiling (cadr e) (caddr e)))
 
 	(($bfloatp e)
-	 (sub 0 (opcons '$floor (sub 0 e))))
+	 (sub 0 (ftake* '$floor (sub 0 e))))
 
 	((maxima-integerp e) e)
 
 	(($orderlessp e (neg e))
-	 (sub* 0 (opcons '$floor (neg e))))
+	 (sub* 0 (ftake* '$floor (neg e))))
 
 	((and (setq e1 (mget e '$numer)) (ceiling e1)))
 
-	((or (member e infinities) (eq e '$und) (eq e '$ind)) '$und)
+	((member e '($inf $minf $ind $und)) e)
+	;; leave ceiling(infinity) as is
 	((or (eq e '$zerob)) 0)
 	((or (eq e '$zeroa)) 1)
 
@@ -296,7 +304,7 @@
 	 (let ((i-sum) (o-sum))
 	   (multiple-value-setq (i-sum o-sum) (integer-part-of-sum e))
 	   (setq o-sum (if (equal i-sum 0) `(($ceiling simp) ,o-sum)
-			 (opcons '$ceiling o-sum)))
+			 (ftake* '$ceiling o-sum)))
 	   (add i-sum o-sum)))
 
 	;; handle 0 < e <= 1 implies ceiling(e) = 1 and
@@ -315,9 +323,14 @@
 (defun simplim%ceiling (expr var val)
   (let* ((arg (cadr expr))
 	 (b (behavior arg var val))
-	 (arglimab (limit arg var val 'think)) ; with $zeroa $zerob
+	 (arglimab (let ((*preserve-direction* t)) (limit arg var val 'think))) ; with $zeroa $zerob
 	 (arglim (ridofab arglimab)))
-    (cond ((and (= b -1)
+    (cond 
+	  ((eq arglim '$ind) (throw 'limit nil))
+	  ((eq arglim '$infinity) (throw 'limit nil))
+	  ((eq arglim '$minf) '$minf)
+	  ((eq arglim '$inf) '$inf)
+	  ((and (= b -1)
 		(maxima-integerp arglim))
 	   arglim)
 	  ((and (= b 1)
@@ -325,7 +338,7 @@
 	   (m+ arglim 1))
 	  ((and ($constantp arglim)
 		(not (maxima-integerp arglim)))
-	   (simplify (list '($ceiling) arglim)))
+	   (ftake '$ceiling arglim))
 	  (t
 	   (throw 'limit nil)))))
 
@@ -343,95 +356,111 @@
 
 (defun simp-nummod (e e1 z)
   (twoargcheck e)
-  (let ((x (simplifya (specrepcheck (cadr e)) z))
-	(y (simplifya (specrepcheck (caddr e)) z)))
+  (let ((x (maybe-simplifya (specrepcheck (cadr e)) z))
+	(y (maybe-simplifya (specrepcheck (caddr e)) z)))
     (cond ((or (equal 0 y) (equal 0 x)) x)
-	  ((equal 1 y) (sub x (opcons '$floor x)))
+	  ((equal 1 y) (sub x (ftake* '$floor x)))
 	  ((and ($constantp x) ($constantp y))
-	   (sub x (mul y (opcons '$floor (div x y)))))
+	   (sub x (mul y (ftake* '$floor (div x y)))))
 	  ((not (equal 1 (setq e1 ($gcd x y))))
-	   (mul e1 (opcons '$mod (div x e1) (div y e1))))
+	   (mul e1 (ftake* '$mod (div x e1) (div y e1))))
 	  (t `(($mod simp) ,x ,y)))))
 
 ;; The function 'round' rounds a number to the nearest integer. For a tie, round to the
 ;; nearest even integer.
 
-(defprop %round simp-round operators)
+;; This property is important to get round(round(x)) => round(x).
 (setf (get '%round 'integer-valued) t)
-(setf (get '%round 'reflection-rule) #'odd-function-reflect)
-(setf (get '$round 'alias) '%round)
-(setf (get '$round 'verb) '%round)
-(setf (get '%round 'noun) '$round)
-
+(setf (get '%round 'reflection-rule) 'odd-function-reflect)
 ;; round distributes over lists, matrices, and equations.
 (setf (get '%round 'distribute_over) '(mlist $matrix mequal))
 
-(defun simp-round (e yy z)
-  (oneargcheck e)
-  (setq yy (caar e)) ;; find a use for the otherwise unused YY.
-  (setq e (simplifya (specrepcheck (second e)) z))
-  (cond (($featurep e '$integer) e) ;; takes care of round(round(x)) --> round(x).
-	((member e '($inf $minf $und $ind) :test #'eq) e)
-	((eq e '$zerob) 0)
-	((eq e '$zeroa) 0)
+(def-simplifier round (e)
+  (cond (($featurep e '$integer)
+	 ;; takes care of round(round(x)) --> round(x).
+	 e)
+	((member e '($inf $minf $und $ind) :test #'eq)
+	 e)
+	((eq e '$zerob)
+	 0)
+	((eq e '$zeroa)
+	 0)
 	(t
 	 (let* ((lb (take '($floor) e))
 		(ub (take '($ceiling) e))
 		(sgn (csign (sub (sub ub e) (sub e lb)))))
-	   (cond ((eq sgn t) `((,yy simp) ,e))
-		 ((eq sgn '$neg) ub)
-		 ((eq sgn '$pos) lb)
-		 ((alike lb ub) lb) ;; For floats that are integers, this can happen. Maybe featurep should catch this.
-		 ((and (eq sgn '$zero) ($featurep lb '$even)) lb)
-		 ((and (eq sgn '$zero) ($featurep ub '$even)) ub)
-		 ((apply-reflection-simp yy e t))
-		 (t `((,yy simp) ,e)))))))
+	   (cond ((eq sgn t)
+		  (give-up))
+		 ((eq sgn '$neg)
+		  ub)
+		 ((eq sgn '$pos)
+		  lb)
+		 ((alike1 lb ub)
+		  ;; For floats that are integers, this can
+		  ;; happen. Maybe featurep should catch this.
+		  lb)
+		 ((and (eq sgn '$zero)
+		       ($featurep lb '$even))
+		  lb)
+		 ((and (eq sgn '$zero)
+		       ($featurep ub '$even))
+		  ub)
+		 ((apply-reflection-simp (mop form) e t))
+		 (t (give-up)))))))
 
 (defprop %round simplim%round simplim%function)
 
 (defun simplim%round (expr var val)
   (let* ((arg (cadr expr))
 	 (b (behavior arg var val))
-	 (arglimab (limit arg var val 'think)) ; with $zeroa $zerob
+	 (arglimab (let ((*preserve-direction* t)) (limit arg var val 'think))) ; with $zeroa $zerob
 	 (arglim (ridofab arglimab)))
-    (cond ((and (= b -1)
+    (cond
+	  ((eq arglim '$ind) (throw 'limit nil))
+	  ((eq arglim '$infinity) (throw 'limit nil))
+	  ((eq arglim '$minf) '$minf)
+	  ((eq arglim '$inf) '$inf)
+	  ((and (= b -1)
 		(maxima-integerp (m+ 1//2 arglim)))
 	   (m- arglim 1//2))
 	  ((and (= b 1)
 		(maxima-integerp (m+ 1//2 arglim)))
 	   (m+ arglim 1//2))
-	  ((and (mnump arglim)
+	  ((and ($constantp arglim)
 		(not (maxima-integerp (m+ 1//2 arglim))))
-	   (simplify (list '(%round) arglim)))
+	   (ftake '%round arglim))
 	  (t
 	   (throw 'limit nil)))))
 
 ;; Round a number towards zero.
 
-(defprop %truncate simp-truncate operators)
+
+;; This property is important to get truncate(truncate(x)) =>
+;; truncate(x).
 (setf (get '%truncate 'integer-valued) t)
-(setf (get '%truncate 'reflection-rule) #'odd-function-reflect)
-(setf (get '$truncate 'alias) '%truncate)
-(setf (get '$truncate 'verb) '%truncate)
-(setf (get '%truncate 'noun) '$truncate)
+(setf (get '%truncate 'reflection-rule) 'odd-function-reflect)
 
 ;; truncate distributes over lists, matrices, and equations.
 (setf (get '%truncate 'distribute_over) '(mlist $matrix mequal))
 
-(defun simp-truncate (e yy z)
-  (oneargcheck e)
-  (setq yy (caar e)) ;; find a use for the otherwise unused YY.
-  (setq e (simplifya (specrepcheck (second e)) z))
-  (cond (($featurep e '$integer) e) ;; takes care of truncate(truncate(x)) --> truncate(x).
-	((member e '($inf $minf $und $ind) :test #'eq) e)
-	((eq e '$zerob) 0)
-	((eq e '$zeroa) 0)
+(def-simplifier truncate (e)
+  (cond (($featurep e '$integer)
+	 ;; takes care of truncate(truncate(x)) --> truncate(x).
+	 e)
+	((member e '($inf $minf $und $ind) :test #'eq)
+	 e)
+	((eq e '$zerob)
+	 0)
+	((eq e '$zeroa)
+	 0)
 	(t
 	 (let ((sgn (csign e)))
-	   (cond ((member sgn '($neg $nz) :test #'eq) (take '($ceiling) e))
-		 ((member sgn '($zero $pz $pos) :test #'eq) (take '($floor) e))
-		 ((apply-reflection-simp yy e t))
-		 (t `((,yy simp) ,e)))))))
+	   (cond ((member sgn '($neg $nz) :test #'eq)
+		  (take '($ceiling) e))
+		 ((member sgn '($zero $pz $pos) :test #'eq)
+		  (take '($floor) e))
+		 ((apply-reflection-simp (mop form) e t))
+		 (t (give-up)))))))
 
 ;;; integration for signum, unit_step, and mod.
 
@@ -453,9 +482,9 @@
 		(let ((q (take '($mod) x a)))
 		   (div (add (mul q q) (mul -1 a q) (mul a x)) 2)))
 
-(putprop '%signum (list (list 'x) #'signum-integral) 'integral)
-(putprop '$unit_step (list (list 'x) #'unit-step-integral) 'integral)
+(putprop '%signum (list (list 'x) 'signum-integral) 'integral)
+(putprop '$unit_step (list (list 'x) 'unit-step-integral) 'integral)
 
 ;; integrate(mod(x,a),a) doesn't have representation in terms of functions
 ;; known to Maxima, I think. (Barton Willis, 2020).
-(putprop '$mod (list (list 'x 'y) #'mod-integral nil) 'integral)
+(putprop '$mod (list (list 'x 'y) 'mod-integral nil) 'integral)

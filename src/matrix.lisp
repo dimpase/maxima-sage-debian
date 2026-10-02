@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,25 +12,15 @@
 
 (macsyma-module matrix)
 
-(declare-top (special *ech* *tri* *inv*
-		      mdl $detout vlist mul* top* *det* genvar $ratfac
-		      varlist header $scalarmatrixp $sparse
-		      $algebraic *rank* *mat*))
+(declare-top (special *ech* *tri*
+		      mdl $detout vlist mul* top* *det*
+		      header
+		      *mat*))
 
-(defmvar $detout nil)
 (defmvar top* nil)
-(defmvar $ratmx nil)
-(defmvar $matrix_element_mult "*")  ;;; Else, most useful when "."
-(defmvar $matrix_element_add "+")
 (defmvar $matrix_element_transpose nil)
 
 (defvar *mat*)
-
-;;I believe that all the code now stores arrays in the value cell 
-(defun get-array-pointer (symbol)
-  "There may be nesting of functions and we may well need to apply
-   this twice in a row"
-  (if (arrayp symbol) symbol (symbol-value symbol)))
 
 (defun mxc (x)
   (mapcar #'(lambda (y) (cons '(mlist) y)) x)) ; Matrix to MACSYMA conversion
@@ -654,7 +644,7 @@
 	   `(($matrix) . ,(mxc ans))))))
 
 ;;; THIS IS FOR TRANSPOSING THE ELEMENTS OF A MATRIX
-;;; A hack for Block matricies and tensors.
+;;; A hack for Block matrices and tensors.
 
 (defun transpose-els (elem)
   (cond ((eq $matrix_element_transpose '$transpose)

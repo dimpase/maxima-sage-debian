@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -29,7 +29,6 @@
 (def-mformat-var |:-FLAG| nil t)
 (def-mformat-var |@-FLAG| nil t)
 (def-mformat-var parameter 0 t)	; Who can read "~33,34,87A" ?
-(def-mformat-var parameter-p nil t)
 (def-mformat-var text nil nil)
 (def-mformat-var text-temp nil nil)
 (def-mformat-var displa-p nil nil)
@@ -93,7 +92,7 @@
       (setq stream *standard-output*))
     ;; This is all done via macros to save space,
     ;; (No functions, no special variable symbols.)
-    ;; If the lack of flexibilty becomes an issue then
+    ;; If the lack of flexibility becomes an issue then
     ;; it can be changed easily.
     (mformat-loop (output-text))
     ;; Keep from getting bitten by buffering.
@@ -140,4 +139,5 @@
 	(displa object))))
 
 (defun mtell (&rest l)
-  (apply #'mformat nil l))
+ (let ((*print-base* 10))
+  (apply #'mformat nil l)))

@@ -171,69 +171,6 @@
 
 (defvar *scan-string-buffer*  nil)
 
-(defun macsyma-read-string (a-string &aux answer)
-  (cond ((not (or (search "$" a-string :test #'char-equal)
-		  (search ";" a-string :test #'char-equal)))
-	 (vector-push-extend #\$ a-string)))
-  (with-input-from-string (stream a-string)
-    (setq answer (third (mread stream)))
-    answer))
-
-(defvar *sharp-read-buffer*
-  (make-array 140 :element-type ' #.(array-element-type "a") :fill-pointer 0 :adjustable t))
-
-(defmfun $-read-aux (arg stream &aux (meval-flag t) (*mread-prompt* ""))
-  (declare (special *mread-prompt*)
-	   (ignore arg))
-  (setf (fill-pointer *sharp-read-buffer*) 0)
-  (cond ((eql #\$ (peek-char t stream))
-	 (tyi stream)
-	 (setq meval-flag nil)))
-  (with-output-to-string (st *sharp-read-buffer*)
-    (let (char)
-      (loop while (not (eql char #\$))
-	     do
-	     (setq char (tyi stream))
-	     (write-char char st))))
-  (if meval-flag
-      (list 'meval* (list 'quote (macsyma-read-string *sharp-read-buffer*)))
-      (list 'quote (macsyma-read-string *sharp-read-buffer*))))
-
-(defun x$-cl-macro-read (stream sub-char arg)
-  (declare (ignore arg))
-  ($-read-aux sub-char stream))
-
-(set-dispatch-macro-character #\# #\$ #'x$-cl-macro-read)
-
-(defvar *macsyma-readtable*)
-
-(defun find-lisp-readtable-for-macsyma ()
-  (cond ((and (boundp '*macsyma-readtable*)
-	      (readtablep *macsyma-readtable*))
-	 *macsyma-readtable*)
-	(t (setq *macsyma-readtable* (copy-readtable nil))
-	   (set-dispatch-macro-character #\# #\$ 'x$-cl-macro-read *macsyma-readtable*)
-	   *macsyma-readtable*)))
-
-(defun set-readtable-for-macsyma ()
-  (setq *readtable* (find-lisp-readtable-for-macsyma)))
-
-(defvar *reset-var* t)
-
-(defvar *variable-initial-values* (make-hash-table)
-  "Hash table containing all Maxima defmvar variables and their initial
-values")
-
-(defmacro defmvar (var &rest val-and-doc)
-  "If *reset-var* is true then loading or eval'ing will reset value, otherwise like defvar"
-  (cond ((> (length val-and-doc) 2)
-	 (setq val-and-doc (list (car val-and-doc) (second val-and-doc)))))
-  `(progn
-    (unless (gethash ',var *variable-initial-values*)
-      (setf (gethash ',var *variable-initial-values*)
-	    ,(first val-and-doc)))
-    (defvar ,var ,@val-and-doc)))
-
 (defmfun $mkey (variable)
   "($mkey '$demo)==>:demo"
   (intern (string-left-trim "$" (string variable)) 'keyword))
@@ -281,58 +218,33 @@ values")
 ;;sample usage
 ;;(defun foo a (show a )(show (listify a)) (show (arg 3)))
 
-(defmacro defun-maclisp (function &body  rest &aux .n.)
-  (cond ((and (car rest) (symbolp (car rest)))
-	 ;;old maclisp narg syntax
-	 (setq .n. (car rest))
-	 (setf (car rest)
-	       `(&rest narg-rest-argument &aux (, .n. (length narg-rest-argument))))))
+(defmacro defun-maclisp (function &body body &aux .n.)
+  (when (typep body '(cons symbol))
+    ;;old maclisp narg syntax
+    (setq .n. (car body))
+    (setf body
+          (cons `(&rest narg-rest-argument &aux (, .n. (length narg-rest-argument)))
+                (cdr body))))
   `(progn
     ;; I (rtoy) think we can consider all defmfun's as translated functions.
     (defprop ,function t translated)
-    (defun ,function . ,rest)))
+    (defun ,function . ,body)))
 
 (defun exploden (symb)
-  (let* (#+(and gcl (not gmp)) (big-chunk-size 120)
-	   #+(and gcl (not gmp)) (tentochunksize (expt 10 big-chunk-size))
-	   string)
+  (let* (string)
     (cond ((symbolp symb)
 	   (setq string (print-invert-case symb)))
 	  ((floatp symb)
 	   (setq string (exploden-format-float symb)))
-
-      ((integerp symb)
-       ;; When obase > 10, prepend leading zero to
-       ;; ensure that output is readable as a number.
-       (let ((leading-digit (if (> *print-base* 10) #\0)))
-         (cond
-           #+(and gcl (not gmp))
-           ((bignump symb)
-            (let* ((big symb)
-                   ans rem tem
-                   (chunks
-                     (loop
-                       do (multiple-value-setq (big rem)
-                            (floor big tentochunksize))
-                       collect rem
-                       while (not (eql 0 big)))))
-              (setq chunks (nreverse chunks))
-              (setq ans (coerce (format nil "~d" (car chunks)) 'list))
-              (if (and leading-digit (not (digit-char-p (car ans) 10.)))
-                (setq ans (cons leading-digit ans)))
-              (loop for v in (cdr chunks)
-                    do (setq tem (coerce (format nil "~d" v) 'list))
-                    (loop for i below (- big-chunk-size (length tem))
-                          do (setq tem (cons #\0 tem)))
-                    (setq ans (nconc ans tem)))
-              (return-from exploden ans)))
-           (t
+	  ((integerp symb)
+	   ;; When obase > 10, prepend leading zero to
+	   ;; ensure that output is readable as a number.
+	   (let ((leading-digit (if (> *print-base* 10) #\0)))
              (setq string (format nil "~A" symb))
              (setq string (coerce string 'list))
              (if (and leading-digit (not (digit-char-p (car string) 10.)))
-               (setq string (cons leading-digit string)))
-             (return-from exploden string)))))
-
+		 (setq string (cons leading-digit string)))
+             (return-from exploden string)))
 	  (t (setq string (format nil "~A" symb))))
     (assert (stringp string))
     (coerce string 'list)))
@@ -340,13 +252,58 @@ values")
 (defvar *exploden-strip-float-zeros* t) ;; NIL => allow trailing zeros
 
 (defun exploden-format-float (symb)
-  (declare (special $maxfpprintprec))
-  (let ((a (abs symb))
-        string
-        (effective-printprec (if (or (= $fpprintprec 0)
-                                     (> $fpprintprec $maxfpprintprec))
-                                 $maxfpprintprec
-                                 $fpprintprec)))
+  (if (or (= $fpprintprec 0) (> $fpprintprec 16.))
+    (exploden-format-float-readably-except-special-values symb)
+    (exploden-format-float-pretty symb)))
+
+;; Return a readable string, EXCEPT for not-a-number and infinity, if present;
+;; for those, return a probably-nonreadable string.
+;; This avoids an error from SBCL about trying to readably print those values.
+
+(defun exploden-format-float-readably-except-special-values (x)
+  (if (or (float-inf-p x) (float-nan-p x))
+    (format nil "~a" x)
+    (let ((*print-readably* t))
+      (let ((s (prin1-to-string x)))
+        ;; Skip the fix up unless we know it's needed for the Lisp implementation.
+        #+(or clisp abcl) (fix-up-exponent-in-place s)
+        #+ecl (insert-zero-before-exponent s)
+        #-(or clisp abcl ecl) s))))
+
+;; (1) If string looks like "n.nnnD0" or "n.nnnd0", return just "n.nnn".
+;; (2) Otherwise, replace #\D or #\d (if present) with #\E or #\e, respectively.
+;; (3) Otherwise, return S unchanged.
+
+(defun fix-up-exponent-in-place (s)
+  (let ((n (length s)) i)
+    (if (> n 2)
+      (cond
+        ((and (or (eql (aref s (- n 2)) #\D) (eql (aref s (- n 2)) #\d)) (eql (aref s (- n 1)) #\0))
+         (subseq s 0 (- n 2)))
+        ((setq i (position #\D s))
+         (setf (aref s i) #\E)
+         s)
+        ((setq i (position #\d s))
+         (setf (aref s i) #\e)
+         s)
+        (t s))
+      s)))
+
+;; Replace "nnnn.Ennn" or "nnn.ennn" with "nnn.0Ennn" or nnn.0ennn", respectively.
+;; (Decimal immediately before exponent without intervening digits is
+;; explicitly allowed by CLHS; see Section 2.3.1, "Numbers as Tokens".)
+
+(defun insert-zero-before-exponent (s)
+  (let ((n (length s)) (i (position #\. s)))
+    (if (and i (< i (1- n)))
+      (let ((c (aref s (1+ i))))
+        (if (or (eql c #\E) (eql c #\e))
+          (concatenate 'string (subseq s 0 (1+ i)) "0" (subseq s (1+ i) n))
+          s))
+    s)))
+
+(defun exploden-format-float-pretty (symb)
+  (let ((a (abs symb)) string)
     ;; When printing out something for Fortran, we want to be
     ;; sure to print the exponent marker so that Fortran
     ;; knows what kind of number it is.  It turns out that
@@ -364,21 +321,17 @@ values")
           (cond
             ((zerop a)
              (values "~,vf" 1))
-            ;; Work around for GCL bug #47404.
-            ;; Avoid numeric comparisons with NaN, which erroneously return T.
-            #+gcl ((or (float-inf-p symb) (float-nan-p symb))
-             (return-from exploden-format-float (format nil "~a" symb)))
             ((<= 0.001 a 1e7)
              (let*
                ((integer-log10 (floor (/ (log a) #.(log 10.0))))
                 (scale (1+ integer-log10)))
-               (if (< scale effective-printprec)
-                 (values "~,vf" (- effective-printprec scale))
-                 (values "~,ve" (1- effective-printprec)))))
-            #-gcl ((or (float-inf-p symb) (float-nan-p symb))
-             (return-from exploden-format-float (format nil "~a" symb)))
+               (if (< scale $fpprintprec)
+                 (values "~,vf" (- $fpprintprec scale))
+                 (values "~,ve" (1- $fpprintprec)))))
+	    ((or (float-inf-p symb) (float-nan-p symb))
+             (return-from exploden-format-float-pretty (format nil "~a" symb)))
             (t
-              (values "~,ve" (1- effective-printprec))))
+              (values "~,ve" (1- $fpprintprec))))
 
           ;; Call FORMAT using format string chosen above.
           (setq string (format nil form digits a))
@@ -393,27 +346,35 @@ values")
       (or (strip-float-zeros string) string)
       string)))
 
-(defun trailing-zeros-regex-f-0 (s) (funcall #.(maxima-nregex::regex-compile "^(.*\\.[0-9]*[1-9])00*$") s))
-(defun trailing-zeros-regex-f-1 (s) (funcall #.(maxima-nregex::regex-compile "^(.*\\.0)00*$") s))
-(defun trailing-zeros-regex-e-0 (s) (funcall #.(maxima-nregex::regex-compile "^(.*\\.[0-9]*[1-9])00*([^0-9][+-][0-9]*)$") s))
-(defun trailing-zeros-regex-e-1 (s) (funcall #.(maxima-nregex::regex-compile "^(.*\\.0)00*([^0-9][+-][0-9]*)$") s))
+(defun trailing-zeros-regex-f-0 (s)
+  (pregexp:pregexp-match-positions '#.(pregexp:pregexp "^(.*\\.[0-9]*[1-9])00*$")
+				   s))
+(defun trailing-zeros-regex-f-1 (s)
+  (pregexp:pregexp-match-positions '#.(pregexp::pregexp "^(.*\\.0)00*$")
+				   s))
+(defun trailing-zeros-regex-e-0 (s)
+  (pregexp:pregexp-match-positions '#.(pregexp:pregexp "^(.*\\.[0-9]*[1-9])00*([^0-9][+-][0-9]*)$")
+				   s))
+(defun trailing-zeros-regex-e-1 (s)
+  (pregexp:pregexp-match-positions '#.(pregexp:pregexp "^(.*\\.0)00*([^0-9][+-][0-9]*)$")
+				   s))
 
 ;; Return S with trailing zero digits stripped off, or NIL if there are none.
-
 (defun strip-float-zeros (s)
-  (cond
-    ((or (trailing-zeros-regex-f-0 s) (trailing-zeros-regex-f-1 s))
-     (let
-       ((group1 (aref maxima-nregex::*regex-groups* 1)))
-       (subseq s (first group1) (second group1))))
-    ((or (trailing-zeros-regex-e-0 s) (trailing-zeros-regex-e-1 s))
-     (let*
-       ((group1 (aref maxima-nregex::*regex-groups* 1))
-        (s1 (subseq s (first group1) (second group1)))
-        (group2 (aref maxima-nregex::*regex-groups* 2))
-        (s2 (subseq s (first group2) (second group2))))
-       (concatenate 'string s1 s2)))
-    (t nil)))
+  (let (matches)
+    (cond
+      ((setq matches (or (trailing-zeros-regex-f-0 s) (trailing-zeros-regex-f-1 s)))
+       (let
+	   ((group1 (elt matches 1)))
+	 (subseq s (car group1) (cdr group1))))
+      ((setq matches (or (trailing-zeros-regex-e-0 s) (trailing-zeros-regex-e-1 s)))
+       (let*
+	   ((group1 (elt matches 1))
+            (s1 (subseq s (car group1) (cdr group1)))
+            (group2 (elt matches 2))
+            (s2 (subseq s (car group2) (cdr group2))))
+	 (concatenate 'string s1 s2)))
+      (t nil))))
 
 (defun explodec (symb)		;is called for symbols and numbers
   (loop for v in (coerce (print-invert-case symb) 'list)
@@ -468,7 +429,7 @@ values")
   (intern (maybe-invert-string-case string) :maxima))
 
 
-#-(or gcl scl allegro)
+#-(or scl allegro)
 (let ((local-table (copy-readtable nil)))
   (setf (readtable-case local-table) :invert)
   (defun print-invert-case (sym)
@@ -491,27 +452,6 @@ values")
 	   (let ((*readtable* local-table)
 		 (*print-case* :upcase))
 	     (princ-to-string sym))))))
-
-#+gcl
-(defun print-invert-case (sym)
-  (cond ((symbolp sym)
-	 (let* ((str (princ-to-string sym))
-		(have-upper nil)
-		(have-lower nil)
-		(converted-str
-		 (map 'string (lambda (c)
-				(cond ((upper-case-p c)
-				       (setf have-upper t)
-				       (char-downcase c))
-				      ((lower-case-p c)
-				       (setf have-lower t)
-				       (char-upcase c))
-				      (t c)))
-		      str)))
-	   (if (and have-upper have-lower)
-	       str
-	       converted-str)))
-	(t (princ-to-string sym))))
 
 (defun implode (list)
   (declare (optimize (speed 3)))
@@ -584,12 +524,6 @@ values")
 (defvar *read-hang-prompt* "")
 
 (defun tyi-raw (&optional (stream *standard-input*) eof-option)
-  ;; Adding this extra EOF test, because the testsuite generates
-  ;; unexpected end of input-stream with Windows XP and GCL 2.6.8.
-  #+gcl
-  (when (eql (peek-char nil stream nil eof-option) eof-option)
-    (return-from tyi-raw eof-option))
-
   (let ((ch (read-char-no-hang stream nil eof-option)))
     (if ch
 	ch
@@ -658,17 +592,14 @@ values")
       ;; so work around null TZ here.
       (if tz (decode-universal-time time-integer (- tz))
         (decode-universal-time time-integer))
-      (declare (ignore day-of-week #+gcl dst-p))
+      (declare (ignore day-of-week))
       ;; DECODE-UNIVERSAL-TIME might return a timezone offset
       ;; which is a multiple of 1/3600 but not 1/60.
       ;; We need a multiple of 1/60 because our formatted
       ;; timezone offset has only minutes and seconds.
       (if (/= (mod tz 1/60) 0)
         ($timedate time-integer (/ (round (- tz) 1/60) 60))
-        (let ((tz-offset
-	       #-gcl (if dst-p (- 1 tz) (- tz))
-	       #+gcl (- tz)	; bug in gcl https://savannah.gnu.org/bugs/?50570
-	       ))
+        (let ((tz-offset (if dst-p (- 1 tz) (- tz))))
           (multiple-value-bind
             (tz-hours tz-hour-fraction)
             (truncate tz-offset)
@@ -691,48 +622,105 @@ values")
 ;; ...+ indicates one or more instances of ...,
 ;; and [...] indicates literal character alternatives.
 ;;
-;; Note that the nregex package doesn't handle optional groups or ...+.
-;; The notation above is only for describing the behavior of the parser.
-;;
 ;; Trailing unparsed stuff causes the parser to fail (return NIL).
 
-(defun match-date-yyyy-mm-dd (s) (funcall #.(maxima-nregex::regex-compile "^([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])") s))
-(defun match-time-hh-mm-ss (s) (funcall #.(maxima-nregex::regex-compile "^[ T]([0-9][0-9]):([0-9][0-9]):([0-9][0-9])") s))
-(defun match-fraction-nnn (s) (funcall #.(maxima-nregex::regex-compile "^[,.]([0-9][0-9]*)") s))
-(defun match-tz-hh-mm (s) (funcall #.(maxima-nregex::regex-compile "^([+-])([0-9][0-9]):([0-9][0-9])$") s))
-(defun match-tz-hhmm (s) (funcall #.(maxima-nregex::regex-compile "^([+-])([0-9][0-9])([0-9][0-9])$") s))
-(defun match-tz-hh (s) (funcall #.(maxima-nregex::regex-compile "^([+-])([0-9][0-9])$") s))
-(defun match-tz-Z (s) (funcall #.(maxima-nregex::regex-compile "^Z$") s))
+;; Originally, these functions all looked like
+;;
+;; (defun match-date-yyyy-mm-dd (s)
+;;   (pregexp:pregexp-match-positions
+;;    '#.(pregexp:pregexp "^([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])")
+;;    s))
+;;
+;; However, sbcl produces incorrect results for this.  For example,
+;;
+;; (match-date-yyyy-mm-dd "1900-01-01 16:00:00-08:00")
+;;
+;; returns ((0 . 10) (0 . 4) (8 . 10) NIL).  But the correct answer is
+;; ((0 . 10) (0 . 4) (5 . 7) (8 . 10)).
+;;
+;; But if you replace the '#.(pregexp:pregexp ...) with
+;; (pregexp:pregexp ...), sbcl works.  But then we end up compiling
+;; the the regexp on every call.  So we use a closure so the regexp is
+;; compiled only once.
+(let ((pat (pregexp:pregexp "^([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])")))
+  (defun match-date-yyyy-mm-dd (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
+
+(let ((pat (pregexp:pregexp "^[ T]([0-9][0-9]):([0-9][0-9]):([0-9][0-9])")))
+  (defun match-time-hh-mm-ss (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
+
+(let ((pat (pregexp:pregexp "^[,.]([0-9][0-9]*)")))
+  (defun match-fraction-nnn (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
+
+  
+(let ((pat (pregexp:pregexp "^([+-])([0-9][0-9]):([0-9][0-9])$")))
+  (defun match-tz-hh-mm (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
+
+(let ((pat (pregexp:pregexp "^([+-])([0-9][0-9])([0-9][0-9])$")))
+  (defun match-tz-hhmm (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
+
+(let ((pat (pregexp:pregexp "^([+-])([0-9][0-9])$")))
+  (defun match-tz-hh (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
+
+(let ((pat (pregexp:pregexp "^Z$")))
+  (defun match-tz-Z (s)
+    (pregexp:pregexp-match-positions
+     pat
+     s)))
 
 (defmfun $parse_timedate (s)
   (setq s (string-trim '(#\Space #\Tab #\Newline #\Return) s))
-  (let (year month day
-       (hours 0) (minutes 0) (seconds 0)
-       (seconds-fraction 0) seconds-fraction-numerator tz)
-    (if (match-date-yyyy-mm-dd s)
+  (let (matches
+	year month day
+	(hours 0) (minutes 0) (seconds 0)
+	(seconds-fraction 0) seconds-fraction-numerator tz)
+    (if (setq matches (match-date-yyyy-mm-dd s))
       (progn 
-        (multiple-value-setq (year month day) (extract-groups-integers s))
-        (setq s (subseq s (second (aref maxima-nregex::*regex-groups* 0)))))
+        (multiple-value-setq (year month day)
+	  (pregexp-extract-groups-integers matches s))
+        (setq s (subseq s (cdr (elt matches 0)))))
       (return-from $parse_timedate nil))
-    (when (match-time-hh-mm-ss s)
-      (multiple-value-setq (hours minutes seconds) (extract-groups-integers s))
-      (setq s (subseq s (second (aref maxima-nregex::*regex-groups* 0)))))
-    (when (match-fraction-nnn s)
-      (multiple-value-setq (seconds-fraction-numerator) (extract-groups-integers s))
-      (let ((group1 (aref maxima-nregex::*regex-groups* 1)))
-        (setq seconds-fraction (div seconds-fraction-numerator (expt 10 (- (second group1) (first group1))))))
-      (setq s (subseq s (second (aref maxima-nregex::*regex-groups* 0)))))
+    (when (setq matches (match-time-hh-mm-ss s))
+      (multiple-value-setq (hours minutes seconds)
+	(pregexp-extract-groups-integers matches s))
+      (setq s (subseq s (cdr (elt matches 0)))))
+    (when (setq matches (match-fraction-nnn s))
+      (multiple-value-setq (seconds-fraction-numerator)
+	(pregexp-extract-groups-integers matches s))
+      (let ((group1 (elt matches 1)))
+        (setq seconds-fraction (div seconds-fraction-numerator (expt 10 (- (cdr group1) (car group1))))))
+      (setq s (subseq s (cdr (elt matches 0)))))
     (cond
-      ((match-tz-hh-mm s)
-       (multiple-value-bind (tz-sign tz-hours tz-minutes) (extract-groups-integers s)
+      ((setq matches (match-tz-hh-mm s))
+       (multiple-value-bind (tz-sign tz-hours tz-minutes)
+	   (pregexp-extract-groups-integers matches s)
          (setq tz (* tz-sign (+ tz-hours (/ tz-minutes 60))))))
-      ((match-tz-hhmm s)
-       (multiple-value-bind (tz-sign tz-hours tz-minutes) (extract-groups-integers s)
+      ((setq matches (match-tz-hhmm s))
+       (multiple-value-bind (tz-sign tz-hours tz-minutes)
+	   (pregexp-extract-groups-integers matches s)
          (setq tz (* tz-sign (+ tz-hours (/ tz-minutes 60))))))
-      ((match-tz-hh s)
-       (multiple-value-bind (tz-sign tz-hours) (extract-groups-integers s)
+      ((setq matches (match-tz-hh s))
+       (multiple-value-bind (tz-sign tz-hours)
+	   (pregexp-extract-groups-integers matches s)
          (setq tz (* tz-sign tz-hours))))
-      ((match-tz-Z s)
+      ((setq matches (match-tz-Z s))
        (setq tz 0))
       (t
         (if (> (length s) 0)
@@ -740,11 +728,11 @@ values")
 
     (encode-time-with-all-parts year month day hours minutes seconds seconds-fraction (if tz (- tz)))))
 
-(defun extract-groups-integers (s)
-  (let ((groups (coerce (subseq maxima-nregex::*regex-groups* 1 maxima-nregex::*regex-groupings*) 'list)))
-    (values-list (mapcar #'parse-integer-or-sign
-                         (mapcar #'(lambda (ab) (subseq s (first ab) (second ab)))
-                                 groups)))))
+(defun pregexp-extract-groups-integers (matches s)
+  (values-list (mapcar #'parse-integer-or-sign
+                       (mapcar #'(lambda (ab)
+				   (subseq s (car ab) (cdr ab)))
+                               (rest matches)))))
 
 (defun parse-integer-or-sign (s)
   (cond
@@ -818,12 +806,9 @@ values")
       ;; so work around null TZ here.
       (if tz (decode-universal-time seconds-integer (- tz))
           (decode-universal-time seconds-integer))
-      (declare (ignore day-of-week #+gcl dst-p))
+      (declare (ignore day-of-week))
       ;; HMM, CAN DECODE-UNIVERSAL-TIME RETURN TZ = NIL ??
-      (let ((tz-offset
-           #-gcl (if dst-p (- 1 tz) (- tz))
-           #+gcl (- tz)  ; bug in gcl https://savannah.gnu.org/bugs/?50570
-           ))
+      (let ((tz-offset (if dst-p (- 1 tz) (- tz))))
         (list '(mlist) year month day hours minutes (add seconds seconds-fraction) ($ratsimp tz-offset))))))
 
 ;;Some systems make everything functionp including macros:
@@ -837,8 +822,3 @@ values")
 ;; variables.
 (deff break #'cl:break)
 (deff gcd #'cl:gcd)
-
-#+(and sbcl sb-package-locks)
-(defun makunbound (sym)
-  (sb-ext:without-package-locks
-      (cl:makunbound sym)))

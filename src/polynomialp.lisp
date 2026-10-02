@@ -16,7 +16,7 @@
  		       								 
 ;;  You should have received a copy of the GNU General Public License	
 ;;  along with this program; if not, write to the Free Software 		 
-;;  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+;;  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 (in-package :maxima)
 
@@ -24,8 +24,6 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (if (not (functionp 'op-equalp)) ($load "linalg-utilities"))
   (if (not (functionp 'require-list-or-set)) ($load "nset")))
-
-($put '$polynomialp 1 '$version)
 
 ;; Return true iff n is an integer and n >= 0.
 
@@ -47,7 +45,7 @@
 (defun polynomialp (p vars coeffp exponp)
   (or
    (mfuncall coeffp p)
-   (if (member p vars :test #'alike1) t nil)
+   (if (memalike p vars) t nil)
    (and (op-equalp p 'mtimes 'mplus)
 	(every #'(lambda (s) (polynomialp s vars coeffp exponp)) (margs p)))
    (and (op-equalp p 'mexpt) (polynomialp (car (margs p)) vars coeffp exponp)

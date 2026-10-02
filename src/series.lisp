@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,10 +12,10 @@
 
 (macsyma-module series)
 
-(declare-top (special var *n *a *m *c *index $cauchysum *gcd*
-		      nn* dn* $ratsimpexpons *infsumsimp *roots *failures
-		      *ratexp *var usexp $verbose ans *trigred
-		      *form indl *noexpand $ratexpand))
+(declare-top (special var *a *m *c *index *gcd*
+		      *roots *failures
+		      *ratexp *var usexp *schatc-ans* *trigred
+		      *form indl *noexpand))
 
 (load-macsyma-macros rzmac)
 
@@ -40,6 +40,7 @@
 ;; The top-level routine for $powerseries, which calls this function after
 ;; spotting invalid arguments.
 (defun powerseries (expr var pt)
+  (setq pt (canonicalize+-inf pt))
   (handler-case
       (if (and (signp e pt) (symbolp var))
           (seriesexpand* expr)
@@ -176,7 +177,7 @@ integration / differentiation variable."))
     (multiple-value-call #'sratexpnd (numden exp))))
 
 (defun sratexpnd (n d)
-  (let ((ans (list nil))
+  (let ((*schatc-ans* (list nil))
         (*splist*)
         ;; A pattern that matches cc*(c*x^m + a)^n
         (linpat
@@ -195,7 +196,7 @@ integration / differentiation variable."))
              (cond ((poly? n var)
 		    (m// n d))
 		   ((m1 n linpat)
-		    (m// (srbinexpnd (cdr ans)) d))
+		    (m// (srbinexpnd (cdr *schatc-ans*)) d))
 		   (t
                     (powerseries-expansion-error))))
             ((smonop d var)
@@ -227,9 +228,9 @@ integration / differentiation variable."))
                       (m1 d linpat)))
              ;; We had num/den and LINPAT matched den. We need to replace cc
              ;; with num/cc and n with -n.
-             (setf (cdr (assoc 'n ans)) (m- (cdr (assoc 'n ans)))
-                   (cdr (assoc 'cc ans)) (m// n (cdr (assoc 'cc ans))))
-             (srbinexpnd (cdr ans)))
+             (setf (cdr (assoc 'n *schatc-ans*)) (m- (cdr (assoc 'n *schatc-ans*)))
+                   (cdr (assoc 'cc *schatc-ans*)) (m// n (cdr (assoc 'cc *schatc-ans*))))
+             (srbinexpnd (cdr *schatc-ans*)))
 
             (t
              ;; *RATEXP is set by RATEXPAND1, which we call to do the general
@@ -459,8 +460,8 @@ integration / differentiation variable."))
 ;; term. If we're not sure about a, it's a bit more difficult: if we know that n
 ;; is a positive integer, the sum is finite (and has at least two terms) and we
 ;; can just split off the last term. Otherwise, give up.
-(defun srbinexpnd (ans)
-  (alist-bind (n a m c cc x) ans
+(defun srbinexpnd (*schatc-ans*)
+  (alist-bind (n a m c cc x) *schatc-ans*
     (m* cc
         (if (and (integerp n) (minusp n))
             (srintegexpd (neg n) a m c)
@@ -471,7 +472,7 @@ integration / differentiation variable."))
                    (m// (m* (m^ var (m* m *index))
                             (m^ c *index)
                             (m^ a (m- n *index)))
-                        (m* (list '($beta) (m- n (m1- *index)) (m1+ *index))
+                        (m* (ftake* '%beta (m- n (m1- *index)) (m1+ *index))
                             (m1+ n)))))
               (cond
                 ((eq sgn-n '$zero) 1)
@@ -647,7 +648,7 @@ integration / differentiation variable."))
               (negate-coeff-p))
          ;; If we know that the coefficient is not positive, switch the series
          ;; around (which gets rid of some ugly minus signs). If we're not sure,
-         ;; but the cofficient "looks negative" (so is something like -7*k),
+         ;; but the coefficient "looks negative" (so is something like -7*k),
          ;; switch it around too.
          (cond
            ((member coeff-sign '($neg $nz))
@@ -961,7 +962,7 @@ integration / differentiation variable."))
 	     ((mexpt) 2 ((mtimes) 2 *index))
 	     ((mplus) ((mexpt) 2 ((mtimes) 2 *index)) -1)
 	     ((mexpt) ((mfactorial) ((mtimes) 2 *index)) -1)
-	     (($bern) ((mtimes) 2 *index))
+	     ((%bern) ((mtimes) 2 *index))
 	     ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) -1)))
      *index 0 $inf)
   sp2)
@@ -971,7 +972,7 @@ integration / differentiation variable."))
 	     ((mexpt) -1 ((mplus) *index -1))
 	     ((mplus) ((mexpt) 2 ((mplus) ((mtimes) 2 *index) -1)) -1)
 	     ((mexpt) ((mfactorial) ((mtimes) 2 *index)) -1)
-	     (($bern) ((mtimes) 2 *index))
+	     ((%bern) ((mtimes) 2 *index))
 	     ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) -1)))
      *index 0 $inf)
   sp2)
@@ -981,7 +982,7 @@ integration / differentiation variable."))
 	     ((mexpt) -1 *index)
 	     ((mexpt) 2 ((mtimes) 2 *index))
 	     ((mexpt) ((mfactorial) ((mtimes) 2 *index)) -1)
-	     (($bern) ((mtimes) 2 *index))
+	     ((%bern) ((mtimes) 2 *index))
 	     ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) -1)))
      *index 0 $inf)
   sp2)
@@ -989,7 +990,7 @@ integration / differentiation variable."))
 (defprop %sec
     ((%sum) ((mtimes) ((mexpt) -1 *index)
 	     ((mexpt) ((mfactorial) ((mtimes) 2 *index)) -1)
-	     (($euler) ((mtimes) 2 *index))
+	     ((%euler) ((mtimes) 2 *index))
 	     ((mexpt) sp2var ((mtimes) 2 *index)))
      *index 0 $inf)
   sp2)
@@ -1020,7 +1021,7 @@ integration / differentiation variable."))
     ((%sum)
      ((mtimes) ((mexpt) 4 *index)
       ((mplus) ((mexpt) 4 *index) -1)
-      (($bern) ((mtimes) 2 *index))
+      ((%bern) ((mtimes) 2 *index))
       ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) -1))
       ((mexpt)
        ((mfactorial) ((mtimes) 2 *index))
@@ -1031,7 +1032,7 @@ integration / differentiation variable."))
 (defprop %coth
     ((%sum)
      ((mtimes) ((mexpt) 4 *index)
-      (($bern) ((mtimes) 2 *index))
+      ((%bern) ((mtimes) 2 *index))
       ((mexpt) ((mfactorial) ((mtimes) 2 *index)) -1)
       ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) -1)))
      *index 0 $inf)
@@ -1039,7 +1040,7 @@ integration / differentiation variable."))
 
 (defprop %sech 
     ((%sum)
-     ((mtimes) (($euler) ((mtimes) 2 *index))
+     ((mtimes) ((%euler) ((mtimes) 2 *index))
       ((mexpt) ((mfactorial) ((mtimes) 2 *index)) -1)
       ((mexpt) sp2var ((mtimes) 2 *index)))
      *index 0 $inf)
@@ -1049,7 +1050,7 @@ integration / differentiation variable."))
     ((%sum)
      ((mtimes) -2 ((mplus) ((mexpt) 2 ((mplus) ((mtimes) 2 *index) -1)) -1)
       ((mexpt) ((mfactorial) ((mtimes) *index 2)) -1)
-      (($bern) ((mtimes) 2 *index))
+      ((%bern) ((mtimes) 2 *index))
       ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) -1)))
      *index 0 $inf)
   sp2)
@@ -1071,4 +1072,14 @@ integration / differentiation variable."))
       ((mexpt) ((mplus) ((mtimes) 2 *index) 1) -1)
       ((mexpt) sp2var ((mplus) ((mtimes) 2 *index) 1)))
      *index 0 $inf)
+  sp2)
+
+ ;; Lambert W function principal branch
+ (defprop %lambert_w
+    ((%sum)
+     ((mtimes) ((mexpt) -1 *index)
+	  ((mexpt) -1 1)
+	 ((mexpt) *index ( (mplus) *index -1))
+	 ((mexpt) ((mfactorial) *index) -1) ((mexpt) sp2var *index))
+     *index 1 $inf)
   sp2)

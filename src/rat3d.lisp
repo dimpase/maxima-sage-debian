@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -15,26 +15,11 @@
 ;;	THIS IS THE NEW RATIONAL FUNCTION PACKAGE PART 4.
 ;;	IT INCLUDES THE POLYNOMIAL FACTORING ROUTINES.
 
-(declare-top (special *min* *mx* *odr* nn* scanmapp *checkagain adn*))
-
-(declare-top (special $factorflag $dontfactor $algebraic $ratfac))
-
-;;There really do seem to be two such variables...
-(declare-top (special alpha *alpha gauss genvar minpoly*))
+(declare-top (special *odr* *checkagain))
 
 (defmvar *irreds nil)
-(defmvar algfac* nil)
-(defmvar low* nil)
 
-(defmvar $intfaclim t)
 (defmvar $berlefact t)
-
-(defmvar $factor_max_degree 1000
-  "If set to an integer n, some potentially large (many factors) polynomials
-   of degree > n won't be factored, preventing huge memory allocations and
-   stack overflows. Set to zero to deactivate."
-  fixnum)
-(putprop '$factor_max_degree 'posintegerset 'assign)
 
 (defmvar $factor_max_degree_print_warning t
   "Print a warning message when a polynomial is not factored because its
@@ -64,8 +49,8 @@
 	((memalike (pdis (make-poly y)) $dontfactor) t)))
 
 (defun removealg (l)
-  (loop for var in l
-	 unless (algv var) collect var))
+  (loop for var2 in l
+	 unless (algv var2) collect var2))
 
 (defun degvecdisrep (degl)
   (do ((l degl (cdr l))
@@ -81,36 +66,47 @@
     (list tcont (pquotient p tcont))))
 
 (defun pmindegvec (p)
-  (minlist (let ((*odr* (putodr (reverse genvar)))
+  (minlist-in-place
+   (let ((*odr* (putodr (reverse genvar)))
 		 (nn* (1+ (length genvar)))
 		 (*min* t))
 	     (degvector nil 1 p))))
 
 (defun pdegreevector (p)
-  (maxlist (let ((*odr* (putodr (reverse genvar)))
+  (maxlist-in-place
+   (let ((*odr* (putodr (reverse genvar)))
 		 (nn* (1+ (length genvar)))
 		 (*mx* t))
 	     (degvector nil 1 p))))
 
-(defun maxlist(l) (maxminl l t))
+(macrolet
+  ((defun-maxminl (do-max in-place)
+    "Defines the function (MAX|MIN)LIST(-IN-PLACE)?"
+    (let ((fun-name (intern (concatenate 'string (if do-max "MAX" "MIN") "LIST"
+                                                 (if in-place "-IN-PLACE"))))
+          (op (if do-max '> '<)))
+      `(defun ,fun-name (l)
+         ,(format nil
+"For L, a list of lists of REALs with the same length N,
+L = ((A_1 ... A_N) (B_1 ... B_N) (C_1 ... C_N) ...), returns a list
+((~A A_1 B_1 C_1 ...) (~:*~A A_2 B_2 C_2 ...) ... (~:*~A A_n B_n C_n ...)).~@[~%~A~:*~]"
+            (if do-max "MAX" "MIN")
+            (if in-place "The first sublist is modified to contain the result."))
+         (do ((l1 ,(if in-place '(car l) '(copy-list (car l))))
+              (ll (cdr l) (cdr ll)))
+             ((null ll) l1)
+           (do ((v1 l1 (cdr v1))
+                (v2 (car ll) (cdr v2)))
+               ((null v1))
+             (when (,op (car v2) (car v1))
+               (rplaca v1 (car v2)))))))))
+  (defun-maxminl t nil)
+  (defun-maxminl t t)
+  (defun-maxminl nil nil)
+  (defun-maxminl nil t))
 
-(defun minlist(l) (maxminl l nil))
-
-(defun maxminl (l switch)
-  (do ((l1 (copy-list (car l)))
-       (ll (cdr l) (cdr ll)))
-      ((null ll) l1)
-    (do ((v1 l1 (cdr v1))
-	 (v2 (car ll) (cdr v2)))
-	((null v1))
-      (cond (switch
-	     (cond ((> (car v2) (car v1))
-		    (rplaca v1 (car v2)))))
-	    (t (cond ((< (car v2) (car v1))
-		      (rplaca v1 (car v2)))))))))
-
-(defun quick-sqfr-check (p var)
-  (let ((gv (delete var (listovars p) :test #'equal))
+(defun quick-sqfr-check (p var2)
+  (let ((gv (delete var2 (listovars p) :test #'equal))
 	(modulus (or modulus *alpha))
 	(l) (p0))
     (if $algebraic (setq gv (removealg gv)))
@@ -126,7 +122,7 @@
 	(t (list* (pget (car p)) (cadr p) (monom->facl (caddr p))))))
 
 (defun psqfr (p)
-  (prog (r varl var mult factors)
+  (prog (r varl var2 mult factors)
      (cond ((pcoefp p) (return (cfactor p)))
 	   ((pminusp p) (return (cons -1 (cons 1 (psqfr (pminus p)))))))
      (desetq (factors p) (ptermcont p))
@@ -134,18 +130,18 @@
      (cond ((pcoefp p) (go end)))
      (setq varl (sort (listovars p) 'pointergp))
      setvar
-     (setq var (car varl) varl (cdr varl) mult 0)
-     (cond ((pointergp var (car p)) (go nextvar))
-	   ((dontfactor var)
+     (setq var2 (car varl) varl (cdr varl) mult 0)
+     (cond ((pointergp var2 (car p)) (go nextvar))
+	   ((dontfactor var2)
 	    (setq factors (cons p (cons 1 factors))
 		  p 1)
 	    (go end)))
-     (cond ((quick-sqfr-check p var)	;QUICK SQFR CHECK BY SUBST.
+     (cond ((quick-sqfr-check p var2)	;QUICK SQFR CHECK BY SUBST.
 	    (setq r (oldcontent p))
 	    (setq p (car r) factors (cons (cadr r)
 					  (cons 1 factors)))
 	    (go nextvar)))
-     (setq r (pderivative p var))
+     (setq r (pderivative p var2))
      (cond ((pzerop r) (go nextvar)))
      (cond ((and modulus (not (pcoefp r))) (pmonicize (cdr r))))
      (setq p (pgcdcofacts p r))
@@ -189,10 +185,6 @@
 		 (cons (pmodroot (cadr x))
 		       (pmodroot1 (cddr x)))))))
 
-(defmvar $savefactors nil "If t factors of ratreped forms will be saved")
-
-(defvar checkfactors () "List of saved factors")
-
 (defun savefactors (l)
   (when $savefactors
     (savefactor1 (car l))
@@ -202,8 +194,8 @@
 (defun savefactor1 (p)
   (unless (or (pcoefp p)
 	      (ptzerop (p-red p))
-	      (member p checkfactors :test #'equal))
-    (push p checkfactors)))
+	      (member p *checkfactors* :test #'equal))
+    (push p *checkfactors*)))
 
 (defun heurtrial1 (poly facs)
   (prog (h j)
@@ -268,8 +260,11 @@
 
 (defmfun $nthroot (p n)
   (if (and (integerp n) (> n 0))
-      (let ((k (pnthrootp (cadr ($rat p)) n)))
+   (let ((r ($rat p)))
+     (if (eql (cddr r) 1)
+      (let ((k (pnthrootp (cadr r) n)))
 	(if k (pdis k) (merror (intl:gettext "nthroot: ~M is not a ~M power") p (format nil "~:r" n))))
+      (merror (intl:gettext "nthroot: ~M is not a polynomial") p)))
     (merror (intl::gettext "nthroot: ~M is not a positive integer") n)))
 
 (defun pnthrootp (p n)
@@ -278,14 +273,14 @@
 (defun pnthroot (poly n)
   (cond ((equal n 1) poly)
 	((pcoefp poly) (cnthroot poly n))
-	(t (let* ((var (p-var poly))
-		  (ans (make-poly var (cquotient (p-le poly) n)
+	(t (let* ((var2 (p-var poly))
+		  (ans (make-poly var2 (cquotient (p-le poly) n)
 				  (pnthroot (p-lc poly) n)))
 		  (ae (p-terms (pquotient (pctimes n (leadterm poly)) ans))))
-	     (do ((p (psimp var (p-red poly))
+	     (do ((p (psimp var2 (p-red poly))
 		     (pdifference poly (pexpt ans n))))
 		 ((pzerop p) ans)
-	       (cond ((or (pcoefp p) (not (eq (p-var p) var))
+	       (cond ((or (pcoefp p) (not (eq (p-var p) var2))
 			  (> (car ae) (p-le p)))
                       (rat-error "pnthroot error (should have been caught)")))
 	       (setq ans (nconc ans (ptptquotient (cdr (leadterm p)) ae)))
@@ -294,10 +289,10 @@
 (defun cnthroot(c n)
   (cond ((minusp c)
 	 (cond ((oddp n) (- (cnthroot (- c) n)))
-	       (t (rat-error "cnthroot error (should have been caught"))))
+	       (t (rat-error "cnthroot error (should have been caught)"))))
 	((zerop c) c)
 	((zerop (cadr (setq c (iroot c n)))) (car c))
-	(t (rat-error "cnthroot error2 (should have been caught"))))
+	(t (rat-error "cnthroot error2 (should have been caught)"))))
 
 
 (defun pabs (x) (cond ((pminusp x) (pminus x)) (t x)))
@@ -316,7 +311,7 @@
 			       (t (pfactor1 a)))))))))
 
 
-(defun ffactor (l fn &aux (alpha alpha))
+(defun ffactor (l fn &aux (*alpha* *alpha*))
   ;;  (declare (special varlist))		;i suppose...
   (prog (q)
      (cond ((and (null $factorflag) (mnump l)) (return l))
@@ -326,10 +321,10 @@
 	   ((and (not gauss)(member 'factored (cdar l) :test #'eq))(return l))
 	   ((and gauss (member 'gfactored (cdar l) :test #'eq)) (return l)))
      (newvar l)
-     (if algfac* (setq varlist (cons alpha (remove alpha varlist :test #'equal))))
+     (if algfac* (setq varlist (cons *alpha* (remove *alpha* varlist :test #'equal))))
      (setq q (ratrep* l))
      (when algfac*
-       (setq alpha (cadr (ratrep* alpha)))
+       (setq *alpha* (cadr (ratrep* *alpha*)))
        (setq minpoly* (subst (car (last genvar))
 			     (car minpoly*)
 			     minpoly*)))
@@ -367,8 +362,13 @@
 			     (algfac*
 			      (cond (modulus (list (car cont) 1))
 				    ((equal (car cont) '(1 . 1)) nil)
-				    ((equal (cdar cont) 1) (list (caar cont) 1))
-				    (t (list (caar cont) 1 (cdar cont) -1))))
+				    (t (let* ((num (caar cont))
+				              (den (cdar cont))
+				              (minusp (pminusp num)))
+				         (when minusp (setq num (pminus num)))
+				         (append (if minusp (list -1 1))
+				                 (if (not (equal num 1)) (list num 1))
+				                 (if (not (equal den 1)) (list den -1)))))))
 			     (t (cfactor (car cont))))
 		       (pfactor11 (psqfr (cadr cont)))
 		       (car p))))))))
@@ -391,7 +391,7 @@
      (cond ((dontfactor (car p)) (return (list p)))
 	   ((and (not (zerop $factor_max_degree)) (> (apply 'max (pdegreevector p)) $factor_max_degree))
 		 (when $factor_max_degree_print_warning
-		   (mformat t "Refusing to factor polynomial ~M because its degree exceeds factor_max_degree (~M)~%" (pdis p) $factor_max_degree))
+		   (mtell (intl:gettext "Refusing to factor polynomial ~M because its degree exceeds factor_max_degree (~M)~%") (pdis p) $factor_max_degree))
 		 (return (list p)))
 	   ((onevarp p)
 	    (cond ((setq factors (factxn+-1 p))
@@ -408,8 +408,8 @@
      (setq factors(if (or algfac* modulus) (list p) ;SQRT(NUM. CONT OF DISC)
 		      (pfactorquad p)))
      (cond ((null factors)(go out)))
-     (when checkfactors
-       (setq factors (heurtrial factors checkfactors))
+     (when *checkfactors*
+       (setq factors (heurtrial factors *checkfactors*))
        (setq *checkagain (cdr factors)))
      out (return (nconc *irreds (mapcan (function pfactorany) factors)))))
 
@@ -418,7 +418,7 @@
 (declare-top (special *hvar *hmat))
 
 (defun pfactorany (p)
-  (cond (*checkagain (let (checkfactors) (pfactor1 p)))
+  (cond (*checkagain (let (*checkfactors*) (pfactor1 p)))
 	((and $homog_hack (not algfac*) (not (onevarp p)))
 	 (let ($homog_hack *hvar *hmat)
 	   (mapcar #'hexpand (pfactor (hreduce p)))))

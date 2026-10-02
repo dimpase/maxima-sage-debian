@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -89,7 +89,7 @@
 
 ;;; THIS TELLS THE EVALUATOR TO KEEP OUT OF POISSON $SERIES.
 
-(defprop mpois (lambda (x) x) mfexpr*)
+(defmspec mpois (x) x)
 
 (defmfun $poisplus (a b)
   (setq a (intopois a) b (intopois b))

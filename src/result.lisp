@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,7 +12,7 @@
 
 (macsyma-module result)
 
-(declare-top (special varlist genvar $ratfac $keepfloat modulus *alpha xv))
+(declare-top (special xv))
 
 (load-macsyma-macros ratmac)
 
@@ -77,8 +77,7 @@
 			    (pexpon*// p2 var nil)) var))
 	(t (list 1 (resultant p1 p2) 1))))
 
-(defmvar $resultant '$subres "Designates which resultant algorithm")
-
+;; FIXME:  This doesn't seem to be used anywhere.
 (defvar *resultlist '($subres $mod $red))
 
 (defun resultant (p1 p2)		;assumes same main var
@@ -263,7 +262,7 @@
 			 (t (go step3))))))))
 
 
-;; *** NOTE THAT MATRIX PRODUCED IS ALWAYS SYMETRIC
+;; *** NOTE THAT MATRIX PRODUCED IS ALWAYS SYMMETRIC
 ;; *** ABOUT THE MINOR DIAGONAL.
 
 (defmfun $bezout (p q var)

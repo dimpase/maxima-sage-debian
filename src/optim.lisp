@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,11 +12,11 @@
 
 (macsyma-module optim)
 
-(declare-top (unspecial args))
-
 (defvar *subexp* (make-array 64 :initial-element nil))
 
-(defmvar $optimprefix '$%)
+(defmvar $optimprefix '$%
+  nil
+  :setting-predicate #'symbolp)
 
 (defmvar $optimwarn t "warns if `optimize' encounters a special form.")
 

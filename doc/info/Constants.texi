@@ -1,3 +1,4 @@
+@c -*- mode: texinfo -*-
 @c -----------------------------------------------------------------------------
 @page
 @node Constants, Lists, Strings, Data Types and Structures
@@ -14,34 +15,78 @@
 @c -----------------------------------------------------------------------------
 
 @c -----------------------------------------------------------------------------
+@anchor{%catalan}
+@defvr {Constant} %catalan
+@vrindex catalan
+@vrindex Catalan's Constant
+
+@code{%catalan} represents Catalan's constant, @math{G}, defined by
+@html
+$$
+G = \sum_{n=0}^\infty {(-1)^n\over (2n+1)^2}
+$$
+@end html
+@ifinfo
+
+@example
+                               inf
+                               ____         n
+                               ╲       (- 1)
+                    %catalan =  ⟩    ──────────
+                               ╱              2
+                               ‾‾‾‾  (2 n + 1)
+                               n = 0
+
+@end example
+
+@end ifinfo
+@tex
+$$G = \sum_{n=0}^\infty {(-1)^n\over (2n+1)^2}$$
+@end tex
+
+(It is also sometimes denoted by @math{C}).
+
+The numeric value of @code{%catalan} is approximately
+0.915965594177219.  (See @urldlmf{25.11.E40}).
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+@c -----------------------------------------------------------------------------
 @anchor{%e}
 @defvr {Constant} %e
-@ifinfo
 @vrindex e
 @vrindex Euler's number
 @vrindex Base of natural logarithm
-@end ifinfo
 
 @code{%e} represents the base of the natural logarithm, also known as Euler's
 number.  The numeric value of @code{%e} is the double-precision floating-point
-value 2.718281828459045d0.
+value 2.718281828459045d0.  (See @urlaands{eqn 4.1.16, 67}, @urlaands{4.1.17, 67}.)
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{%i}
-@defvr {Constant} %i
-@ifinfo
 @vrindex i
 @vrindex Imaginary unit
+@defvr {Constant} %i
+
+@code{%i} represents the imaginary unit, 
+@html
+\(\sqrt{-1}.\)
+@end html
+@ifinfo
+@math{sqrt(- 1).}
 @end ifinfo
+@iftex
+@math{\sqrt{-1}.}
+@end iftex
 
-@code{%i} represents the imaginary unit, @math{sqrt(- 1)}.
-
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
@@ -53,32 +98,51 @@ value 2.718281828459045d0.
 @code{false} represents the Boolean constant of the same name.
 Maxima implements @code{false} by the value @code{NIL} in Lisp.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{%gamma}
-@defvr {Constant} %gamma
-@ifinfo
 @vrindex Euler-Mascheroni constant
-@end ifinfo
+@defvr {Constant} %gamma
 
-The Euler-Mascheroni constant, 0.5772156649015329 ....
+The Euler-Mascheroni constant, 0.5772156649015329.... It is defined by (@urlaands{eqn 6.1.3, 255} and @urldlmf{5.2.ii})
+@html
+$$
+\gamma = \lim_{n \rightarrow \infty} \left(\sum_{k=1}^n {1\over k} - \log n\right)
+$$
+@end html
+@ifinfo
+
+@example
+                                   n
+                                  ====
+                                  \     1
+               %gamma = limit    ( >    - - log(n))
+                        n -> inf  /     k
+                                  ====
+                                  k = 1
+@end example
+
+@end ifinfo
+@tex
+$$\gamma = \lim_{n \rightarrow \infty} \left(\sum_{k=1}^n {1\over k} - \log n\right)$$
+@end tex
+
+
 @c DOUBTLESS THERE IS MORE TO SAY HERE.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{ind}
-@defvr {Constant} ind
-@ifinfo
 @vrindex Indeterminate
-@end ifinfo
+@defvr {Constant} ind
 
 @code{ind} represents a bounded, indefinite result.
 
@@ -90,67 +154,146 @@ Example:
 @c limit (sin(1/x), x, 0);
 @c ===end===
 @example
+@group
 (%i1) limit (sin(1/x), x, 0);
 (%o1)                          ind
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{inf}
-@defvr {Constant} inf
-@ifinfo
 @vrindex Real infinity
-@end ifinfo
+@defvr {Constant} inf
 
 @code{inf} represents real positive infinity.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{infinity}
-@defvr {Constant}  infinity
-@ifinfo
 @vrindex Complex infinity
-@end ifinfo
+@defvr {Constant}  infinity
 
 @code{infinity} represents complex infinity.
 
-@opencatbox
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+
+@c -----------------------------------------------------------------------------
+@anchor{least_negative_float}
+@defvr {Constant} least_negative_float
+The least negative floating-point number in Maxima.  That is, the
+negative floating-point number closest to 0.  It is approximately
+-4.94065e-324, when
+@url{https://en.wikipedia.org/wiki/Subnormal_number,denormal} numbers
+are supported.  Otherwise it is the same as
+@mref{least_negative_normalized_float}.
+
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{least_negative_normalized_float}
+@defvr {Constant} least_negative_normalized_float
+The least negative normalized floating-point number in Maxima.  That
+is, the negative normalized floating-point number closest to 0.  It is
+approximately -2.22507e-308.
+
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{least_positive_float}
+@defvr {Constant} least_positive_float
+The least positive floating-point number in Maxima.  That is, the
+positive floating-point number closest to 0.  It is approximately
+4.94065e-324, when
+@url{https://en.wikipedia.org/wiki/Subnormal_number,denormal} numbers
+are supported.  Otherwise it is the same as
+@mref{least_positive_normalized_float}.
+
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+@anchor{least_positive_normalized_float}
+@defvr {Constant} least_positive_normalized_float
+The least positive normalized floating-point number in Maxima.  That
+is, the positive normalized floating-point number closest to 0.  It is
+approximately 2.22507e-308.
+
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{minf}
-@defvr {Constant} minf
-@ifinfo
 @vrindex Minus infinity
 @vrindex Negative infinity
-@end ifinfo
+@defvr {Constant} minf
 
 @code{minf} represents real minus (i.e., negative) infinity.
 
-@opencatbox
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{most_negative_float}
+@defvr {Constant} most_negative_float
+The most negative floating-point number in Maxima.  It is
+approximately -1.79769e+308.
+
+@opencatbox{Categories:}
+@category{Constants}
+@closecatbox
+@end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{most_positive_float}
+@defvr {Constant} most_positive_float
+The most positive floating-point number in Maxima.  It is
+approximately 1.797693e+308.
+
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{%phi}
-@defvr {Constant} %phi
-@ifinfo
 @vrindex phi
 @vrindex Golden mean
-@end ifinfo
+@defvr {Constant} %phi
 
-@code{%phi} represents the so-called @i{golden mean}, @math{(1 + sqrt(5))/2}.
+@code{%phi} represents the so-called @i{golden mean}, 
+@html
+\((1+\sqrt{5})/2.\)
+@end html
+@ifinfo
+@math{(1 + sqrt(5))/2.}
+@end ifinfo
+@iftex
+@math{(1+\sqrt{5})/2.}
+@end iftex
 The numeric value of @code{%phi} is the double-precision floating-point value
 1.618033988749895d0.
 
@@ -172,13 +315,18 @@ Examples:
 @c ratsimp (%);
 @c ===end===
 @example
+@group
 (%i1) fibtophi (fib (n));
                            n             n
                        %phi  - (1 - %phi)
 (%o1)                  -------------------
                            2 %phi - 1
+@end group
+@group
 (%i2) fib (n-1) + fib (n) - fib (n+1);
 (%o2)          - fib(n + 1) + fib(n) + fib(n - 1)
+@end group
+@group
 (%i3) fibtophi (%);
             n + 1             n + 1       n             n
         %phi      - (1 - %phi)        %phi  - (1 - %phi)
@@ -188,8 +336,11 @@ Examples:
                                       %phi      - (1 - %phi)
                                     + ---------------------------
                                               2 %phi - 1
+@end group
+@group
 (%i4) ratsimp (%);
 (%o4)                           0
+@end group
 @end example
 
 By default, Maxima does not know the algebraic properties of @code{%phi}.
@@ -204,38 +355,46 @@ After evaluating @code{tellrat (%phi^2 - %phi - 1)} and @code{algebraic: true},
 @c ratsimp (e);
 @c ===end===
 @example
+@group
 (%i1) e : expand ((%phi^2 - %phi - 1) * (A + 1));
                  2                      2
 (%o1)        %phi  A - %phi A - A + %phi  - %phi - 1
+@end group
+@group
 (%i2) ratsimp (e);
                   2                     2
 (%o2)        (%phi  - %phi - 1) A + %phi  - %phi - 1
+@end group
+@group
 (%i3) tellrat (%phi^2 - %phi - 1);
                             2
 (%o3)                  [%phi  - %phi - 1]
+@end group
+@group
 (%i4) algebraic : true;
 (%o4)                         true
+@end group
+@group
 (%i5) ratsimp (e);
 (%o5)                           0
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{%pi}
-@defvr {Constant} %pi
-@ifinfo
 @vrindex pi
-@end ifinfo
+@defvr {Constant} %pi
 
 @code{%pi} represents the ratio of the perimeter of a circle to its diameter.
 The numeric value of @code{%pi} is the double-precision floating-point value
 3.141592653589793d0.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
@@ -247,17 +406,15 @@ The numeric value of @code{%pi} is the double-precision floating-point value
 @code{true} represents the Boolean constant of the same name.
 Maxima implements @code{true} by the value @code{T} in Lisp.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{und}
-@defvr {Constant} und
-@ifinfo
 @vrindex Undefined
-@end ifinfo
+@defvr {Constant} und
 
 @code{und} represents an undefined result.
 
@@ -269,11 +426,13 @@ Example:
 @c limit (x*sin(x), x, inf);
 @c ===end===
 @example
+@group
 (%i1) limit (x*sin(x), x, inf);
 (%o1)                          und
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
@@ -297,13 +456,17 @@ Example:
 @c limit(zeroa+x);
 @c ===end===
 @example
+@group
 (%i1) limit(zeroa);
 (%o1)                           0
-(%i2) limit(x+zeroa);
+@end group
+@group
+(%i2) limit(zeroa+x);
 (%o2)                           x
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr
@@ -318,7 +481,7 @@ infinitesimals.
 
 See also @mref{zeroa} and @mrefdot{limit}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Constants}
 @closecatbox
 @end defvr

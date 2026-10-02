@@ -311,7 +311,7 @@ a^v * gamma_incomplete (-v, a);
  *    log(1+a*x), log(x+a), log(x)^2.
  */
 
-/* Algorithm 2.4: Laplace transfom of the Whittaker function
+/* Algorithm 2.4: Laplace transform of the Whittaker function
  *
  * Test for Whittaker W function.  Simplify this if possible, or
  * convert to Whittaker M function.
@@ -326,7 +326,7 @@ a^v * gamma_incomplete (-v, a);
  *        *2f1(u+v+1/2,u-k+1/2;v-k+1;(p-a/2)/(p+a/2))
  */
 
-/* Algorithm 2.5: Laplace transfom of bessel_k(0,a*t)
+/* Algorithm 2.5: Laplace transform of bessel_k(0,a*t)
  *
  * The general algorithm handles the Bessel K function for an order |v|<1.
  * but does not include the special case v=0. Return the Laplace transform:
@@ -507,8 +507,8 @@ n! * exp (- a*v) / v^(n + 1);
 makefact (laplace (u^n * exp (- b*u), u, v));
 n! / (v + b)^(n + 1);
 
-makefact (ratsimp (laplace ((u - a)^n * exp (- b*(u - a)) * unit_step (u - a), u, v)));
-n!/(v + b)^(n + 1) * exp (- a*v);
+laplace ((u - a)^n * exp (- b*(u - a)) * unit_step (u - a), u, v);
+(%e^(a*b)*gamma(n+1))/((v+b)^n*(%e^(a*v+a*b)*v+%e^(a*v+a*b)*b))$
 
 /* general power */
 
@@ -660,6 +660,25 @@ s^((-%i*v)-1)*gamma(%i*v+1);
 assuming (u > -1, laplace (t^(u + v*%i), t, s));
 s^((-%i*v)-u-1)*gamma(%i*v+u+1);
 
+/* Bug 4398 */
+assuming(a > 0, laplace(delta(t - a) * sin(b*t), t, s));
+-(((%e^(2*%i*a*b)-1)*%e^(-(a*s)-%i*a*b)*%i)/2)$
+
+/* Bug in 5.47.0 reported on the mailing-list on 22/01/2025 */
+laplace (cos (t)*unit_step (t-%pi), t, s);
+ -(s/(%e^(%pi*s)*s^2+%e^(%pi*s)))$
+
+/* Test for the pwilt function (examples from the manual) */
+pwilt (exp(-s)*s/(s^3-2*s-s+2), s, t);
+hstep(t-1)*(((t-1)*%e^(t-1))/3-(2*%e^-(2*(t-1)))/9);
+
+pwilt ((s^2+2)/(s^2-1), s, t);
+delta(t)+(3*%e^t)/2-(3*%e^-t)/2;
+
+/* function hstep should be accepted instead of unit_step */
+laplace (cos (t)*hstep (t-%pi), t, s);
+-(s/(%e^(%pi*s)*s^2+%e^(%pi*s)))$
+
 (kill (z),
  declare (z, complex), assume (realpart (z) > -1), 0);
 0;
@@ -679,3 +698,9 @@ done;
 
 (reset(assume_pos),1);
 1;
+
+contexts;
+[initial,global]$
+
+(map('forget, facts()),kill(values), 0);
+0$

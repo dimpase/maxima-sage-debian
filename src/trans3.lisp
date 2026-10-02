@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -272,11 +272,11 @@
 ;;;       F(N):=LAMBDA([U],N*U);
 ;;;       `(LAMBDA (U) (gen-func U 'N)) without extend loaded.
 ;;; II. side effects.
-;;;    A. Those since effects need to be propogated to the environment
+;;;    A. Those side effects need to be propagated to the environment
 ;;;       where the LAMBDA was made. This is difficult to do in the
 ;;;       present translator. e.g.
 ;;;       F(L):=BLOCK([SUM:0],FULLMAP(LAMBDA([U],SUM:SUM+U),L),SUM);
-;;;       every function which guarantees the order of argument evalation
+;;;       every function which guarantees the order of argument evaluation
 ;;;       (MPROG and MPROGN), must translate and expression and get information
 ;;;       about environment propagation.
 ;;;       (PROGN (FULLMAP (PROGN (SET-ENV) '(LAMBDA ...)) L)
@@ -296,7 +296,7 @@
 ;;; be an upward funarg, that it is not possible (wanted)
 ;;; have two different lambda's generated from the same
 ;;; place. e.g. INTERPOLATE(SIN(X^2)=A,X,0,N) (implied lambda
-;;; which is contructed by the translation property for
+;;; which is constructed by the translation property for
 ;;; interpolate. MAP(LAMBDA([U],...),L) is another example)
 ;;; these forms will be called I-LAMBDA's, and will be generated
 ;;; from LAMBDA's by the functions that want to. All this
@@ -312,11 +312,11 @@
 (defun gen-tr-lambda (form &aux arg-info frees t-form dup)
   (unless ($listp (cadr form))
     (tr-format (intl:gettext "error: first argument of lambda expression must be a list; found ~M") (cadr form))
-    (setq tr-abort t)
+    (tr-abort)
     (return-from gen-tr-lambda nil))
   (when (null (cddr form))
     (tr-format (intl:gettext "error: empty body in lambda expression.~%"))
-    (setq tr-abort t)
+    (tr-abort)
     (return-from gen-tr-lambda nil))
   (setq arg-info (mapcar #'(lambda (v)
 			     (cond ((mdefparam v) nil)
@@ -330,11 +330,11 @@
 	     (and (member t arg-info :test #'eq)
 		  (cdr (member t arg-info :test #'eq)))) ;;; the &REST is not the last one.
 	 (tr-format (intl:gettext "error: unsupported argument list ~:M in lambda expression.~%") (cadr form))
-	 (setq tr-abort t)
+	 (tr-abort)
 	 nil)
 	((setq dup (find-duplicate (cdadr form) :test #'eq :key #'mparam))
 	 (tr-format (intl:gettext "error: ~M occurs more than once in lambda expression parameter list") (mparam dup))
-	 (setq tr-abort t)
+	 (tr-abort)
 	 nil)
 	(t
 	 (setq arg-info (member t arg-info :test #'eq) ;; &RESTP
@@ -347,19 +347,15 @@
 			    ,@(cddr form)))
 	       t-form (cdr t-form)
 	       frees (tbound-free-vars (free-lisp-vars t-form)))))
-					; with this info we now dispatch to the various macros forms.
-					; (cadr t-form) is a lambda list. (cddr t-form) is a progn body.
-  (cond ((null (car frees))		; woopie.
-	 (cond ((null arg-info)
-		`($any . (m-tlambda ,@(cdr t-form))))
-	       (t
-		`($any . (m-tlambda& ,@(cdr t-form))))))
-	((null (cadr frees))
-	`($any . (,(cond ((null arg-info) 'm-tlambda&env)
-			 (t               'm-tlambda&env&))
-		   (,(cadr t-form) ,(car frees))
-		   ,@(cddr t-form))))
-	(t
-	 (warn-meval form)
-	 (side-effect-free-check (cadr frees) form)
-	 `($any . (meval ',form)))))
+  (cond ((null (car frees))
+         (let ((tlambda (if arg-info 'm-tlambda& 'm-tlambda)))
+           `($any . (,tlambda ,(cadr t-form) ,@(cddr t-form)))))
+        ((null (cadr frees))
+         (let* ((tlambda (if arg-info 'm-tlambda&env& 'm-tlambda&env))
+                (fvl (car frees))
+                (cfvl (intersection fvl *tr-free-vars-to-capture*)))
+           `($any . (,tlambda (,(cadr t-form) ,fvl ,cfvl) ,@(cddr t-form)))))
+        (t
+         (warn-meval form)
+         (side-effect-free-check (cadr frees) form)
+         (punt-to-meval form))))

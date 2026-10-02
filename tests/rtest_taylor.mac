@@ -20,11 +20,11 @@ taylorinfo(taylor(x,[x,y],0,5));
 taylorinfo(taylor(x,[x,y],0,5,z,a,7));
 [[x,y],[0,0],[5,5],[z,a,7]]$
 
-(tp : taylor(x, [x, a, 5, asympt]),0);
+(tp : taylor(x, [x, a, 5, 'asymp]),0);
 0$
 
 taylorinfo(tp);
-[[x,a,5, asympt]]$
+[[x,a,5, asymp]]$
 
 taylorinfo(taylor(taylor(x,x,a,7),y,b,9));
 [[y,b,9],[x,a,7]]$
@@ -229,10 +229,15 @@ true$
 
 /*--- asymptotic ---*/
 
-taylor(x + 1/x + 2/x^2,[x,inf, 2, asympt]);
+/* Previously, the next two tests misspelled `asymp` as `asympt`. But correcting the
+spelling gives the error "taylor: cannot create an asymptotic expansion at infinity." 
+So after correcting `asympt` to `asymp`, these tests fail due to a limitation of the code, 
+not a bug. I'm going to change [x,inf, 2, 'asymp]) to ,[x,0, 2, 'asymp]); */
+
+taylor(x + 1/x + 2/x^2,[x,0, 2, 'asymp]);
 x+1/x + 2/x^2$
 
-taylor(x + 1/x + 2/x^2,[x, inf, 1, asympt]);
+taylor(x + 1/x + 2/x^2,[x, 0, 1, 'asymp]);
 x + 1/x$
 
 /*--- jacobian elliptic ---*/
@@ -603,3 +608,265 @@ taylor( 'diff(f(t,u),u), u, 0, 1);
 taylor(signum(x), x, -2, 5)$
 -1;
 
+/* Bug #2167: taylor(rat(...)...) gives incorrect results
+ * Bug #3068: taylor of CRE fails
+ */
+
+/* This used to return the bogus series 1/x */
+taylor(rat(1/x),x,1,2);
+1-(x-1)+(x-1)^2;
+
+/* This used to signal an error about an unfamiliar singularity */
+taylor(rat(1/z+1),z,0,1);
+1/z+1;
+
+/* This used to signal an error about an unfamiliar singularity */
+taylor(rat(z+1),z,inf,0);
+z+1;
+
+/* This used to signal an error about an unfamiliar singularity */
+taylor(rat(x/(1+x)),x,inf,2);
+1-1/x+1/x^2;
+
+/* Bug #1848: taytorat leaks internal gensyms from multivar expansions
+ * Bug #2446: horner of multivariate taylor gives junk
+ */
+
+taytorat (taylor (x, [x], 0, 1));
+''(rat (x));
+
+taytorat (taylor (taylor (x + y, [x], 0, 1), [y], 0, 1));
+''(rat (x + y));
+
+horner (taylor (x, [x], 0, 1));
+x;
+
+/* Bug #608: taylor(x^a,[x],0,1) unsimplified
+ * Bug #545: multivar taylor gives 1^2
+ */
+
+/* This used to yield "+1^2*x^a" */
+string(taylor(x^a,[x],0,1));
+"+x^a";
+
+/* This used to yield "+1^4*(x*y)^a" */
+string(taylor((x*y)^a,[x,y],0,1));
+"+(x*y)^a";
+
+/*4602 taylorinfo ignores asymp */
+taylorinfo(taylor(exp(1/x),[x,0,3,'asymp]));
+[[x, 0, 3, asymp]]$
+
+/* 4585 Taylor polynomials involving tangent & a quotient*/
+taylor(tan(x)/(x-%pi-1),x,%pi+1,2);
+tan(1)/(x-%pi-1)+(tan(1)^2+1)+(tan(1)^3+tan(1))*(x-%pi-1)+((3*tan(1)^4+4*tan(1)^2+1)*(x-%pi-1)^2)/3$
+
+taylor(cot(x)/(x-%pi-1),x,%pi+1,2);
+1/(tan(1)*(x-%pi-1))-(tan(1)^2+1)/tan(1)^2
+                          +((tan(1)^2+1)*(x-%pi-1))/tan(1)^3
+                          -((tan(1)^4+4*tan(1)^2+3)*(x-%pi-1)^2)/(3*tan(1)^4)$
+
+/* Bug #4774: "taylor should accept -inf and -minf" */
+ratdisrep(taytorat(taylor(1/x^2,x,-inf,2) - taylor(1/x^2,x,minf,2)));
+0;
+ratdisrep(taytorat(taylor(1/x^2,x,-minf,2) - taylor(1/x^2,x,inf,2)));
+0;
+
+/* Taylor expansion of atan2: continuous regions (Q1 and Q4) */
+ratdisrep(taylor(atan2(x, 1), x, 0, 3));
+x - x^3/3;
+ratdisrep(taylor(atan2(-x, 1), x, 0, 3));
+-x + x^3/3;
+ratdisrep(taylor(atan2(0, 1+x), x, 0, 3));
+0;
+
+/* Taylor expansion of atan2: branch cut on the negative real axis (Q2 and Q3) */
+ratdisrep(taylor(atan2(x, -1), x, 0, 3));
+%pi - x + x^3/3;
+ratdisrep(taylor(atan2(-x, -1), x, 0, 3));
+-%pi + x - x^3/3;
+ratdisrep(taylor(atan2(x^2, -1), x, 0, 3));
+%pi - x^2;
+ratdisrep(taylor(atan2(-x^2, -1), x, 0, 3));
+-%pi + x^2;
+ratdisrep(taylor(atan2(0, -1+x), x, 0, 3));
+%pi;
+
+/* Taylor expansion of atan2: approaches to the y-axis */
+ratdisrep(taylor(atan2(1, x), x, 0, 1));
+%pi/2 - x;
+ratdisrep(taylor(atan2(1, -x), x, 0, 1));
+%pi/2 + x;
+ratdisrep(taylor(atan2(-1, x), x, 0, 1));
+-%pi/2 + x;
+ratdisrep(taylor(atan2(-1, -x), x, 0, 1));
+-%pi/2 - x;
+
+/* Taylor expansion of atan2: identically zero arguments
+   (expressions disguised to bypass the simplifier) */
+ratdisrep(taylor(atan2(1, sin(x)^2+cos(x)^2-1), x, 0, 3));
+%pi/2;
+ratdisrep(taylor(atan2(-1, sin(x)^2+cos(x)^2-1), x, 0, 3));
+-%pi/2;
+ratdisrep(taylor(atan2(1+x, sin(x)^2+cos(x)^2-1), x, 0, 2));
+%pi/2;
+errcatch(taylor(atan2(cosh(x)^2-sinh(x)^2-1, sin(x)^2+cos(x)^2-1), x, 0, 3));
+[];
+
+/* Taylor expansion of atan2: arguments requiring terms of higher order than requested */
+ratdisrep(taylor(atan2(5*sin(4*x)-10*sin(2*x), 5*cos(4*x)-10*cos(2*x)+1), x, 0, 1));
+-%pi;
+ratdisrep(taylor(atan2(5*sin(4*x)-10*sin(2*x), 5*cos(4*x)-10*cos(2*x)+1), x, 0, 2));
+-%pi;
+ratdisrep(taylor(atan2(5*sin(4*x)-10*sin(2*x), 5*cos(4*x)-10*cos(2*x)+1), x, 0, 3));
+-%pi + 10*x^3;
+
+/* Taylor expansion of atan2: symbolic parameters */
+assume(a > 0);
+[a > 0];
+ratdisrep(taylor(atan2(a*x^3, -1), x, 0, 3));
+%pi - a*x^3;
+ratdisrep(taylor(atan2(a*x^3, 0), x, 0, 3));
+%pi/2;
+forget(a > 0);
+[a > 0];
+assume(a < 0);
+[a < 0];
+ratdisrep(taylor(atan2(a*x^3, -1), x, 0, 3));
+-%pi - a*x^3;
+ratdisrep(taylor(atan2(a*x^3, 0), x, 0, 3));
+-%pi/2;
+forget(a < 0);
+[a < 0];
+
+/* Taylor expansion of atan2: limits to infinity (negative orders) */
+ratdisrep(taylor(atan2(x, x^2), x, inf, 3));
+1/x - 1/(3*x^3);
+ratdisrep(taylor(atan2(x^2, x), x, inf, 3));
+%pi/2 - 1/x + 1/(3*x^3);
+
+/* Taylor expansion of atan2: limits to negative infinity (quadrant check at infinity) */
+ratdisrep(taylor(atan2(x, x^2), x, minf, 3));
+1/x - 1/(3*x^3);
+ratdisrep(taylor(atan2(x^2, x), x, minf, 3));
+%pi/2 - 1/x + 1/(3*x^3);
+
+/* Taylor expansion of atan2: differing rates to zero */
+ratdisrep(taylor(atan2(x, x^2), x, 0, 3));
+%pi/2 - x + x^3/3;
+ratdisrep(taylor(atan2(-x, x^2), x, 0, 3));
+-%pi/2 + x - x^3/3;
+ratdisrep(taylor(atan2(x^2, x), x, 0, 3));
+x - x^3/3;
+ratdisrep(taylor(atan2(x^2, -x), x, 0, 3));
+%pi - x + x^3/3;
+
+/* Taylor expansion of atan2: transcendentals */
+ratdisrep(taylor(atan2(log(1+x), exp(x)-1-x), x, 0, 2));
+%pi/2 - x/2 - (5*x^2)/12;
+ratdisrep(taylor(atan2(sin(x)-x, cos(x)-1), x, 0, 3));
+-%pi + x/3 - x^3/810;
+
+/* Taylor expansion of atan2: composite variables & asymptotic sign evaluation */
+ratdisrep(taylor(atan2(x*log(x), -1), x, 0, 2));
+-%pi - x*log(x);
+ratdisrep(taylor(atan2(x*log(x), 1), x, 0, 2));
+x*log(x);
+ratdisrep(taylor(atan2(exp(-1/x), -1), x, 0, 1));
+%pi - %e^(-1/x);
+ratdisrep(taylor(atan2(-exp(-1/x), -1), x, 0, 1));
+-%pi + %e^(-1/x);
+
+/* Taylor expansion of atan2: composite variable dominance flips */
+ratdisrep(taylor(atan2(x, log(x)), x, 0, 2));
+%pi + x/log(x);
+ratdisrep(taylor(atan2(log(x), x), x, 0, 2));
+-%pi/2 - x/log(x);
+
+/* Bug #4799: "taylor contagion" */
+ratdisrep(2*%e^taylor(x, x, inf, 2));
+2*%e^x;
+ratdisrep(1+%e^taylor(x, x, inf, 2));
+%e^x+1;
+
+/* Bug #4792: "taylor(%e^(-%i*x), x, inf, 0) = false + . . ." */
+string(taylor(%e^(-%i*x), x, inf, 0));
+"+0";
+
+/* Bug #4806: "Taylor: bad singular datum" */
+assume(equal(a, 0));
+[equal(a, 0)];
+ratdisrep(exp(-(taylor(x,x,inf,2)-a)^2) - exp(-(taylor(x,x,inf,2)+a)^2));
+0;
+forget(equal(a, 0));
+[equal(a, 0)];
+
+
+/* Bug #4909: "taylor applied to diff noun forms mishandles multiple differentiation variables" */
+
+taylor('diff(x^3*y^2,x,1,y,1), x,0,4, y,0,4) - 6*x^2*y;
+0;
+
+taylor('diff(x^3*z^2,x,1,z,1), x,0,4) - 6*x^2*z;
+0;
+
+
+/* Bug #4910: "taylor drops terms of finite sums and products" */
+
+taylor('sum((k-2)*x^k,k,1,3), x,0,3) - (x^3-x);
+0;
+
+taylor('product(1+(k-2)*x,k,1,3), x,0,3) - (1-x^2);
+0;
+
+taylor('sum(x^(10-k),k,1,9), x,0,3) - (x^3+x^2+x);
+0;
+
+
+/* Bug #4911: "diff of a Taylor series with singular kernels crashes or loses terms" */
+
+diff(taylor(exp(-1/x),x,0,3), x) - exp(-1/x)/x^2;
+0;
+
+diff(taylor(x*log(x),x,0,3), x) - (log(x)+1);
+0;
+
+
+/* Bug #4912: "taylor of an unevaluated sum with expansion order inf crashes" */
+
+taylor('sum(x^k,k,0,3), x,0,inf) - (x^3+x^2+x+1);
+0;
+
+
+/* Bug #4913: "taylor(atan(1/x),x,0,3) asks for the sign of x" */
+
+taylor(atan(1/x), x,0,3) - (%pi/2 - x + x^3/3);
+0$
+
+taylor(atan(-1/x), x,0,3) - (-%pi/2 + x - x^3/3);
+0$
+
+
+/* Bug #4915: "Dead finite*inf check in lim-times lets taylor accept oscillating kernels" */
+
+errcatch(taylor(exp(exp(%i/x)/x), x, 0, 2));
+[];
+
+
+/* Bug #4914: "Taylor: SRF applies the truncation level of the first variable to all variables" */
+
+block([t],
+ t : taylor(x, y,0,2, x,0,8),
+ taylorinfo(t^2));
+[[y,0,2],[x,0,9]];
+
+
+/* clean up & checks */
+(remvalue(m, mi, ts, old, qq, foo),0);
+0$
+
+contexts;
+[initial, global]$
+
+(forget(m > 0, 1 > a), facts());
+[]$

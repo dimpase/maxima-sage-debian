@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -15,13 +15,11 @@
 (declare-top
  ;; evaluate for declarations
  (special
-  linel			;Width of screen.
-  ttyheight		;Height of screen.
 
   width height depth maxht maxdp level size lop rop break right
   bkpt bkptwd bkptht bkptdp bkptlevel bkptout lines 
-  oldrow oldcol in-p
-  mratp $aliases))
+  oldrow oldcol
+  mratp))
 
 ;;; macros for the DISPLA package.
 

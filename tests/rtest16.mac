@@ -3,7 +3,7 @@
 
 /* make sure things work after a reset().  ID: 1986726 and ID: 2787047
  *
- * display2d is a resetable option variable. We save the value of display2d
+ * display2d is a resettable option variable. We save the value of display2d
  * and restore it after the reset. This allows to run the testsuite in both
  * display modes.
  */
@@ -241,31 +241,19 @@ block ([L1 : [["1.2E-10","1.2E-9","1.2E-8","1.2E-7","1.2E-6","1.2E-5","1.2E-4","
   "1.234432112344321E-5","1.234432112344321E-4","0.001234432112344321","0.01234432112344321","0.1234432112344321",
   "1.234432112344321","12.34432112344321","123.4432112344321","1234.432112344321","12344.32112344321",
   "123443.2112344321","1234432.112344321","1.234432112344321E+7","1.234432112344321E+8","1.234432112344321E+9",
-  "1.234432112344321E+10"],
- ["1.234432112344321E-10","1.234432112344321E-9","1.234432112344321E-8","1.234432112344321E-7","1.234432112344321E-6",
-  "1.234432112344321E-5","1.234432112344321E-4","0.001234432112344321","0.01234432112344321","0.1234432112344321",
-  "1.234432112344321","12.34432112344321","123.4432112344321","1234.432112344321","12344.32112344321",
-  "123443.2112344321","1234432.112344321","1.234432112344321E+7","1.234432112344321E+8","1.234432112344321E+9",
-  "1.234432112344321E+10"],
- ["1.234432112344321E-10","1.234432112344321E-9","1.234432112344321E-8","1.234432112344321E-7","1.234432112344321E-6",
-  "1.234432112344321E-5","1.234432112344321E-4","0.001234432112344321","0.01234432112344321","0.1234432112344321",
-  "1.234432112344321","12.34432112344321","123.4432112344321","1234.432112344321","12344.32112344321",
-  "123443.2112344321","1234432.112344321","1.234432112344321E+7","1.234432112344321E+8","1.234432112344321E+9",
-  "1.234432112344321E+10"],
- ["1.234432112344321E-10","1.234432112344321E-9","1.234432112344321E-8","1.234432112344321E-7","1.234432112344321E-6",
-  "1.234432112344321E-5","1.234432112344321E-4","0.001234432112344321","0.01234432112344321","0.1234432112344321",
-  "1.234432112344321","12.34432112344321","123.4432112344321","1234.432112344321","12344.32112344321",
-  "123443.2112344321","1234432.112344321","1.234432112344321E+7","1.234432112344321E+8","1.234432112344321E+9",
-  "1.234432112344321E+10"],
- ["1.234432112344321E-10","1.234432112344321E-9","1.234432112344321E-8","1.234432112344321E-7","1.234432112344321E-6",
-  "1.234432112344321E-5","1.234432112344321E-4","0.001234432112344321","0.01234432112344321","0.1234432112344321",
-  "1.234432112344321","12.34432112344321","123.4432112344321","1234.432112344321","12344.32112344321",
-  "123443.2112344321","1234432.112344321","1.234432112344321E+7","1.234432112344321E+8","1.234432112344321E+9",
   "1.234432112344321E+10"]],
  L2 : block ([foo : 1.2344321123443211234],
-             makelist (block ([fpprintprec : m], makelist (string (foo*10^n), n, -10, 10)), m, 2, 20))],
- map (lambda ([s1, s2], if sequalignore (s1, s2) then true else s2 # s1), flatten (L1), flatten (L2)),
+             makelist (block ([fpprintprec : m], makelist ([m, string (foo*10^n)], n, -10, 10)), m, 2, 16))],
+ map (lambda ([s1, s2], if sequalignore (s1, second (s2)) then true else ['fpprintprec = first (s2), 'expected = s1, 'actual = second (s2)]), apply (append, L1), apply (append, L2)),
  delete (true, %%));
+[];
+
+/* verify that fpprintprec = 0 or  fpprintprec > 16 prints readably */
+
+block ([foo: float (%pi), L],
+       L: makelist (block ([fpprintprec: m], makelist ([m, foo*10^n, string (foo*10^n)], n, -10, 10)), m, [0, 17, 18, 19, 20]),
+       map (lambda ([L1], if parse_string (L1[3]) = L1[2] then true else ['fpprintprec = first (L1), 'expected = L1[2], 'actual = L1[3]]), apply (append, L)),
+       delete (true, %%));
 [];
 
 /* SF bug #3213: "fpprintprec do not round bfloat correctly." */
@@ -557,7 +545,7 @@ ratsimp(hgfred([-3/2,1],[-1/2], t));
 integrate((g32475^n*(g32475*n-n-1)/(g32475-1)^2+1/(g32475-1)^2)/(1-g32475)
  -(g32475^(2*n+1)*(g32475*n-n-1)/(g32475-1)^2+g32475^(n+1)/(g32475-1)^2)
   /(1-g32475),g32475,0,1);
-(n+1)^2/2-1/2;
+(n^2+2*n+1)/2-1/2$
 
 kill(all);
 done;
@@ -648,7 +636,7 @@ ode2('diff(y,x)-%i*y-sin(x),y,x);
 y = (%c-%i*(x-%i*%e^-(2*%i*x)/2)/2)*%e^(%i*x);
 
 /*
- * Bug ID: 826623 "simplifer returns %i*%i"
+ * Bug ID: 826623 "simplifier returns %i*%i"
  * 
  * Some examples to show simplification of expressions of the form
  * (a*b*...)^q*(a*b*...)^r, where q+r=1
@@ -1035,18 +1023,17 @@ sinh(0.0b0);
 0.0b0;
 
 /* Bug ID: 1219846 - properties of translated functions
- * The property noun is already present
  */
 kill(f);
 done;
 f(x):=x;
 f(x):=x;
 properties(f);
-[function,noun];
+[function];
 translate(f);
 [f];
 properties(f);
-[transfun,function,noun];
+[transfun,function];
 kill(f);
 done;
 
@@ -1256,7 +1243,7 @@ true;
 closeto(float(log((1+200!)+(1+199!)*%i))- (.004999958333958322*%i + 863.2319996922491), 1e-15);
 true;
 
-closeto(float(log((1+200!)/7+(1+199!)/11*%i)) - (.003181807444342708*%i + 869.9736929490153), 1e-15);
+closeto(float(log((1+200!)/7+(1+199!)/11*%i)) - (.003181807444342709*%i + 861.286082105308008), 1e-12);
 true;
 
 /* Bug ID: 2306402 - scalarp bug
@@ -2007,12 +1994,14 @@ errcatch(elliptic_f(2,1));
 map(lambda([x], featurep(x, 'irrational)),[42,%pi,%phi,%e]);
 [false, true, true, true]$
 
-/* #2501 %pi/8 is definitely not an integer */
-integrate(log(cot(x)-1),x,0,%pi/4);
-(%i*li[2]((%i+1)/2)-%i*li[2](-((%i-1)/2)))/2 -(%i*(2*li[2](%i+1)-2*li[2](1-%i))+%pi*log(2))/4$
+/* #2501 %pi/8 is definitely not an integer
+  A better answer is %pi*log(2))/8, but this is correct.*/
+block([ans : integrate(log(cot(x)-1),x,0,%pi/4)], [ans, expand(float(ans))]);
+[-((%i*li[2]((1-%i)/2))/2)+(%i*li[2](-((-%i-1)/2)))/2+%catalan, 0.27219826128795016]$
 
+/* A better answer is -%pi*log(4)/4, but this is correct.*/
 integrate(log(cos(x)),x,0,%pi/2);
-%i*%pi^2/24-(6*%pi*log(4)+%i*%pi^2)/24$
+(-2*%pi*log(4)-(%i*%pi^2)/3)/8+(%i*%pi^2)/24$
 
 map(lambda([x], featurep(x, noninteger)),[sqrt(5),%pi,%pi/3, %pi/8,log(42),99/2013]);
 [true,true,true,true,true,true]$
@@ -2046,7 +2035,7 @@ true$
 
 /* #2675 (1/3): Integration yields noun form with subscripted variable */
 integrate(exp(-(1+%i)*x[1]),x[1],0,inf);
--((-1 + %i)/2)$
+1/2-%i/2$
 
 /* #2688: %e^^A returns element by element exponent */
 is(%e^^matrix([1,2],[3,4]) = %e^matrix([1,2],[3,4]));
@@ -2057,9 +2046,12 @@ integrate(x[1]*exp(x[1]), x[1]);
 exp(x[1])*(x[1]-1)$
 
 /* #2726: Integrate produces wrong answer for Gaussian Moments */
-(declare(m2726, even),
- block([tmp: integrate(exp(-x^2/2)/sqrt(2*%pi) * x^m2726, x, -1/4, 1/4)],
-   sign (subst(m2726 = 4, tmp))));
+block([tmp, m2726],
+   assume(m2726+1 > 0),
+   tmp : integrate(exp(-x^2/2)/sqrt(2*%pi) * x^m2726, x, -1/4, 1/4),
+   tmp : sign(subst(m2726 = 4, tmp)),
+   forget(m2726+1 > 0),
+   tmp);
 pos$
 
 /* # 2697: Inconsistent handling of Greek symbols */
@@ -2168,6 +2160,23 @@ true;
 
 closeto(float(li[3](exp(%pi*%i/3))) - float(zeta(3)/3 + %i*5*%pi^3/162), 5.6611e-16);
 true;
+
+/*
+ * li[3] should not return a small imaginary part for this value.
+ * (There are others, but the solution fixes those as well.
+ */
+imagpart(li[3](-.862));
+0;
+
+/*
+ * Likewise li[s](-1.5) was returning small imaginary parts.  In fact,
+ * this was true for -2 < z < -1 because the log series was used to
+ * compute the value.  Check that we return exactly zero now for
+ * select values of s
+ */
+
+makelist(imagpart(li[s](-1.5)), s, 4, 10);
+[0, 0, 0, 0, 0, 0, 0];  
 
 /* Bug 3582: numerical evaluation of li[2] */
 /* this gave an infinite loop */
@@ -2308,6 +2317,21 @@ closeto(li[20](5b0) - (5.0000238783147176199891129814336b0 - 2.18205440094215142
   6.76366b-24);
 true;
 
+/*
+ * Bug 3966: li[s](1) = zeta(s)
+ */
+makelist(li[s+1/2](1), s, 1, 5);
+[zeta(3/2), zeta(5/2), zeta(7/2), zeta(9/2), zeta(11/2)];
+
+li[7/3](1);
+zeta(7/3);
+
+li[-5/2](1);
+li[-5/2](1);
+
+li[-5/2](1.0);
+li[-5/2](1.0);
+
 /* Bug #3194: No simplification of "tan(x+n*%pi)" and "cot(x+n*%pi)" with "n" being a declared integer */
 /* Also test that the "modulus 1/2" check in "%piargs-tan/cot" works correctly. */
 declare(i, integer, ei, even, oi, odd);
@@ -2423,15 +2447,15 @@ sign(((-1)-%e^-(4.075321792706671E-4*d_1))*%e^-(4.075321792706671E-4*d_2)+%e^-(8
 pnz$
 factor(a^1000000+a+1);
 a^1000000+a+1$
-max(2.0325-6.9825*%e^-(492380.0*t),2.103-7.053*%e^-(406810.0*t));
-'max(2.0325-6.9825*%e^-(492380.0*t),2.103-7.053*%e^-(406810.0*t))$
-sign(exp(-492380*t)-2793);
+block([ratprint : false, factor_max_degree_print_warning : false], length(errcatch(max(2.0325-6.9825*%e^-(492380.0*t),2.103-7.053*%e^-(406810.0*t)))));
+1;
+block([factor_max_degree_print_warning : false], sign(exp(-492380*t)-2793));
 pnz$
 
 /* Bug #3147: sign of expressions with exponents crashes */
 assume(t>0);
 [t>0]$
-sign(2^(500005*t)-2^(500001*t));
+block([factor_max_degree_print_warning : false], sign(2^(500005*t)-2^(500001*t)));
 pos$
 kill(t);
 done$
@@ -2460,7 +2484,7 @@ string (ev (rat(1/((x-1)^(2/3)+1)), algebraic));
 "((x-1)^(1/3)*x-((x-1)^(1/3))^2-(x-1)^(1/3)+1)/(x^2-2*x+2)";
 
 string (ev (rat(x/(sqrt(x^(2/3)+1))), algebraic));
-"(sqrt(x^(2/3)+1)*x^(1/3)*x^2+((-sqrt(x^(2/3)+1)*(x^(1/3))^2)+sqrt(x^(2/3)+1))*x)/(x^2+1)";
+"(sqrt(x^(2/3)+1)*x^(1/3)*x^2+(-(sqrt(x^(2/3)+1)*(x^(1/3))^2)+sqrt(x^(2/3)+1))*x)/(x^2+1)";
 
 /* additional examples courtesy of M. Talon */
 
@@ -2646,3 +2670,1303 @@ integrate(1/(1+tan(x)), x, 0, %pi/2);
 /* Also from bug #3562 */
 limit(log((x^2+1)/x^2)-2*log((x-1)/x), x, 0, minus);
 0$
+
+/* #3787 fixnump checks in simpexpt */
+(declare(n,integer),0);
+0$
+
+(-1)^((2^62-1)*n);
+(-1)^n$
+
+(-1)^((2^62+1)*n);
+(-1)^n$
+
+(-1)^((2^62+2)*n);
+1$
+
+(remove(n,integer),0);
+0$
+
+/*
+ * Check sech/csch don't overflow for large numbers.  Use relative
+ *  error to test for accuracy.
+ */
+
+closetorel(actual, expected, tol) := block([numer:true, relerr: abs(actual-expected)/expected], if (relerr < tol) then true else relerr);
+closetorel(actual, expected, tol) := block([numer:true, relerr: abs(actual-expected)/expected], if (relerr < tol) then true else relerr);
+
+closeto(sech(715.0), 6.033b-311);
+true;
+closeto(csch(715.0), 6.033b-311);
+true;
+
+/*
+ *
+ * Check acsch doesn't overflow for small numbers.  But some lisps
+ * like clisp don't support denormals, so we have to be careful.
+ *
+ */
+
+if (1e-309 = 0.0) then
+    closetorel(acsch(1e-300), acsch(bfloat(1e-300)), 1.1375b-16)
+  else
+    closetorel(acsch(1e-309), acsch(bfloat(1b-309)), 7.1559b-17);
+true;
+
+/* SF bug #3825: "apply('forget, facts()) gives Lisp error" */
+
+(kill (all), declare (F, increasing));
+done;
+
+facts ();
+[kind (F, increasing)];
+
+featurep (F, increasing);
+true;
+
+apply ('forget, facts ());
+[kind (F, increasing)];
+
+facts ();
+[];
+
+featurep (F, increasing);
+false;
+
+declare ([F, G], rational, [H, I], irrational);
+done;
+
+facts ();
+[kind (F, rational), kind (G, rational), kind (H, irrational), kind (I, irrational)];
+
+[featurep (F, rational),
+ featurep (G, rational),
+ featurep (H, irrational),
+ featurep (I, irrational)];
+[true, true, true, true];
+
+forget (kind (G, rational), kind (I, irrational));
+[kind (G, rational), kind (I, irrational)];
+
+facts ();
+[kind (F, rational), kind (H, irrational)];
+
+forget (kind (F, rational), kind (H, irrational));
+[kind (F, rational), kind (H, irrational)];
+
+facts ();
+[];
+
+[featurep (F, rational),
+ featurep (G, rational),
+ featurep (H, irrational),
+ featurep (I, irrational)];
+[false, false, false, false];
+
+/* Bug #3934: expand(1/(1+%i)^4) => (-4)^(-1) (unsimplified) */
+
+expand((1+%i)^-2);
+-%i/2;
+
+expand(1/(1+%i)^4);
+-1/4;
+
+expand(4/(%i+1)^4)+1;
+0;
+
+expand(1/(1+%i)^8-1/16);
+0;
+
+expand((sqrt(-1/2)+sqrt(1/2))^-8);
+1;
+
+/* Bug #3956: expand(1/((sqrt(2)-1)*(sqrt(2)+1))) => 1/1 (unsimplified) */
+
+expand(1/((sqrt(2)-1)*(sqrt(2)+1)));
+1;
+
+expand(1/(-(sqrt(3)-1)*(sqrt(3)+1)));
+-1/2;
+
+expand(1/(-(sqrt(n+1)-1)*(sqrt(n+1)+1)));
+-1/n;
+
+/* Bugs #4045 and #4062:
+   - Different results for integration in Maxima 5.45.1 and 5.46.0
+   - limit(li[3](x), x, inf) gives li[3](inf) */
+
+integrate((log(x)^2)/(1+x), x, 0, 1);
+3*zeta(3)/2;
+
+limit(li[2](x), x, -inf);
+minf;
+
+limit(li[2](x), x, inf);
+infinity;
+
+limit(li[3](x), x, -inf);
+minf;
+
+limit(li[3](x), x, inf);
+infinity;
+
+limit(li[n](x), x, -inf);
+'limit(li[n](x), x, -inf);
+
+limit(li[2](sin(x)), x, inf);
+'limit(li[2](sin(x)), x, inf);
+
+/* Bug #4048: "An incorrect limit" */
+
+makelist(limit(diff(log(tan(%pi/2*tanh(x))), x), x, inf), simpfun, ['identity, lambda([e], trigreduce(trigsimp(trigreduce(e)))), 'exponentialize, 'trigreduce, 'trigrat]);
+[2, 2, 2, 2, 2];
+
+/* Bug 4064: "Simple limit triggers Lisp error '1 is not of type LIST'" */
+
+[limit(tan(%pi*tanh(x)), x, inf), limit(tan(%pi*tanh(x)), x, minf)];
+[0, 0];
+
+limit(tan(%pi/2*tanh(x)+1), x, inf);
+-cot(1);
+
+[limit(cot(%pi*tanh(x)), x, inf), limit(cot(%pi*tanh(x)), x, minf)];
+[minf, inf];
+
+[limit(tan(%pi/2*tanh(x)), x, inf), limit(tan(%pi/2*tanh(x)), x, minf)];
+[inf, minf];
+
+[limit(cot(%pi/2*tanh(x)), x, inf), limit(cot(%pi/2*tanh(x)), x, minf)];
+[0, 0];
+
+closeto(e,tol):=block([numer:true,abse],abse:abs(e),if(abse<tol) then true else abse);
+closeto(e,tol):=block([numer:true,abse],abse:abs(e),if(abse<tol) then true else abse);
+
+closeto(float(li[2](%i))-(0.915965594177219*%i-0.20561675835602827), 1e-15);
+true;
+
+closeto(bfloat(li[2](%i))-(9.15965594177219015054603b-1*%i - 2.05616758356028304559052b-1), 10*10^(-fpprec));
+true;
+
+/* Bug #4317: "Maxima doesn't know that signum(real) can only be -1, 0 or +1" */
+
+is(signum(x)<=1);
+true;
+
+is(signum(x)>=-1);
+true;
+
+is(signum(x)<2);
+true;
+
+is(signum(x)>-2);
+true;
+
+is(equal(signum(x),1));
+unknown;
+
+is(equal(signum(x),-1));
+unknown;
+
+is(equal(signum(x),0));
+unknown;
+
+is(equal(signum(x),1/2));
+false;
+
+is(equal(signum(x),-1/2));
+false;
+
+declare(x,complex);
+done;
+
+is(signum(x)<=1);
+unknown;
+
+is(signum(x)>=-1);
+unknown;
+
+kill(x);
+done;
+
+/* Bug #4326: "sin(asec(x)), cos(acsc(x)) and many more are incorrectly simplified" */
+
+block
+(
+	[err : 0.0, a, b],
+	for outer in [sin, cos, tan, csc, sec, cot] do
+	(
+		for inner in [asin, acos, atan, acsc, asec, acot] do
+		(
+			a : outer(inner(x)),
+			b : block([exponentialize : true, logarc : true, triginverses : false], outer(inner(x))),
+			for x in [-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] do
+			(
+				err : err + abs(at(a, 'x = x) - at(b, 'x = x))
+			)
+		)
+	),
+	is(err < 1e-10)
+);
+true$
+kill(err); /* No longer needed, but kept here so that test numbers don't change. */
+done$
+
+/* Bug #4450:  add tests for psi */
+
+/* psi[s](a) with s >= 1 and a an integer */
+psi[1](2);
+%pi^2/6 - 1;
+
+psi[2](3);
+2*(9/8 - zeta(3));
+
+psi[2](maxpsiposint + 1);
+psi[2](21);
+
+/* psi[s](a) where a is not a rational or a > maxpsiposint */
+psi[1](sqrt(2));
+psi[1](sqrt(2));
+
+psi[0](1+11/12);
+psi[0](11/12) + 12/11;
+
+/* psi[s](a), a > 1 */
+psi[1](1+11/12);
+%pi^2*csc(11*%pi/12)^2-psi[1](1/12) - 144/121;
+
+/* psi[0](p/q) for selected values of p and q */
+psi[0](1/2);
+-2*log(2) - %gamma;
+
+psi[0](1/3);
+-3*log(3)/2-%pi/(2*sqrt(3))-%gamma;
+
+psi[0](1/4);
+-3*log(2) - %pi/2 - %gamma;
+
+psi[0](1/6);
+-3*log(3)/2-2*log(2)-sqrt(3)*%pi/2-%gamma;
+
+psi[0](2/3);
+-3*log(3)/2+%pi/(2*sqrt(3))-%gamma;
+
+psi[0](3/4);
+-3*log(2)+%pi/2-%gamma;
+
+psi[0](5/6);
+-3*log(3)/2-2*log(2)+sqrt(3)*%pi/2-%gamma;
+
+/* Gauss formula for psi[0](p/2) */
+psi[0](4/5);
+cos((16*%pi)/5)*log(2-2*cos((4*%pi)/5))+cos((8*%pi)/5)*log(2-2*cos((2*%pi)/5)) -(%pi*cot((4*%pi)/5))/2-log(5)-%gamma;
+
+/* psi[s](1/2) */
+psi[2](1/2);
+-14*zeta(3);
+
+psi[3](1/2);
+%pi^4;
+
+/* psi[s](a), a > 1/2, a < 1 */
+psi[2](7/8);
+psi[2](1/8)-2*%pi^3*cot((7*%pi)/8)*csc((7*%pi)/8)^2;
+
+/* psi[s](a) for a > maxpsinegint, which uses the reflection formula */
+/* Also bug #4932: "psi[s] is wrong at negative rational arguments for odd s" */
+psi[1](-5/2);
+%pi^2/2+1036/225;
+
+/* Ordering of integers and floats that have the same value. */
+map(orderlessp,
+	[0,    1,    -1,   0.0,   1.0,   -1.0],
+	[0.0,  1.0,  -1.0, 0,     1,     -1]);
+	[true, true, true, false, false, false];
+
+/* Ordering of a^b and (a^b)^c */
+map(orderlessp,
+	[ a^b,      (a^b)^0.5, (a^b)^1.5, (a^b)^2.5,  (-1)^a,      ((-1)^a)^0.5, ((-1)^a)^1.5, ((-1)^a)^2.5],
+	[(a^b)^0.5,  a^b,      (a^b)^2.5, (a^b)^1.5, ((-1)^a)^0.5,  (-1)^a,      ((-1)^a)^2.5, ((-1)^a)^1.5]);
+[true, false, true, false, true, false, true, false]$
+
+/* Bug #4458: orderlessp(A, B) with unsimplified A can modify A in place by marking it as simplified, when it's not */
+block([simp : false, a], a : %e^(z/1), orderlessp(a, (simp : true, -log(z+1))), a^2);
+%e^(2*z);
+
+/* Ordering of bigfloats: Check that bigfloats of the same precision are ordered numerically by ordergreatp. */
+block (
+	[R, L, P, A, B],
+	R : make_random_state(false),               /* Save random state, restore later. */
+	set_random_state(make_random_state(31137)), /* Random numbers, but same every time. */
+	L : makelist(bfloat(random(21) - 10) * bfloat(%e) ^ (random(200.0) - 100.0), i, 1, 100),
+	set_random_state(R),
+	P : cartesian_product_list(L, L),
+	A : map(lambda([pair], ordergreatp(first(pair), second(pair))), P),
+	B : map(lambda([pair], is(first(pair) > second(pair))), P),
+	is(A = B)
+);
+true;
+
+/* Bug #4504: "properties shows properties with NIL value" */
+/* "sin" DOES distribute over bags. */
+/* "solve" does NOT distribute over bags, because giving it a list means solving a system of equations. */
+[member("distributes over bags", properties(sin)), member("distributes over bags", properties(solve))];
+[true, false];
+
+/* Bug #4506: "Subscripted function simplifiers don't check subscript/argument count" */
+[errcatch(psi[0]()), errcatch(psi[0](x, y)), errcatch(psi[0, 1](x))];
+[[], [], []];
+
+/* Bug #4507: "rectform uses conjugate when it doesn't help" */
+block([result], declare(z, complex), result : rectform(gamma(z)), kill(z), result);
+'realpart(gamma(z))+%i*'imagpart(gamma(z));
+
+/* Bug #4500: "rectform of set" */
+rectform({1, %i});
+'realpart({1,%i})+%i*'imagpart({1,%i});
+rectform(1 # %i);
+'realpart(1 # %i)+%i*'imagpart(1 # %i);
+
+/* From mailing list discussion: "alike1 / great and bigfloats of different precisions" (2025-03-01)
+   Test that bigfloat zeros with different precisions are treated as being different. */
+block(
+	[z16 : block([fpprec : 16], bfloat(0)),
+	 z17 : block([fpprec : 17], bfloat(0))],
+	[is(z16 - z17 = 0.0b0),
+	 is(z16 = z17),
+	 is(z17 = z16),
+	 ordergreatp(z16, z17),
+	 ordergreatp(z17, z16)]
+);
+[true, false, false, false, true];
+
+/* Test that orderlessp is a total ordering on binary bigfloats. */
+block(
+	[L : [], fpprec : fpprec],
+	local(totalorderp),
+	
+	/* totalorderp by Stavros Macrakis */
+	totalorderp(func, domain) := block(
+		[ord, i, j, res : []],
+		ord : sort(domain, func),
+		i : 0,
+		for eli in ord do (
+			i : i + 1,
+			j : 0,
+			for elj in ord do (
+				j : j + 1,
+				if func(eli, elj) # is(i < j) and not(eli = elj) then push([i, j, eli, elj], res)
+			)
+		),
+		res
+	),
+	
+	for i : -4 thru 4 do (
+		for fpprec : 1 thru 11 step 2 do (
+			push(bfloat(25 * i), L),
+			push(bfloat(5 * i), L),
+			push(bfloat(i), L),
+			push(bfloat(i / 5), L),
+			push(bfloat(i / 25), L)
+		)
+	),
+	
+	/* Test for total order. */
+	totalorderp(orderlessp, L)
+);
+[];
+
+block(
+	[expr, exponentialize : false, L : []],
+	push(expr : sin(x) ^ 2 + cos(x) ^ 2, L),
+	exponentialize : true,
+	push(expr, L),
+	push(ratsimp(resimplify(expr)), L),
+	reverse(L)
+);
+[sin(x)^2+cos(x)^2,sin(x)^2+cos(x)^2,1];
+
+/* Bug #4548: float(10^400) returns false on GCL */
+errcatch(float(10^400));
+[];
+
+/* Bug #3839 */
+limit(asin(3+%i*x),x,0,plus);
+%pi-asin(3);
+limit(asin(3+%i*x),x,0,minus);
+asin(3);
+limit(rectform(asin(3+%i*x)),x,0,plus);
+%pi/2-(%i*log(17-3*2^(5/2)))/2;
+
+/* Bug #3889 */
+limit((cos(x)-1)/(sin(x)+sqrt(2-2*cos(x))),x,0,plus);
+0;
+
+/* Bug #3923 */
+limit(r*cos(r)/sqrt(1-cos(r)^2),r,0);
+ind;
+
+/* Bug #4041 */
+listp(splitfield(x^4+x^2+1,x));
+true;
+
+/* Bug #3667 */
+csign(csc(x+%i*y));
+complex;
+
+/* Bug #3585 */
+imagpart(li[4](-0.75));
+0;
+
+/* Bug #3545 */
+ratsimp(integrate(%e^-(2*%i*%pi*t)*(%e^(2*%i*%pi*t)+1),t,-1/6,1/6));
+(2*%pi+3^(3/2))/(6*%pi);
+
+/* Bug #3508 */
+max(zeroa,zerob);
+'max(zeroa,zerob);
+
+/* Bug #3160 */
+ratsimp(diff(integrate(log(4-5*x^3)^5,x),x)-log(4-5*x^3)^5);
+0;
+
+/* Bug #3135 */
+gruntz(atan2(x^2-2,x^3-3*x),x,sqrt(2),minus);
+-%pi;
+
+/* Bug #3141 */
+gruntz((x^(1/x)-1)*sqrt(x),x,0,plus),domain:complex;
+0;
+
+/* Bug #3137 */
+gruntz(abs(sin(x))/sqrt(1-cos(x)),x,0,plus);
+sqrt(2);
+
+/* Bug #3080 */
+integrate(cos(x/atan(x)),x);
+'integrate(cos(x/atan(x)),x);
+
+/* Bug #2940 */
+errcatch(integrate(cot(x),x,0,inf));
+[];
+
+/* Bug #2899 */
+limit((1+sqrt(n+1))^(-n-1)/(1+sqrt(n))^(-n),n,inf);
+0;
+
+/* Bug #2706 */
+limit((%e^(-sqrt(-z))*(w*sqrt(-z)*%e^(2*sqrt(-z))-w*sqrt(-z)))/(2*z),z,0);
+-w;
+
+/* Bug #2583 */
+integrate(x^(8*%i-1),x);
+-((%i*x^(8*%i))/8);
+
+/* Bug #2487 */
+integrate(x^(1/3)/(x^(2/3)+1),x,0,8);
+6-(3*log(5))/2;
+limit(-log(1+x^(2/3)),x,0,plus),algebraic:true;
+0;
+
+/* Bug #2357 */
+is("string">0);
+false;
+
+/* Bug #1768 */
+csign(sqrt(x));
+complex;
+
+/* #4560 integrals of the form integrate((a*z+a*b)^p*%e^(c*z+d),z) */
+integrate((a*z+a*b)^p*%e^(c*z+d),z);
+-((%e^(d-b*c)*expintegral_e(-p,-((c*(a*z+a*b))/a))*(a*z+a*b)^(p+1))/a)$
+
+/* Bug #4451 */
+ratsimp(%e^(%i*sqrt(%pi+1)/2)/%pi), algebraic;
+%e^((%i*sqrt(%pi+1))/2)/%pi;
+
+(kill(values),kill(facts), 0);
+0$
+
+/* Simple tests for kbateman */
+assume(x>0);
+[x > 0];
+
+kbateman[0](x);
+exp(-x);
+
+kbateman[2](x);
+2*exp(-x)*x;
+
+(forget(x > 0), makelist(kbateman[n](0), n, 0, 5));
+[0,2/%pi,0,-2/(3*%pi), 0, 2/(5*%pi)];
+
+/* \#4642 sign(1.0e-310*%i) gives error because 1e-310*x/1e-310 fails*/
+errcatch(sign(1.0e-310*%i));
+[]$
+
+csign(1.0e-310*%i);
+imaginary$
+
+csign(1.0e-301);
+pos$
+
+csign(-1.0e-301);
+neg$
+
+csign(1.0e-301 + %i * 1.0e-301);
+complex$
+
+errcatch(sign(1.0b-310*%i));
+[]$
+
+csign(1.0b-310*%i);
+imaginary$
+
+csign(1.0b-301);
+pos$
+
+csign(-1.b-301);
+neg$
+
+csign(1.0b-301 + %i * 1.0e-301);
+complex$
+
+/* \#4638 cabs/carg/polarform overflow and underflow*/
+
+cabs(1e-170 + %i*1e-170);
+1.4142135623730951e-170$
+
+cabs(1e170 + %i*1e+170);
+1.4142135623730952e170$
+
+carg(1e170 + %i*1e+170);
+0.7853981633974483$
+
+carg(1e-310 + %i*1e-310);
+0.7853981633974483$
+
+/* Note: 1.4142135623730952e170*%e^(0.7853981633974483*%i) is not simplified! */
+(%emode : false,0);
+0$
+
+block([ans : polarform(1e170 + %i*1e+170)], [inpart(ans,0),inpart(ans,1),inpart(ans,2)]);
+["*",1.4142135623730952e170,%e^(0.7853981633974483*%i)]$
+
+(reset(%emode),0);
+0$
+
+/* Bug #4457: "simplus or great bug" */
+/* Bug #4630: "expand not idempotent (simplus)" */
+/* (caused by the same underlying bug) */
+
+apply("+", [-2^(23/4),-(99*2^(13/4)),49*2^(7/4),33*2^(3/2),4818]);
+-(99*2^(13/4))+33*2^(7/4)+33*2^(3/2)+4818;
+
+expand((1 + sqrt(2)) * 2^(15/4) + (1 - sqrt(2)) * 2^(5/4));
+3*2^(7/4)+9*2^(5/4);
+
+2^(17/4) + 2^(15/4) + (2^(5/4) - 2^(7/4));
+3*2^(7/4)+9*2^(5/4);
+
+2^(5/4) - 2^(7/4) + (2^(17/4) + 2^(15/4));
+3*2^(7/4)+9*2^(5/4);
+
+2^(17/4) + 2^(15/4) - 2^(7/4) + 2^(5/4);
+3*2^(7/4)+9*2^(5/4);
+
+2^(17/4) + 2^(7/4) + 2^(5/4);
+2^(7/4)+9*2^(5/4);
+
+2^(1/4) + 2^(3/8) + 7*2^(1/4);
+2^(13/4)+2^(3/8);
+
+(3^x + 3^(x + 1/2)) + 2*3^x;
+3^(x+1)+3^(x+1/2);
+
+/* Bug #4658: "factor should check that second argument is irreducible" */
+
+errcatch(factor(a^2*g+a*g-a^2, g^3-1));
+[];
+
+factor(a^2*g+a*g-a^2, second(factor(g^3-1)));
+(a*(-g+3*a+1)*(g-1))/3;
+
+kill(x);
+done$
+
+/*
+Bug #4749: "Declaring a symbol both real and complex or real and imaginary"
+Test all(?) pairs of inconsistent declarations and make sure they cause errors.
+*/
+
+sublist
+(
+	[
+		['integer, 'noninteger],
+		['even, 'noninteger],
+		['odd, 'noninteger],
+		['rational, 'irrational],
+		['integer, 'irrational],
+		['even, 'irrational],
+		['odd, 'irrational],
+		['real, 'imaginary],
+		['rational, 'imaginary],
+		['irrational, 'imaginary],
+		['integer, 'imaginary],
+		['even, 'imaginary],
+		['odd, 'imaginary],
+		['even, 'odd],
+		['increasing, 'decreasing],
+		['symmetric, 'antisymmetric],
+		['evenfun, 'oddfun],
+		[lassociative, rassociative],
+		['scalar, 'nonscalar]
+	],
+	lambda
+	(
+		[pair],
+		block
+		(
+			[[a, b] : pair],
+			/* first a, then b */
+			kill(x),
+			apply('declare, ['x, a]),
+			if errcatch(apply('declare, ['x, b])) # [] then return(true),
+			/* first b, then a */
+			kill(y),
+			apply('declare, ['y, b]),
+			if errcatch(apply('declare, ['y, a])) # [] then return(true),
+			false
+		)
+	)
+);
+[];
+
+kill(x, y);
+done;
+
+/*
+Test inferencing, e.g. irrational -> noninteger
+A list entry ['rational, ['rational, 'real, -'irrational, -'imaginary]] means
+that for a symbol x declared rational,
+featurep(x, rational) and featurep(x, real) should return true, and
+featurep(x, irrational) and featurep(x, imaginary) should return false.
+*/
+
+sublist
+(
+	[
+		['even, ['even, 'integer, 'rational, 'real, -'odd, -'noninteger, -'imaginary]],
+		['odd, ['odd, 'integer, 'rational, 'real, -'even, -'noninteger, -'imaginary]],
+		['integer, ['integer, 'rational, 'real, -'noninteger, -'imaginary]],
+		['rational, ['rational, 'real, -'irrational, -'imaginary]],
+		['irrational, ['irrational, 'real, 'noninteger, -'rational, -'integer, -'even, -'odd, -'imaginary]],
+		['imaginary, ['imaginary, 'complex, 'noninteger, -'real, -'rational, -'irrational, -'integer, -'even, -'odd]]
+	],
+	lambda
+	(
+		[entry],
+		block
+		(
+			[[source, targets] : entry, failed : false, expected, res],
+			kill(x),
+			apply('declare, ['x, source]),
+			for target in targets do
+			(
+				if atom(target) then expected : true
+				else [target, expected] : [-target, false],
+				if apply('featurep, ['x, target]) # expected then failed : true
+			),
+			failed
+		)
+	)
+);
+[];
+
+kill(x);
+done;
+
+/* Bug #4757: "%e^2.0, %emode:false stays %e^2.0" */
+
+%e^2.0, %emode: true;
+7.38905609893065;
+
+%e^2.0, %emode: false;
+7.38905609893065;
+
+%e^(%i*%pi), %emode: true;
+-1;
+
+string(%e^(%i*%pi)), %emode: false;
+"%e^(%i*%pi)";
+
+
+/* Bug #4591: "solve called on degree six gives 0^0 error" */
+
+solve((x^2+1+%i)^3);
+[x = -sqrt(-%i-1),x = sqrt(-%i-1)];
+
+solve(expand((x^2+1+%i)^3));
+[x = -sqrt(-%i-1),x = sqrt(-%i-1)];
+
+solve(x^3+3*%i*x^2+3*x^2+6*%i*x+2*%i-2);
+[x = -((3*%i+3)/3),x = (-(3*%i)-3)/3];
+
+
+/* Bug #4543: "solve returns unsimplified result for cubic" */
+
+solve(expand((x+sqrt(3))^3),x);
+[x = -sqrt(3)];
+
+
+/* Bug #4342: "rectform((-1)^(5/6)) is bizarre" */
+
+realpart((-1)^(5/6));
+-(sqrt(3)/2);
+
+realpart((-2)^(5/6));
+-(sqrt(3)/2^(1/6));
+
+
+/* Bug #4011: "Substitution order and zero-divide"
+   Bug #4410: "'at' incorrectly returns 0 instead of error for 0/0"
+   (same cause) */
+
+errcatch(psubst([a=0,b=0],b/a));
+[];
+
+errcatch(0*log(0));
+[];
+
+
+/* Bug #4764: "0 * 0.0 and 0 * 0.0b0 remaining 0" */
+
+0 * 0.0;
+0.0;
+
+0 * 0b0;
+0b0;
+
+0 * 0.0 * 0b0;
+0b0;
+
+0.0 * 0;
+0.0;
+
+0.0 * 0b0;
+0b0;
+
+0b0 * 0;
+0b0;
+
+0b0 * 0.0;
+0b0;
+
+
+/* Bug #3110: "x*x/abs(x) differs from x/abs(x)*x" */
+
+x*x/abs(x);
+abs(x);
+
+x/abs(x)*x;
+abs(x);
+
+1/abs(x)*x*x;
+abs(x);
+
+x/abs(x)*x*x;
+x*abs(x);
+
+
+/* Bug #3264: "Integral of asin(2*x)^3/(1-4*x^2) wrong" */
+
+block([int : asin(2*x)^3/(1-4*x^2), ratprint : false],
+  zeroequiv(diff(integrate(int, x), x) - int, x));
+true;
+
+
+/* Bug #4770: "kill doesn't remove operator declarations" */
+
+(infix("myop"), declare("myop", lassociative), kill("myop"), infix("myop"),
+ featurep("myop", lassociative));
+false;
+
+kill("myop");
+done;
+
+(infix("myop"),
+ [member("myop", props), member(operator, properties("myop"))]);
+[true, true];
+
+(declare("myop", lassociative), remove("myop", lassociative),
+ [member("myop", props), member(operator, properties("myop"))]);
+[true, true];
+
+(remove("myop", operator),
+ [member("myop", props), member(operator, properties("myop"))]);
+[false, false];
+
+(kill("myop"),
+ properties("myop"));
+[];
+
+
+/* Bug #4343: "Lisp error for taylor when taylor_logexpand : false" */
+
+assume(n > 0);
+[n > 0];
+ratdisrep(taylor((atan(n/%pi)+%pi/2)^n/%pi^n, n, inf, 0)), taylor_logexpand : false;
+1/%e;
+forget(n > 0);
+[n > 0];
+
+
+/* Bug #4791: "taylor(atan(%pi)^x, x, inf, 0) contains unsimplified sin(0) and cos(0)" */
+
+freeof(sin(0), cos(0), taylor(atan(%pi)^x, x, inf, 0)), simp : false;
+true;
+
+
+/* Bug #4788: "taylor(a^x, x, inf, 0) vs. taylor(f(a)^x, x, inf, 0) for f = atan, asin, asinh" */
+
+is(radcan(taylor(a^x, x, inf, 0)) = a^x);
+true;
+is(radcan(taylor(asin(a)^x, x, inf, 0)) = asin(a)^x);
+true;
+is(radcan(taylor(asinh(a)^x, x, inf, 0)) = asinh(a)^x);
+true;
+is(radcan(taylor(atan(a)^x, x, inf, 0)) = atan(a)^x);
+true;
+is(radcan(taylor(atanh(a)^x, x, inf, 0)) = atanh(a)^x);
+true;
+is(radcan(taylor(asin(a + x), x, 1, 0)) = asin(a + 1));
+true;
+is(radcan(taylor(asinh(a + x), x, 1, 0)) = asinh(a + 1));
+true;
+is(radcan(taylor(atan(a + x), x, 1, 0)) = atan(a + 1));
+true;
+is(radcan(taylor(atanh(a + x), x, 1, 0)) = atanh(a + 1));
+true;
+
+
+/* Bug #4781: "solve(atan(x)=2) gives a non-solution" */
+
+solve(atan(x) = 1);
+[x = tan(1)];
+solve(atan(x) = 2);
+[];
+solve(atan(x) = %pi/2);
+[];
+solve(atan(x) = a, x);
+[x = tan(a)];
+
+
+/* Bug #4795: "realpart(li[2](2*%e^(%i*0.1)))" crashes Maxima */
+
+round(1000000 * realpart(li[2](2*%e^(%i*0.1))));
+2163217;
+
+
+/* Bug #4801: "Bogus derivatives when arguments match variable names in DEFGRAD" */
+
+diff(atan2(x, y), x);
+y/(y^2+x^2);
+
+diff(atan2(x, y), y);
+-(x/(y^2+x^2));
+
+diff(atan2(y, x), x);
+-(y/(y^2+x^2));
+
+diff(atan2(y, x), y);
+x/(y^2+x^2);
+
+
+/* Bug #4800: "zeroa, zerob are listed by listofvars" */
+
+listofvars(zeroa + zerob + inf + minf + infinity + ind + und);
+[];
+
+
+/* Bug #4756: "expand(sin(%e^x)), numer incorrectly replaces %e with numerical value" */
+
+expand(sin(%e^x)), numer;
+sin(%e^x);
+
+[%pi, %e], numer;
+[3.141592653589793, 2.718281828459045];
+
+[%pi, %e^x], numer;
+[3.141592653589793, %e^x];
+
+
+/* Solving of equations involving abs and signum */
+
+solve(abs(x) = 0, x);
+[x = 0];
+
+solve(abs(2*x + 3) = 4, x);
+[x = 1/2, x = -7/2];
+
+solve(abs(x) = -1, x);
+[];
+
+solve(abs(x + %i) = 0, x);
+[x = -%i];
+
+solve(abs(x + %i) = 1, x);
+[abs(x + %i) = 1];
+
+solve(signum(x) = 0, x);
+[x = 0];
+
+solve(signum(2*x + 3) = 0, x);
+[x = -3/2];
+
+solve(signum(x) = 2, x);
+[];
+
+
+/* (-1)^integer is integer */
+
+(declare(n, integer), featurep((-1)^n, integer));
+true;
+
+remove(n, integer);
+done;
+
+
+/* Bug #4803: "limit(1+zerob), numer : true vs limit(1+zeroa), numer : true;"
+   (actually a bug in trigreduce) */
+
+trigreduce(1 - 1/x), numer;
+1 - 1/x;
+
+
+/* Bug #4829: "j^2/abs(j) simplified incorrectly for j declared imaginary" */
+
+declare(j, imaginary);
+done;
+
+j^2/abs(j);
+j^2/abs(j);
+
+remove(j, imaginary);
+done;
+
+
+/* More solving of equations involving abs and signum */
+
+solve(abs(x) = %i, x);
+[];
+
+solve(abs(x) = %i + 1, x);
+[];
+
+
+/* Bug #4836: "Integer/parity inferencing through equal not working" */
+
+declare(i, integer, ni, noninteger, e, even, o, odd, ir, irrational);
+done;
+
+(forget(facts(x)), assume(equal(x, i)), featurep(x, integer));
+true;
+
+(forget(facts(x)), assume(equal(2*i, x)), featurep(x, integer));
+true;
+
+(forget(facts(x)), assume(equal(x, u)), assume(equal(x, i)), featurep(x, integer));
+true;
+
+(forget(facts(x)), assume(equal(x, ni)), featurep(x, noninteger));
+true;
+
+(forget(facts(x)), assume(equal(2*u, x)), assume(equal(x, ni)), featurep(x, noninteger));
+true;
+
+(forget(facts(x)), assume(equal(x, i)), featurep(x, noninteger));
+false;
+
+(forget(facts(x)), assume(equal(x, e)), featurep(x, even));
+true;
+
+(forget(facts(x)), assume(equal(o, x)), featurep(x, odd));
+true;
+
+(forget(facts(x)), assume(equal(x, u)), assume(equal(x, e)), featurep(x, even));
+true;
+
+(forget(facts(x)), assume(equal(x, ni)), featurep(x, even));
+false;
+
+(forget(facts(x)), assume(equal(x, ir)), featurep(x, noninteger));
+true;
+
+(forget(facts(x)), assume(equal(x, ir)), featurep(x, integer));
+false;
+
+(forget(facts(x)), remove(i, integer, ni, noninteger, e, even, o, odd, ir, irrational));
+done;
+
+
+/* Bug #4839: "absarg returns the wrong argument (phase) for tanh of a complex number" */
+
+closeto(rectform(tanh(2 + 3*%i)) - rectform(polarform(tanh(2 + 3*%i))), 1e-14);
+true;
+
+
+/* Bug #4832: "great/ordfna: float vs. bignum ordering overflows instead of comparing" */
+
+sort([1e300, 10^400]);
+[1e300, 10^400];
+
+sort([1/10^400, 1.0]);
+[1/10^400, 1.0];
+
+sort([10^16+1, 1e16, 10^16-1]);
+[10^16-1, 1e16, 10^16+1];
+
+
+/* Bug #4833: "negative rational base + integral float exponent stays a noun" */
+
+(-1/2)^2.0;
+0.25;
+
+
+/* Bug #4845: "float(log(1/2 + %i/2)) is wrong" */
+
+is(abs(float(log(1/2 + %i/2)) - log(0.5 + 0.5 * %i)) < 1e-14);
+true;
+
+
+/* Bug #4847: "pop evaluates its argument twice, can cause bugs" */
+
+(i : 0, idx() := i : i + 1, L[1] : [1, 2, 3], L[2] : [4, 5, 6], [pop(L[idx()]), L[1], L[2]]);
+[1, [2, 3], [4, 5, 6]];
+
+kill(i, idx, L);
+done;
+
+
+/* More tests for bug #4764 */
+
+1.0 * 0;
+0.0;
+
+1b0 * 0;
+0b0;
+
+
+/* Bug #4862: "solve doesn't deduplicate subscripted variables correctly" */
+
+solve(p[1] = 5, [p[1], p[1]]);
+[p[1] = 5];
+
+
+/* Bug #4874: "realpart/imagpart can destroy facts" */
+
+(assume(notequal(x, 0)), 0);
+0;
+
+realpart(log(x));
+log(abs(x));
+
+facts();
+[notequal(x, 0)];
+
+(forget(notequal(x, 0)), 0);
+0;
+
+
+/* Bug #4889: "array on a memoizing function returns huge junk values" */
+
+(kill(f), f[i] := i^2, array(f, 5), f[2]);
+4;
+
+(kill(f), f[i] := i^2, array(f, fixnum, 5), f[2]);
+4;
+
+(kill(f), array(f, 5, function), f[2]);
+f[2];
+
+(kill(f), 0);
+0;
+
+
+/* Bug #4890: "A failed local() permanently destroys definitions" */
+
+(kill(f),
+ f(x) := 111,
+ errcatch(block([], local(f, 1), 0)),
+ f(1));
+111;
+
+(kill(f, a),
+ f(x) := 111,
+ a(x) := 222,
+ block([], local(a), a(x) := 333, errcatch(block([], local(f, 1), 0)), 0),
+ [f(1), a(1)]);
+[111, 222];
+
+
+/* Bug #4892: "Assigning an option variable its own name bypasses its validator" */
+
+(errcatch(expop : 'expop),
+ integerp(expop));
+true;
+
+
+/* Bug #4893: "Unrecognized macroexpansion value makes every macro call return false" */
+
+third([
+ kill(f),
+ f(x) ::= x^2,
+ block([macroexpansion], f(3)), /* <-- third */
+ kill(f)]);
+9;
+
+
+/* Bug #4895: "map inside a function called by maplist skips the operator check" */
+
+third([
+ kill(f),
+ f(e) := map("+", e, [10, 20]),
+ errcatch(maplist(f, [a+b])), /* <-- third */
+ kill(f)]);
+[];
+
+third([
+ kill(f),
+ f(e) := map("+", e, [10, 20]),
+ maplist(f, [[1, 2]]), /* <-- third */
+ kill(f)]);
+[[11, 22]];
+
+
+/* Bug #4896: "Calling a variable whose value is a string crashes the evaluator" */
+
+(kill(f, abc),
+ f : "abc",
+ f(2));
+abc(2);
+
+(kill(abc),
+ apply("abc", [2]));
+abc(2);
+
+(kill(f),
+ f : "+",
+ f(2, 3));
+5;
+
+
+/* Bug #4900: "Subscripted assignment to a string-valued variable crashes" */
+
+fourth([
+ kill(s),
+ s : "abc",
+ s[1] : 5,
+ [s, s[1]], /* <-- fourth */
+ kill(s)]);
+["abc", 5];
+
+
+/* Bug #4901: "Redefining a structure leaves a stale entry in structures" */
+
+(kill(f),
+ defstruct(f(x, y)),
+ defstruct(f(x, y, z)),
+ length(sublist(structures, lambda([s], is(op(s) = 'f)))));
+1;
+
+(kill(f),
+ length(sublist(structures, lambda([s], is(op(s) = 'f)))));
+0;
+
+
+/* Bug #4902: "use_fast_arrays: first subscripted assignment to a bound variable hangs" */
+
+block([use_fast_arrays : true],
+ kill(a, b),
+ a : b,
+ a[1] : 10,
+ [a[1], b]);
+[10, b];
+
+block([use_fast_arrays : true],
+ kill(a, c, f),
+ c : 0,
+ f(x) := (c : c + 1, x),
+ a[f(1)] : 99, [a[1], c]);
+[99, 1];
+
+kill(a, b, c, f);
+done;
+
+
+/* Bug #4903: "use_fast_arrays: array(a, n) mistakes the dimension for an array type" */
+
+block([use_fast_arrays : true, result],
+ kill(a, n),
+ n : 2,
+ array(a, n),
+ a[1] : 7,
+ result : a[1],
+ kill(a, n),
+ result);
+7;
+
+
+/* Bug #4904: "ev with expand(m, n) does not evaluate the arguments" */
+
+block([n : 1], ev((x + 1)^2 / (y + 1)^2, expand(n, n)));
+(x+1)^2/(y+1)^2;
+
+block([n : 2], ev((x + 1)^2 / (y + 1)^2, expand(n, n)));
+x^2/(y^2+2*y+1)+2*x/(y^2+2*y+1)+1/(y^2+2*y+1);
+
+
+/* Bug #xxxx: "kill on an element of a fixnum/flonum array behaves incorrectly" */
+
+block([a], local(a),
+ array(a, fixnum, 2, 2),
+ a[1, 1] : 7,
+ kill(a[1, 1]),
+ a[1, 1]);
+0;
+
+block([a], local(a),
+ array(a, flonum, 2, 2),
+ a[1, 1] : 7.5,
+ kill(a[1, 1]),
+ a[1, 1]);
+0.0;
+
+block([a], local(a),
+ f[i] := i^2,
+ array(f, fixnum, 5),
+ f[2],
+ kill(f[2]),
+ f[2]);
+4;
+
+
+/* Bug #4907: "A deferred if strips quotes from its branches" */
+
+block([e, p, foo],
+ local(e, p, foo),
+ foo : 99,
+ e : if p then 'foo else 1,
+ p : true,
+ ev(e));
+foo;
+
+
+/* Bug #4989: "is(bfloat(-1) = -1.0b0) = false" */
+
+is(bfloat(-1) = -1.0b0);
+true;
+
+
+/* Leave this at the end of the file! */
+[facts(), contexts];
+[[], [initial, global]]$

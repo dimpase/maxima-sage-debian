@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,8 +12,6 @@
 (macsyma-module comm2)
 
 ;;;; DIFF2
-
-(declare-top (special $props $dotdistrib))
 
 (defun diffint (e x)
   (let (a)
@@ -129,9 +127,6 @@
 	(t (union* (extractvars (cdar e)) (extractvars (cdr e))))))
 
 ;;;; AT
-
-;;dummy-variable-operators is defined in COMM, which uses it inside of SUBST1.
-(declare-top (special atvars *atp* munbound dummy-variable-operators))
 
 (defmfun $atvalue (exp eqs val)
   (let (dl vl fun)
@@ -250,11 +245,9 @@
                     (atvarschk vl)
                     (substitutel vl atvars (caddar atvalues)))))))
 
-(declare-top (special $ratfac genvar varlist $keepfloat))
-
 (defmvar $logconcoeffp nil)
 
-(defmfun $logcontract (e)
+(defmfun ($logcontract :properties ((evfun t))) (e)
   (lgcreciprocal (logcon e))) ; E is assumed to be simplified.
 
 (defun logcon (e)
@@ -391,11 +384,7 @@
 
 ;;;; RTCON
 
-(declare-top (special $radexpand $domain))
-
-(defmvar $rootsconmode t)
-
-(defmfun $rootscontract (e)	       ; E is assumed to be simplified
+(defmfun ($rootscontract :properties ((evfun t))) (e)	       ; E is assumed to be simplified
   (let ((radpe (and $radexpand (not (eq $radexpand '$all)) (eq $domain '$real)))
 	($radexpand nil))
     (rtcon e radpe)))
@@ -492,88 +481,9 @@
 	 (do ((l (cdr e) (cdr l)) (c 0 (+ c ($nterms (car l)))))
 	     ((null l) c)))
 	((and (eq (caar e) 'mexpt) (integerp (caddr e)) (plusp (caddr e)))
-	 ($binomial (+ (caddr e) ($nterms (cadr e)) -1) (caddr e)))
+	 (ftake '%binomial (+ (caddr e) ($nterms (cadr e)) -1) (caddr e)))
 	((specrepp e) ($nterms (specdisrep e)))
 	(t 1)))
-
-;;;; ATAN2
-
-(declare-top (special $numer $logarc $trigsign))
-
-;; atan2 distributes over lists, matrices, and equations
-(defprop $atan2 (mlist $matrix mequal) distribute_over)
-
-(defun simpatan2 (expr vestigial z)     ; atan2(y,x) ~ atan(y/x)
-  (declare (ignore vestigial))
-  (twoargcheck expr)
-  (let (y x signy signx)
-    (setq y (simpcheck (cadr expr) z)
-          x (simpcheck (caddr expr) z))
-    (cond ((and (zerop1 y) (zerop1 x))
-           (merror (intl:gettext "atan2: atan2(0,0) is undefined.")))
-          ( ;; float contagion
-           (and (or (numberp x) (ratnump x))       ; both numbers
-                (or (numberp y) (ratnump y))       ; ... but not bigfloats
-                (or $numer (floatp x) (floatp y))) ; at least one float
-           (atan ($float y) ($float x)))
-          ( ;; bfloat contagion
-           (and (mnump x)
-                (mnump y)
-                (or ($bfloatp x) ($bfloatp y)))    ; at least one bfloat
-           (setq x ($bfloat x)
-                 y ($bfloat y))
-           (*fpatan y (list x)))
-          ;; Simplifify infinities
-          ((or (eq x '$inf)
-               (alike1 x '((mtimes) -1 $minf)))
-           ;; Simplify atan2(y,inf) -> 0
-           0)
-          ((or (eq x '$minf)
-               (alike1 x '((mtimes) -1 $inf)))
-           ;; Simplify atan2(y,minf) -> %pi for realpart(y)>=0 or 
-           ;; -%pi for realpart(y)<0. When sign of y unknwon, return noun form.
-           (cond ((member (setq signy ($sign ($realpart x))) '($pos $pz $zero)) 
-                  '$%pi)
-                 ((eq signy '$neg) (mul -1 '$%pi))
-                 (t (eqtest (list '($atan2) y x) expr))))
-          ((or (eq y '$inf)
-               (alike1 y '((mtimes) -1 $minf)))
-           ;; Simplify atan2(inf,x) -> %pi/2
-           (div '$%pi 2))
-          ((or (eq y '$minf)
-               (alike1 y '((mtimes -1 $inf))))
-           ;; Simplify atan2(minf,x) -> -%pi/2
-           (div '$%pi -2))
-          ((and (free x '$%i) (setq signx ($sign x))
-                (free y '$%i) (setq signy ($sign y))
-                (cond ((zerop1 y)
-                       (cond ((eq signx '$neg) '$%pi)
-                             ((member signx '($pos $pz)) 0)))
-                      ((zerop1 x)
-                       (cond ((eq signy '$neg) (div '$%pi -2))
-                             ((member signy '($pos $pz)) (div '$%pi 2))))
-                      ((alike1 y x)
-                       (cond ((eq signx '$neg) (mul -3 (div '$%pi 4)))
-                             ((member signx '($pos $pz)) (div '$%pi 4))))
-                      ((alike1 y (mul -1 x))
-                       (cond ((eq signx '$neg) (mul 3 (div '$%pi 4)))
-                             ((member signx '($pos $pz)) (div '$%pi -4)))))))
-          ($logarc
-           (logarc '%atan2 (list ($logarc y) ($logarc x))))
-          ((and $trigsign (eq t (mminusp y)))
-           (neg (take '($atan2) (neg y) x)))
-          ;; atan2(y,x) = atan(y/x) + pi sign(y) (1-sign(x))/2
-          ((eq signx '$pos)
-           (take '(%atan) (div y x)))
-          ((and (eq signx '$neg)
-                (member (setq signy ($csign y)) '($pos $neg) :test #'eq))
-           (add (take '(%atan) (div y x))
-                (porm (eq signy '$pos) '$%pi)))
-          ((and (eq signx '$zero) (eq signy '$zero))
-           ;; Unfortunately, we'll rarely get here.  For example,
-           ;; assume(equal(x,0)) atan2(x,x) simplifies via the alike1 case above
-           (merror (intl:gettext "atan2: atan2(0,0) is undefined.")))
-          (t (eqtest (list '($atan2) y x) expr)))))
 
 ;;;; ARITHF
 
@@ -614,7 +524,14 @@
 
 ;;;; BOX
 
-;; Set the the property reversealias
+;; Alias makes `box` in input parse to symbol MBOX.
+;; (The MHEADER property is only applied to nonatomic expressions;
+;; the alias property covers `box` as a symbol.)
+
+(defprop $box mbox alias)
+
+;; Reverse alias makes MBOX and MLABOX display as box in 1-d output.
+
 (defprop mbox $box reversealias)
 (defprop mlabox $box reversealias)
 
@@ -624,15 +541,16 @@
 (defmfun $lpart (e &rest args)
   (mpart args nil (list e) nil '$lpart))
 
-(defmfun $box (e &optional (l nil l?))
+(defmfun make-mbox (e &optional (l nil l?))
   (if l?
       (list '(mlabox) e (box-label l))
       (list '(mbox) e)))
 
-(defun box (e label)
-  (if (eq label t)
-      (list '(mbox) e)
-      ($box e (car label))))
+(setf (get 'mbox 'operators)
+      (lambda (x y z)
+        (declare (ignore y))
+        (let ((mbox-args (if z (cdr x) (mapcar #'simplify (cdr x)))))
+          (eqtest (apply 'make-mbox mbox-args) x))))
 
 (defun box-label (x)
   (if (atom x)
@@ -654,19 +572,17 @@
 
 ;;;; MAPF
 
-(declare-top (special scanmapp))
-
-(defmspec $scanmap (l)
+(defmspec ($scanmap :properties ((evok t))) (l)
   (let ((scanmapp t))
     (resimplify (apply #'scanmap1 (mmapev l)))))
 
 (defun scanmap1 (func e &optional (flag nil flag?))
+  (when (and flag? (not (member flag '($bottomup $topdown))))
+    (merror (intl:gettext "scanmap: third argument must be 'bottomup' or 'topdown', if present; found ~M") flag))
   (let ((arg2 (specrepcheck e)) newarg2)
     (cond ((eq func '$rat)
 	   (merror (intl:gettext "scanmap: cannot apply 'rat'.")))
-	  (flag?
-	   (unless (eq flag '$bottomup)
-	     (merror (intl:gettext "scanmap: third argument must be 'bottomup', if present; found ~M") flag))
+	  ((eq flag '$bottomup)
 	   (if (mapatom arg2)
 	       (funcer func (ncons arg2))
 	       (subst0 (funcer func
@@ -714,27 +630,26 @@
 
 ;;;; GENMAT
 
+;; GENMATRIX is improved in order to save time when creating a large matrix.
+;; see SF bug #4056
+
 (defmfun $genmatrix (a i2 &optional (j2 i2) (i1 1) (j1 i1))
-  (let ((f) (l (ncons '($matrix))))
+  (let ((f))
     (setq f (if (or (symbolp a) (hash-table-p a) (arrayp a))
-		#'(lambda (i j) (meval (list (list a 'array) i j)))
-	      #'(lambda (i j) (mfuncall a i j))))
-    
+                #'(lambda (i j) (meval (list (list a 'array) i j)))
+              #'(lambda (i j) (mfuncall a i j))))
+
     (if (notevery #'fixnump (list i2 j2 i1 j1))
-      (merror (intl:gettext "genmatrix: bounds must be integers; found ~M, ~M, ~M, ~M") i2 j2 i1 j1))
- 	 
+        (merror (intl:gettext "genmatrix: bounds must be integers; found ~M, ~M, ~M, ~M") i2 j2 i1 j1))
+
     (if (or (> i1 i2) (> j1 j2))
-      (merror (intl:gettext "genmatrix: upper bounds must be greater than or equal to lower bounds; found ~M, ~M, ~M, ~M") i2 j2 i1 j1))
- 	 
-    (dotimes (i (1+ (- i2 i1)))
-      (nconc l (ncons (ncons '(mlist)))))
-    (do ((i i1 (1+ i))
-	 (l (cdr l) (cdr l)))
-	((> i i2))
-      (do ((j j1 (1+ j)))
-	  ((> j j2))
-	(nconc (car l) (ncons (funcall f i j)))))
-    l))
+        (merror (intl:gettext "genmatrix: upper bounds must be greater than or equal to lower bounds; found ~M, ~M, ~M, ~M") i2 j2 i1 j1))
+
+    (cons '($matrix)
+          (loop for i from i1 to i2
+                collect (cons '(mlist)
+                              (loop for j from j1 to j2
+                                    collect (funcall f i j)))))))
 
 ; Execute deep copy for copymatrix and copylist.
 ; Resolves SF bug report [ 1224960 ] sideeffect with copylist.
@@ -814,9 +729,11 @@
 	 (cons (cons (getopr ary) '(array)) (cdr subs)))
 	(t (cons '(mqapply array) (cons ary (cdr subs))))))
 
-(defmspec $arrayinfo (ary)
-  (setq ary (cdr ary))
-  (arrayinfo-aux (car ary) (getvalue (car ary))))
+(defmspec $arrayinfo (e)
+  (let*
+    ((ary (second e))
+     (ary-value (if (or (arrayp ary) (hash-table-p ary)) ary (getvalue ary))))
+    (arrayinfo-aux ary ary-value)))
 
 (defun arrayinfo-aux (sym val)
   (prog (arra ary)
@@ -868,8 +785,6 @@
 				  (cons '(mlist simp) (mapcar #'1- (cdr ary1)))))))))))
 
 ;;;; ALIAS
-
-(declare-top (special greatorder lessorder))
 
 (defmspec $ordergreat (l)
   (if greatorder (merror (intl:gettext "ordergreat: reordering is not allowed.")))

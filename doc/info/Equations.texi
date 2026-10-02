@@ -1,5 +1,7 @@
 @menu
 * Functions and Variables for Equations::   
+* Examples for algsys::
+* References for equations::
 @end menu
 
 @c -----------------------------------------------------------------------------
@@ -17,7 +19,7 @@ Default value: @code{0}
 
 See also @mref{%rnum_list}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -46,35 +48,35 @@ It's recommended to use this list rather than doing @code{concat ('%r, j)}.
 @c   sol : subst (t[i], %rnum_list[i], sol)$
 @c sol;
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) solve ([x + y = 3], [x,y]);
-(%o1)              [[x = 3 - %r1, y = %r1]]
+(%o1)               [[x = 3 - %r1, y = %r1]]
 @end group
 @group
 (%i2) %rnum_list;
-(%o2)                       [%r1]
+(%o2)                         [%r1]
 @end group
 @group
 (%i3) sol : solve ([x + 2*y + 3*z = 4], [x,y,z]);
-(%o3)   [[x = - 2 %r3 - 3 %r2 + 4, y = %r3, z = %r2]]
+(%o3)     [[x = - 2 %r3 - 3 %r2 + 4, y = %r3, z = %r2]]
 @end group
 @group
 (%i4) %rnum_list;
-(%o4)                     [%r2, %r3]
+(%o4)                      [%r2, %r3]
 @end group
 @group
 (%i5) for i : 1 thru length (%rnum_list) do
-        sol : subst (t[i], %rnum_list[i], sol)$
+  sol : subst (t[i], %rnum_list[i], sol)$
 @end group
 @group
 (%i6) sol;
-(%o6)     [[x = - 2 t  - 3 t  + 4, y = t , z = t ]]
-                     2      1           2       1
+(%o6)       [[x = - 2 t  - 3 t  + 4, y = t , z = t ]]
+                       2      1           2       1
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -87,7 +89,7 @@ Default value: 10^8
 @c WHAT IS algepsilon, EXACTLY ??? describe ("algsys") IS NOT VERY INFORMATIVE !!!
 @code{algepsilon} is used by @mrefdot{algsys}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -111,7 +113,7 @@ only yield approximations when all else fails.
 
 @c ABOVE DESCRIPTION NOT TOO CLEAR -- MAYBE EXAMPLES WILL HELP
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -206,38 +208,52 @@ Examples:
 @c e2: -1 - y + 2*y^2 - x + x^2;
 @c algsys ([e1, e2], [x, y]);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) e1: 2*x*(1 - a1) - 2*(x - 1)*a2;
 (%o1)              2 (1 - a1) x - 2 a2 (x - 1)
-(%i2) e2: a2 - a1; 
+@end group
+@group
+(%i2) e2: a2 - a1;
 (%o2)                        a2 - a1
-(%i3) e3: a1*(-y - x^2 + 1); 
+@end group
+@group
+(%i3) e3: a1*(-y - x^2 + 1);
                                    2
 (%o3)                   a1 (- y - x  + 1)
+@end group
+@group
 (%i4) e4: a2*(y - (x - 1)^2);
                                        2
 (%o4)                   a2 (y - (x - 1) )
+@end group
+@group
 (%i5) algsys ([e1, e2, e3, e4], [x, y, a1, a2]);
 (%o5) [[x = 0, y = %r1, a1 = 0, a2 = 0], 
-
                                   [x = 1, y = 0, a1 = 1, a2 = 1]]
+@end group
+@group
 (%i6) e1: x^2 - y^2;
                               2    2
 (%o6)                        x  - y
+@end group
+@group
 (%i7) e2: -1 - y + 2*y^2 - x + x^2;
                          2        2
 (%o7)                 2 y  - y + x  - x - 1
+@end group
+@group
 (%i8) algsys ([e1, e2], [x, y]);
                  1            1
 (%o8) [[x = - -------, y = -------], 
               sqrt(3)      sqrt(3)
-
         1              1             1        1
 [x = -------, y = - -------], [x = - -, y = - -], [x = 1, y = 1]]
      sqrt(3)        sqrt(3)          3        3
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end deffn
@@ -281,40 +297,44 @@ Examples:
 @c polyfactor: true$
 @c allroots (eqn);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) eqn: (1 + 2*x)^3 = 13.5*(1 + x^5);
                             3          5
 (%o1)              (2 x + 1)  = 13.5 (x  + 1)
+@end group
+@group
 (%i2) soln: allroots (eqn);
-(%o2) [x = .8296749902129361, x = - 1.015755543828121, 
-
-x = .9659625152196369 %i - .4069597231924075, 
-
-x = - .9659625152196369 %i - .4069597231924075, x = 1.0]
+(%o2) [x = 0.8296749902129361, x = - 1.0157555438281212, 
+x = 0.9659625152196369 %i - 0.4069597231924075, 
+x = - 0.9659625152196369 %i - 0.4069597231924075, x = 1.0]
+@end group
+@group
 (%i3) for e in soln
         do (e2: subst (e, eqn), disp (expand (lhs(e2) - rhs(e2))));
-                      - 3.5527136788005E-15
+                     - 3.552713678800501e-15
 
-                     - 5.32907051820075E-15
+                     - 8.43769498715119e-15
 
-         4.44089209850063E-15 %i - 4.88498130835069E-15
+        2.6645352591003757e-15 %i - 6.217248937900877e-15
 
-        - 4.44089209850063E-15 %i - 4.88498130835069E-15
+       - 2.6645352591003757e-15 %i - 6.217248937900877e-15
 
-                       3.5527136788005E-15
+                               0.0
 
 (%o3)                         done
+@end group
 (%i4) polyfactor: true$
+@group
 (%i5) allroots (eqn);
-(%o5) - 13.5 (x - 1.0) (x - .8296749902129361)
-
-                           2
- (x + 1.015755543828121) (x  + .8139194463848151 x
-
- + 1.098699797110288)
+(%o5) - 13.5 (x - 1.0) (x - 0.8296749902129361)
+                            2
+ (x + 1.0157555438281212) (x  + 0.813919446384815 x
+ + 1.0986997971102883)
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Numerical methods}
 @closecatbox
@@ -333,7 +353,7 @@ In all respects, @code{bfallroots} is identical to @code{allroots} except
 that @code{bfallroots} computes the roots using bigfloats.  See 
 @mref{allroots} for more information.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Numerical methods}
 @closecatbox
@@ -360,23 +380,23 @@ the generation of extremely large expressions.
 @c backsubst : true$
 @c linsolve ([eq1, eq2, eq3], [x,y,z]);
 @c ===end===
-@example
+@example maxima
 (%i1) eq1 : x + y + z = 6$
 (%i2) eq2 : x - y + z = 2$
 (%i3) eq3 : x + y - z = 0$
 (%i4) backsubst : false$
 @group
 (%i5) linsolve ([eq1, eq2, eq3], [x,y,z]);
-(%o5)             [x = z - y, y = 2, z = 3]
+(%o5)               [x = z - y, y = 2, z = 3]
 @end group
 (%i6) backsubst : true$
 @group
 (%i7) linsolve ([eq1, eq2, eq3], [x,y,z]);
-(%o7)               [x = 1, y = 2, z = 3]
+(%o7)                 [x = 1, y = 2, z = 3]
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -395,69 +415,82 @@ Otherwise, common subexpressions are not identified.
 
 Examples:
 
-@example
+@c ===beg===
+@c programmode: false$
+@c breakup: true$
+@c solve (x^3 + x^2 - 1);
+@c breakup: false$
+@c solve (x^3 + x^2 - 1);
+@c ===end===
+@example maxima
 (%i1) programmode: false$
 (%i2) breakup: true$
-(%i3) solve (x^3 + x^2 - 1);
-
-                        sqrt(23)    25 1/3
-(%t3)                  (--------- + --)
-                        6 sqrt(3)   54
-Solution:
-
-                                      sqrt(3) %i   1
-                                      ---------- - -
-                sqrt(3) %i   1            2        2   1
-(%t4)    x = (- ---------- - -) %t3 + -------------- - -
-                    2        2            9 %t3        3
-
-                                      sqrt(3) %i   1
-                                    - ---------- - -
-              sqrt(3) %i   1              2        2   1
-(%t5)    x = (---------- - -) %t3 + ---------------- - -
-                  2        2             9 %t3         3
-
-                                   1     1
-(%t6)                  x = %t3 + ----- - -
-                                 9 %t3   3
-(%o6)                    [%t4, %t5, %t6]
-(%i6) breakup: false$
-(%i7) solve (x^3 + x^2 - 1);
-Solution:
-
-             sqrt(3) %i   1
-             ---------- - -
-                 2        2        sqrt(23)    25 1/3
-(%t7) x = --------------------- + (--------- + --)
-             sqrt(23)    25 1/3    6 sqrt(3)   54
-          9 (--------- + --)
-             6 sqrt(3)   54
-
-                                              sqrt(3) %i   1    1
-                                           (- ---------- - -) - -
-                                                  2        2    3
 @group
-           sqrt(23)    25 1/3  sqrt(3) %i   1
-(%t8) x = (--------- + --)    (---------- - -)
-           6 sqrt(3)   54          2        2
+(%i3) solve (x^3 + x^2 - 1);
+                        sqrt(23)   25 1/3
+(%t3)                  (-------- + --)
+                            3/2    54
+                         2 3
+solve: solution:
 
-                                            sqrt(3) %i   1
-                                          - ---------- - -
-                                                2        2      1
-                                      + --------------------- - -
-                                           sqrt(23)    25 1/3   3
-                                        9 (--------- + --)
-                                           6 sqrt(3)   54
+                                    sqrt(3) %i   - 1
+                                    ---------- + ---
+            - 1   sqrt(3) %i            2         2    - 1
+(%t4)  x = (--- - ----------) %t3 + ---------------- + ---
+             2        2                  9 %t3          3
+
+                                    - 1   sqrt(3) %i
+                                    --- - ----------
+            sqrt(3) %i   - 1         2        2        - 1
+(%t5)  x = (---------- + ---) %t3 + ---------------- + ---
+                2         2              9 %t3          3
+
+                                  1     - 1
+(%t6)                 x = %t3 + ----- + ---
+                                9 %t3    3
+(%o6)                    [%t4, %t5, %t6]
 @end group
-            sqrt(23)    25 1/3             1             1
-(%t9)  x = (--------- + --)    + --------------------- - -
-            6 sqrt(3)   54          sqrt(23)    25 1/3   3
-                                 9 (--------- + --)
-                                    6 sqrt(3)   54
-(%o9)                    [%t7, %t8, %t9]
+(%i7) breakup: false$
+@group
+(%i8) solve (x^3 + x^2 - 1);
+solve: solution:
+
+            sqrt(3) %i   - 1
+            ---------- + ---
+                2         2       sqrt(23)   25 1/3
+(%t8) x = -------------------- + (-------- + --)
+             sqrt(23)   25 1/3        3/2    54
+          9 (-------- + --)        2 3
+                 3/2    54
+              2 3
+                                          - 1   sqrt(3) %i    - 1
+                                         (--- - ----------) + ---
+                                           2        2          3
+
+           sqrt(23)   25 1/3  sqrt(3) %i   - 1
+(%t9) x = (-------- + --)    (---------- + ---)
+               3/2    54          2         2
+            2 3
+                                         - 1   sqrt(3) %i
+                                         --- - ----------
+                                          2        2          - 1
+                                     + -------------------- + ---
+                                          sqrt(23)   25 1/3    3
+                                       9 (-------- + --)
+                                              3/2    54
+                                           2 3
+
+            sqrt(23)   25 1/3            1             - 1
+(%t10) x = (-------- + --)    + -------------------- + ---
+                3/2    54          sqrt(23)   25 1/3    3
+             2 3                9 (-------- + --)
+                                       3/2    54
+                                    2 3
+(%o10)                  [%t8, %t9, %t10]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -473,7 +506,7 @@ Solution:
 @code{demo ("dimen")} displays a short demonstration.
 @c I GUESS THIS SHOULD BE EXPANDED TO COVER EACH FUNCTION IN THE PACKAGE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Share packages}
 @closecatbox
 @end deffn
@@ -489,7 +522,7 @@ generated by the solve functions called from within the @code{block}.
 Termination of the @code{block} with a dollar sign, @code{$}, sets @code{dispflag} to
 @code{false}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @category{Display flags and variables}
 @closecatbox
@@ -511,24 +544,27 @@ or not there exists a rational function @code{@var{g}(@var{t})} satisfying
 @c      (n - 1)/(n + 2);
 @c funcsolve (eqn, f(n));
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) eqn: (n + 1)*f(n) - (n + 3)*f(n + 1)/(n + 1) =
-      (n - 1)/(n + 2);
+     (n - 1)/(n + 2);
                             (n + 3) f(n + 1)   n - 1
 (%o1)        (n + 1) f(n) - ---------------- = -----
                                  n + 1         n + 2
+@end group
+@group
 (%i2) funcsolve (eqn, f(n));
-
-Dependent equations eliminated:  (4 3)
+solve: dependent equations eliminated: (4 3)
                                    n
 (%o2)                f(n) = ---------------
                             (n + 1) (n + 2)
+@end group
 @end example
 
 Warning: this is a very rudimentary implementation -- many safety checks
 and obvious generalizations are missing.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end deffn
@@ -563,47 +599,45 @@ Examples:
 @c x;
 @c y;
 @c ===end===
-@example
+@example maxima
 (%i1) globalsolve: true$
+@group
 (%i2) solve ([x + 3*y = 2, 2*x - y = 5], [x, y]);
-Solution
-
-                                 17
-(%t2)                        x : --
-                                 7
-
-                                   1
-(%t3)                        y : - -
-                                   7
-(%o3)                     [[%t2, %t3]]
+                             17        1
+(%o2)                  [[x : --, y : - -]]
+                             7         7
+@end group
+@group
 (%i3) x;
                                17
 (%o3)                          --
                                7
+@end group
+@group
 (%i4) y;
                                  1
 (%o4)                          - -
                                  7
+@end group
 (%i5) globalsolve: false$
 (%i6) kill (x, y)$
+@group
 (%i7) solve ([x + 3*y = 2, 2*x - y = 5], [x, y]);
-Solution
-
-                                 17
-(%t7)                        x = --
-                                 7
-
-                                   1
-(%t8)                        y = - -
-                                   7
-(%o8)                     [[%t7, %t8]]
+                             17        1
+(%o7)                  [[x = --, y = - -]]
+                             7         7
+@end group
+@group
 (%i8) x;
 (%o8)                           x
+@end group
+@group
 (%i9) y;
 (%o9)                           y
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @closecatbox
 @end defvr
@@ -728,7 +762,7 @@ default 5th arg, initial guess:  none
 (%o5)                               [%t5]
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Integral equations}
 @closecatbox
 @end deffn
@@ -751,7 +785,7 @@ to an inexact or non-closed form solution, respectively.  If a series method was
 used, @var{nterms} gives the number of terms taken (which could be less than
 the n given to @code{ieqn} if an error prevented generation of further terms).
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Integral equations}
 @closecatbox
 @end defvr
@@ -764,7 +798,7 @@ Returns the left-hand side (that is, the first argument) of the expression
 @var{expr}, when the operator of @var{expr} is one of the relational operators
 @code{< <= = # equal notequal >= >},
 @c MENTION -> (MARROW) IN THIS LIST IF/WHEN THE PARSER RECOGNIZES IT
-one of the assignment operators @code{:= ::= : ::}, or an user-defined binary
+one of the assignment operators @code{:= ::= : ::}, or a user-defined binary
 infix operator, as declared by @mrefdot{infix}
 
 When @var{expr} is an atom or its operator is something other than the ones
@@ -790,36 +824,60 @@ Examples:
 @c infix ("][");
 @c lhs (aa ][ bb);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) e: aa + bb = cc;
 (%o1)                     bb + aa = cc
+@end group
+@group
 (%i2) lhs (e);
 (%o2)                        bb + aa
+@end group
+@group
 (%i3) rhs (e);
 (%o3)                          cc
+@end group
+@group
 (%i4) [lhs (aa < bb), lhs (aa <= bb), lhs (aa >= bb),
        lhs (aa > bb)];
 (%o4)                   [aa, aa, aa, aa]
+@end group
+@group
 (%i5) [lhs (aa = bb), lhs (aa # bb), lhs (equal (aa, bb)),
        lhs (notequal (aa, bb))];
 (%o5)                   [aa, aa, aa, aa]
+@end group
+@group
 (%i6) e1: '(foo(x) := 2*x);
 (%o6)                     foo(x) := 2 x
+@end group
+@group
 (%i7) e2: '(bar(y) ::= 3*y);
 (%o7)                    bar(y) ::= 3 y
+@end group
+@group
 (%i8) e3: '(x : y);
 (%o8)                         x : y
+@end group
+@group
 (%i9) e4: '(x :: y);
 (%o9)                        x :: y
+@end group
+@group
 (%i10) [lhs (e1), lhs (e2), lhs (e3), lhs (e4)];
 (%o10)               [foo(x), bar(y), x, x]
+@end group
+@group
 (%i11) infix ("][");
 (%o11)                         ][
+@end group
+@group
 (%i12) lhs (aa ][ bb);
 (%o12)                         aa
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -871,22 +929,35 @@ Examples:
 @c linsolve ([e1, e2, e3], '[x, y, z]);
 @c [x, y, z];
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) e1: x + z = y;
 (%o1)                       z + x = y
+@end group
+@group
 (%i2) e2: 2*a*x - y = 2*a^2;
                                        2
 (%o2)                   2 a x - y = 2 a
+@end group
+@group
 (%i3) e3: y - 2*z = 2;
 (%o3)                      y - 2 z = 2
+@end group
+@group
 (%i4) [globalsolve: false, programmode: true];
 (%o4)                     [false, true]
+@end group
+@group
 (%i5) linsolve ([e1, e2, e3], [x, y, z]);
 (%o5)            [x = a + 1, y = 2 a, z = a - 1]
+@end group
+@group
 (%i6) [globalsolve: false, programmode: false];
 (%o6)                    [false, false]
+@end group
+@group
 (%i7) linsolve ([e1, e2, e3], [x, y, z]);
-Solution
+Solution:
 
 (%t7)                       z = a - 1
 
@@ -894,32 +965,49 @@ Solution
 
 (%t9)                       x = a + 1
 (%o9)                    [%t7, %t8, %t9]
-(%i9) ''%;
-(%o9)            [z = a - 1, y = 2 a, x = a + 1]
-(%i10) [globalsolve: true, programmode: false];
-(%o10)                    [true, false]
-(%i11) linsolve ([e1, e2, e3], [x, y, z]);
-Solution
+@end group
+@group
+(%i10) ''%;
+(%o10)           [z = a - 1, y = 2 a, x = a + 1]
+@end group
+@group
+(%i11) [globalsolve: true, programmode: false];
+(%o11)                    [true, false]
+@end group
+@group
+(%i12) linsolve ([e1, e2, e3], [x, y, z]);
+Solution:
 
-(%t11)                      z : a - 1
+(%t12)                      z : a - 1
 
-(%t12)                       y : 2 a
+(%t13)                       y : 2 a
 
-(%t13)                      x : a + 1
-(%o13)                 [%t11, %t12, %t13]
-(%i13) ''%;
-(%o13)           [z : a - 1, y : 2 a, x : a + 1]
-(%i14) [x, y, z];
-(%o14)                 [a + 1, 2 a, a - 1]
-(%i15) [globalsolve: true, programmode: true];
-(%o15)                    [true, true]
-(%i16) linsolve ([e1, e2, e3], '[x, y, z]);
-(%o16)           [x : a + 1, y : 2 a, z : a - 1]
-(%i17) [x, y, z];
-(%o17)                 [a + 1, 2 a, a - 1]
+(%t14)                      x : a + 1
+(%o14)                 [%t12, %t13, %t14]
+@end group
+@group
+(%i15) ''%;
+(%o15)           [z : a - 1, y : 2 a, x : a + 1]
+@end group
+@group
+(%i16) [x, y, z];
+(%o16)                 [a + 1, 2 a, a - 1]
+@end group
+@group
+(%i17) [globalsolve: true, programmode: true];
+(%o17)                    [true, true]
+@end group
+@group
+(%i18) linsolve ([e1, e2, e3], '[x, y, z]);
+(%o18)           [x : a + 1, y : 2 a, z : a - 1]
+@end group
+@group
+(%i19) [x, y, z];
+(%o19)                 [a + 1, 2 a, a - 1]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @closecatbox
 @end deffn
@@ -934,7 +1022,7 @@ Default value: @code{true}
 When @code{linsolvewarn} is @code{true}, @mref{linsolve} prints a message
 "Dependent equations eliminated".
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @closecatbox
 @end defvr
@@ -950,7 +1038,7 @@ the manual under @mrefdot{algsys}  Otherwise, @code{linsolve} solves an
 under-determined system of equations with some variables expressed in terms of
 others.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @closecatbox
 @end defvr
@@ -964,7 +1052,7 @@ Default value: @code{not_set_yet}
 solutions returned by @mref{solve} or @mrefdot{realroots}
 @c NEED AN EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @category{Polynomials}
 @closecatbox
@@ -984,13 +1072,15 @@ interval may be @code{minf} or @code{inf}.
 @c p: x^10 - 2*x^4 + 1/2$
 @c nroots (p, -6, 9.1);
 @c ===end===
-@example
+@example maxima
 (%i1) p: x^10 - 2*x^4 + 1/2$
+@group
 (%i2) nroots (p, -6, 9.1);
 (%o2)                           4
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Numerical methods}
 @closecatbox
@@ -1008,7 +1098,7 @@ positive integer returns @code{q}, a polynomial over the integers, such that
 perfect nth power.  This routine is much faster than @mref{factor} or even
 @mrefdot{sqfr}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @closecatbox
 @end deffn
@@ -1025,7 +1115,7 @@ polynomial is complex.
 
 See @code{allroots} for an example.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Numerical methods}
 @closecatbox
@@ -1047,7 +1137,7 @@ When @code{programmode} is @code{false}, @code{solve}, etc. create intermediate
 expression labels @code{%t1}, @code{%t2}, etc., and assign the solutions to them.
 @c NEED AN EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @category{Polynomials}
 @closecatbox
@@ -1061,7 +1151,7 @@ Default value: @code{false}
 When @code{realonly} is @code{true}, @mref{algsys} returns only those solutions
 which are free of @code{%i}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -1099,6 +1189,9 @@ When @code{programmode} is @code{false}, @code{realroots} creates intermediate
 expression labels @code{%t1}, @code{%t2}, @dots{},
 assigns the results to them, and returns the list of labels.
 
+See also @mrefcomma{allroots} @mrefcomma{bfallroots} @mrefcomma{guess_exact_value}
+and @mrefdot{lhs}
+
 Examples:
 
 @c ===beg===
@@ -1106,29 +1199,39 @@ Examples:
 @c ev (%[1], float);
 @c ev (-1 - x + x^5, %);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) realroots (-1 - x + x^5, 5e-6);
                                612003
 (%o1)                     [x = ------]
                                524288
+@end group
+@group
 (%i2) ev (%[1], float);
-(%o2)                 x = 1.167303085327148
+(%o2)                x = 1.1673030853271484
+@end group
+@group
 (%i3) ev (-1 - x + x^5, %);
-(%o3)                - 7.396496210176905E-6
+(%o3)                - 7.396496210176906e-6
+@end group
 @end example
 
 @c ===beg===
 @c realroots (expand ((1 - x)^5 * (2 - x)^3 * (3 - x)), 1e-20);
 @c multiplicities;
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) realroots (expand ((1 - x)^5 * (2 - x)^3 * (3 - x)), 1e-20);
 (%o1)                 [x = 1, x = 2, x = 3]
+@end group
+@group
 (%i2) multiplicities;
 (%o2)                       [5, 3, 1]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Numerical methods}
 @closecatbox
@@ -1142,7 +1245,7 @@ Returns the right-hand side (that is, the second argument) of the expression
 @var{expr}, when the operator of @var{expr} is one of the relational operators
 @code{< <= = # equal notequal >= >},
 @c MENTION -> (MARROW) IN THIS LIST IF/WHEN THE PARSER RECOGNIZES IT
-one of the assignment operators @code{:= ::= : ::}, or an user-defined binary
+one of the assignment operators @code{:= ::= : ::}, or a user-defined binary
 infix operator, as declared by @mrefdot{infix}
 
 When @var{expr} is an atom or its operator is something other than the ones
@@ -1168,38 +1271,60 @@ Examples:
 @c infix ("][");
 @c rhs (aa ][ bb);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) e: aa + bb = cc;
 (%o1)                     bb + aa = cc
+@end group
+@group
 (%i2) lhs (e);
 (%o2)                        bb + aa
+@end group
+@group
 (%i3) rhs (e);
 (%o3)                          cc
+@end group
+@group
 (%i4) [rhs (aa < bb), rhs (aa <= bb), rhs (aa >= bb),
        rhs (aa > bb)];
 (%o4)                   [bb, bb, bb, bb]
+@end group
 @group
 (%i5) [rhs (aa = bb), rhs (aa # bb), rhs (equal (aa, bb)),
        rhs (notequal (aa, bb))];
-@end group
 (%o5)                   [bb, bb, bb, bb]
+@end group
+@group
 (%i6) e1: '(foo(x) := 2*x);
 (%o6)                     foo(x) := 2 x
+@end group
+@group
 (%i7) e2: '(bar(y) ::= 3*y);
 (%o7)                    bar(y) ::= 3 y
+@end group
+@group
 (%i8) e3: '(x : y);
 (%o8)                         x : y
+@end group
+@group
 (%i9) e4: '(x :: y);
 (%o9)                        x :: y
+@end group
+@group
 (%i10) [rhs (e1), rhs (e2), rhs (e3), rhs (e4)];
 (%o10)                  [2 x, 3 y, y, y]
+@end group
+@group
 (%i11) infix ("][");
 (%o11)                         ][
+@end group
+@group
 (%i12) rhs (aa ][ bb);
 (%o12)                         bb
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -1212,7 +1337,7 @@ Default value: @code{true}
 @code{rootsconmode} governs the behavior of the @code{rootscontract} command.
 See @mref{rootscontract} for details.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -1273,37 +1398,53 @@ Examples:
 @c rootsconmode: true$
 @c rootscontract (sqrt(5 + sqrt(5)) - 5^(1/4)*sqrt(1 + sqrt(5)));
 @c ===end===
-@example
+@example maxima
 (%i1) rootsconmode: false$
+@group
 (%i2) rootscontract (x^(1/2)*y^(3/2));
                                    3
 (%o2)                      sqrt(x y )
+@end group
+@group
 (%i3) rootscontract (x^(1/2)*y^(1/4));
                                    1/4
 (%o3)                     sqrt(x) y
+@end group
 (%i4) rootsconmode: true$
+@group
 (%i5) rootscontract (x^(1/2)*y^(1/4));
 (%o5)                    sqrt(x sqrt(y))
+@end group
+@group
 (%i6) rootscontract (x^(1/2)*y^(1/3));
                                    1/3
 (%o6)                     sqrt(x) y
+@end group
 (%i7) rootsconmode: all$
+@group
 (%i8) rootscontract (x^(1/2)*y^(1/4));
                               2   1/4
 (%o8)                       (x  y)
+@end group
+@group
 (%i9) rootscontract (x^(1/2)*y^(1/3));
                              3  2 1/6
 (%o9)                      (x  y )
+@end group
 (%i10) rootsconmode: false$
+@group
 (%i11) rootscontract (sqrt(sqrt(x) + sqrt(1 + x))
                     *sqrt(sqrt(1 + x) - sqrt(x)));
 (%o11)                          1
+@end group
 (%i12) rootsconmode: true$
-(%i13) rootscontract (sqrt(5+sqrt(5)) - 5^(1/4)*sqrt(1+sqrt(5)));
+@group
+(%i13) rootscontract (sqrt(5 + sqrt(5)) - 5^(1/4)*sqrt(1 + sqrt(5)));
 (%o13)                          0
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification functions}
 @closecatbox
 @end deffn
@@ -1318,7 +1459,7 @@ for the roots found by the @mref{realroots} function.
 @c IS IT GUARANTEED THAT |ACTUAL - ESTIMATE| < rootepsilon OR IS IT SOME OTHER
 @c NOTION ?? NEED EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Numerical methods}
 @closecatbox
@@ -1409,95 +1550,113 @@ Examples:
 @c solve (%, x);
 @c ev (%th(2), %[1]);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) solve (asin (cos (3*x))*(f(x) - 1), x);
-
 solve: using arc-trig functions to get a solution.
 Some solutions will be lost.
                             %pi
 (%o1)                  [x = ---, f(x) = 1]
                              6
+@end group
+@group
 (%i2) ev (solve (5^f(x) = 125, f(x)), solveradcan);
                                 log(125)
 (%o2)                   [f(x) = --------]
                                  log(5)
+@end group
+@group
 (%i3) [4*x^2 - y^2 = 12, x*y - x = 2];
                       2    2
 (%o3)             [4 x  - y  = 12, x y - x = 2]
-
+@end group
+@group
 (%i4) solve (%, [x, y]);
-(%o4) [[x = 2, y = 2], [x = .5202594388652008 %i
- - .1331240357358706, y = .07678378523787788
- - 3.608003221870287 %i], [x = - .5202594388652008 %i
- - .1331240357358706, y = 3.608003221870287 %i
- + .07678378523787788], [x = - 1.733751846381093, 
-y = - .1535675710019696]]
-
+(%o4) [[x = 2, y = 2], [x = 0.5202594388652008 %i
+ - 0.1331240357358706, y = 0.07678378523787788
+ - 3.608003221870287 %i], [x = - 0.5202594388652008 %i
+ - 0.1331240357358706, y = 3.608003221870287 %i
+ + 0.07678378523787788], [x = - 1.733751846381093, 
+y = - 0.15356757100196963]]
+@end group
+@group
 (%i5) solve (1 + a*x + x^3, x);
-
                                        3
-              sqrt(3) %i   1   sqrt(4 a  + 27)   1 1/3
-(%o5) [x = (- ---------- - -) (--------------- - -)
-                  2        2      6 sqrt(3)      2
-
-        sqrt(3) %i   1
-       (---------- - -) a
-            2        2
+            - 1   sqrt(3) %i   sqrt(4 a  + 27)   1 1/3
+(%o5) [x = (--- - ----------) (--------------- - -)
+             2        2               3/2        2
+                                   2 3
+       sqrt(3) %i   - 1
+      (---------- + ---) a
+           2         2
  - --------------------------, x = 
               3
       sqrt(4 a  + 27)   1 1/3
    3 (--------------- - -)
-         6 sqrt(3)      2
-
-                          3
- sqrt(3) %i   1   sqrt(4 a  + 27)   1 1/3
-(---------- - -) (--------------- - -)
-     2        2      6 sqrt(3)      2
-
-         sqrt(3) %i   1
-      (- ---------- - -) a
-             2        2
+             3/2        2
+          2 3
+                            3
+ sqrt(3) %i   - 1   sqrt(4 a  + 27)   1 1/3
+(---------- + ---) (--------------- - -)
+     2         2           3/2        2
+                        2 3
+       - 1   sqrt(3) %i
+      (--- - ----------) a
+        2        2
  - --------------------------, x = 
               3
       sqrt(4 a  + 27)   1 1/3
    3 (--------------- - -)
-         6 sqrt(3)      2
-
+             3/2        2
+          2 3
          3
  sqrt(4 a  + 27)   1 1/3               a
 (--------------- - -)    - --------------------------]
-    6 sqrt(3)      2                  3
-                              sqrt(4 a  + 27)   1 1/3
+        3/2        2                  3
+     2 3                      sqrt(4 a  + 27)   1 1/3
                            3 (--------------- - -)
-                                 6 sqrt(3)      2
+                                     3/2        2
+                                  2 3
+@end group
+@group
 (%i6) solve (x^3 - 1);
              sqrt(3) %i - 1        sqrt(3) %i + 1
 (%o6)   [x = --------------, x = - --------------, x = 1]
                    2                     2
+@end group
+@group
 (%i7) solve (x^6 - 1);
            sqrt(3) %i + 1      sqrt(3) %i - 1
 (%o7) [x = --------------, x = --------------, x = - 1, 
                  2                   2
-
                      sqrt(3) %i + 1        sqrt(3) %i - 1
                x = - --------------, x = - --------------, x = 1]
                            2                     2
-(%i8) ev (x^6 - 1, %[1]);
+@end group
 @group
+(%i8) ev (x^6 - 1, %[1]);
                                       6
                       (sqrt(3) %i + 1)
 (%o8)                 ----------------- - 1
                              64
 @end group
+@group
 (%i9) expand (%);
 (%o9)                           0
+@end group
+@group
 (%i10) x^2 - 1;
                               2
 (%o10)                       x  - 1
+@end group
+@group
 (%i11) solve (%, x);
 (%o11)                  [x = - 1, x = 1]
+@end group
+@group
 (%i12) ev (%th(2), %[1]);
 (%o12)                          0
+@end group
 @end example
 
 The symbols @code{%r} are used to denote arbitrary constants in a solution.
@@ -1505,16 +1664,17 @@ The symbols @code{%r} are used to denote arbitrary constants in a solution.
 @c ===beg===
 @c solve([x+y=1,2*x+2*y=2],[x,y]);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) solve([x+y=1,2*x+2*y=2],[x,y]);
-
 solve: dependent equations eliminated: (2)
-(%o1)                      [[x = 1 - %r1, y = %r1]]
+(%o1)               [[x = 1 - %r1, y = %r1]]
+@end group
 @end example
 
 See @mref{algsys} and @mref{%rnum_list} for more information.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end deffn
@@ -1528,7 +1688,7 @@ When @code{solvedecomposes} is @code{true}, @code{solve} calls
 @mref{polydecomp} if asked to solve polynomials.
 @c OTHERWISE WHAT HAPPENS -- CAN'T SOLVE POLYNOMIALS, OR SOME OTHER METHOD IS USED ??
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -1543,7 +1703,7 @@ implicit solutions, that is, solutions of the form @code{F(x) = 0} where
 @code{F} is some function.
 @c NEED AN EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -1559,7 +1719,7 @@ the expression.  The @code{false} setting may be desired in some cases where
 factoring is not necessary.
 @c NEED AN EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -1574,7 +1734,7 @@ if called with either a null equation list or a null variable list.  For
 example, @code{solve ([], [])} would print two warning messages and return
 @code{[]}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -1589,7 +1749,7 @@ which makes @code{solve} slower but will allow certain problems containing
 exponentials and logarithms to be solved.
 @c NEED AN EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
@@ -1605,8 +1765,728 @@ saying that it is using inverse trigonometric functions to solve the equation,
 and thereby losing solutions.
 @c NEED AN EXAMPLE HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Algebraic equations}
 @closecatbox
 @end defvr
 
+@c =============================================================================
+@node Examples for algsys, References for equations, Functions and Variables for Equations, Equations
+@section Examples for algsys
+
+@var{algsys} often fails to solve problems that have solutions.  The following examples
+provide some solution strategies.
+
+@subsection Strategies
+
+Many users try to solve the most general problem imaginable, with multiple
+free parameters. Unfortunately the size and complexity of individual solutions
+increases rapidly with
+the number of parameters, as can be seen in the examples below.
+This 'expression swell' makes it difficult for a computer
+algebra system to confirm symbolically that solutions satisfy the
+input equations so solutions can be incorrectly rejected by a solver.
+Every effort should be made to reduce the complexity of, and number of
+parameters in, the equations to be solved.
+
+@subsection Example 1: Intersection of two circles
+
+We wish to find the intersection points of two circles: one centered
+at (a,b) with radius r
+and the second centered at (c,d) with radius s.
+
+@var{algsys} does not find a solution to the original problem.
+@c ===beg===
+@c eq1: (x-a)^2+(y-b)^2-r^2;
+@c eq2: (x-c)^2+(y-d)^2-s^2;
+@c algsys([eq1,eq2],[x,y]);
+@c ===end===
+@example maxima
+@group
+(%i1) eq1: (x-a)^2+(y-b)^2-r^2;
+                           2          2    2
+(%o1)               (y - b)  + (x - a)  - r
+@end group
+@group
+(%i2) eq2: (x-c)^2+(y-d)^2-s^2;
+                           2          2    2
+(%o2)               (y - d)  + (x - c)  - s
+@end group
+@group
+(%i3) algsys([eq1,eq2],[x,y]);
+(%o3)                          []
+@end group
+@end example
+
+@c -----------------------------------------------------------------------------
+@subsubheading Simplify the problem
+
+This problem can be transformed to eliminate parameters by:
+translating the center of the first circle to the origin;
+scaling so that the first circle has radius 1;
+and, rotating about the new origin so that
+the center of the second circle is located on the positive x-axis.
+
+@c ===beg===
+@c eq1a:x^2+y^2-1;
+@c eq2a:(x-C)^2+y^2-S^2;
+@c algsys([eq1a,eq2a],[x,y]);
+@c ===end===
+@example maxima
+@group
+(%i1) eq1a:x^2+y^2-1;
+                            2    2
+(%o1)                      y  + x  - 1
+@end group
+@group
+(%i2) eq2a:(x-C)^2+y^2-S^2;
+                        2          2    2
+(%o2)                  y  + (x - C)  - S
+@end group
+@group
+(%i3) algsys([eq1a,eq2a],[x,y]);
+               2    2
+              S  - C  - 1
+(%o3) [[x = - -----------, y = 
+                  2 C
+          4       2       2    4      2
+  sqrt(- S  + (2 C  + 2) S  - C  + 2 C  - 1)
+- ------------------------------------------], 
+                     2 C
+        2    2
+       S  - C  - 1
+[x = - -----------, y = 
+           2 C
+        4       2       2    4      2
+sqrt(- S  + (2 C  + 2) S  - C  + 2 C  - 1)
+------------------------------------------]]
+                   2 C
+@end group
+@end example
+
+It is not necessary to rescale these equations to obtain
+a solution.
+
+@c ===beg===
+@c eq1b:x^2+y^2-r^2;
+@c eq2b:(x-C)^2+y^2-s^2;
+@c algsys([eq1b,eq2b],[x,y]);
+@c ===end===
+@example maxima
+@group
+(%i1) eq1b:x^2+y^2-r^2;
+                           2    2    2
+(%o1)                     y  + x  - r
+@end group
+@group
+(%i2) eq2b:(x-C)^2+y^2-s^2;
+                        2          2    2
+(%o2)                  y  + (x - C)  - s
+@end group
+@group
+(%i3) algsys([eq1b,eq2b],[x,y]);
+               2    2    2
+              s  - r  - C
+(%o3) [[x = - ------------, y = 
+                  2 C
+          4       2      2   2    4      2  2    4
+  sqrt(- s  + (2 r  + 2 C ) s  - r  + 2 C  r  - C )
+- -------------------------------------------------], 
+                         2 C
+        2    2    2
+       s  - r  - C
+[x = - ------------, y = 
+           2 C
+        4       2      2   2    4      2  2    4
+sqrt(- s  + (2 r  + 2 C ) s  - r  + 2 C  r  - C )
+-------------------------------------------------]]
+                       2 C
+@end group
+@end example
+
+@c -----------------------------------------------------------------------------
+@subsubheading Simplify the equations
+
+Another strategy is to simplify the equations. 
+The expression @var{eq1-eq2} is linear in unknowns @var{x} and @var{y}.
+@var{algsys} can solve the simpler system of equations @var{[eq1,eq1-eq2]}.
+
+Note the complexity of the solution at (%o4).  
+
+@c ===beg===
+@c eq1: (x-a)^2+(y-b)^2-r^2;
+@c eq2: (x-c)^2+(y-d)^2-s^2;
+@c eq3: expand(eq1-eq2);
+@c soln:algsys([eq1,eq3],[x,y]);
+@c ratsimp(subst(soln[1],[eq1,eq2]));
+@c ratsimp(subst(soln[2],[eq1,eq2]));
+@c ===end===
+@example maxima
+@group
+(%i1) eq1: (x-a)^2+(y-b)^2-r^2;
+                           2          2    2
+(%o1)               (y - b)  + (x - a)  - r
+@end group
+@group
+(%i2) eq2: (x-c)^2+(y-d)^2-s^2;
+                           2          2    2
+(%o2)               (y - d)  + (x - c)  - s
+@end group
+@group
+(%i3) eq3: expand(eq1-eq2);
+                                       2    2    2    2    2    2
+(%o3) 2 d y - 2 b y + 2 c x - 2 a x + s  - r  - d  - c  + b  + a
+@end group
+@group
+(%i4) soln:algsys([eq1,eq3],[x,y]);
+                               4
+(%o4) [[x = - ((d - b) sqrt(- s
+       2      2              2              2      2   2    4
+ + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) s  - r
+       2              2              2      2   2    4        3
+ + (2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) r  - d  + 4 b d
+         2              2      2   2
+ + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2              2
+ + (c - a) s  + (a - c) r  + (- c - a) d  + (2 b c + 2 a b) d
+    3      2     2    2         2    3
+ - c  + a c  + (a  - b ) c - a b  - a )
+     2              2              2      2
+/(2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ), 
+                     4       2      2              2
+y = ((c - a) sqrt(- s  + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c
+      2      2   2    4       2              2              2
+ + 2 b  + 2 a ) s  - r  + (2 d  - 4 b d + 2 c  - 4 a c + 2 b
+      2   2    4        3         2              2      2   2
+ + 2 a ) r  - d  + 4 b d  + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2    3      2     2            2    2
+ + (b - d) s  + (d - b) r  + d  - b d  + (c  - 2 a c - b  + a ) d
+      2              3    2        2              2
+ + b c  - 2 a b c + b  + a  b)/(2 d  - 4 b d + 2 c  - 4 a c
+      2      2                          4
+ + 2 b  + 2 a )], [x = ((d - b) sqrt(- s
+       2      2              2              2      2   2    4
+ + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) s  - r
+       2              2              2      2   2    4        3
+ + (2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) r  - d  + 4 b d
+         2              2      2   2
+ + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2            2
+ + (a - c) s  + (c - a) r  + (c + a) d  + (- 2 b c - 2 a b) d
+    3      2     2    2         2    3
+ + c  - a c  + (b  - a ) c + a b  + a )
+     2              2              2      2
+/(2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ), 
+                       4       2      2              2
+y = - ((c - a) sqrt(- s  + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c
+      2      2   2    4       2              2              2
+ + 2 b  + 2 a ) s  - r  + (2 d  - 4 b d + 2 c  - 4 a c + 2 b
+      2   2    4        3         2              2      2   2
+ + 2 a ) r  - d  + 4 b d  + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2    3      2
+ + (d - b) s  + (b - d) r  - d  + b d
+       2            2    2         2              3    2
+ + (- c  + 2 a c + b  - a ) d - b c  + 2 a b c - b  - a  b)
+     2              2              2      2
+/(2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a )]]
+@end group
+@group
+(%i5) ratsimp(subst(soln[1],[eq1,eq2]));
+(%o5)                        [0, 0]
+@end group
+@group
+(%i6) ratsimp(subst(soln[2],[eq1,eq2]));
+(%o6)                        [0, 0]
+@end group
+@end example
+
+@c -----------------------------------------------------------------------------
+@subsubheading Simplify the equations using poly_reduced_grobner
+
+Sometimes the system of equations can be solved after preprocessing
+with the function
+@mref{poly_reduced_grobner} from the @var{grobner} package.
+
+The reduced Gröbner basis returned at (%o4) consists of two polynomials
+in unknowns @var{x} and @var{y}:
+the first is bilinear in the unknowns;
+the second is quadratic in @var{y} only.  This confirms there
+are two (perhaps multiple) solutions, as we know geometrically.
+
+@c ===beg===
+@c eq1: (x-a)^2+(y-b)^2-r^2;
+@c eq2: (x-c)^2+(y-d)^2-s^2;
+@c /* load grobner package */
+@c  load("grobner")$
+@c poly_reduced_grobner([eq1,eq2],[x,y]);
+@c soln:algsys(%,[x,y]);
+@c ratsimp(subst(soln[1],[eq1,eq2]));
+@c ratsimp(subst(soln[2],[eq1,eq2]));
+@c ===end===
+@example maxima
+@group
+(%i1) eq1: (x-a)^2+(y-b)^2-r^2;
+                           2          2    2
+(%o1)               (y - b)  + (x - a)  - r
+@end group
+@group
+(%i2) eq2: (x-c)^2+(y-d)^2-s^2;
+                           2          2    2
+(%o2)               (y - d)  + (x - c)  - s
+@end group
+@group
+(%i3) /* load grobner package */
+ load("grobner")$
+@end group
+@group
+(%i4) poly_reduced_grobner([eq1,eq2],[x,y]);
+                                        2    2    2    2    2
+(%o4) [(2 d - 2 b) y + (2 c - 2 a) x + s  - r  - d  - c  + b
+    2      2              2              2      2   2
+ + a , (4 d  - 8 b d + 4 c  - 8 a c + 4 b  + 4 a ) y
+          2      2      2          2      2       3        2
+ + (d (4 s  - 4 r  + 4 b ) + b (4 r  - 4 s ) - 4 d  + 4 b d
+                      2                  2                    3
+ + a c (8 d + 8 b) + c  (- 4 d - 4 b) + a  (- 4 d - 4 b) - 4 b )
+      4            2      2      2      2       3
+ y + s  + c (a (4 s  + 4 r  - 4 d  - 4 b ) - 4 a )
+    2     2      2       2  2    2       2      2      2
+ + b  (2 s  - 2 r ) - 2 r  s  + d  (- 2 s  + 2 r  - 2 b )
+    2       2      2      2      2      2
+ + c  (- 2 s  - 2 r  + 2 d  + 2 b  + 6 a )
+    2       2      2      2      2     4    4    4        3    4
+ + a  (- 2 s  - 2 r  + 2 d  + 2 b ) + r  + d  + c  - 4 a c  + b
+    4
+ + a ]
+@end group
+@group
+(%i5) soln:algsys(%,[x,y]);
+                               4
+(%o5) [[x = - ((d - b) sqrt(- s
+       2      2              2              2      2   2    4
+ + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) s  - r
+       2              2              2      2   2    4        3
+ + (2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) r  - d  + 4 b d
+         2              2      2   2
+ + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2              2
+ + (c - a) s  + (a - c) r  + (- c - a) d  + (2 b c + 2 a b) d
+    3      2     2    2         2    3
+ - c  + a c  + (a  - b ) c - a b  - a )
+     2              2              2      2
+/(2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ), 
+                     4       2      2              2
+y = ((c - a) sqrt(- s  + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c
+      2      2   2    4       2              2              2
+ + 2 b  + 2 a ) s  - r  + (2 d  - 4 b d + 2 c  - 4 a c + 2 b
+      2   2    4        3         2              2      2   2
+ + 2 a ) r  - d  + 4 b d  + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2    3      2     2            2    2
+ + (b - d) s  + (d - b) r  + d  - b d  + (c  - 2 a c - b  + a ) d
+      2              3    2        2              2
+ + b c  - 2 a b c + b  + a  b)/(2 d  - 4 b d + 2 c  - 4 a c
+      2      2                          4
+ + 2 b  + 2 a )], [x = ((d - b) sqrt(- s
+       2      2              2              2      2   2    4
+ + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) s  - r
+       2              2              2      2   2    4        3
+ + (2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ) r  - d  + 4 b d
+         2              2      2   2
+ + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2            2
+ + (a - c) s  + (c - a) r  + (c + a) d  + (- 2 b c - 2 a b) d
+    3      2     2    2         2    3
+ + c  - a c  + (b  - a ) c + a b  + a )
+     2              2              2      2
+/(2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a ), 
+                       4       2      2              2
+y = - ((c - a) sqrt(- s  + (2 r  + 2 d  - 4 b d + 2 c  - 4 a c
+      2      2   2    4       2              2              2
+ + 2 b  + 2 a ) s  - r  + (2 d  - 4 b d + 2 c  - 4 a c + 2 b
+      2   2    4        3         2              2      2   2
+ + 2 a ) r  - d  + 4 b d  + (- 2 c  + 4 a c - 6 b  - 2 a ) d
+         2                3      2         4        3
+ + (4 b c  - 8 a b c + 4 b  + 4 a  b) d - c  + 4 a c
+         2      2   2         2      3       4      2  2    4
+ + (- 2 b  - 6 a ) c  + (4 a b  + 4 a ) c - b  - 2 a  b  - a )
+            2            2    3      2
+ + (d - b) s  + (b - d) r  - d  + b d
+       2            2    2         2              3    2
+ + (- c  + 2 a c + b  - a ) d - b c  + 2 a b c - b  - a  b)
+     2              2              2      2
+/(2 d  - 4 b d + 2 c  - 4 a c + 2 b  + 2 a )]]
+@end group
+@group
+(%i6) ratsimp(subst(soln[1],[eq1,eq2]));
+(%o6)                        [0, 0]
+@end group
+@group
+(%i7) ratsimp(subst(soln[2],[eq1,eq2]));
+(%o7)                        [0, 0]
+@end group
+@end example
+
+@c -----------------------------------------------------------------------------
+@subsection Example 2: Equations with irrational coefficients
+
+The presence of irrational coefficients can prevent @var{algsys}
+from finding solutions.  Replacing the constant with a symbol
+allows a solution to be found.
+
+@c ===beg===
+@c eq1: %pi*y + x - 1;
+@c eq2: 1 - x^2*y;
+@c algsys([eq1,eq2],[x,y]);
+@c /* Substitute p for %p and magically algsys finds solutions */
+@c  eq1a:subst(p,%pi,eq1);
+@c s:algsys([eq1a,eq2],[x,y]);
+@c /* substitute %pi for p */
+@c  s:subst(%pi,p,s)$
+@c /* Check the solution */
+@c  ratsimp(subst(s[1],[eq1,eq2]));
+@c ratsimp(subst(s[2],[eq1,eq2]));
+@c ratsimp(subst(s[3],[eq1,eq2]));
+@c /* numerical values of solution */
+@c  rectform(float(s));
+@c ===end===
+@example maxima
+@group
+(%i1) eq1: %pi*y + x - 1;
+(%o1)                     %pi y + x - 1
+@end group
+@group
+(%i2) eq2: 1 - x^2*y;
+                                 2
+(%o2)                       1 - x  y
+@end group
+@group
+(%i3) algsys([eq1,eq2],[x,y]);
+(%o3)                          []
+@end group
+@group
+(%i4) /* Substitute p for %p and magically algsys finds solutions */
+ eq1a:subst(p,%pi,eq1);
+(%o4)                      p y + x - 1
+@end group
+@group
+(%i5) s:algsys([eq1a,eq2],[x,y]);
+                 5/3               5/3
+(%o5) [[x = - ((2    sqrt(3) %i + 2   )
+   3/2          2                   1/3
+ (3    sqrt(27 p  - 4 p) - 27 p + 2)
+     3/2          2                   2/3
+ + (3    sqrt(27 p  - 4 p) - 27 p + 2)
+      1/3       1/3  3/2           2
+ ((9 2    %i - 2    3   ) sqrt(27 p  - 4 p)
+     1/3  7/2          1/3       4/3               4/3
+ + (2    3    %i - 27 2   ) p - 2    sqrt(3) %i + 2   ) - 8)/24, 
+       5/3               5/3
+y = ((2    sqrt(3) %i + 2   )
+   3/2          2                   1/3
+ (3    sqrt(27 p  - 4 p) - 27 p + 2)
+     3/2          2                   2/3
+ + (3    sqrt(27 p  - 4 p) - 27 p + 2)
+      1/3       1/3  3/2           2
+ ((9 2    %i - 2    3   ) sqrt(27 p  - 4 p)
+     1/3  7/2          1/3       4/3               4/3
+ + (2    3    %i - 27 2   ) p - 2    sqrt(3) %i + 2   ) + 16)
+                  5/3               5/3
+/(24 p)], [x = ((2    sqrt(3) %i - 2   )
+   3/2          2                   1/3
+ (3    sqrt(27 p  - 4 p) - 27 p + 2)
+     3/2          2                   2/3
+ + (3    sqrt(27 p  - 4 p) - 27 p + 2)
+      1/3       1/3  3/2           2
+ ((9 2    %i + 2    3   ) sqrt(27 p  - 4 p)
+     1/3  7/2          1/3       4/3               4/3
+ + (2    3    %i + 27 2   ) p - 2    sqrt(3) %i - 2   ) + 8)/24, 
+         5/3               5/3
+y = - ((2    sqrt(3) %i - 2   )
+   3/2          2                   1/3
+ (3    sqrt(27 p  - 4 p) - 27 p + 2)
+     3/2          2                   2/3
+ + (3    sqrt(27 p  - 4 p) - 27 p + 2)
+      1/3       1/3  3/2           2
+ ((9 2    %i + 2    3   ) sqrt(27 p  - 4 p)
+     1/3  7/2          1/3       4/3               4/3
+ + (2    3    %i + 27 2   ) p - 2    sqrt(3) %i - 2   ) - 16)
+                     5/3   3/2          2                   1/3
+/(24 p)], [x = - (- 2    (3    sqrt(27 p  - 4 p) - 27 p + 2)
+     3/2          2                   2/3
+ + (3    sqrt(27 p  - 4 p) - 27 p + 2)
+   1/3  3/2          2              1/3      4/3
+ (2    3    sqrt(27 p  - 4 p) + 27 2    p - 2   ) - 4)/12, 
+        5/3   3/2          2                   1/3
+y = (- 2    (3    sqrt(27 p  - 4 p) - 27 p + 2)
+     3/2          2                   2/3
+ + (3    sqrt(27 p  - 4 p) - 27 p + 2)
+   1/3  3/2          2              1/3      4/3
+ (2    3    sqrt(27 p  - 4 p) + 27 2    p - 2   ) + 8)/(12 p)]]
+@end group
+@group
+(%i6) /* substitute %pi for p */
+ s:subst(%pi,p,s)$
+@end group
+@group
+(%i7) /* Check the solution */
+ ratsimp(subst(s[1],[eq1,eq2]));
+(%o7)                        [0, 0]
+@end group
+@group
+(%i8) ratsimp(subst(s[2],[eq1,eq2]));
+(%o8)                        [0, 0]
+@end group
+@group
+(%i9) ratsimp(subst(s[3],[eq1,eq2]));
+(%o9)                        [0, 0]
+@end group
+@group
+(%i10) /* numerical values of solution */
+ rectform(float(s));
+(%o10) [[x = 1.0980298583288306 - 1.1920356507617584 %i, 
+y = 0.37943673232099623 %i - 0.031203873047263193], 
+[x = 1.1920356507617584 %i + 1.0980298583288306, 
+y = - 0.37943673232099623 %i - 0.031203873047263193], 
+[x = - 1.1960597166576612, y = 0.6990275184621078]]
+@end group
+@end example
+
+@c -----------------------------------------------------------------------------
+@subsection Example 3: Assumptions on parameters
+
+@var{algsys} may require assumptions on parameters to obtain a solution.
+No general guidance can be provided.  Users may be able to use their knowledge
+of the problem to restrict the range of parameters appropriately.
+
+@c ===beg===
+@c eqs:[y-x=0, g*x*y-h=0, z+(x+1)/y-x-1=0];
+@c /* without assumptions no solution is found */
+@c  algsys(eqs,[x,y,z]);
+@c assume(h>0);
+@c algsys(eqs,[x,y,z]);
+@c /* With a different assumption the solution has a different form */
+@c  (forget(h>0),assume(h<0));
+@c algsys(eqs,[x,y,z]);
+@c ===end===
+@example maxima
+@group
+(%i1) eqs:[y-x=0, g*x*y-h=0, z+(x+1)/y-x-1=0];
+                                       x + 1
+(%o1)   [y - x = 0, g x y - h = 0, z + ----- - x - 1 = 0]
+                                         y
+@end group
+@group
+(%i2) /* without assumptions no solution is found */
+ algsys(eqs,[x,y,z]);
+(%o2)                          []
+@end group
+@group
+(%i3) assume(h>0);
+(%o3)                        [h > 0]
+@end group
+@group
+(%i4) algsys(eqs,[x,y,z]);
+            sqrt(h)      sqrt(h)           h - g
+(%o4) [[x = -------, y = -------, z = ---------------], 
+            sqrt(g)      sqrt(g)      sqrt(g) sqrt(h)
+                  sqrt(h)        sqrt(h)             h - g
+           [x = - -------, y = - -------, z = - ---------------]]
+                  sqrt(g)        sqrt(g)        sqrt(g) sqrt(h)
+@end group
+@group
+(%i5) /* With a different assumption the solution has a different form */
+ (forget(h>0),assume(h<0));
+(%o5)                        [h < 0]
+@end group
+@group
+(%i6) algsys(eqs,[x,y,z]);
+              %i sqrt(- h)        %i sqrt(- h)
+(%o6) [[x = - ------------, y = - ------------, 
+                sqrt(g)             sqrt(g)
+      sqrt(- h) (%i h - %i g)
+z = - -----------------------], 
+             sqrt(g) h
+     %i sqrt(- h)      %i sqrt(- h)
+[x = ------------, y = ------------, 
+       sqrt(g)           sqrt(g)
+    sqrt(- h) (%i h - %i g)
+z = -----------------------]]
+           sqrt(g) h
+@end group
+@end example
+
+@c -----------------------------------------------------------------------------
+@subsection Example 4: Preproccess equations with poly_reduced_grobner
+
+In this example the direct solution of the system of equations
+using @var{algsys} finds four real solutions.
+After preprocessing with @mref{poly_reduced_grobner}, ten
+solutions are found.
+
+Inspection of the reduced Gröbner basis returned at (%o5) shows that it
+comprises a degree-10 polynomial in @var{y} and an expression
+linear in @var{x} and of degree-8 in @var{y}. There can be at most
+10 solutions for y, and exactly one @var{x} solution for each @var{y}
+solution, for a maximum of ten solutions overall.
+
+@c ===beg===
+@c p1:-x*y^3+y^2+x^4-9*x/8;
+@c p2:y^4-x^3*y-9*y/8+x^2;
+@c algsys([p1,p2],[x,y]);
+@c /* load grobner package */
+@c  load("grobner")$
+@c eqs:poly_reduced_grobner([p1,p2],[x,y]);
+@c algsys(eqs,[x,y]);
+@c ===end===
+@example maxima
+@group
+(%i1) p1:-x*y^3+y^2+x^4-9*x/8;
+                          3    2    4   9 x
+(%o1)                - x y  + y  + x  - ---
+                                         8
+@end group
+@group
+(%i2) p2:y^4-x^3*y-9*y/8+x^2;
+                       4    3     9 y    2
+(%o2)                 y  - x  y - --- + x
+                                   8
+@end group
+@group
+(%i3) algsys([p1,p2],[x,y]);
+            1               9      9               1
+(%o3) [[x = -, y = 1], [x = -, y = -], [x = 1, y = -], 
+            2               8      8               2
+                                                  [x = 0, y = 0]]
+@end group
+@group
+(%i4) /* load grobner package */
+ load("grobner")$
+@end group
+@group
+(%i5) eqs:poly_reduced_grobner([p1,p2],[x,y]);
+                 8           5           2
+(%o5) [- 200704 y  + 437832 y  - 263633 y  + 53010 x, 
+                                 10          7         4
+                           4096 y   - 10440 y  + 7073 y  - 729 y]
+@end group
+@group
+(%i6) algsys(eqs,[x,y]);
+                                   1        9      9
+(%o6) [[x = 0, y = 0], [x = 1, y = -], [x = -, y = -], 
+                                   2        8      8
+     1               sqrt(3) %i - 1        sqrt(3) %i + 1
+[x = -, y = 1], [x = --------------, y = - --------------], 
+     2                     4                     2
+       sqrt(3) %i + 1      sqrt(3) %i - 1
+[x = - --------------, y = --------------], 
+             4                   2
+      5/2                5/2
+     3    %i - 9        3    %i + 9
+[x = -----------, y = - -----------], 
+         16                 16
+        5/2              5/2
+       3    %i + 9      3    %i - 9
+[x = - -----------, y = -----------], 
+           16               16
+     sqrt(3) %i - 1        sqrt(3) %i + 1
+[x = --------------, y = - --------------], 
+           2                     4
+       sqrt(3) %i + 1      sqrt(3) %i - 1
+[x = - --------------, y = --------------]]
+             2                   4
+@end group
+@end example
+
+@subsection Example 5: Intersection of a sphere with two paraboloids
+
+This problem is the intersection of a sphere with two paraboloids
+  (@ref{allgower,,Allgower et al 1992}, Example 2, p841).
+
+There are two real solutions y = z = (sqrt(5)-1)/2,
+x = +/- sqrt(z-y^2) = +/- sqrt(sqrt(5)-2).
+
+@c ===beg===
+@c algsys([x^2+y^2+z^2-1,z-x^2-y^2,y-x^2-z^2],[x,y,z]);
+@c ===end===
+@example maxima
+@group
+(%i1) algsys([x^2+y^2+z^2-1,z-x^2-y^2,y-x^2-z^2],[x,y,z]);
+                            sqrt(5) - 1        sqrt(5) + 1
+(%o1) [[x = sqrt(2) %i, y = -----------, z = - -----------], 
+                                 2                  2
+                       sqrt(5) + 1      sqrt(5) - 1
+[x = sqrt(2) %i, y = - -----------, z = -----------], 
+                            2                2
+                       sqrt(5) - 1        sqrt(5) + 1
+[x = - sqrt(2) %i, y = -----------, z = - -----------], 
+                            2                  2
+                         sqrt(5) + 1      sqrt(5) - 1
+[x = - sqrt(2) %i, y = - -----------, z = -----------], 
+                              2                2
+                                sqrt(5) + 1        sqrt(5) + 1
+[x = sqrt(- sqrt(5) - 2), y = - -----------, z = - -----------], 
+                                     2                  2
+                                  sqrt(5) + 1
+[x = - sqrt(- sqrt(5) - 2), y = - -----------, 
+                                       2
+      sqrt(5) + 1                               sqrt(5) - 1
+z = - -----------], [x = sqrt(sqrt(5) - 2), y = -----------, 
+           2                                         2
+    sqrt(5) - 1                                 sqrt(5) - 1
+z = -----------], [x = - sqrt(sqrt(5) - 2), y = -----------, 
+         2                                           2
+    sqrt(5) - 1
+z = -----------]]
+         2
+@end group
+@end example
+
+@c =============================================================================
+@node References for equations, , Examples for algsys, Equations
+@section References for equations
+
+@itemize
+
+@item @anchor{beyer}
+(Beyer 1984) Beyer, William A.,
+   Solution of Simultaneous Polynomial Equations by Elimination in MACSYMA,
+   @url{ http://udspace.udel.edu/handle/19716/1399 ,
+   Proceedings of the 1984 MACSYMA Users' Conference}, pp 110-120
+   
+
+@item @anchor{allgower}
+(Allgower et al 1992) Eugene L. Allgower, Kurt Georg and Rick Miranda,
+   The Method of
+   Resultants for Computing Real Solutions of Polynomial Systems, 
+   SIAM Journal on Numerical Analysis, Vol 29 No 3, Jun 1992, pp 831-844
+   @url{https://doi.org/10.1137/0729051, doi:10.1137/0729051}
+
+@end itemize

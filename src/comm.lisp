@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,42 +12,7 @@
 
 (macsyma-module comm)
 
-(declare-top (special $exptsubst $linechar $nolabels $inflag $piece $dispflag
-		      $gradefs $props $dependencies derivflag derivlist
-		      $linenum $partswitch *linelabel* nn* dn*
-		      $powerdisp atvars $errexp $derivsubst $dotdistrib
-		      $opsubst $subnumsimp $transrun in-p substp $sqrtdispflag
-		      $pfeformat dummy-variable-operators))
-
-(defvar *islinp* nil) ; When T, sdiff is called from the function islinear.
-(defvar *atp* nil)    ; When T, prevents substitution from applying to vars 
-                      ; bound by %sum, %product, %integrate, %limit
-
-;; op and opr properties
-
-(defvar *opr-table* (make-hash-table :test #'equal))
-
-(defun getopr0 (x)
-  (or
-    (and (symbolp x) (get x 'opr))
-    (and (stringp x) (gethash x *opr-table*))))
-
-(defun getopr (x)
-  (or (getopr0 x) x))
-
-(defun putopr (x y)
-  (or
-    (and (symbolp x) (setf (get x 'opr) y))
-    (and (stringp x) (setf (gethash x *opr-table*) y))))
-
-(defun remopr (x)
-  (or
-    (and (symbolp x) (remprop x 'opr))
-    (and (stringp x) (remhash x *opr-table*))))
-
-;; Store built-in operators, which get additional properties.
-;; These operators aren't killed by the function kill-operator.
-(defvar *mopl* nil)
+(declare-top (special *linelabel*))
 
 ;; This business about operator properties is terrible --
 ;; this stuff should be in src/nparse.lisp, and it should be split up
@@ -64,22 +29,11 @@
 	(mequal "=") (mgreaterp ">") (mlessp "<") (mleqp "<=") (mgeqp ">=")
 	(mnotequal "#") (mand "and") (mor "or") (mnot "not") (msetq ":")
 	(mdefine ":=") (mdefmacro "::=") (mquote "'") (mlist "[")
-	(mset "::") (mfactorial "!") (marrow "-->") (mprogn "(")
+	(mset "::") (mfactorial "!") (%genfact "!!") (marrow "-->") (mprogn "(")
 	(mcond "if") (mdo "do") (mdoin "do_in")))
 
 (mapc #'(lambda (x) (putprop (car x) (cadr x) 'op))
       '((mqapply $subvar) (bigfloat $bfloat)))
-
-(defmvar $exptsubst nil)
-(defmvar $partswitch nil)
-(defmvar $inflag nil)
-(defmvar $derivsubst nil)
-(defmvar $opsubst t)
-(defvar $gradefs '((mlist simp)))
-(defvar $dependencies '((mlist simp)))
-(defvar atvars '($@1 $@2 $@3 $@4))
-(defvar in-p nil)
-(defvar substp nil)
 
 (defmvar $vect_cross nil
   "If TRUE allows DIFF(X~Y,T) to work where ~ is defined in
@@ -114,8 +68,9 @@
                   ;; A nested list.
                   ($psubstitute (cadr l) z))
                  ((and ($listp l)
-                       (eq (caar (cadr l)) 'mequal)
-                       (null (cddr l)))
+                       (null (cddr l))
+                       (not (atom (cadr l)))
+                       (eq (caar (cadr l)) 'mequal))
                   ;; A list with one equation.
                   ($psubstitute (cadr l) z))
                  ((notloreq l) (improper-arg-err l '$psubstitute))
@@ -131,7 +86,7 @@
                         ((null l) z)
                       (setq eqn (car l))
                       (when (not (eq 'mequal (caar eqn)))
-                        (improper-arg-err old '$substitute))
+                        (improper-arg-err old '$psubstitute))
                       (setq gensymbol (gensym))
                       ;; Store the gensym and the new expression into a list.
                       (push (cons gensymbol (caddr eqn)) genlist)
@@ -144,136 +99,7 @@
                            (let (($simp t)) (resimplify z)))
                         (setq z (maxima-substitute (cdar l) (caar l) z))))))))))
 
-(defun maxima-substitute (x y z) ; The args to SUBSTITUTE are assumed to be simplified.
-;; Prevent replacing dependent variable with constant in derivative
-(cond ((and (not (atom z)) (eq (caar z) '%derivative) (eq (cadr z) y) (typep x 'number)) z)
-(t
-  (let ((in-p t) (substp t))
-    (if (and (mnump y) (= (signum1 y) 1))
-	(let ($sqrtdispflag ($pfeformat t)) (setq z (nformat-all z))))
-    (simplifya
-     (if (atom y)
-	 (cond ((equal y -1)
-		(setq y '((mminus) 1)) (subst2 x y (nformat-all z) nil nil)) ;; negxpty and timesp don't matter in this call since (caar y) != 'mexpt
-	       (t
-		(cond ((and (not (symbolp x))
-			    (functionp x))
-		       (let ((tem (gensym)))
-			 (setf (get  tem  'operators) 'application-operator)
-			 (setf (symbol-function tem) x)
-			 (setq x tem))))
-		(subst1 x y z)))
-	 (let ((negxpty (if (and (eq (caar y) 'mexpt)
-				 (= (signum1 (caddr y)) 1))
-			    (mul2 -1 (caddr y))))
-	       (timesp (if (eq (caar y) 'mtimes) (setq y (nformat y)))))
-	   (subst2 x y z negxpty timesp)))
-     nil)))
-))
 
-;;Remainder of page is update from F302 --gsb
-
-;;Used in COMM2 (AT), limit, and below.
-(defvar dummy-variable-operators '(%product %sum %laplace %integrate %limit %at))
-
-(defun subst1 (x y z)			; Y is an atom
-  (cond ((atom z) (if (equal y z) x z))
-	((specrepp z) (subst1 x y (specdisrep z)))
-	((eq (caar z) 'bigfloat) z)
-	((and (eq (caar z) 'rat) (or (equal y (cadr z)) (equal y (caddr z))))
-	 (div (subst1 x y (cadr z)) (subst1 x y (caddr z))))
-	((at-substp z) (subst-except-second-arg x y z))
-	((and (eq y t) (eq (caar z) 'mcond))
-	 (list (cons (caar z) nil) (subst1 x y (cadr z)) (subst1 x y (caddr z))
-	       (cadddr z) (subst1 x y (car (cddddr z)))))
-	(t (let ((margs (mapcar #'(lambda (z1) (subst1 x y z1)) (cdr z)))
-                 (oprx (getopr x)) (opry (getopr y)))
-	     (if (and $opsubst
-		      (or (eq opry (caar z))
-			  (and (eq (caar z) 'rat) (eq opry 'mquotient))))
-		 (if (or (numberp x)
-			 (member x '(t nil $%e $%pi $%i) :test #'eq)
-			 (and (not (atom x))
-			      (not (or (eq (car x) 'lambda)
-				       (eq (caar x) 'lambda)))))
-		     (if (or (and (member 'array (cdar z) :test #'eq)
-				  (or (and (mnump x) $subnumsimp)
-				      (and (not (mnump x)) (not (atom x)))))
-			     ($subvarp x))
-			 (let ((substp 'mqapply))
-			   (subst0 (list* '(mqapply) x margs) z))
-			 (merror (intl:gettext "subst: cannot substitute ~M for operator ~M in expression ~M") x y z))
-		     (subst0 (cons (cons oprx nil) margs) z))
-		 (subst0 (cons (cons (caar z) nil) margs) z))))))
-
-(defun subst2 (x y z negxpty timesp)
-  (let (newexpt)
-    (cond ((atom z) z)
-	  ((specrepp z) (subst2 x y (specdisrep z) negxpty timesp))
-	  ((at-substp z) z) ;; IS SUBST-EXCEPT-SECOND-ARG APPROPRIATE HERE ?? !!
-	  ((alike1 y z) x)
-	  ((and timesp (eq (caar z) 'mtimes) (alike1 y (setq z (nformat z)))) x)
-	  ((and (eq (caar y) 'mexpt) (eq (caar z) 'mexpt) (alike1 (cadr y) (cadr z))
-		(setq newexpt (cond ((alike1 negxpty (caddr z)) -1)
-				    ($exptsubst (expthack (caddr y) (caddr z))))))
-	   (list '(mexpt) x newexpt))
-	  ((and $derivsubst (eq (caar y) '%derivative) (eq (caar z) '%derivative)
-		(alike1 (cadr y) (cadr z)))
-	   (let ((tail (subst-diff-match (cddr y) (cdr z))))
-	     (cond ((null tail) z)
-		   (t (cons (cons (caar z) nil) (cons x (cdr tail)))))))
-	  (t (recur-apply #'(lambda (z1) (subst2 x y z1 negxpty timesp)) z)))))
-
-;; replace y with x in z, but leave z's second arg unchanged.
-;; This is for cases like at(integrate(x, x, a, b), [x=3])
-;; where second arg of integrate binds a new variable x,
-;; and we do not wish to subst 3 for x inside integrand.
-(defun subst-except-second-arg (x y z)
-  (cond 
-    ((member (caar z) '(%integrate %sum %product %limit %laplace))
-     (append 
-       (list (remove 'simp (car z))   ; ensure resimplification after substitution
-             (if (eq y (third z))     ; if (third z) is new var that shadows y
-                 (second z)           ; leave (second z) unchanged
-                 (subst1 x y (second z))) ; otherwise replace y with x in (second z)
-             (third z))               ; never change integration var
-       (mapcar (lambda (z) (subst1 x y z)); do subst in limits of integral
-               (cdddr z))))
-    ((eq (caar z) '%at)
-     ;; similar considerations here, but different structure of expression.
-     (let*
-       ((at-eqn-or-eqns (third z))
-        (at-eqns-list (if (eq (caar at-eqn-or-eqns) 'mlist) (rest at-eqn-or-eqns) (list at-eqn-or-eqns))))
-       (list
-         (remove 'simp (car z)) ;; ensure resimplification after substitution
-         (if (member y (mapcar #'(lambda (e) (second e)) at-eqns-list))
-           (second z)
-           (subst1 x y (second z)))
-         `((mlist) ,@(mapcar #'(lambda (e) (list (first e) (second e) (subst1 x y (third e)))) at-eqns-list)))))
-    ((eq (caar z) '%derivative)
-     ;; and again, with yet a different structure.
-     (let*
-       ((vars-and-degrees (rest (rest z)))
-        (diff-vars (loop for v in vars-and-degrees by #'cddr collect v))
-        (diff-degrees (loop for n in (rest vars-and-degrees) by #'cddr collect n)))
-       (append
-         (list
-           (remove 'simp (car z)) ;; ensure resimplification after substitution
-           (if (member y diff-vars)
-             (second z)
-             (subst1 x y (second z))))
-         (apply #'append (loop for v in diff-vars for n in diff-degrees collect (list v (subst1 x y n)))))))
-    (t z)))
-
-(defun subst0 (new old)
-  (cond ((atom new) new)
-	((alike (cdr new) (cdr old))
-	 (cond ((eq (caar new) (caar old)) old)
-	       (t (simplifya (cons (cons (caar new) (member 'array (cdar old) :test #'eq)) (cdr old))
-			     nil))))
-	((member 'array (cdar old) :test #'eq)
-	 (simplifya (cons (cons (caar new) '(array)) (cdr new)) nil))
-	(t (simplifya new nil))))
 
 (defun expthack (y z)
   (prog (nn* dn* yn yd zn zd qd)
@@ -317,15 +143,6 @@
   (and *atp*
        (or (member (caar z) '(%derivative %del) :test #'eq)
            (member (caar z) dummy-variable-operators :test #'eq))))
-
-(defun recur-apply (fun e)
-  (cond ((eq (caar e) 'bigfloat) e)
-	((specrepp e) (funcall fun (specdisrep e)))
-	(t (let ((newargs (mapcar fun (cdr e))))
-	     (if (alike newargs (cdr e))
-		 e
-		 (simplifya (cons (cons (caar e) (member 'array (cdar e) :test #'eq)) newargs)
-			    nil))))))
 
 (defmfun $depends (&rest args)
   (when (oddp (length args))
@@ -407,7 +224,6 @@
 	     (add2lnc (cons (cons (caar z) nil) (cdr z)) $gradefs) z))))
 
 (defmfun $diff (&rest args)
-  #-gcl
   (declare (dynamic-extent args))
   (let (derivlist)
     (deriv args)))
@@ -471,22 +287,6 @@
   (let (y)
     (and (atom e) (setq y (mget e '$atomgrad)) (assolike x y))))
 
-(defun depends (e x &aux l)
-  (setq e (specrepcheck e))
-  (cond ((alike1 e x) t)
-        ((mnump e) nil)
-        ((and (symbolp e) (setq l (mget e 'depends)))
-         ;; Go recursively through the list of dependencies.
-         ;; This code detects indirect dependencies like a(x) and x(t).
-         (dependsl l x))
-        ((atom e) nil)
-        (t (or (depends (caar e) x)
-               (dependsl (cdr e) x)))))
-
-(defun dependsl (l x)
-  (dolist (u l)
-    (if (depends u x) (return t))))
-
 (defun sdiff (e x) ; The args to SDIFF are assumed to be simplified.
   ;; Remove a special representation from the variable of differentiation
   (setq x (specrepcheck x))
@@ -519,12 +319,11 @@
 	 (cond ((or (atom (cadr e)) (member 'array (cdaadr e) :test #'eq)) (chainrule e x))
 	       ((freel (cddr e) x) (diff%deriv (cons (sdiff (cadr e) x) (cddr e))))
 	       (t (diff%deriv (list e x 1)))))
-	((member (caar e) '(%binomial $beta) :test #'eq)
+	((member (caar e) '(%binomial %beta) :test #'eq)
 	 (let ((efact ($makefact e)))
 	   (mul2 (factor (sdiff efact x)) (div e efact))))
 	((eq (caar e) '%integrate) (diffint e x))
 	((eq (caar e) '%laplace) (difflaplace e x))
-	((eq (caar e) '%at) (diff-%at e x))
 ; This rule is not correct. We cut it out.
 ;	((member (caar e) '(%realpart %imagpart) :test #'eq)
 ;	 (list (cons (caar e) nil) (sdiff (cadr e) x)))
@@ -563,10 +362,10 @@
                result))
 
 	  ;; extension for pdiff.
-	  ((and (get '$pderivop 'operators) (funcall 'sdiffgrad-pdiff e x)))
+	  ((and (get '$pderivop 'operators) (mfuncall 'sdiffgrad-pdiff e x)))
 
 	  ;; two line extension for hypergeometric.
-	  ((and (equal fun '$hypergeometric) (get '$hypergeometric 'operators))
+	  ((and (equal fun '%hypergeometric) (get '%hypergeometric 'operators))
 	   (funcall 'diff-hypergeometric (second e) (third e) (fourth e) x))
 
 	  ((or (eq fun 'mqapply) (null (setq grad (zl-get fun 'grad))))
@@ -582,9 +381,14 @@
                    (mapcar 
                      #'mul2
                      (cdr 
-                       (substitutel
-                         (cdr e) 
-                         (car grad)
+                       ;; Need to substitute in parallel to avoid trouble when
+                       ;; function arguments match the placeholder names of the
+                       ;; DEFGRAD expression.
+                       ($psubstitute
+                         (append '((mlist)) (mapcar #'(lambda (a b)
+                                                        (list '(mequal) a b))
+                                                    (car grad)
+                                                    (cdr e)))
                          (do ((l1 (cdr grad) (cdr l1))
                               (args args (cdr args)) 
                               (l2))
@@ -678,26 +482,23 @@
 		 ((mexpt) $%e ((mtimes) -1 ((mexpt) x 2)))))
 	  )))
 
-(defprop $atan2 ((x y) ((mtimes) y ((mexpt) ((mplus) ((mexpt) x 2) ((mexpt) y 2)) -1))
-		 ((mtimes) -1 x ((mexpt) ((mplus) ((mexpt) x 2) ((mexpt) y 2)) -1)))
-  grad)
+(defgrad %atan2 ($x $y)
+  #$$y/(y^2+x^2)$
+  #$$-(x/(y^2+x^2))$)
 
-(defprop $li 
-  ((n x)
-; Do not put a noun form on the property list, but NIL.
-; SDIFFGRAD generates the noun form.
-;   ((%derivative) ((mqapply) (($li array) n) x) n 1)
-   nil
-   ((mtimes) ((mqapply) (($li array) ((mplus) -1 n)) x) ((mexpt) x -1)))
-  grad)
+(defgrad $li ($n $x)
+  ;; wrt n
+  nil
+  ;; wrt x
+  #$$ li[n-1](x)/x$
+  )
 
-(defprop $psi 
-  ((n x)
-; Do not put a noun form on the property list, but NIL.
-; SDIFFGRAD generates the noun form.
-   nil
-   ((mqapply) (($psi array) ((mplus) 1 n)) x))
-  grad)
+(defgrad $psi ($n $x)
+  ;; wrt n
+  nil
+  ;; wrt x
+  #$$ psi[n+1](x)$
+  )
 
 (defun atvarschk (argl)
   (do ((largl (length argl) (1- largl))
@@ -712,32 +513,6 @@
       (and (eq (caar x) 'mlist)
 	   (dolist (u (cdr x))
 	     (if (not (mequalp u)) (return t))))))
-
-(defun substitutel (l1 l2 e)
-  "l1 is a list of expressions.  l2 is a list of variables. For each 
-   element in list l2, substitute corresponding element of l1 into e"
-  (do ((l1 l1 (cdr l1))
-       (l2 l2 (cdr l2)))
-      ((null l1) e)
-    (setq e (maxima-substitute (car l1) (car l2) e))))
-
-(defun union* (a b)
-  (do ((a a (cdr a))
-       (x b))
-      ((null a) x)
-    (if (not (memalike (car a) b)) (setq x (cons (car a) x)))))
-
-(defun intersect* (a b)
-  (do ((a a (cdr a))
-       (x))
-      ((null a) x)
-    (if (memalike (car a) b) (setq x (cons (car a) x)))))
-
-(defun nthelem (n e)
-  (car (nthcdr (1- n) e)))
-
-(defun delsimp (e)
-  (delete 'simp (copy-list e) :count 1 :test #'eq))
 
 (defun remsimp (e)
   (if (atom e) e (cons (delsimp (car e)) (mapcar #'remsimp (cdr e)))))
@@ -760,7 +535,6 @@
   (disp1 (cdr form) t t))
 
 (defmfun $ldisp (&rest args)
-  #-gcl
   (declare (dynamic-extent args))
   (disp1 args t nil))
 
@@ -768,7 +542,6 @@
   (disp1 (cdr form) nil t))
 
 (defmfun $disp (&rest args)
-  #-gcl
   (declare (dynamic-extent args))
   (disp1 args nil nil))
 
@@ -786,7 +559,6 @@
     (if lablist (nconc lablist (cons (elabel ans) nil)))
     (setq tim (get-internal-run-time))
     (let ((*display-labels-p* (not (null lablist))))
-      (declare (special *display-labels-p*))
       (displa (list '(mlabel) (if lablist *linelabel*) ans)))
     (mterpri)
     (timeorg tim)))
@@ -843,7 +615,8 @@
 ;;; These functions implement the Macsyma functions $op and $operatorp.
 ;;; Dan Stanger
 (defmfun $op (expr)
-  ($part expr 0))
+  (let (($partswitch nil))
+    ($part expr 0)))
 
 (defmfun $operatorp (expr oplist)
   (if ($listp oplist)
@@ -851,12 +624,10 @@
       (alike1 ($op expr) oplist)))
 
 (defmfun $part (&rest args)
-  #-gcl
   (declare (dynamic-extent args))
   (mpart args nil nil $inflag '$part))
 
 (defmfun $inpart (&rest args)
-  #-gcl
   (declare (dynamic-extent args))
   (mpart args nil nil t '$inpart))
 
@@ -872,6 +643,11 @@
   (let ((substp t))
     (mpart arglist substflag dispflag inflag fn)))
 
+(defun make-mbox-for-mpart (e label)
+  (if (eq label t)
+      (list '(mbox) e)
+      (make-mbox e (car label))))
+
 (defun mpart (arglist substflag dispflag inflag fn)
   (prog (substitem arg arg1 exp exp1 exp* sevlist count prevcount n specp
 	 lastelem lastcount)
@@ -882,7 +658,7 @@
      (when (null (setq arglist (cdr arglist)))
        (setq $piece exp)
        (return (cond (substflag (meval substitem))
-		     (dispflag (box exp dispflag))
+		     (dispflag (make-mbox-for-mpart exp dispflag))
 		     (t exp))))
      (cond ((not inflag)
 	    (cond ((or (and ($listp exp) (null (cdr arglist)))
@@ -932,7 +708,7 @@
 							  '(array))))
 				    (resimplify exp*))
 				   (dispflag
-				    (rplacd exp (cdr (box (copy-tree exp) dispflag)))
+				    (rplacd exp (cdr (make-mbox-for-mpart (copy-tree exp) dispflag)))
 				    (rplaca exp (if (eq dispflag t)
 						    '(mbox)
 						    '(mlabox)))
@@ -952,7 +728,7 @@
 					  (rplaca exp (meval substitem))
 					  (resimplify exp*))
 			       (dispflag (setq $piece (resimplify (car exp)))
-					 (rplaca exp (box (car exp) dispflag))
+					 (rplaca exp (make-mbox-for-mpart (car exp) dispflag))
 					 (resimplify exp*))
 			       (inflag (setq $piece (car exp)))
 			       (t (setq $piece (simplify (car exp))))))))
@@ -1009,12 +785,12 @@
 		 (return (cond (substflag (rplaca (nthcdr (1- lastcount) exp1)
 						  (meval substitem))
 					  (resimplify exp*))
-			       (dispflag (rplaca exp (box (car exp) dispflag))
+			       (dispflag (rplaca exp (make-mbox-for-mpart (car exp) dispflag))
 					 (resimplify exp*))
 			       (t $piece))))
 		(substflag (if (null (cdr exp)) (go err))
 			   (rplaca exp (cadr exp)) (rplacd exp (cddr exp)))
-		(dispflag (rplaca exp (box (car exp) dispflag))
+		(dispflag (rplaca exp (make-mbox-for-mpart (car exp) dispflag))
 			  (setq exp (cdr exp)))
 		(t (setq exp exp1)))
      (go sevloop)))
@@ -1022,31 +798,26 @@
 (defun getop (x)
   (or (and (symbolp x) (get x 'op)) x))
 
-(defmfun $listp (x)
-  (and (not (atom x))
-       (not (atom (car x)))
-       (eq (caar x) 'mlist)))
-
 (defmfun $cons (x e)
   (atomchk (setq e (format1 e)) '$cons t)
-  (mcons-exp-args e (cons x (margs e))))
+  (simplifya (mcons-exp-args e (cons x (margs e))) t))
 
 (defmfun $endcons (x e)
   (atomchk (setq e (format1 e)) '$endcons t)
-  (mcons-exp-args e (append (margs e) (ncons x))))
+  (simplifya (mcons-exp-args e (append (margs e) (ncons x))) t))
 
 (defmfun $reverse (e)
   (atomchk (setq e (format1 e)) '$reverse nil)
-  (mcons-exp-args e (reverse (margs e))))
+  (simplifya (mcons-exp-args e (reverse (margs e))) t))
 
 (defmfun $append (&rest args)
   (if (null args)
-      '((mlist simp))
+      (simplifya '((mlist)) t)
       (let ((arg1 (specrepcheck (first args))) op arrp)
 	(atomchk arg1 '$append nil)
 	(setq op (mop arg1)
 	      arrp (if (member 'array (cdar arg1) :test #'eq) t))
-	(mcons-exp-args
+	(simplifya (mcons-exp-args
 	 arg1
 	 (apply #'append
 		(mapcar #'(lambda (u)
@@ -1055,20 +826,13 @@
 					 (eq arrp (if (member 'array (cdar u) :test #'eq) t)))
 			      (merror (intl:gettext "append: operators of arguments must all be the same.")))
 			    (margs u))
-			args))))))
+			args)))
+      t))))
 
 (defun mcons-exp-args (e args)
   (if (eq (caar e) 'mqapply)
       (list* (delsimp (car e)) (cadr e) args)
       (cons (delsimp (car e)) args)))
-
-(defmfun $member (x e)
-  (atomchk (setq e ($totaldisrep e)) '$member t)
-  (if (memalike ($totaldisrep x) (margs e)) t))
-
-(defun atomchk (e fun 2ndp)
-  (if (or (atom e) (eq (caar e) 'bigfloat))
-      (merror (intl:gettext "~:M: ~Margument must be a non-atomic expression; found ~M") fun (if 2ndp "2nd " "") e)))
 
 (defun format1 (e)
   (cond (($listp e) e)
@@ -1152,8 +916,9 @@
       ($rest e (- m n)))))
 
 (defmfun $args (e)
-  (atomchk (setq e (format1 e)) '$args nil)
-	 (cons '(mlist) (margs e)))
+ (let ((formatted (format1 e)))
+  (atomchk formatted '$args nil)
+	 (simplifya (cons '(mlist) (margs formatted)) (eq e formatted))))
 
 (defmfun $delete (x l &optional (n -1 n?))
   (when (and n? (or (not (fixnump n)) (minusp n))) ; if n is set, it must be a nonneg fixnum
@@ -1222,7 +987,6 @@
   (let ((errset nil)
 	(errcatch (cons bindlist loclist))
 	(*mdebug* nil))
-    (declare (special errcatch))
     (let ((result (errset (funcall thunk))))
       (labels ((bad-number-p (num)
 		 (if (complexp num)
@@ -1236,7 +1000,10 @@
 	    
 (defmfun $float (e)
   (cond ((numberp e)
-	 (let ((e1 (float e))) (if (float-inf-p e1) (signal 'floating-point-overflow) e1)))
+	 (let ((e1 (float e))) (if (float-inf-p e1) (error 'floating-point-overflow) e1)))
+	((eq e '$%i)
+	 ;; Handle %i specially.
+	 (mul 1.0 '$%i))
 	((and (symbolp e) (mget e '$numer)))
 	((or (atom e) (member 'array (cdar e) :test #'eq)) e)
 	((eq (caar e) 'rat) (fpcofrat e))
@@ -1279,8 +1046,7 @@
 			      ($float `((%log) ,(third n)))))))
 		 ((complex-number-p n 'integerp)
 		  ;; float(log(n+m*%i)).
-		  (let ((re ($realpart n))
-			(im ($imagpart n)))
+		  (destructuring-bind (re . im) (trisplit n)
 		    (to (or (try-float-computation #'(lambda ()
 						       (log (complex (float re)
 								     (float im)))))
@@ -1292,15 +1058,16 @@
 					       (float (/ im scale))))))))))
 		 (t
 		  ;; log(n1/d1 + n2/d2*%i) =
-		  ;;   log(s*(n+m*%i)) = log(s) + log(n+m*%i)
+		  ;;   log((n+m*%i)/s) = log(n+m*%i) - log(s)
 		  ;;
 		  ;; where s = lcm(d1, d2), n and m are integers
 		  ;;
-		  (let* ((s (lcm ($denom ($realpart n))
-				 ($denom ($imagpart n))))
-			 (p ($expand (mul s n))))
-		    (add ($float `((%log) ,s))
-			 ($float `((%log) ,p))))))))
+          (destructuring-bind (re . im) (trisplit n)
+		   (let* ((s (lcm ($denom re)
+			 	  ($denom im)))
+			      (p ($expand (mul s n))))
+		    (sub ($float `((%log) ,p))
+			 ($float `((%log) ,s)))))))))
 	((and (eq (caar e) '%erf)
 	      (eq (second e) '$%i))
 	 ;; Handle like erf(%i).  float(%i) (via recur-apply below)
@@ -1315,6 +1082,7 @@
       (coeff e x 0)
       (coeff e (power x n) 1)))
 
+#+nil
 (defun coeff (e var pow)
   (simplify
    (cond ((alike1 e var) (if (equal pow 1) 1 0))
@@ -1429,7 +1197,6 @@
 	  (t
 	   (setq lo l)
 	   (setq ll (meval lo))))
-    (setq ll (meval l))
     (cond ((and ($mapatom lo) ($listp ll))
 	   (if ($emptyp ll) (merror "Pop called on an empty list")
 	     (prog2

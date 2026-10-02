@@ -1,16 +1,10 @@
-# -*-mode: tcl; fill-column: 75; tab-width: 8; coding: iso-latin-1-unix -*-
+###### EOpenplot.tcl ############################################
 #
-#       $Id: EOpenplot.tcl,v 1.7 2011-03-19 23:15:44 villate Exp $
+# Copyright (C) 1998 William F. Schelter
+# For distribution under GNU public License.  See COPYING.tcl
 #
-###### EOpenplot.tcl ######
-############################################################
-# Netmath       Copyright (C) 1998 William F. Schelter     #
-# For distribution under GNU public License.  See COPYING. #
-############################################################
+#################################################################
 
-
-
-#
 #-----------------------------------------------------------------
 #
 # eval_openplot --  invoke OPENPLOT on the substring of Window given
@@ -25,26 +19,20 @@
 #
 
 proc eval_openplot { program w thisRange resultRange } {
-
-
     set tem [eval $w get $thisRange]
     lappend tem -windowname $name
     foreach v [getDimensions $w $name] { lappend tem $v }
     set allowed "plot2d plotdf plot3d scene"
     set f [lindex $tem 0]
     if { [lsearch $allowed $f] >= 0 } {
-	mxapply $f [lrange $tem 1 end]
+	$f {*}[lrange $tem 1 end]
 	ShowPlotWindow $w $name $thisRange $resultRange $desired
     } else {
-	error [concat "$f" [mc "not allowed, only"] "{$allowed}"]
-    }
+	error [concat "$f" [mc "not allowed, only"] "{$allowed}"]}
     set name  [plotWindowName $w $f]
     set desired [setDesiredDims $w $name $thisRange ]
-    return 0
-}
+    return 0}
 
-
-#
 #-----------------------------------------------------------------
 #
 # plotWindowName --  checks preferences to see if separate or multiple
@@ -58,8 +46,12 @@ proc eval_openplot { program w thisRange resultRange } {
 #----------------------------------------------------------------
 #
 proc plotWindowName { w command } {
-    upvar #0 maxima_default(plotwindow) plot
-    upvar #0 maxima_priv(plot,count) count
+    if {[info exists ::xmaxima_default(plotwindow)]} {
+        set plot $::xmaxima_default(plotwindow)
+    }
+    if {[info exists ::xmaxima_priv(plot,count)]} {
+        set count $::xmaxima_priv(plot,count)
+    }
     set name ""
 
     if { "$command" == "scene" } {

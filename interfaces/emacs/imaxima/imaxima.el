@@ -8,9 +8,9 @@
 ;; Copyright (C) 2001, 2002, 2003, 2004 Jesper Harder
 ;; Copyright (C) 2006 Stephen Eglen (imaxima-print-buffer)
 ;; Copyright (C) 2007, 2008 Yasuaki Honda (imaxima-to-html, inline graph)
-;; Copyright (C) 2020, 2021 Leo Butler (imaxima-gnuplot-replot, various improvements)
+;; Copyright (C) 2020, 2021, 2022 Leo Butler (imaxima-gnuplot-replot, various improvements)
 
-;; Time-stamp: <2021-05-03 Leo Butler (dev)>
+;; Time-stamp: <16-01-2024 11:38:28 Leo Butler>
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -24,8 +24,7 @@
 ;;
 ;; You should have received a copy of the GNU General Public
 ;; License along with this program; if not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-;; MA 02111-1307 USA
+;; Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 ;;
 
 ;;; Commentary:
@@ -734,6 +733,11 @@ This command does not work in XEmacs."
   (unless (eq (process-status process) 'run)
     (imaxima-clean-up)))
 
+(defun imaxima-restart-gs ()
+  "Kill Ghostscript process and start a new one."
+  (kill-process imaxima-gs-process)
+  (imaxima-start-gs))
+
 (defun imaxima-maybe-restart-gs ()
   "Unless `imaxima-gs-process' is running, call
 `imaxima-start-gs' to (re)start GS."
@@ -836,15 +840,16 @@ cleardictstack 0 get restore\n")
 		  (cl-multiple-value-setq (bb width height)
 		    (imaxima-extract-bb psfilename))))))
 	  (unless (eq imaxima-image-type 'postscript)
-	    (imaxima-ps-to-image psfilename filename bb width height))
+	    (imaxima-ps-to-image psfilename filename bb width height)
+	    ;; FIXME:
+	    ;; Ghostscript on Windows doesn't flush the image to the file.
+	    ;; So we have to kill the process and restart.  What a kludge!
+	    (when (eq system-type 'windows-nt)
+	      (imaxima-restart-gs)))
 	  (cond ((featurep 'xemacs)
+		 ;; FIXME:
 		 (when (eq system-type 'windows-nt)
-		   ;;(setq filename (imaxima-subst-char-in-string ?\\ ?/ filename))
-		   ;; FIXME:
-		   ;; Ghostscript on Windows doesn't flush the image to the file.
-		   ;; So we have to kill the process and restart.  What a kludge!
-		   (kill-process imaxima-gs-process)
-		   (imaxima-start-gs))
+		   (imaxima-restart-gs))
 		 (xemacs-set-imagefile-properties filename imaxima-image-type str))
 		(t
 		 (prog1
@@ -1121,7 +1126,7 @@ Argument STR contains output received from Maxima.
 			     (rest (match-string 2 imaxima-output))
 			     image)
 			 (setq imaxima-output rest)
-			 (setq output (concat output (setq image (imaxima-make-image match 'latex))))
+			 (setq output (concat output (setq image (imaxima-make-image match 'latex)) "\n"))
 			 ;; Remember the image into main-output if this is the first output.
 			 ;; This will be passed to imaxima-continuation
 			 (if (null main-output)
@@ -1134,7 +1139,7 @@ Argument STR contains output received from Maxima.
 		       (let ((match (match-string 1 imaxima-output))
 			     (rest (match-string 2 imaxima-output)))
 			 (setq imaxima-output rest)
-			 (setq output (concat output (imaxima-make-image match 'latex))))
+			 (setq output (concat output (imaxima-make-image match 'latex) "\n")))
 		     ;; imaxima-output is incomplete.
 		     (setq imaxima-filter-running nil)
 		     (cl-return-from imaxima-filter output)))

@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -45,11 +45,11 @@
 	(t
 	 (push (cons f type) *tr-runtime-warned*)
 	 (when $tr_warn_bad_function_calls
-	   (let ((tabl (cdr (assoc type '((fexpr . (fexpr-warnedp "This may be due to lack of enough translation data *print-base* info."))
-					 (macro . (macro-warnedp "Macros should be loaded when you are translating."))
-					 (undefined . (undefined-warnp "The function was totally undefined. Maybe you want to quote it."))
-					 (punt-nil . (punt-nil-warnp "If you want the value of the function name, use `apply'"))
-					 (mfexpr . (mfexpr-warnedp "MFEXPRS should be loaded at translating time. Use of them in translated code (nay, any code!), is NOT recommended however.")))
+	   (let ((tabl (cdr (assoc type '(($undefined . (undefined-warnp "The function was totally undefined. Maybe you want to quote it."))
+					 ($punt_nil . (punt-nil-warnp "If you want the value of the function name, use `apply'."))
+					 ($lisp_macro . (lisp-macro-warnp "Lisp macros should already be loaded at translate time."))
+					 ($maxima_fexpr . (mfexpr-warnp "Maxima fexprs should already be loaded at translate time."))
+					 ($maxima_special_form . (mfexpr*-warnp "Maxima special forms should already be loaded at translate time.")))
 				   :test #'eq))))
 	     (cond ((null tabl))
 		   ((get f (car tabl)))
@@ -74,35 +74,36 @@
       ;;loses if the argl could not be evaluated but macsyma &quote functions
       ;;but the translator should be fixed so that if (mget f 'mfexprp) is t
       ;;then it doesn't translate as an mfunction-call.
-      `(lispm-mfunction-call-aux ',f ',argl (list ,@ argl) nil)))
+      `(mfunction-call-aux ',f ',argl nil)))
 
-(defun lispm-mfunction-call-aux (f argl list-argl autoloaded-already? &aux f-prop)
+(defun mfunction-call-aux (f argl autoloaded-already? &aux f-prop)
   (cond ((functionp f)
-	 (apply f list-argl))
+	 (apply f (mapcar-eval argl)))
 	((macro-function f)
-	 (eval (cons f list-argl)))
+	 (mfunction-call-warn f '$lisp_macro)
+	 (eval (cons f argl)))
 	((not (symbolp f)) (merror (intl:gettext "apply: expected symbol or function; found: ~M") f))
 	((setq f-prop (get f 'mfexpr*))
-	 (funcall f-prop (cons nil argl)))
+	 (mfunction-call-warn f '$maxima_special_form)
+	 (funcall f-prop (cons (list f) argl)))
 	((setq f-prop (mget f 'mexpr))
 	 (cond ((mget f 'mfexprp)
-		(mfunction-call-warn f 'mfexpr)
+		(mfunction-call-warn f '$maxima_fexpr)
 		(meval (cons (list f) argl)))
 	       (t
-		(mlambda f-prop list-argl f t nil))))
+		(mlambda f-prop (mapcar-eval argl) f t nil))))
 	((setq f-prop (get f 'autoload))
 	 (cond (autoloaded-already?
 		(merror (intl:gettext "apply: function ~:@M undefined after loading file ~A") f (namestring (get f 'autoload))))
 	       (t
 		(funcall autoload (cons f f-prop))
-		(lispm-mfunction-call-aux f argl list-argl t))))
-
+		(mfunction-call-aux f argl t))))
 	((boundp f)
-	 (mfunction-call-warn f 'punt-nil)
-	 (mapply (eval f) (mapcar-eval argl) f))
+	 (mfunction-call-warn f '$punt_nil)
+	 (mapply (symbol-value f) (mapcar-eval argl) f))
 	(t
-	 (mfunction-call-warn f 'undefined)
-	 `((,f) ,@ list-argl))))
+	 (mfunction-call-warn f '$undefined)
+	 `((,f) ,@(mapcar-eval argl)))))
 
 (defquote trd-msymeval (&rest l)
   (let ((a-var? (car l)))
@@ -110,8 +111,10 @@
 	(eval a-var?) ;;; ouch!
 	(setf (symbol-value a-var?) (if (cdr l) (eval (cadr l))  a-var?))))) ;; double ouch!
 
-;;; These are the LAMBDA forms. They have macro properties that set
-;;; up very different things in compiled code.
+(defun maybe-msymeval (var)
+  (if (boundp var)
+      (symbol-value var)
+      var))
 
 ;;; (FUNGEN&ENV-for-meval <eval vars list> <late eval vars list>  <EXP>)
 ;;won't work in cl.  fix later.

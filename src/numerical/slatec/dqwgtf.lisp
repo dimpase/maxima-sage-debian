@@ -19,7 +19,8 @@
 
 (defun dqwgtf (x omega p2 p3 p4 integr)
   (declare (type (f2cl-lib:integer4) integr)
-           (type (double-float) p4 p3 p2 omega x))
+           (type (double-float) p4 p3 p2 omega x)
+           (ignore p2 p3 p4))
   (prog ((omx 0.0) (dqwgtf 0.0))
     (declare (type (double-float) dqwgtf omx))
     (setf omx (* omega x))
@@ -34,7 +35,7 @@
    end_label
     (return (values dqwgtf nil nil nil nil nil nil))))
 
-(in-package #-gcl #:cl-user #+gcl "CL-USER")
+(in-package #:cl-user)
 #+#.(cl:if (cl:find-package '#:f2cl) '(and) '(or))
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (setf (gethash 'fortran-to-lisp::dqwgtf

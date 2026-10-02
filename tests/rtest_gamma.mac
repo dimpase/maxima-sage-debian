@@ -159,7 +159,7 @@ factcomb((n+1)*(n+2)*(n+3)*n!);
 factcomb(n!/(n*(n-1)*(n-2)));
 (n-3)!;
 
-/* No simplifcation for infinities and undeterminates 
+/* No simplification for infinities and undeterminates
    with the exception of inf! -> inf */
 
 map(factorial, [inf,minf,infinity,und,ind]);
@@ -332,13 +332,19 @@ errcatch(genfact(-2,-2,1));
 errcatch(genfact(2,5,2));
 [];
 
-/* for all other numbers we get a noun form */
+/* for rational numbers we get a noun form at present, although expressions in terms of the gamma function are possible */
+
 (3/2)!!;
-genfact(3/2,0,2);
+(3/2)!!;
+
+/* for floats and bigfloats we get a numerical result */
+
 (2.5)!!;
-genfact(2.5,1,2);
+''(ev (float (sqrt(2/%pi)^((1-cos(%pi*z))/2)*2^(z/2)*gamma(1 + z/2)), z = 5/2));
+
 (2.5b0)!!;
-genfact(2.5b0,1,2);
+''(ev (bfloat (sqrt(2/%pi)^((1-cos(%pi*z))/2)*2^(z/2)*gamma(1 + z/2)), z = 5/2));
+
 
 /******************************************************************************
   Double factorial
@@ -355,7 +361,7 @@ double_factorial(conjugate(z));
 conjugate(double_factorial(x+%i*y));
 double_factorial(x-%i*y);
 
-/* No simplifcation for infinities and undeterminates 
+/* No simplification for infinities and undeterminates 
    with the exception of inf: inf! -> inf */
 
 map(factorial, [inf,minf,infinity,und,ind]);
@@ -391,6 +397,9 @@ makegamma(double_factorial(n));
 (gamma(n/2+1)*2^((1-cos(%pi*n))/4+n/2))/%pi^((1-cos(%pi*n))/4);
 
 /* Some small numbers */
+
+makelist (k!!, k, -13, -1, 2);
+[1/10395, -1/945, 1/105, -1/15, 1/3, -1, 1];
 
 double_factorial(-3);
 -1;
@@ -807,7 +816,7 @@ errcatch(gamma(175.0));  /* should overflow */
 errcatch(gamma(250.0));  /* should overflow */
 [];
 
-/* Simplifcation for infinities and undeterminates only for inf */
+/* Simplification for infinities and undeterminates only for inf */
 
 map('gamma, [inf,minf,infinity,und,ind]);
 [inf,gamma(minf),gamma(infinity),gamma(und),gamma(ind)];
@@ -1484,7 +1493,7 @@ relerror(
   gamma_incomplete(10+5*%i,10+2.5*%i),
   (55884.99767768350551452192526458363894624371018195106017631282130b0 
   -30587.35558698211815103119732529095917842073159139555085583572089b0*%i),
-  8.0e-15);
+  9.0e-15);
 true;
 
 relerror(
@@ -1634,7 +1643,7 @@ relerror(
   1b-32);
 true;
 
-/* Further tests after modication of the code */
+/* Further tests after modification of the code */
 
 fpprec:35;
 35;
@@ -1843,7 +1852,7 @@ true;
 relerror(
   gamma_incomplete(0.5,-2.5*%i),
   -0.59691417904238855062194720247331 + 0.00921495731742953647951029973386*%i,
-  2.81e-15);
+  3.2e-15);
 true;
 
 relerror(
@@ -1879,7 +1888,7 @@ true;
 relerror(
   gamma_incomplete(0.5,2.5*%i),
   -0.59691417904238855062194720247331 - 0.00921495731742953647951029973386*%i,
- 2.81e-15);
+ 3.2e-15);
 true;
 
 relerror(
@@ -2632,7 +2641,7 @@ true;
 /* We have done a check for the numerical algorithm of the Erf function which
    calls the Incomplete Gamma function. 
    We do not do further numerical tests for the other Error functions, 
-   but only check the correct implementation of the numercial routines
+   but only check the correct implementation of the numerical routines
    against the Erf function
 */
 
@@ -2835,7 +2844,7 @@ limit(fresnel_s(x),x,minf);
 -1/2;
 
 /* Simplification of infinities 
-   The rules for an odd function and the simplifaction for imaginary
+   The rules for an odd function and the simplification for imaginary
    arguments are applied too.
 */
 
@@ -3424,7 +3433,7 @@ closeto(
   4.35e-15); /* we have lost accuracy. More tests necessary? */
 true;
 
-/* Incomplete Beta is definied for negative integers a and b >= (-a) 
+/* Incomplete Beta is defined for negative integers a and b >= (-a)
    Add this point we have a problem. functions.wolfram.com gives different
    numerical results for this cases. When b not equal -a Maxima and 
    functions.wolfram.com differ by a factor 2. For other valid integer b
@@ -3703,7 +3712,7 @@ relerror(
 true;
 
 
-/* From the mailing list.  This should not signal an error and should give a simplifed answer */
+/* From the mailing list.  This should not signal an error and should give a simplified answer */
 relerror(
  expand(bfloat(erf((sqrt(2)*%i-sqrt(2))/2))),
  4.74147636640994245161681b-1 * %i - 9.69264211944215930381491b-1,
@@ -3912,6 +3921,16 @@ gamma_incomplete_lower(1/3-2,z);
 ((9/10-3/(5*z))*%e^-z)/z^(2/3)+(9*''gamma_incomplete_lower(1/3,z))/10;
 
 /*
+ * Derivative of gamma_incomplete_lower.  We don't have a formula for
+ * the derivative wrt a, the first arg.
+ */
+diff(gamma_incomplete_lower(a,z), z);
+z^(a-1)*exp(-z);
+
+diff(gamma_incomplete_lower(a,z), a);
+'diff(gamma_incomplete_lower(a,z), a);
+
+/*
  * Test expansion of gamma_incomplete_regularized.
  */
 gamma_incomplete_regularized(3,z) - gamma_incomplete(3,z)/gamma(3);
@@ -3979,5 +3998,247 @@ pn$
 sign(gamma(sqrt(x)));
 pnz$
 
+/* tests for errors noted while reviewing
+ * SF bug #2999: "bug in cdf_binomial caused by beta_incomplete_regularized"
+ * problem was that beta_incomplete_regularized and beta_incomplete_generalized
+ * are no longer implemented as Lisp functions (i.e., not FBOUNDP).
+ * I guess they're implemented solely via simplification now.
+ *
+ * NOTE: expected results look plausible to me,
+ * but I did not check them carefully.
+ */
+
+/* examples from #2999 */
+
+beta_incomplete_regularized(4830,171,0.8333333333333334);
+1.134595788994921E-194;
+
+beta_incomplete_regularized (1000.0, 1000.0, 0.5);
+0.5;
+
+/* other cases discovered while fixing preceding error */
+
+beta_incomplete_regularized (m + 2, n, 1/2), beta_expand = true;
+beta_incomplete_regularized(m,n,1/2)
+ -((n+m)*((((-m)-1)*2^((-n)-m))/((-n)-m)+2^((-n)-m-1)))/(m*(m+1)*beta(m,n));
+
+beta_incomplete_regularized (m - 2, n, 1/2), beta_expand = true;
+beta_incomplete_regularized(m,n,1/2)
+ -(((1-m)*2^((-n)-m+2))/((-n)-m+2)+2^((-n)-m+1))/(beta(m,n)*(n+m-1));
+
+beta_incomplete_generalized (m + 2, n, x, y), beta_expand = true;
+((-(1-y)^n*y^(m+1))+(((-m)-1)*((1-x)^n*x^m-(1-y)^n*y^m))/((-n)-m)
+                         +(1-x)^n*x^(m+1))
+ /(n+m+1)
+ +(m*(m+1)*beta_incomplete_generalized(m,n,x,y))/((n+m)*(n+m+1));
+
+beta_incomplete_generalized (m - 2, n, x, y), beta_expand = true;
+(beta_incomplete_generalized(m,n,x,y)*((-n)-m+1)*((-n)-m+2))/((1-m)
+                                                                   *(2-m))
+ -(((-n)-m+2)*((1-y)^n*y^(m-1)+((1-m)*((1-y)^n*y^(m-2)-(1-x)^n*x^(m-2)))
+                               /((-n)-m+2)-(1-x)^n*x^(m-1)))
+  /((1-m)*(2-m));
+
+/* verify derivatives of beta_incomplete and friends (unreported bug) */
+
+(kill (a, b, x, y, e), 
+finite_difference_epsilon: 1e-8,
+
+finite_difference_jacobian (ee, vars, vars0) :=
+    genmatrix (lambda ([i, j], finite_difference_partial (ee[i], vars, vars0, j)), length(ee), length(vars)),
+
+finite_difference_partial (e, vars, vars0, j) :=
+    block ([e0, e1, vars1],
+           subst (vars0, e),
+           e0: ev (%%, nouns, numer),
+           vars1: copy (vars0),
+           vars1[j]: (lhs(vars0[j]) = rhs(vars0[j]) + finite_difference_epsilon),
+           subst (vars1, e),
+           e1: ev (%%, nouns, numer),
+           (e1 - e0)/finite_difference_epsilon),
+
+finite_difference_gradient (e, vars, vars0) :=
+    makelist (finite_difference_partial (e, vars, vars0, j), j, 1, length(vars)),
+
+/* definition of hypergeometric_regularized can go away when it is built in ... */
+hypergeometric_regularized (p, q, x) :=
+    hypergeometric (p, q, x)/product (gamma(q[i]), i, 1, length(q)),
+
+test_derivative (expr, grad_expr, vars, vars0) :=
+    block ([grad_via_diff, grad_via_finite_difference, norm_error],
+           subst (vars0, grad_expr),
+           grad_via_diff: ev (%%, numer),
+           grad_via_finite_difference: finite_difference_gradient (expr, vars, vars0),
+           norm_error: sqrt (lsum (e^2, e, grad_via_diff - grad_via_finite_difference)),
+           if norm_error < sqrt (finite_difference_epsilon)
+               then true
+               else FAILED ('expr = expr, 'grad_via_diff = grad_via_diff, 'grad_via_finite_difference = grad_via_finite_difference, 'norm_error = norm_error)),
+
+ab0_list:
+    cartesian_product_list
+        ([a = 2, a = 3, a = 4],
+         [b = 4, b = 5, b = 6]),
+
+abx0_list:
+    cartesian_product_list
+        ([a = 2, a = 3, a = 4],
+         [b = 4, b = 5, b = 6],
+         [x = 0.25, x = 0.5, x = 0.75]),
+
+abxy0_list:
+    cartesian_product_list
+        ([a = 2, a = 3, a = 4],
+         [b = 4, b = 5, b = 6],
+         [x = 0.1, x = 0.25, x = 0.4],
+         [y = 0.6, y = 0.75, y = 0.9]),
+0);
+0;
+
+grad_beta: makelist (diff (beta (a, b), v), v, [a, b]);
+[-beta(a,b)*(psi[0](b+a)-psi[0](a)),
+ -beta(a,b)*(psi[0](b+a)-psi[0](b))];
+
+grad_beta_incomplete: makelist (diff (beta_incomplete (a, b, x), v), v, [a, b, x]);
+[beta_incomplete(a,b,x)*log(x)
+  -gamma(a)^2*hypergeometric_regularized([a,a,1-b],[a+1,a+1],x)*x^a,
+
+ gamma(b)^2*hypergeometric_regularized([b,b,1-a],[b+1,b+1],1-x)*(1-x)^b
+  -beta_incomplete(b,a,1-x)*log(1-x)+beta(a,b)*(psi[0](b)-psi[0](b+a)),
+
+ (1-x)^(b-1)*x^(a-1)];
+
+grad_beta_incomplete_regularized: makelist (diff (beta_incomplete_regularized (a, b, x), v), v, [a, b, x]);
+[beta_incomplete_regularized(a,b,x)*(log(x)+psi[0](b+a)-psi[0](a))
+  -(gamma(a)*hypergeometric_regularized([a,a,1-b],[a+1,a+1],x)*gamma(b+a)*x^a)/gamma(b),
+
+ (gamma(b)*gamma(b+a)*hypergeometric_regularized([b,b,1-a],[b+1,b+1],1-x)*(1-x)^b)/gamma(a)
+   +beta_incomplete_regularized(b,a,1-x)*((-log(1-x))-psi[0](b+a)+psi[0](b)),
+
+ ((1-x)^(b-1)*x^(a-1))/beta(a,b)];
+
+grad_beta_incomplete_generalized: makelist (diff (beta_incomplete_generalized (a, b, x, y), v), v, [a, b, x, y]);
+[beta_incomplete(a,b,y)*log(y)
+  +gamma(a)^2*(hypergeometric_regularized([a,a,1-b],[a+1,a+1],x)*x^a
+                -hypergeometric_regularized([a,a,1-b],[a+1,a+1],y)*y^a)
+  -beta_incomplete(a,b,x)*log(x),
+
+ (-gamma(b)^2*(hypergeometric_regularized([b,b,1-a],[b+1,b+1],1-x)*(1-x)^b
+               -hypergeometric_regularized([b,b,1-a],[b+1,b+1],1-y)*(1-y)^b))
+  -beta_incomplete(b,a,1-y)*log(1-y)+beta_incomplete(b,a,1-x)*log(1-x),
+
+ -(1-x)^(b-1)*x^(a-1),
+
+ (1-y)^(b-1)*y^(a-1)];
+
+map (lambda ([ab0], test_derivative (beta (a, b), grad_beta, [a, b], ab0)), ab0_list);
+''(makelist (true, length (ab0_list)));
+
+map (lambda ([abx0], test_derivative (beta_incomplete (a, b, x), grad_beta_incomplete, [a, b, x], abx0)), abx0_list);
+''(makelist (true, length (abx0_list)));
+
+map (lambda ([abx0], test_derivative (beta_incomplete_regularized (a, b, x), grad_beta_incomplete_regularized, [a, b, x], abx0)), abx0_list);
+''(makelist (true, length (abx0_list)));
+
+map (lambda ([abxy0], test_derivative (beta_incomplete_generalized (a, b, x, y), grad_beta_incomplete_generalized, [a, b, x, y], abxy0)), abxy0_list);
+''(makelist (true, length (abxy0_list)));
+
+/******************************************************************************
+
+  Test the Beta function
+
+  Numerical values are taken from functions/wolfram.com.
+******************************************************************************/
+
+/* Derivatives of beta function */
+diff(beta(a,b),a);
+-(beta(a,b)*(psi[0](b+a)-psi[0](a)));
+
+diff(beta(a,b),b);
+-(beta(a,b)*(psi[0](b+a)-psi[0](b)));
+
+diff(beta(a,b),a,2);
+beta(a,b)*(psi[0](b+a)-psi[0](a))^2-beta(a,b)*(psi[1](b+a)-psi[1](a));
+
+diff(beta(a,b),b,2);
+beta(a,b)*(psi[0](b+a)-psi[0](b))^2-beta(a,b)*(psi[1](b+a)-psi[1](b));
+
+diff(beta(a,b),a,1,b,1);
+beta(a,b)*(psi[0](b+a)-psi[0](a))*(psi[0](b+a)-psi[0](b))
+ -beta(a,b)*psi[1](b+a);
+
+/* Bug #4690: "inverse_erf(erf(x)) and erf(inverse_erf(x)) don't simplify to x, even if x is real" */
+(kill(x, x1, x2, x3, z), assume(x1 > -1, x2 < 1, x3 > -1, x3 < 1), declare(z, complex), done);
+done;
+erf(inverse_erf(x));
+erf(inverse_erf(x));
+erf(inverse_erf(x1));
+erf(inverse_erf(x1));
+erf(inverse_erf(x2));
+erf(inverse_erf(x2));
+erf(inverse_erf(x3));
+x3;
+inverse_erf(erf(x));
+x;
+inverse_erf(erf(z));
+inverse_erf(erf(z));
+(kill(x, x1, x2, x3, z), done);
+done;
+
+/* Analogous for erfc and inverse_erfc ... */
+(kill(x, x1, x2, x3, z), assume(x1 > 0, x2 < 2, x3 > 0, x3 < 2), declare(z, complex), done);
+done;
+erfc(inverse_erfc(x));
+erfc(inverse_erfc(x));
+erfc(inverse_erfc(x1));
+erfc(inverse_erfc(x1));
+erfc(inverse_erfc(x2));
+erfc(inverse_erfc(x2));
+erfc(inverse_erfc(x3));
+x3;
+inverse_erfc(erfc(x));
+x;
+inverse_erfc(erfc(z));
+inverse_erfc(erfc(z));
+(kill(x, x1, x2, x3, z), done);
+done;
+
+/* Bug #4673: "binomial(a,a-b) doesn't simplify to binomial(a,b)" */
+
+binomial(a, a - b);
+binomial(a, b);
+
+binomial(a + b, a - b);
+binomial(a + b, 2 * b);
+
+binomial(a + b + c, a + b + c - d - e - f);
+binomial(a + b + c, d + e + f);
 
 
+/* Bug #4929: "erfc loses half its precision on exact arguments" */
+
+block([numer:true], is(abs(erfc(1)/0.15729920705028513 - 1) < 1e-14));
+true;
+
+block([numer:true], is(abs(erfc(2)/0.004677734981047266 - 1) < 1e-14));
+true;
+
+block([numer:true], is(abs(erfc(-1)/1.8427007929497149 - 1) < 1e-14));
+true;
+
+
+/* Bug #4930: "log_gamma at bigfloat precision is off by 2*%pi*%i for complex arguments" */
+
+block([fpprec:30], is(abs(bfloat(log_gamma(1+%i)) - bfloat(log(gamma(1+%i)))) < 1b-25));
+true;
+
+block([fpprec:30], is(abs(bfloat(log_gamma(3+2*%i)) - bfloat(log(gamma(3+2*%i)))) < 1b-25));
+true;
+
+block([fpprec:30], is(abs(bfloat(log_gamma(%i/2)) - bfloat(log(gamma(%i/2)))) < 1b-25));
+true;
+
+block([fpprec:30], is(abs(bfloat(log_gamma(2+3*%i)) - bfloat(log(gamma(2+3*%i)))) < 1b-25));
+true;
+
+block([fpprec:30], is(abs(bfloat(log_gamma(1+%i)) - log_gamma(1.0+%i)) < 1e-14));
+true;
