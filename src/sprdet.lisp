@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,7 +14,8 @@
 
 ;; THIS IS THE NEW DETERMINANT PACKAGE
 
-(declare-top (special x *ptr* *ptc* *blk* $ratmx ml* *detsign* rzl*))
+(declare-top (special ;;x
+              *ptr* *ptc* *blk* ml* *detsign* rzl*))
 
 (defun sprdet (ax n)
   (declare (fixnum n))
@@ -92,12 +93,12 @@
      on (setq rule (cons (list d s elm (1- col)) rule))
      (go l2)))
 
-(declare-top (special j))
+(declare-top (special *j*)) ;; Why does this need to be a special variable?
 
 (defun singp (x ml col n)
   (declare (fixnum col n))
-  (prog (i (j col) l) 
-     (declare (fixnum  j))
+  (prog (i (*j* col) l) 
+     (declare (fixnum  *j*))
      (setq l ml)
      (if (null ml)
 	 (go loop)
@@ -105,13 +106,13 @@
 	       ml (cdr ml)))
      (cond ((member i rzl* :test #'equal) (return t))
 	   ((zrow x i col n) (return (setq rzl*(cons i rzl*)))))
-     loop (cond ((> j n) (return nil))
-		((every #'(lambda (i) (equal (aref x i j) 0)) l)
+     loop (cond ((> *j* n) (return nil))
+		((every #'(lambda (i) (equal (aref x i *j*) 0)) l)
 		 (return t)))
-     (incf j)
+     (incf *j*)
      (go loop)))
 
-(declare-top (unspecial j))
+(declare-top (unspecial *j*))
 
 (defun tdbu (x n)
   (declare (fixnum n))
@@ -136,11 +137,10 @@
      tag1 (when (null nml) (go tag2))
      (setq dd  (car nml))
      (setq nml (cdr nml))
-     (nbn dd)
+     (nbn dd x)
      (go tag1)))
 
-(defun nbn (rule)
-  (declare (special x))
+(defun nbn (rule x)
   (prog (ans r a)
      (setq ans 0 r (cadar rule))
      (when (equal r 0) (return 0))
@@ -214,7 +214,7 @@
    (setq l (cdr l))
    (go loop)))
 
-(declare-top (unspecial x ml* rzl*))
+(declare-top (unspecial ml* rzl*))
 
 (defun atranspose (a n)
   (prog (i j d)

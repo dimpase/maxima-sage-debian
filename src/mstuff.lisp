@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -21,7 +21,7 @@
 	  (mfunction1 (setq bfun (getopr f))))
     (when (member bfun '(lessthan great) :test #'eq)
       (setq llist (mapcar #'ratdisrep llist)))
-    (cons '(mlist) (stable-sort llist comparfun))))
+    (simplifya (cons '(mlist) (stable-sort llist comparfun)) t)))
 
 ;; cmulisp does not like the closure version.  Clisp insists on the
 ;; closure version.  Gcl likes either...  For the moment we will
@@ -39,7 +39,8 @@
 
 (defmspec $makelist (x)
   (setq x (cdr x))
-  (prog (n form arg a b c d lv)
+  (simplifya
+    (prog (n form arg a b c d lv)
      (setq n (length x))
      (cond
        ((= n 0) (return '((mlist))))
@@ -49,7 +50,7 @@
           `((mlist) ,(meval `(($ev) ,@(list (list '(mquote) form)))))))
        ((= n 2)
         (setq form (first x))
-        (setq b ($float (meval (second x))))
+        (setq b (let (($simp t)) ($float (meval (second x)))))
         (if (numberp b)
             (return
               (do
@@ -65,7 +66,7 @@
         (if ($listp b)
             (setq lv (mapcar #'(lambda (u) (list '(mquote) u)) (cdr b)))
             (progn
-              (setq b ($float (meval b)))
+              (setq b (let (($simp t)) ($float (meval b))))
               (if ($numberp b)
                   (return
                     (do
@@ -81,7 +82,7 @@
         (setq arg (second x))
         (setq a (meval (third x)))
         (setq b (meval (fourth x)))
-        (setq d ($float (meval `((mplus) ,b ((mtimes) ,a -1)))))
+        (setq d (let (($simp t)) ($float (meval `((mplus) ,b ((mtimes) ,a -1))))))
         (if (numberp d)
             (setq lv (interval2 a 1 d))
             (merror (intl:gettext "makelist: the fourth argument minus the third one must evaluate to a number; found: ~M") d)))
@@ -91,9 +92,9 @@
         (setq a (meval (third x)))
         (setq b (meval (fourth x)))
         (setq c (meval (fifth x)))
-        (setq d ($float
+        (setq d (let (($simp t)) ($float
                  (meval 
-                  `((mtimes) ((mplus) ,b ((mtimes) ,a -1)) ((mexpt) ,c -1)))))
+                  `((mtimes) ((mplus) ,b ((mtimes) ,a -1)) ((mexpt) ,c -1))))))
         (if (numberp d)
             (setq lv (interval2 a c d))
             (merror (intl:gettext "makelist: the fourth argument minus the third one, divided by the fifth one must evaluate to a number; found: ~M") d)))
@@ -105,10 +106,11 @@
 	 (push (meval `(($ev)
 			,@(list (list '(mquote) form)
 				(list '(mequal) arg (car lv)))))
-	       ans)))))
+	       ans))))
+    t))
 
 (defun interval2 (i s d)
-  (do ((nn i (meval `((mplus) ,s ,nn)))
+  (do ((nn i (let (($simp t)) (meval `((mplus) ,s ,nn))))
        (m 0 (1+ m))
        (ans))
       ((> m d) (nreverse ans))
@@ -127,6 +129,6 @@
     (merror (intl:gettext "sublist: first argument must be a list; found: ~M") a) )
   (do ((a (cdr a) (cdr a))
        (x))
-      ((null a) (cons '(mlist) (nreverse x)))
+      ((null a) (simplifya (cons '(mlist) (nreverse x)) t))
     (if (definitely-so (mfuncall f (car a)))
 	(push (car a) x))))

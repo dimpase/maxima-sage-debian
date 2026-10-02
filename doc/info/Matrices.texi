@@ -1,3 +1,4 @@
+@c -*- mode: texinfo -*-
 @menu
 * Introduction to Matrices and Linear Algebra::  
 * Functions and Variables for Matrices and Linear Algebra::  
@@ -61,7 +62,7 @@ modified object (See @mref{copymatrix} for a way of avoiding this):
 @c M1[1][1]: 2;
 @c M2;
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) M1: matrix([0,0],[0,0]);
                             [ 0  0 ]
@@ -93,7 +94,7 @@ Converting a matrix to nested lists and vice versa works the following way:
 @c M2: transpose(M1);
 @c args(M2);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) l: [[1,2],[3,4]];
 (%o1)                   [[1, 2], [3, 4]]
@@ -144,7 +145,7 @@ By default the @code{vect} package does not declare the dot operator to be a
 commutative operator.  To get a commutative dot operator @code{.}, the command
 @code{declare(".", commutative)} must be executed.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Vectors}
 @category{Share packages}
 @category{Package vect}
@@ -172,7 +173,7 @@ The functions in the @code{eigen} package are:@*
 @mrefcomma{eigenvectors} @mrefcomma{uniteigenvectors} and
 @mrefdot{similaritytransform}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Vectors}
 @category{Matrices}
 @category{Share packages}
@@ -195,7 +196,7 @@ or more lists (or matrices) onto the matrix @var{M}.
 
 See also @mref{addrow} and @mrefdot{append}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -209,7 +210,7 @@ more lists (or matrices) onto the matrix @var{M}.
 
 See also @mref{addcol} and @mrefdot{append}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -221,7 +222,7 @@ See also @mref{addcol} and @mrefdot{append}
 Returns the adjoint of the matrix @var{M}.
 The adjoint matrix is the transpose of the matrix of cofactors of @var{M}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -236,15 +237,21 @@ equations @var{eqn_1}, @dots{}, @var{eqn_m}.  This is the coefficient matrix
 with a column adjoined for the constant terms in each equation (i.e., those
 terms not dependent upon @var{x_1}, @dots{}, @var{x_n}).
 
-@example
+@c ===beg===
+@c m: [2*x - (a - 1)*y = 5*b, c + b*y + a*x = 0]$
+@c augcoefmatrix (m, [x, y]);
+@c ===end===
+@example maxima
 (%i1) m: [2*x - (a - 1)*y = 5*b, c + b*y + a*x = 0]$
+@group
 (%i2) augcoefmatrix (m, [x, y]);
                        [ 2  1 - a  - 5 b ]
 (%o2)                  [                 ]
                        [ a    b      c   ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @category{Matrices}
 @closecatbox
@@ -270,9 +277,9 @@ Examples:
 @c cauchy_matrix([x1, x2], [y1, y2]);
 @c cauchy_matrix([x1, x2]);
 @c ===end===
-@example
-(%i1) cauchy_matrix([x1, x2], [y1, y2]);
+@example maxima
 @group
+(%i1) cauchy_matrix([x1, x2], [y1, y2]);
                       [    1        1    ]
                       [ -------  ------- ]
                       [ y1 + x1  y2 + x1 ]
@@ -281,7 +288,7 @@ Examples:
                       [ -------  ------- ]
                       [ y1 + x2  y2 + x2 ]
 @end group
-
+@group
 (%i2) cauchy_matrix([x1, x2]);
                       [   1         1    ]
                       [  ----    ------- ]
@@ -290,9 +297,10 @@ Examples:
                       [    1       1     ]
                       [ -------   ----   ]
                       [ x2 + x1   2 x2   ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -305,42 +313,65 @@ Returns the characteristic polynomial for the matrix @var{M}
 with respect to variable @var{x}.  That is,
 @code{determinant (@var{M} - diagmatrix (length (@var{M}), @var{x}))}.
 
-@example
+@c ===beg===
+@c a: matrix ([3, 1], [2, 4]);
+@c expand (charpoly (a, lambda));
+@c (programmode: true, solve (%));
+@c matrix ([x1], [x2]);
+@c ev (a . % - lambda*%, %th(2)[1]);
+@c %[1, 1] = 0;
+@c x2^2 + x1^2 = 1;
+@c solve ([%th(2), %], [x1, x2]);
+@c ===end===
+@example maxima
+@group
 (%i1) a: matrix ([3, 1], [2, 4]);
                             [ 3  1 ]
 (%o1)                       [      ]
                             [ 2  4 ]
+@end group
+@group
 (%i2) expand (charpoly (a, lambda));
                            2
 (%o2)                lambda  - 7 lambda + 10
+@end group
+@group
 (%i3) (programmode: true, solve (%));
 (%o3)               [lambda = 5, lambda = 2]
+@end group
+@group
 (%i4) matrix ([x1], [x2]);
                              [ x1 ]
 (%o4)                        [    ]
                              [ x2 ]
+@end group
+@group
 (%i5) ev (a . % - lambda*%, %th(2)[1]);
                           [ x2 - 2 x1 ]
 (%o5)                     [           ]
                           [ 2 x1 - x2 ]
+@end group
+@group
 (%i6) %[1, 1] = 0;
 (%o6)                     x2 - 2 x1 = 0
+@end group
+@group
 (%i7) x2^2 + x1^2 = 1;
                             2     2
 (%o7)                     x2  + x1  = 1
-(%i8) solve ([%th(2), %], [x1, x2]);
+@end group
 @group
+(%i8) solve ([%th(2), %], [x1, x2]);
                   1               2
 (%o8) [[x1 = - -------, x2 = - -------], 
                sqrt(5)         sqrt(5)
-
                                              1             2
                                     [x1 = -------, x2 = -------]]
                                           sqrt(5)       sqrt(5)
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -353,14 +384,19 @@ Returns the coefficient matrix for the
 variables @var{x_1}, @dots{}, @var{x_n} of the system of linear equations
 @var{eqn_1}, @dots{}, @var{eqn_m}.
 
-@example
+@c ===beg===
+@c coefmatrix([2*x-(a-1)*y+5*b = 0, b*y+a*x = 3], [x,y]);
+@c ===end===
+@example maxima
+@group
 (%i1) coefmatrix([2*x-(a-1)*y+5*b = 0, b*y+a*x = 3], [x,y]);
-                                 [ 2  1 - a ]
-(%o1)                            [          ]
-                                 [ a    b   ]
+                          [ 2  1 - a ]
+(%o1)                     [          ]
+                          [ a    b   ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @category{Matrices}
 @closecatbox
@@ -372,9 +408,98 @@ variables @var{x_1}, @dots{}, @var{x_n} of the system of linear equations
 
 Returns the @var{i}'th column of the matrix @var{M}.
 The return value is a matrix.
-@c EXAMPLE HERE
 
-@opencatbox
+The matrix returned by @code{col} does not share memory with the argument @var{M};
+a modification to the return value does not modify @var{M}.
+
+Examples:
+
+@code{col} returns the @var{i}'th column of the matrix @var{M}.
+
+@c ===beg===
+@c abc: matrix ([12, 14, -4], [2, x, b], [3*y, -7, 9]);
+@c col (abc, 1);
+@c col (abc, 2);
+@c col (abc, 3);
+@c ===end===
+@example maxima
+@group
+(%i1) abc: matrix ([12, 14, -4], [2, x, b], [3*y, -7, 9]);
+                        [ 12   14   - 4 ]
+                        [               ]
+(%o1)                   [  2    x    b  ]
+                        [               ]
+                        [ 3 y  - 7   9  ]
+@end group
+@group
+(%i2) col (abc, 1);
+                             [ 12  ]
+                             [     ]
+(%o2)                        [  2  ]
+                             [     ]
+                             [ 3 y ]
+@end group
+@group
+(%i3) col (abc, 2);
+                             [ 14  ]
+                             [     ]
+(%o3)                        [  x  ]
+                             [     ]
+                             [ - 7 ]
+@end group
+@group
+(%i4) col (abc, 3);
+                             [ - 4 ]
+                             [     ]
+(%o4)                        [  b  ]
+                             [     ]
+                             [  9  ]
+@end group
+@end example
+
+The matrix returned by @code{col} does not share memory with the argument.
+In this example,
+assigning a new value to @code{aa2} does not modify @code{aa}.
+
+@c ===beg===
+@c aa: matrix ([1, 2, x], [7, y, 3]);
+@c aa2: col (aa, 2);
+@c aa2[2, 1]: 123;
+@c aa2;
+@c aa;
+@c ===end===
+@example maxima
+@group
+(%i1) aa: matrix ([1, 2, x], [7, y, 3]);
+                           [ 1  2  x ]
+(%o1)                      [         ]
+                           [ 7  y  3 ]
+@end group
+@group
+(%i2) aa2: col (aa, 2);
+                              [ 2 ]
+(%o2)                         [   ]
+                              [ y ]
+@end group
+@group
+(%i3) aa2[2, 1]: 123;
+(%o3)                          123
+@end group
+@group
+(%i4) aa2;
+                             [  2  ]
+(%o4)                        [     ]
+                             [ 123 ]
+@end group
+@group
+(%i5) aa;
+                           [ 1  2  x ]
+(%o5)                      [         ]
+                           [ 7  y  3 ]
+@end group
+@end example
+
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -398,12 +523,13 @@ the functions in this package in matrix calculations.
 
 Example:
 
-@c HMM, SPURIOUS "redefining the Macsyma function".
-@c LEAVE IT HERE SINCE THAT'S WHAT A USER ACTUALLY SEES.
-@example
+@c ===beg===
+@c load ("eigen")$
+@c columnvector ([aa, bb, cc, dd]);
+@c ===end===
+@example maxima
 (%i1) load ("eigen")$
-Warning - you are redefining the Macsyma function eigenvalues
-Warning - you are redefining the Macsyma function eigenvectors
+@group
 (%i2) columnvector ([aa, bb, cc, dd]);
                              [ aa ]
                              [    ]
@@ -412,9 +538,10 @@ Warning - you are redefining the Macsyma function eigenvectors
                              [ cc ]
                              [    ]
                              [ dd ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -432,7 +559,7 @@ also modifies @code{m1 [i,j]}.  Creating a copy with @code{copymatrix} and then
 using assignment creates a separate, modified copy.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -451,11 +578,34 @@ The form of the result depends upon the setting of the switch @mrefdot{ratmx}
 There is a special routine for computing sparse determinants which is called
 when the switches @code{ratmx} and @mref{sparse} are both @code{true}.
 
+@code{display_determinant_bars} governs the display of determinants.
+
 @c EXAMPLES NEEDED HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{display_determinant_bars}
+@defvr {Option variable} display_determinant_bars
+Default value: @code{true}
+
+When @code{display_determinant_bars} is @code{true},
+a determinant noun expression which has a literal matrix as its sole argument
+is displayed with a vertical bar on either side.
+
+Otherwise, @code{display_determinant_bars} is @code{false},
+or the determinant is not a noun expression,
+or its argument is not a literal matrix;
+in these cases, the expression is displayed as an ordinary function call.
+
+@opencatbox{Categories:}
+@category{Display flags and variables}
+@category{Matrices}
+@closecatbox
+
+@end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{detout}
@@ -471,25 +621,36 @@ given to @mref{ev} which causes the other two to be set correctly.
 
 Example:
 
-@example
+@c ===beg===
+@c m: matrix ([a, b], [c, d]);
+@c detout: true$
+@c doallmxops: false$
+@c doscmxops: false$
+@c invert (m);
+@c ===end===
+@example maxima
+@group
 (%i1) m: matrix ([a, b], [c, d]);
                             [ a  b ]
 (%o1)                       [      ]
                             [ c  d ]
+@end group
 (%i2) detout: true$
 (%i3) doallmxops: false$
 (%i4) doscmxops: false$
+@group
 (%i5) invert (m);
                           [  d   - b ]
                           [          ]
                           [ - c   a  ]
 (%o5)                     ------------
                            a d - b c
+@end group
 @end example
 @c THERE'S MORE TO THIS STORY: detout: false$ invert (m); RETURNS THE SAME THING.
 @c IT APPEARS THAT doallmxops IS CRUCIAL HERE.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @category{Evaluation flags}
 @closecatbox
@@ -511,7 +672,7 @@ a matrix, it is not copied; all diagonal elements refer to the same instance,
 @var{x}.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -528,7 +689,7 @@ When it is @code{false} then the setting of the
 individual @code{dot} switches govern which operations are performed.
 
 @c NEED EXAMPLES HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -549,27 +710,40 @@ or constant, and @var{power} is a list or matrix.
 
 Example:
 
-@example
+@c ===beg===
+@c m: matrix ([1, %i], [a+b, %pi]);
+@c domxexpt: false$
+@c (1 - c)^m;
+@c domxexpt: true$
+@c (1 - c)^m;
+@c ===end===
+@example maxima
+@group
 (%i1) m: matrix ([1, %i], [a+b, %pi]);
                          [   1    %i  ]
 (%o1)                    [            ]
                          [ b + a  %pi ]
+@end group
 (%i2) domxexpt: false$
+@group
 (%i3) (1 - c)^m;
                              [   1    %i  ]
                              [            ]
                              [ b + a  %pi ]
 (%o3)                 (1 - c)
+@end group
 (%i4) domxexpt: true$
+@group
 (%i5) (1 - c)^m;
                   [                      %i  ]
                   [    1 - c      (1 - c)    ]
 (%o5)             [                          ]
                   [        b + a         %pi ]
                   [ (1 - c)       (1 - c)    ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -585,7 +759,7 @@ operations); if this switch is @code{false} such operations are not carried out.
 @c IS THIS AN EVALUATION OR A SIMPLIFICATION FLAG ??
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -600,7 +774,7 @@ matrices are carried out.
 @c IS THIS AN EVALUATION OR A SIMPLIFICATION FLAG ??
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -616,7 +790,7 @@ not take place with respect to any variables which are less important, according
 the variable ordering assumed for canonical rational expression (CRE) form, than
 those on the @code{dontfactor} list.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end defvr
@@ -631,7 +805,7 @@ carried out.
 @c IS THIS AN EVALUATION OR A SIMPLIFICATION FLAG ??
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -646,7 +820,7 @@ a matrix result.  This switch is not subsumed under @mrefdot{doallmxops}
 @c IS THIS AN EVALUATION OR A SIMPLIFICATION FLAG ??
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -661,7 +835,7 @@ When @code{dot0nscsimp} is @code{true}, a non-commutative product of zero
 and a nonscalar term is simplified to a commutative product.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -677,7 +851,7 @@ a non-commutative product of zero and
 a scalar term is simplified to a commutative product.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -693,7 +867,7 @@ a non-commutative product of one and
 another term is simplified to a commutative product.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -708,7 +882,7 @@ When @code{dotassoc} is @code{true}, an expression @code{(A.B).C} simplifies to
 @c "." MEANS NONCOMMUTATIVE MULTIPLICATION RIGHT ??
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -726,7 +900,7 @@ Turning on this flag effectively turns on @mrefcomma{dot0simp}@w{}
 @mrefcomma{dot0nscsimp} and @mref{dot1simp} as well.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -740,7 +914,7 @@ When @code{dotdistrib} is @code{true}, an expression @code{A.(B + C)} simplifies
 to @code{A.B + A.C}.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -754,7 +928,7 @@ When @code{dotexptsimp} is @code{true}, an expression @code{A.A} simplifies to
 @code{A^^2}.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -768,7 +942,7 @@ Default value: 1
 @c "RETURNED" ?? IS THIS A SIMPLIFICATION OR AN EVALUATION ??
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -783,7 +957,7 @@ simplifies to @code{SC*A} and @code{A.(SC*B)} simplifies to @code{SC*(A.B)}.
 @c HMM, DOES "SC" MEAN "SCALAR" HERE ?? CLARIFY
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -809,7 +983,7 @@ triangularized matrices.
 @c M: matrix ([3, 7, aa, bb], [-1, 8, 5, 2], [9, 2, 11, 4]);
 @c echelon (M);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) M: matrix ([3, 7, aa, bb], [-1, 8, 5, 2], [9, 2, 11, 4]);
                        [  3   7  aa  bb ]
@@ -832,7 +1006,7 @@ triangularized matrices.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @category{Matrices}
 @closecatbox
@@ -879,8 +1053,11 @@ If @code{eigen.mac} is not already loaded,
 After loading, all functions and variables in the package are available.
 @c REFER TO OVERVIEW OF PACKAGE (INCLUDING LIST OF FUNCTIONS) HERE
 
+For matrices consisting of only floating-point values, see also
+@mrefdot{dgeev}
+
 @c NEED EXAMPLES HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -938,6 +1115,9 @@ to @code{true}.
 
 See also @mrefdot{eigenvalues}
 
+For matrices consisting of only floating-point values, see also
+@mrefdot{dgeev}
+
 Examples:
 
 A matrix which has just one eigenvector per eigenvalue.
@@ -948,7 +1128,7 @@ A matrix which has just one eigenvector per eigenvalue.
 @c for i thru length (vals[1]) do disp (val[i] = vals[1][i],
 @c   mult[i] = vals[2][i], vec[i] = vecs[i]);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) M1: matrix ([11, -1], [1, 7]);
                            [ 11  - 1 ]
@@ -993,20 +1173,19 @@ A matrix which has two eigenvectors for one eigenvalue (namely 2).
 @c for i thru length (vals[1]) do disp (val[i] = vals[1][i],
 @c   mult[i] = vals[2][i], vec[i] = vecs[i]);
 @c ===end===
-@example
+@example maxima
 @group
-(%i1) M1: matrix ([0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 2, 0],
-                  [0, 0, 0, 2]);
-                        [ 0  1  0  0 ]
-                        [            ]
-                        [ 0  0  0  0 ]
-(%o1)                   [            ]
-                        [ 0  0  2  0 ]
-                        [            ]
-                        [ 0  0  0  2 ]
+(%i1) M1 : matrix ([0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]);
+                         [ 0  1  0  0 ]
+                         [            ]
+                         [ 0  0  0  0 ]
+(%o1)                    [            ]
+                         [ 0  0  2  0 ]
+                         [            ]
+                         [ 0  0  0  2 ]
 @end group
 @group
-(%i2) [vals, vecs]: eigenvectors (M1);
+(%i2) [vals, vecs] : eigenvectors (M1);
 (%o2) [[[0, 2], [2, 2]], [[[1, 0, 0, 0]], 
                                    [[0, 0, 1, 0], [0, 0, 0, 1]]]]
 @end group
@@ -1035,7 +1214,7 @@ A matrix which has two eigenvectors for one eigenvalue (namely 2).
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -1048,7 +1227,7 @@ Returns an @var{m} by @var{n} matrix, all elements of which
 are zero except for the @code{[@var{i}, @var{j}]} element which is @var{x}.
 @c WOW, THAT SEEMS PRETTY SPECIALIZED ...
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1069,7 +1248,7 @@ Maxima prompts for each element.
 The elements may be any expressions, which are evaluated.
 @code{entermatrix} evaluates its arguments.
 
-@example
+@example maxima
 (%i1) n: 3$
 (%i2) m: entermatrix (n, n)$
 
@@ -1096,7 +1275,7 @@ Matrix entered.
                 [    0         0      (b + a)  ]
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Console interaction}
 @category{Matrices}
 @closecatbox
@@ -1136,7 +1315,7 @@ Examples:
 @c genmatrix (lambda ([i, j], j - i), 3, 3);
 @c genmatrix (B, 2, 2);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) h [i, j] := 1 / (i + j - 1);
                                     1
@@ -1193,7 +1372,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1232,7 +1411,7 @@ Gram-Schmidt algorithm using default inner product function.
 @c y: gramschmidt (x);
 @c map (innerproduct, [y[1], y[2], y[3]], [y[2], y[3], y[1]]);
 @c ===end===
-@example
+@example maxima
 (%i1) load ("eigen")$
 @group
 (%i2) x: matrix ([1, 2, 3], [9, 18, 30], [12, 48, 60]);
@@ -1264,7 +1443,7 @@ Gram-Schmidt algorithm using a specified inner product function.
 @c map (ip, [y[1], y[2], y[3]], [y[2], y[3], y[1]]), a=-%pi/2,
 @c          b=%pi/2;
 @c ===end===
-@example
+@example maxima
 (%i1) load ("eigen")$
 @group
 (%i2) ip (f, g) := integrate (f * g, u, a, b);
@@ -1283,7 +1462,7 @@ Gram-Schmidt algorithm using a specified inner product function.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -1294,7 +1473,7 @@ Gram-Schmidt algorithm using a specified inner product function.
 
 Returns an @var{n} by @var{n} identity matrix.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1315,7 +1494,7 @@ where @code{.} is the noncommutative multiplication operator.
 @code{inprod} is a synonym for @code{innerproduct}.
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -1360,7 +1539,7 @@ In particular, when @var{M} has polynomial elements,
 @code{invert(@var{M})} is equivalent to @code{@var{M}^^-1}.
 
 @c NEED EXAMPLES HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1376,14 +1555,14 @@ Example:
 @c ===beg===
 @c list_matrix_entries(matrix([a,b],[c,d]));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) list_matrix_entries(matrix([a,b],[c,d]));
 (%o1)                     [a, b, c, d]
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1396,23 +1575,167 @@ Default value: @code{[}
 @code{lmxchar} is the character displayed as the left delimiter of a matrix.
 See also @mrefdot{rmxchar}
 
+@code{lmxchar} is only used when @code{display2d_unicode} is @code{false}.
+
 Example:
 
-@example
-(%i1) lmxchar: "|"$
-(%i2) matrix ([a, b, c], [d, e, f], [g, h, i]);
+@c ===beg===
+@c display2d_unicode: false $
+@c lmxchar: "|"$
+@c matrix ([a, b, c], [d, e, f], [g, h, i]);
+@c ===end===
+@example maxima
+(%i1) display2d_unicode: false $
+(%i2) lmxchar: "|"$
+@group
+(%i3) matrix ([a, b, c], [d, e, f], [g, h, i]);
                            | a  b  c ]
                            |         ]
-(%o2)                      | d  e  f ]
+(%o3)                      | d  e  f ]
                            |         ]
                            | g  h  i ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Display flags and variables}
 @category{Matrices}
 @closecatbox
 @end defvr
+
+@c -----------------------------------------------------------------------------
+@anchor{display_matrix_brackets}
+@deffn {Option variable} display_matrix_brackets
+Default value: @code{true}
+
+When @code{display_matrix_brackets} is @code{true},
+matrices are displayed with brackets (square braces) to the left and right.
+
+When @code{display_matrix_brackets} is @code{false},
+matrices are not displayed with brackets;
+only the matrix elements are displayed.
+
+@opencatbox{Categories:}
+@category{Matrices}
+@category{Display flags and variables}
+@closecatbox
+
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{display_matrix_padding_horizontal}
+@deffn {Option variable} display_matrix_padding_horizontal
+Default value: @code{true}
+
+When @code{display_matrix_padding_horizontal} is @code{true},
+matrices are displayed with spaces between successive columns,
+and a space before the first column and a space after the last column.
+
+When @code{display_matrix_padding_horizontal} is @code{false},
+matrices are not displayed with spaces between successive columns,
+and no space before the first column and no space after the last column.
+Successive columns are immediately adjacent to each other,
+and the first column is immediately adjacent to the left bracket,
+and the last column is immediately adjacent to the right bracket,
+if the brackets are present (see @mref{display_matrix_brackets}).
+    
+See also @mrefdot{display_matrix_padding_vertical}
+
+Examples:
+
+@c ===beg===
+@c display_matrix_padding_horizontal;
+@c foo: matrix ([a, b, c], [d, e, f], [g, h, i]);
+@c display_matrix_padding_horizontal: false;
+@c foo;
+@c ===end===
+@example maxima
+@group
+(%i1) display_matrix_padding_horizontal;
+(%o1)                         true
+(%i2) foo: matrix ([a, b, c], [d, e, f], [g, h, i]);
+                           ┌         ┐
+                           │ a  b  c │
+                           │         │
+(%o2)                      │ d  e  f │
+                           │         │
+                           │ g  h  i │
+                           └         ┘
+@end group
+@group
+(%i3) display_matrix_padding_horizontal: false;
+(%o3)                         false
+(%i4) foo;
+                              ┌   ┐
+                              │abc│
+                              │   │
+(%o4)                         │def│
+                              │   │
+                              │ghi│
+                              └   ┘
+@end group
+@end example
+
+@opencatbox{Categories:}
+@category{Matrices}
+@category{Display flags and variables}
+@closecatbox
+
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{display_matrix_padding_vertical}
+@deffn {Option variable} display_matrix_padding_vertical
+Default value: @code{true}
+
+When @code{display_matrix_padding_vertical} is @code{true},
+matrices are displayed with an empty line between successive rows.
+
+When @code{display_matrix_padding_vertical} is @code{false},
+matrices are not displayed with an empty line between successive rows;
+successive rows are immediately adjacent to each other.
+
+See also @mrefdot{display_matrix_padding_horizontal}
+
+Examples:
+
+@c ===beg===
+@c display_matrix_padding_vertical;
+@c foo: matrix ([a, b, c], [d, e, f], [g, h, i]);
+@c display_matrix_padding_vertical: false;
+@c foo;
+@c ===end===
+@example maxima
+@group
+(%i1) display_matrix_padding_vertical;
+(%o1)                         true
+(%i2) foo: matrix ([a, b, c], [d, e, f], [g, h, i]);
+                           ┌         ┐
+                           │ a  b  c │
+                           │         │
+(%o2)                      │ d  e  f │
+                           │         │
+                           │ g  h  i │
+                           └         ┘
+@end group
+@group
+(%i3) display_matrix_padding_vertical: false;
+(%o3)                         false
+(%i4) foo;
+                           ┌         ┐
+                           │ a  b  c │
+(%o4)                      │ d  e  f │
+                           │ g  h  i │
+                           └         ┘
+@end group
+@end example
+
+@opencatbox{Categories:}
+@category{Matrices}
+@category{Display flags and variables}
+@closecatbox
+
+@end deffn
 
 @c -----------------------------------------------------------------------------
 @anchor{matrix}
@@ -1458,21 +1781,32 @@ See @mrefcomma{eigenvalues} @mrefcomma{eigenvectors} @mrefcomma{determinant}@w{}
 @mrefcomma{echelon} and @mrefdot{rank}
 @c CHECK -- WE PROBABLY WANT EXHAUSTIVE LIST HERE
 
+Option variables @mref{display_matrix_brackets} and @mref{display_matrix_padding_vertical}
+govern the display of matrices.
+
 Examples:
 
 @itemize @bullet
 @item
 Construction of matrices from lists.
 @end itemize
-@example
+@c ===beg===
+@c x: matrix ([17, 3], [-8, 11]);
+@c y: matrix ([%pi, %e], [a, b]);
+@c ===end===
+@example maxima
+@group
 (%i1) x: matrix ([17, 3], [-8, 11]);
                            [ 17   3  ]
 (%o1)                      [         ]
                            [ - 8  11 ]
+@end group
+@group
 (%i2) y: matrix ([%pi, %e], [a, b]);
                            [ %pi  %e ]
 (%o2)                      [         ]
                            [  a   b  ]
+@end group
 @end example
 @itemize @bullet
 @item
@@ -1609,7 +1943,7 @@ matrix inverse, if it exists.
                             [ 0  1 ]
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1622,45 +1956,67 @@ matrix inverse, if it exists.
 @fname{matrixexp} (@var{M}, @var{V})
 
 Calculates the matrix exponential
-@ifnotinfo
-@tex
-@math{e^{MV}}
-@end tex
-@ifset mathjax
 @html
-$$e^{M\cdot V}$$
+\(e^{M\cdot V}\)
 @end html
-@end ifset
-@ifclear mathjax
-@math{e^(M*V)}
-@end ifclear
-@end ifnotinfo 
 @ifinfo
 @math{e^(M*V)}
 @end ifinfo
+@iftex
+@math{e^{MV}}
+@end iftex
+@c @ifnotinfo
+@c @tex
+@c @math{e^{MV}}
+@c @end tex
+@c @ifset mathjax
+@c @html
+@c $$e^{M\cdot V}$$
+@c @end html
+@c @end ifset
+@c @ifclear mathjax
+@c @math{e^(M*V)}
+@c @end ifclear
+@c @end ifnotinfo 
+@c @ifinfo
+@c @math{e^(M*V)}
+@c @end ifinfo
 . Instead of the vector @var{V} a number @var{n} can be specified as the second
 argument. If this argument is omitted @code{matrixexp} replaces it by @code{1}.
 
 The matrix exponential of a matrix @var{M} can be expressed as a power series:
-@ifnotinfo
-@tex
-@math{e^M=\sum_{k=0}^\infty{{M^k}\over{k!}}}
-@end tex
-@ifset mathjax
 @html
-$$e^M=\sum_{k=0}^\infty{\left(\frac{M^k}{k!}\right)}$$
+$$
+e^M=\sum_{k=0}^\infty{\left(\frac{M^k}{k!}\right)}
+$$
 @end html
-@end ifset
-@ifclear mathjax
-@math{e^M=sum(M^k/k!,0,inf)}
-@end ifclear
-@end ifnotinfo 
 @ifinfo
 @math{e^M=sum(M^k/k!,0,inf)}
-@end ifinfo
 
+@end ifinfo
+@tex
+$$e^M=\sum_{k=0}^\infty{\left(\frac{M^k}{k!}\right)}$$
+@end tex
+
+@c @ifnotinfo
+@c @tex
+@c @math{e^M=\sum_{k=0}^\infty{{M^k}\over{k!}}}
+@c @end tex
+@c @ifset mathjax
+@c @html
+@c $$e^M=\sum_{k=0}^\infty{\left(\frac{M^k}{k!}\right)}$$
+@c @end html
+@c @end ifset
+@c @ifclear mathjax
+@c @math{e^M=sum(M^k/k!,0,inf)}
+@c @end ifclear
+@c @end ifnotinfo 
+@c @ifinfo
+@c @math{e^M=sum(M^k/k!,0,inf)}
+@c @end ifinfo
+@c 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1676,7 +2032,7 @@ See also @mrefcomma{map} @mrefcomma{fullmap} @mrefcomma{fullmapl} and
 @mrefdot{apply}
 
 @c NEED EXAMPLE HERE
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1687,7 +2043,7 @@ See also @mrefcomma{map} @mrefcomma{fullmap} @mrefcomma{fullmapl} and
 
 Returns @code{true} if @var{expr} is a matrix, otherwise @code{false}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Predicate functions}
 @category{Matrices}
 @closecatbox
@@ -1710,28 +2066,39 @@ See also @mref{matrix_element_mult} and @mrefdot{matrix_element_transpose}
 
 Example:
 
-@example
+@c ===beg===
+@c matrix_element_add: "*"$
+@c matrix_element_mult: "^"$
+@c aa: matrix ([a, b, c], [d, e, f]);
+@c bb: matrix ([u, v, w], [x, y, z]);
+@c aa . transpose (bb);
+@c ===end===
+@example maxima
 (%i1) matrix_element_add: "*"$
 (%i2) matrix_element_mult: "^"$
+@group
 (%i3) aa: matrix ([a, b, c], [d, e, f]);
                            [ a  b  c ]
 (%o3)                      [         ]
                            [ d  e  f ]
-(%i4) bb: matrix ([u, v, w], [x, y, z]);
+@end group
 @group
+(%i4) bb: matrix ([u, v, w], [x, y, z]);
                            [ u  v  w ]
 (%o4)                      [         ]
                            [ x  y  z ]
 @end group
+@group
 (%i5) aa . transpose (bb);
                      [  u  v  w   x  y  z ]
                      [ a  b  c   a  b  c  ]
 (%o5)                [                    ]
                      [  u  v  w   x  y  z ]
                      [ d  e  f   d  e  f  ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -1748,41 +2115,56 @@ The assigned value may be the name of an operator enclosed in quote marks,
 the name of a function,
 or a lambda expression.
 
-The dot operator @code{.} is an useful choice in some contexts.
+The dot operator @code{.} is a useful choice in some contexts.
 
 See also @mref{matrix_element_add} and @mrefdot{matrix_element_transpose}
 
 Example:
 
-@example
+@c ===beg===
+@c matrix_element_add: lambda ([[x]], sqrt (apply ("+", x)))$
+@c matrix_element_mult: lambda ([x, y], (x - y)^2)$
+@c [a, b, c] . [x, y, z];
+@c aa: matrix ([a, b, c], [d, e, f]);
+@c bb: matrix ([u, v, w], [x, y, z]);
+@c aa . transpose (bb);
+@c ===end===
+@example maxima
 (%i1) matrix_element_add: lambda ([[x]], sqrt (apply ("+", x)))$
 (%i2) matrix_element_mult: lambda ([x, y], (x - y)^2)$
+@group
 (%i3) [a, b, c] . [x, y, z];
                           2          2          2
 (%o3)         sqrt((c - z)  + (b - y)  + (a - x) )
+@end group
+@group
 (%i4) aa: matrix ([a, b, c], [d, e, f]);
                            [ a  b  c ]
 (%o4)                      [         ]
                            [ d  e  f ]
+@end group
+@group
 (%i5) bb: matrix ([u, v, w], [x, y, z]);
                            [ u  v  w ]
 (%o5)                      [         ]
                            [ x  y  z ]
+@end group
+@group
 (%i6) aa . transpose (bb);
                [             2          2          2  ]
                [ sqrt((c - w)  + (b - v)  + (a - u) ) ]
 (%o6)  Col 1 = [                                      ]
                [             2          2          2  ]
                [ sqrt((f - w)  + (e - v)  + (d - u) ) ]
-
                          [             2          2          2  ]
                          [ sqrt((c - z)  + (b - y)  + (a - x) ) ]
                  Col 2 = [                                      ]
                          [             2          2          2  ]
                          [ sqrt((f - z)  + (e - y)  + (d - x) ) ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -1812,35 +2194,55 @@ See also @mref{matrix_element_add} and @mrefdot{matrix_element_mult}
 
 Examples:
 
-@example
+@c ===beg===
+@c declare (a, nonscalar)$
+@c transpose ([a, b]);
+@c matrix_element_transpose: nonscalars$
+@c transpose ([a, b]);
+@c matrix_element_transpose: transpose$
+@c transpose ([a, b]);
+@c matrix_element_transpose: lambda ([x], realpart(x) - %i*imagpart(x))$
+@c m: matrix ([1 + 5*%i, 3 - 2*%i], [7*%i, 11]);
+@c transpose (m);
+@c ===end===
+@example maxima
 (%i1) declare (a, nonscalar)$
+@group
 (%i2) transpose ([a, b]);
-                        [ transpose(a) ]
-(%o2)                   [              ]
-                        [      b       ]
+                              [ a ]
+(%o2)                         [   ]
+                              [ b ]
+@end group
 (%i3) matrix_element_transpose: nonscalars$
+@group
 (%i4) transpose ([a, b]);
                         [ transpose(a) ]
 (%o4)                   [              ]
                         [      b       ]
+@end group
 (%i5) matrix_element_transpose: transpose$
+@group
 (%i6) transpose ([a, b]);
                         [ transpose(a) ]
 (%o6)                   [              ]
                         [ transpose(b) ]
-(%i7) matrix_element_transpose: lambda ([x], realpart(x)
-      - %i*imagpart(x))$
+@end group
+(%i7) matrix_element_transpose: lambda ([x], realpart(x) - %i*imagpart(x))$
+@group
 (%i8) m: matrix ([1 + 5*%i, 3 - 2*%i], [7*%i, 11]);
                      [ 5 %i + 1  3 - 2 %i ]
 (%o8)                [                    ]
                      [   7 %i       11    ]
+@end group
+@group
 (%i9) transpose (m);
                       [ 1 - 5 %i  - 7 %i ]
 (%o9)                 [                  ]
                       [ 2 %i + 3    11   ]
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -1860,7 +2262,7 @@ the square matrix @var{M}.
 
 @code{load ("nchrpl")} loads this function.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @category{Package nchrpl}
 @closecatbox
@@ -1873,7 +2275,7 @@ the square matrix @var{M}.
 Returns the @var{i}, @var{j} minor of the matrix @var{M}.  That is, @var{M}
 with row @var{i} and column @var{j} removed.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1897,7 +2299,7 @@ with integers, since it avoids polynomial arithmetic altogether.
 
 @code{load ("nchrpl")} loads this file.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @category{Package nchrpl}
 @closecatbox
@@ -1910,7 +2312,7 @@ with integers, since it avoids polynomial arithmetic altogether.
 Computes the determinant of the matrix @var{M} by the Johnson-Gentleman tree 
 minor algorithm.  @code{newdet} returns the result in CRE form.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1925,7 +2327,7 @@ minor algorithm.  A permanent is like a determinant but with no sign changes.
 
 See also @code{newdet}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1942,7 +2344,7 @@ largest non-singular subdeterminant of @var{M}.
 wrong answer if it cannot determine that a matrix element that is
 equivalent to zero is indeed so.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1963,7 +2365,7 @@ result of matrix inverse is in CRE form.  Note that this may
 cause the elements to be expanded (depending on the setting of @mref{ratfac})
 which might not always be desired.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @category{Rational expressions}
 @closecatbox
@@ -1976,7 +2378,81 @@ which might not always be desired.
 Returns the @var{i}'th row of the matrix @var{M}.
 The return value is a matrix.
 
-@opencatbox
+The matrix returned by @code{row} shares memory with the argument @var{M};
+a modification to the return value modifies @var{M}.
+
+Examples:
+
+@code{row} returns the @var{i}'th row of the matrix @var{M}.
+
+@c ===beg===
+@c abc: matrix ([12, 14, -4], [2, x, b], [3*y, -7, 9]);
+@c row (abc, 1);
+@c row (abc, 2);
+@c row (abc, 3);
+@c ===end===
+@example maxima
+@group
+(%i1) abc: matrix ([12, 14, -4], [2, x, b], [3*y, -7, 9]);
+                        [ 12   14   - 4 ]
+                        [               ]
+(%o1)                   [  2    x    b  ]
+                        [               ]
+                        [ 3 y  - 7   9  ]
+@end group
+@group
+(%i2) row (abc, 1);
+(%o2)                    [ 12  14  - 4 ]
+@end group
+@group
+(%i3) row (abc, 2);
+(%o3)                      [ 2  x  b ]
+@end group
+@group
+(%i4) row (abc, 3);
+(%o4)                    [ 3 y  - 7  9 ]
+@end group
+@end example
+
+The matrix returned by @code{row} shares memory with the argument.
+In this example,
+assigning a new value to @code{aa2} also modifies @code{aa}.
+
+@c ===beg===
+@c aa: matrix ([1, 2, x], [7, y, 3]);
+@c aa2: row (aa, 2);
+@c aa2[1, 3]: 123;
+@c aa2;
+@c aa;
+@c ===end===
+@example maxima
+@group
+(%i1) aa: matrix ([1, 2, x], [7, y, 3]);
+                           [ 1  2  x ]
+(%o1)                      [         ]
+                           [ 7  y  3 ]
+@end group
+@group
+(%i2) aa2: row (aa, 2);
+(%o2)                      [ 7  y  3 ]
+@end group
+@group
+(%i3) aa2[1, 3]: 123;
+(%o3)                          123
+@end group
+@group
+(%i4) aa2;
+(%o4)                     [ 7  y  123 ]
+@end group
+@group
+(%i5) aa;
+                          [ 1  2   x  ]
+(%o5)                     [           ]
+                          [ 7  y  123 ]
+@end group
+@end example
+
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -1988,9 +2464,11 @@ Default value: @code{]}
 
 @code{rmxchar} is the character drawn on the right-hand side of a matrix.
 
+@code{rmxchar} is only used when @code{display2d_unicode} is @code{false}.
+
 See also @mrefdot{lmxchar}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Display flags and variables}
 @closecatbox
 @end defvr
@@ -2010,7 +2488,7 @@ then all 1 x 1 matrices are simplified to scalars.
 When @code{scalarmatrixp} is @code{false}, 1 x 1 matrices are not simplified
 to scalars.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2037,7 +2515,7 @@ Cartesian coordinates.  To expand an expression into physical components in the
 current coordinate system, there is a function with usage of the form
 @c SOME TEXT HAS GONE MISSING HERE
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package vect}
 @closecatbox
 @end deffn
@@ -2052,7 +2530,7 @@ and returns the altered matrix.
 @code{@var{M} [@var{i}, @var{j}]: @var{x}} has the same effect,
 but returns @var{x} instead of @var{M}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -2086,7 +2564,7 @@ to be able to form @code{rightmatrix}.
 
 @code{simtran} is a synonym for @code{similaritytransform}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -2099,7 +2577,7 @@ Default value: @code{false}
 When @code{sparse} is @code{true}, and if @code{ratmx} is @code{true}, then
 @code{determinant} will use special routines for computing sparse determinants.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end defvr
@@ -2114,7 +2592,7 @@ When @code{sparse} is @code{true}, and if @code{ratmx} is @code{true}, then
 Returns a new matrix composed of the matrix @var{M} with rows @var{i_1},
 @dots{}, @var{i_m} deleted, and columns @var{j_1}, @dots{}, @var{j_n} deleted.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -2134,7 +2612,7 @@ of @code{length (m)} rows and 1 column, such that @code{N[i,1] = M[i]}.
 Otherwise @var{M} is a symbol,
 and the return value is a noun expression @code{'transpose (@var{M})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn
@@ -2155,7 +2633,7 @@ triangularized matrices.
 @c M: matrix ([3, 7, aa, bb], [-1, 8, 5, 2], [9, 2, 11, 4]);
 @c triangularize (M);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) M: matrix ([3, 7, aa, bb], [-1, 8, 5, 2], [9, 2, 11, 4]);
                        [  3   7  aa  bb ]
@@ -2174,7 +2652,7 @@ triangularized matrices.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear equations}
 @category{Matrices}
 @closecatbox
@@ -2212,7 +2690,7 @@ eigenvectors of which do not span the vector space of the appropriate dimension.
 
 @code{ueivects} is a synonym for @code{uniteigenvectors}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -2224,13 +2702,13 @@ eigenvectors of which do not span the vector space of the appropriate dimension.
 @deffnx {Function} uvect (@var{x})
 
 Returns @math{@var{x}/norm(@var{x})};
-this is an unit vector in the same direction as @var{x}.
+this is a unit vector in the same direction as @var{x}.
 
 @code{load ("eigen")} loads this function.
 
 @code{uvect} is a synonym for @code{unitvector}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package eigen}
 @closecatbox
 @end deffn
@@ -2246,7 +2724,7 @@ system.  @code{potentialzeroloc} has a similar role as for @code{potential}, but
 the order of the left-hand sides of the equations must be a cyclic permutation
 of the coordinate variables.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package vect}
 @closecatbox
 @end deffn
@@ -2274,11 +2752,68 @@ expansion for an operand that is any kind of product.
 
 @table @code
 @item expandcrosscross
-Simplifies @math{p ~ (q ~ r)} to @math{(p . r)*q - (p . q)*r}.
+Simplifies 
+@html
+\(p \sim (q \sim r)\)
+@end html
+@ifinfo
+@math{p ~ (q ~ r)}
+@end ifinfo
+@iftex
+@math{p \sim (q \sim r)}
+@end iftex 
+to 
+@html
+\((p . r)q - (p . q)r.\)
+@end html
+@ifinfo
+@math{(p . r)*q-(p . q)*r.}
+@end ifinfo
+@iftex
+@math{(p . r)q - (p . q)r.}
+@end iftex
 @item expandcurlcurl
-Simplifies @math{curl curl p} to @math{grad div p + div grad p}.
+Simplifies 
+@html
+\({\rm curl}\; {\rm curl}\; p\)
+@end html
+@ifinfo
+@math{curl curl p}
+@end ifinfo
+@iftex
+@math{{\rm curl}\; {\rm curl}\; p}
+@end iftex 
+to 
+@html
+\({\rm grad}\; {\rm div}\; p + {\rm div}\; {\rm grad}\; p.\)
+@end html
+@ifinfo
+@math{grad div p + div grad p.}
+@end ifinfo
+@iftex
+@math{{\rm grad}\; {\rm div}\; p + {\rm div}\; {\rm grad}\; p.}
+@end iftex
 @item expandlaplaciantodivgrad
-Simplifies @math{laplacian p} to @math{div grad p}.
+Simplifies 
+@html
+\({\rm laplacian}\; p\)
+@end html
+@ifinfo
+@math{laplacian p}
+@end ifinfo
+@iftex
+@math{{\rm laplacian}\; p}
+@end iftex 
+to 
+@html
+\({\rm div}\; {\rm grad}\; p.\)
+@end html
+@ifinfo
+@math{div grad p.}
+@end ifinfo
+@iftex
+@math{{\rm div}\; {\rm grad}\; p.}
+@end iftex
 @item expandcross
 Enables @code{expandcrossplus} and @code{expandcrosscross}.
 @item expandplus
@@ -2299,7 +2834,7 @@ These flags have all been declared @code{evflag}.
 @c COORDINATES[[X,Y,Z]], DIMENSION[3], SF[[1,1,1]], and SFPROD[1] are set
 @c by the function invocation
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package vect}
 @category{Simplification functions}
 @closecatbox
@@ -2314,7 +2849,7 @@ Default value: @code{false}
 When @code{vect_cross} is @code{true}, it allows DIFF(X~Y,T) to work where
 ~ is defined in SHARE;VECT (where VECT_CROSS is set to @code{true}, anyway.)
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package vect}
 @category{Differential calculus}
 @closecatbox
@@ -2326,7 +2861,7 @@ When @code{vect_cross} is @code{true}, it allows DIFF(X~Y,T) to work where
 
 Returns an @var{m} by @var{n} matrix, all elements of which are zero.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Matrices}
 @closecatbox
 @end deffn

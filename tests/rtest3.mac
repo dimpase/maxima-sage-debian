@@ -330,7 +330,7 @@ block ([L : [], s : -2], for i:10 thru 1 step s do L : cons (s : -s, L), L);
 
 /* bug reported to mailing list 2009-05-13 "reset ( radexpand,  domain )"
  *
- * display2d is a resetable option variable. We save the value of display2d
+ * display2d is a resettable option variable. We save the value of display2d
  * and restore it after the reset. This allows to run the testsuite in both
  * display modes.
  */
@@ -379,13 +379,18 @@ trigsimp ((%i*gamma_incomplete(1,(1-2*log(x))^2/4)*(1-2*log(x))^2)
 %i*gamma_incomplete(1,(4*log(x)^2-4*log(x)+1)/4)$
 
 trigsimp (integrate (%e^((-log(x)^2)-1)*log(x),x));
--(%e^-(3/4)*(2*gamma_incomplete(1,(4*log(x)^2-4*log(x)+1)/4)*abs(2*log(x)-1)
-            +2*gamma_incomplete(1/2,(4*log(x)^2-4*log(x)+1)/4)*log(x)
-            -gamma_incomplete(1/2,(4*log(x)^2-4*log(x)+1)/4)))
- /(4*abs(2*log(x)-1))$
+-((%e^-(3/4)*(2*gamma_incomplete(1,(4*log(x)^2-4*log(x)+1)/4)
+               *sqrt(4*log(x)^2-4*log(x)+1)
+             +2*gamma_incomplete(1/2,(4*log(x)^2-4*log(x)+1)/4)*log(x)
+             -gamma_incomplete(1/2,(4*log(x)^2-4*log(x)+1)/4)))
+ /(4*sqrt(4*log(x)^2-4*log(x)+1)))$
 
 /* throw away results of integrate, just make sure it runs without crashing */
-block ([foo, bar, ctxt],
+
+/* The assignment facsum_combine : 'facsum_combine, prevents some calls to asksign & askinteger. Without
+   this assignment in a fresh Maxima, this test runs with no calls to either asksign or askinteger.  */
+
+block ([foo, bar, ctxt, domain : 'complex, facsum_combine : 'facsum_combine],
   foo : exp(-(log(x) - MU)*(log(x) - MU)/(2*SIGMA*SIGMA))/(x*SIGMA*sqrt(2*%pi)),
   bar : (log(B) - log(x*SIGMA) + ((x-A)*(x-A)/(2*B*B) - (log(x) -MU)*(log(x) -MU)/(2*SIGMA*SIGMA))),
   [foo, bar] : subst ([A=2, MU=3], [foo, bar]),
@@ -394,6 +399,7 @@ block ([foo, bar, ctxt],
   integrate (expand (foo*bar), x),
   integrate (expand (foo*bar), x, 2, inf),
   killcontext (ctxt),
+  remvalue(ctxt),
   0);
 0;
 
@@ -406,9 +412,10 @@ errcatch (integrate(ev(ratsimp(1/(x^(5/2)+3*x^(1/3))),algebraic),x));
 (kill (foo, bar, baz), foo () := bar (), bar () := (errcatch (integrate(ev(ratsimp(1/(x^(5/2)+3*x^(1/3))),algebraic),x)), throw ('baz)), catch (foo ()));
 baz;
 
-/* result for this test will change if ever "quotient by zero" bug is fixed */
+/* This bug can be fixed by changing simplus to simplify 2^(3/2)*x^2 - sqrt(2)*x^2
+to sqrt(2)*x^2. Until this bug is fixed, we'll errcatch this test. */
 errcatch (integrate (exp(2^(3/2)*x^2 - sqrt(2)*x^2), x));
-[];
+[-((sqrt(%pi)*%i*erf(2^(1/4)*%i*x))/2^(5/4))];
 
 (kill (quux), bar () := (errcatch (integrate (exp(2^(3/2)*x^2 - sqrt(2)*x^2), x)), throw ('quux)), catch (foo ()));
 quux;
@@ -437,7 +444,6 @@ mumble;
  mydefaults['nointegrate] : false,
  mydefaults['tlimswitch] : true,
  mydefaults['limsubst] : false,
- mydefaults['abconvtest] : false,
  mydefaults['packagefile] : false,
  mydefaults['factlim] : 100000,
  mydefaults['cflength] : 1,
@@ -453,7 +459,7 @@ mumble;
 true;
 
 (myflags : '[verbose, exptsubst, partswitch, inflag, derivsubst, opsubst, demoivre,
-             nointegrate, tlimswitch, limsubst, abconvtest, packagefile],
+             nointegrate, tlimswitch, limsubst, packagefile],
  /* "not" causes an extra evaluation of its argument,
   * so this next line won't work as expected if "not" ever becomes
   * simplifying operator; update this test case as needed if that
@@ -461,14 +467,14 @@ true;
   */
  myflags :: map ("not", myflags),
  ev (myflags));
-[true, true, true, true, true, false, true, true, false, true, true, true];
+[true, true, true, true, true, false, true, true, false, true, true];
 
 map (reset, myflags);
 [[verbose], [exptsubst], [partswitch], [inflag], [derivsubst], [opsubst], [demoivre],
- [nointegrate], [tlimswitch], [limsubst], [abconvtest], [packagefile]];
+ [nointegrate], [tlimswitch], [limsubst], [packagefile]];
 
 ev (myflags);
-[false, false, false, false, false, true, false, false, true, false, false, false];
+[false, false, false, false, false, true, false, false, true, false, false];
 
 (myvals : '[factlim, cflength, taylordepth, maxtaydiff, lhospitallim, linel],
  myvals :: makelist (99, v, myvals),
@@ -600,9 +606,9 @@ sqrt(    G    )
      d, x a
 ";
 
-with_default_2d_display ([S: make_string_output_stream ()],
+block ([display2d_unicode: false], with_default_2d_display ([S: make_string_output_stream ()],
   with_stdout (S, ?terpri (), print ((1 - G[a, b, c, d, w, x])/E[1, 1/2, 2/3, 17/29])),
-  get_output_stream_string (S));
+  get_output_stream_string (S)));
 "
        c b, w
 1 -     G
@@ -624,101 +630,101 @@ map (get_index_properties, '[A, B, C, D, E, F, G]);
 (print_string_2d (e) := with_default_2d_display (printf (false, "~m", e)), 0);
 0;
 
-print_string_2d (lsum(1/f(g(x)/h(x)), x, LOOOOOOOOONG_EXPR));
-"====
+block ([display2d_unicode: false], print_string_2d (lsum(1/f(g(x)/h(x)), x, LOOOOOOOOONG_EXPR)));
+"____
 \\                         1
  >                     -------
 /                        g(x)
-====                   f(----)
+----                   f(----)
 x in LOOOOOOOOONG_EXPR   h(x)
 "$
 
 /* other examples which call DSUMPROD in test suite */
 
-print_string_2d ('sum(x^k / k,k,1,inf));
+block ([display2d_unicode: false], print_string_2d ('sum(x^k / k,k,1,inf)));
 "inf
-====   k
+____   k
 \\     x
  >    --
 /     k
-====
+----
 k = 1
 "$
 
-print_string_2d (subst (k = \*index, 'sum(x^k / k,k,1,inf)));
+block ([display2d_unicode: false], print_string_2d (subst (k = \*index, 'sum(x^k / k,k,1,inf))));
 "inf
-====        *index
+____        *index
 \\          x
  >         -------
 /          *index
-====
+----
 *index = 1
 "$
 
-print_string_2d ('sum(i!,i,1,4));
+block ([display2d_unicode: false], print_string_2d ('sum(i!,i,1,4)));
 " 4
-====
+____
 \\
  >    i!
 /
-====
+----
 i = 1
 "$
 
-print_string_2d ('sum(g(i),i,0,n));
+block ([display2d_unicode: false], print_string_2d ('sum(g(i),i,0,n)));
 " n
-====
+____
 \\
  >    g(i)
 /
-====
+----
 i = 0
 "$
 
-print_string_2d ('sum(g(i),i,0,n) + 1);
+block ([display2d_unicode: false], print_string_2d ('sum(g(i),i,0,n) + 1));
 " n
-====
+____
 \\
  >    g(i) + 1
 /
-====
+----
 i = 0
 "$
 
-print_string_2d (foo: unsum(product(i^2,i,1,n),n));
+block ([display2d_unicode: false], print_string_2d (foo: unsum(product(i^2,i,1,n),n)));
 " n - 1
- /===\\
-  ! !   2
-( ! !  i ) (n - 1) (n + 1)
-  ! !
+ _____
+ |   |  2
+(|   | i ) (n - 1) (n + 1)
+ |   |
  i = 1
 "$
 
-print_string_2d (nusum(foo,n,1,n));
+block ([display2d_unicode: false], print_string_2d (nusum(foo,n,1,n)));
 "  n
-/===\\
- ! !   2
- ! !  i  - 1
- ! !
+_____
+|   |  2
+|   | i  - 1
+|   |
 i = 1
 "$
 
-print_string_2d (powerseries(log(sin(x)/x),x,0));
+block ([display2d_unicode: false], print_string_2d (powerseries(log(sin(x)/x),x,0)));
 "inf
-====        i2  2 i2 - 1             2 i2
+____        i2  2 i2 - 1             2 i2
 \\      (- 1)   2         bern(2 i2) x
  >     ----------------------------------
 /                  i2 (2 i2)!
-====
+----
 i2 = 1
 "$
 
-print_string_2d (product((x^i+1)^2.5,i,1,inf)/(x^2+1));
+block ([display2d_unicode: false], print_string_2d (product((x^i+1)^2.5,i,1,inf)/(x^2+1)));
 " inf
-/===\\
- ! !    i     2.5
- ! !  (x  + 1)
- ! !
+_____
+|   |   i     2.5
+|   | (x  + 1)
+|   |
 i = 1
 -----------------
       2
@@ -727,31 +733,31 @@ i = 1
 
 /* additional DSUMPROD examples */
 
-print_string_2d ('lsum(1/(1+f(x)/2), kskdsksdkkdksdksd, w999393293923939losl));
-"====
+block ([display2d_unicode: false], print_string_2d ('lsum(1/(1+f(x)/2), kskdsksdkkdksdksd, w999393293923939losl)));
+"____
 \\                                            1
  >                                        --------
 /                                         f(x)
-====                                      ---- + 1
+----                                      ---- + 1
 kskdsksdkkdksdksd in w999393293923939losl  2
 "$
 
-print_string_2d ('lsum(1/(1+f(x)/2), kskdsksdkkdksdksd, w999393293923939losl^2));
-"====
+block ([display2d_unicode: false], print_string_2d ('lsum(1/(1+f(x)/2), kskdsksdkkdksdksd, w999393293923939losl^2)));
+"____
 \\                                             1
  >                                         --------
 /                                          f(x)
-====                                       ---- + 1
+----                                       ---- + 1
                                          2  2
 kskdsksdkkdksdksd in w999393293923939losl
 "$
 
-print_string_2d ('lsum(1/(1+f(x)/2), kskdsksdkkdksdksd, w999393293923939losl^skdkskdsk));
-"====
+block ([display2d_unicode: false], print_string_2d ('lsum(1/(1+f(x)/2), kskdsksdkkdksdksd, w999393293923939losl^skdkskdsk)));
+"____
 \\                                                     1
  >                                                 --------
 /                                                  f(x)
-====                                               ---- + 1
+----                                               ---- + 1
                                          skdkskdsk  2
 kskdsksdkkdksdksd in w999393293923939losl
 "$
@@ -801,13 +807,13 @@ print_string_2d (' "."(a, b, c));
 "a . b . c
 ";
 
-print_string_2d (' ?rat(a, b));
+block ([display2d_unicode: false], print_string_2d (' ?rat(a, b)));
 "a
 -
 b
 ";
 
-print_string_2d (' "/"(a, b));
+block ([display2d_unicode: false], print_string_2d (' "/"(a, b)));
 "a
 -
 b
@@ -891,17 +897,17 @@ print_string_2d ('?mabs(a));
 "abs(a)
 ";
 
-print_string_2d ('matrix([a, b, c]));
+block ([display2d_unicode: false], print_string_2d ('matrix([a, b, c])));
 "[ a  b  c ]
 ";
 
-print_string_2d ('?mbox(a));
+block ([display2d_unicode: false], print_string_2d (box(a)));
 "\"\"\"
 \"a\"
 \"\"\"
 ";
 
-print_string_2d ('?mlabox (a, b));
+block ([display2d_unicode: false], print_string_2d (box (a, b)));
 "b\"\"
 \"a\"
 \"\"\"
@@ -914,3 +920,168 @@ print_string_2d ('?mtext ("hello"));
 block ([linel: 65], print_string_2d ('?mlabel (a, b)));
 "(a)                             b
 ";
+
+/* SF bug #3301: "fpprintprec do not round bfloat correctly(another case)"
+ * Test exponent of printed bigfloat is correct when number is rounded.
+ */
+
+(fpprec:64, fpprintprec:16, done);
+done;
+
+print_string_2d(0.99999999999999999999b0);
+"1.0b0
+";
+
+print_string_2d(1.99999999999999999999b0);
+"2.0b0
+";
+
+bftrunc:false;
+false;
+
+print_string_2d(0.99999999999999999999b0);
+"1.000000000000000b0
+";
+
+print_string_2d(1.99999999999999999999b0);
+"2.000000000000000b0
+";
+
+bftrunc: true;
+true;
+
+block([fpprintprec:4],string(0.9999499999b0));
+"9.999b-1";
+block([fpprintprec:4],string(0.99995b0));
+"1.0b0";
+block([fpprintprec:4],string(0.99999b0));
+"1.0b0";
+block([fpprintprec:4],string(1.0005b0));
+"1.0b0";
+block([fpprintprec:4],string(1.000499999b0));
+"1.0b0";
+block([fpprintprec:4],string(1.00050001b0));
+"1.001b0";
+     
+block([fpprintprec:10],string(0.9999999999499b0));
+"9.999999999b-1";
+block([fpprintprec:10],string(0.99999999999b0));
+"1.0b0";
+block([fpprintprec:10],string(0.999999999995b0));
+"1.0b0";
+block([fpprintprec:10],string(1.0000000005b0));
+"1.0b0";
+block([fpprintprec:10],string(1.00000000051b0));
+"1.000000001b0";
+
+block( [ bad: [], str],
+  for fpprintprec:4 thru 15 do
+    for a in [1,5,50,-1,-5] do
+       if parse_string(str: string(1+bfloat(a*10^(-fpprintprec-1)))) # 1.0b0
+       then push([fpprintprec,a,str],bad),
+  reverse(bad));
+ [];
+
+(reset(fpprec, fpprintprec), done);
+done;
+
+/* SF bug report #4287: "2d pretty printer ignores successive empty lines"
+ *
+ * Note that in the following examples, an empty line is displayed with one space on it,
+ * so the expected results have a space on lines that are entirely empty in the input.
+ * This is a consequence of the particular bug fix that was devised;
+ * if ever the display code is modified again so that the place-holding space
+ * becomes unnecessary, the expected results will have to be adjusted.
+ */
+
+print_string_2d ("aaa");
+"aaa
+";
+
+print_string_2d ("aaa
+bbb");
+"aaa
+bbb
+";
+
+print_string_2d ("aaa
+
+bbb");
+"aaa
+ 
+bbb
+";
+
+print_string_2d ("aaa
+
+
+bbb");
+"aaa
+ 
+ 
+bbb
+";
+
+print_string_2d ("aaa
+
+
+
+bbb
+
+
+
+
+ccc");
+"aaa
+ 
+ 
+ 
+bbb
+ 
+ 
+ 
+ 
+ccc
+";
+
+print_string_2d ("
+
+
+
+aaa
+
+
+");
+" 
+ 
+ 
+ 
+aaa
+ 
+ 
+";
+
+print_string_2d ("
+
+   With longing comes loss,
+
+  and the presence of absence:
+
+    \"'My Novel' not found.\"
+
+");
+" 
+ 
+   With longing comes loss,
+ 
+  and the presence of absence:
+ 
+    \"'My Novel' not found.\"
+ 
+";
+
+contexts;
+[initial, global]$
+
+kill(values);
+done$

@@ -49,16 +49,15 @@
         (apply #'$invert args)))))
 
 (defun invert-via-$invert_by_lu (m &optional (field-name (if $ratmx '$crering '$generalring)))
-  (declare (special $ratmx $detout))
   ;; Call functions from package linearalgebra via MFUNCALL to autoload them if necessary.
   (if $detout
     (let*
       ((field (mfuncall '$require_ring field-name "$second" "$invert"))
-       (d-i (funcall 'invert-by-lu-with-determinant m field-name))
+       (d-i (mfuncall 'invert-by-lu-with-determinant m field-name))
        (d (first d-i))
        (i (second d-i))
-       (d-times-i (multiply-matrix-elements d (funcall 'mring-mult field) i))
-       (d^-1 (funcall (funcall 'mring-reciprocal field) d)))
+       (d-times-i (multiply-matrix-elements d (mfuncall 'mring-mult field) i))
+       (d^-1 (funcall (mfuncall 'mring-reciprocal field) d)))
       (list '(mtimes) d^-1 d-times-i))
     (mfuncall '$invert_by_lu m field-name)))
 

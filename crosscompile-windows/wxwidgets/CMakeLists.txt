@@ -10,25 +10,31 @@
 # If no further patches are needed, you should get a
 # updated setup-file automatically.
 
-set(WXWIDGETSVERSION "3.1.4")
-
-set(WXWIDGETS_MD5 "47eaa907b3923bc5d6938bd5cf35b901")
-
+set(WXWIDGETSVERSION "3.3.3")
+set(WXWIDGETS_MD5 "a804b52a1faff69d77bdfbf8bc50ce5a")
 set(WXWIDGETS_URL "https://github.com/wxWidgets/wxWidgets/releases/download/v${WXWIDGETSVERSION}/wxWidgets-${WXWIDGETSVERSION}.tar.bz2")
 
+# WxWidgets Webview/Edge needs this package
 
-# Build wxWidgets static library (required for wxMaxima)
-# We link statically, so the installation of the library is not
-# necessary, we only need the locale files. But fortunately
-# there is a make target, which does install the locale files only.
+# MSWEBVIEWVERSION / MSWEBVIEW_MD5 is set in the directory above.
+
 externalproject_add(wxwidgets
   URL "${WXWIDGETS_URL}"
   DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/downloads
   URL_MD5 ${WXWIDGETS_MD5}
-  CONFIGURE_COMMAND ${CMAKE_BINARY_DIR}/wxwidgets/wxwidgets-prefix/src/wxwidgets/configure --disable-shared --disable-compat28 --with-zlib=builtin --with-libjpeg=builtin --without-libtiff --with-libpng=builtin --with-expat=builtin --build=${BUILDHOST} --host=${HOST} --enable-accessibility
+  DEPENDS mswebview
+  CMAKE_ARGS -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_RC_COMPILER=${CMAKE_RC_COMPILER} -DwxUSE_LUNASVG=builtin -DwxUSE_WEBVIEW_EDGE=YES -DwxBUILD_LOCALES=ON
+  PATCH_COMMAND cmake -E make_directory ${CMAKE_BINARY_DIR}/wxwidgets/wxwidgets-prefix/src/wxwidgets/3rdparty/webview2
+        COMMAND cmake -E chdir ${CMAKE_BINARY_DIR}/wxwidgets/wxwidgets-prefix/src/wxwidgets/3rdparty/webview2 cmake -E tar x ${CMAKE_SOURCE_DIR}/downloads/microsoft.web.webview2.${MSWEBVIEWVERSION}.nupkg
   BUILD_COMMAND $(MAKE)
-  INSTALL_COMMAND $(MAKE) locale_install "DESTDIR=${CMAKE_BINARY_DIR}/wxwidgets-installroot"
+        COMMAND $(MAKE) locale
+        COMMAND $(MAKE) install DESTDIR=${CMAKE_BINARY_DIR}/wxwidgets-installroot/
+  INSTALL_COMMAND ""
 )
 
-# Install wxWidgets locale files only.
-INSTALL(DIRECTORY "${CMAKE_BINARY_DIR}/wxwidgets-installroot/usr/local/share/" DESTINATION share/ COMPONENT wxMaxima)
+
+# Install wxWidgets locale files.
+install(DIRECTORY "${CMAKE_BINARY_DIR}/wxwidgets-installroot/usr/local/share/locale" DESTINATION share COMPONENT wxMaxima FILES_MATCHING PATTERN "*.mo")
+
+# Install wxWidgets DLLs.
+install(DIRECTORY "${CMAKE_BINARY_DIR}/wxwidgets-installroot/usr/local/bin/" DESTINATION bin COMPONENT wxMaxima FILES_MATCHING PATTERN "*.dll")

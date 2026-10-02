@@ -1,7 +1,8 @@
 /* Various tests of TeX output. Run it via batch("tests/rtest_tex.mac").
  * This program is not organized (at present) in actual result -- expected result pairs.
  */
- 
+linel:2^10;
+
 latex0 (s) :=
     (print ("\\documentclass{article}"),
     print (concat ("\\title{", s, "}")),
@@ -44,6 +45,8 @@ with_stdout ("tmp-rtest-1.tex",
     tex (Mumble[i,j] + blurf[a][b]),
     tex (\2F1 + ?lisp_symbol),
     tex (embedded\$dollar + embedded%percent + embedded_underscore + embedded\&ampersand),
+    tex_text ("Ensure that \\verb|%i1| and \\verb|%o1| are typeset similarly, and \\verb|%i| is $i$:"),
+    tex ('[%i1,%o1,%i]), /* Ref: https://sourceforge.net/p/maxima/bugs/4695/ */
 
     tex_text ("\\subsubsection*{Explicit and implicit subscripts}"),
     tex_text ("In each of the next several lists, all items in a list should be identical."),
@@ -171,6 +174,32 @@ a newline."),
     tex ('((riff or raff) and not (roff or ruff))),
     tex ('(not foo ((a + b)^2/(a - b)^2) or bar (x and baz (sqrt(y^n)) or z))),
 
+
+    tex_text ("\\subsection*{Derivatives, Partial Derivatives}"),
+    tex_text ("$F = F(x), G=G(x,y)$"),
+    block([f,F,G],
+      tex ((depends(F,[x]),'diff(F,x))),
+      tex ('diff(F,x,3)),
+      tex ('diff(F,y)),
+      tex ((depends(G,[x,y]),'diff(G,x))),
+      tex ('diff(G,y)),
+      tex ('diff(G,x,1,y,1)),
+      tex ('diff(G,x,1,y,2)),
+      tex ('diff(G,x,2,y,1)),
+      tex ('diff(G,x,4,y,2)),
+      tex ((f : cos(x+y)+%e, 'diff(f,x))),
+      tex ('diff(f,y)),
+      tex ('diff(f,x,1,y,1)),
+      tex ('diff(f,x,1,y,2)),
+      tex ('diff(f,x,2,y,1)),
+      tex ('diff(f,x,4,y,2)),
+      tex ((f : cos(x)+%e, 'diff(f,x))),
+      tex ('diff(f,y)),
+      tex ('diff(f,x,1,y,1)),
+      tex ('diff(f,x,1,y,2)),
+      tex ('diff(f,x,2,y,1)),
+      tex ('diff(f,x,4,y,2))),
+
     tex_text ("\\subsection*{Lists, matrices, and sets}"),
     tex ([a, b, c, d, e]),
     tex ([a + b, a*b, a/b, a^b, a^b^c]),
@@ -225,6 +254,45 @@ a newline."),
     tex ('("After texput" : foonofix)),
 
     tex ('("All together now" : <<fooprefix foo foonary foo foonary foonofix foopostfix>>)),
+
+    tex_text ("\\subsection*{{\\tt texput} with output function}"),
+
+    tex_text ("Derivatives before {\\tt texput}:"),
+
+    tex ('diff (y(x), x, 3) + 'diff (y(x), x, 2) + 'diff (y(x), x) +  y(x) + a = 0),
+    tex ('diff (y(t), t, 3) + 'diff (y(t), t, 2) + 'diff (y(t), t) +  y(t) + a = 0),
+    tex ('diff (f(x, t), x) + 'diff(f(x, t), t) = c),
+
+    texput (nounify (diff), lambda ([e], if not mapatom (first (e)) and length (args (first (e))) = 1 then if third (e) = 1 then sconcat (tex1 (op (first (e))), "'\\left(", tex1 (first (args (first (e)))), "\\right)"))),
+    texput (nounify (diff), lambda ([e], if second (e) = 't and third (e) =1 then sconcat ("\\dot ", tex1 (first (e))) elseif second (e) = 't and third (e) = 2 then sconcat ("\\ddot ", tex1 (first (e))))),
+
+    tex_text ("Derivatives after {\\tt texput}:"),
+
+    tex ('diff (y(x), x, 3) + 'diff (y(x), x, 2) + 'diff (y(x), x) +  y(x) + a = 0),
+    tex ('diff (y(t), t, 3) + 'diff (y(t), t, 2) + 'diff (y(t), t) +  y(t) + a = 0),
+    tex ('diff (f(x, t), x) + 'diff(f(x, t), t) = c),
+
+    tex (1/(1 + 'diff (u, t))),
+    tex (1/(1 + ('diff (u, t))^n)),
+    /* this next one should use only default typesetting for diff */
+    tex ('integrate ('diff (g(a, b), b) * 'diff (h(c - a, b), a), b, minf, inf)),
+
+    tex_text ("Additional {\\tt texput} examples --- no previous \\TeX\\ function:"),
+
+    texput (baz, lambda ([e], if mapatom (first (e)) then sconcat ("\\hat{", tex1 (first (e)), "}"))),
+
+    tex (%pi + %phi / baz (%gamma[2])),
+    tex (%pi + %phi / baz (3 + %gamma[2])),
+
+    tex_text ("Additional {\\tt texput} examples --- general and special cases:"),
+
+    /* general case is a catch-all -- no conditional */
+    texput (quux, lambda ([e], sconcat ("\\mathrm{", string (op (e)), "}", tex1 (subst (quux = ?mprogn, e))))),
+    /* special case applies only to mapatom argument */
+    texput (quux, lambda ([e], if mapatom (first (e)) then sconcat ("\\hat{", tex1 (first (e)), "}"))),
+
+    tex (%pi + %phi / quux (%gamma[2])),
+    tex (%pi + %phi / quux (3 + %gamma[2])),
 
     tex_text ("\\subsection*{Miscellany}"),
 
@@ -336,6 +404,11 @@ with_stdout (s,
     
     tex ('at (f (u), u = 0)),
     tex (1 / (1 - 'at (diff (f (u), u), u = 0))),
+
+    print ("'at\\_difference noun expressions."),
+    tex ('at_difference (f (u), u, a, b)),
+    tex ('at_difference ('integrate (g (w), w), w, 1 - %pi^2, epsilon[3]^4)),
+    tex ('at_difference (exp (-(1/2)*((z - mu)/sigma)^2) / sigma / sqrt (2*%pi), z, minf, inf)),
     
     print ("Bigfloats."),
     
@@ -454,7 +527,36 @@ with_stdout (s,
     tex('integrate(f(x)^n,x,0,inf)^4),
     tex('sum(f(x)^x,x,0,n)^4),
 
+    print ("Typesetting conjugates."),
+
+    simp: false,
+
+    declare ([x, y, z], complex),
+    declare ([a, b, c], real),
+
+    tex (conjugate (x)),
+    tex (conjugate (conjugate (x))),
+    tex (conjugate (x)^2),
+    tex (conjugate (x)^(k + 2)),
+    tex (conjugate (x^2)),
+    tex (conjugate (x + y)),
+    tex (conjugate (x + y)^m),
+    tex (conjugate (x*y)),
+    tex (conjugate (x*y)^n),
+    tex (conjugate (x/y)),
+    tex (conjugate (x/y)^k),
+    tex (conjugate ((-1)^%i)),
+    tex (conjugate (sin (x))),
+    tex (sin (conjugate (x))),
+    tex (conjugate (sin (x))^n),
+    tex (sin (conjugate (x))^n),
+    tex (conjugate (sin (x)^n)),
+    tex (sin (conjugate (x)^n)),
+
+    simp: true,
+
     print ("The end!"),
     print ("\\end{document}"));
 
 close (s);
+linel:79;

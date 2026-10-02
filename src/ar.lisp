@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,8 +12,6 @@
 
 (macsyma-module ar)
 
-(declare-top (special evarrp munbound flounbound fixunbound $use_fast_arrays))
-
 (defstruct (mgenarray (:conc-name mgenarray-))
   aref
   aset
@@ -22,10 +20,18 @@
   generator
   content)
 
+(deftype marray ()
+  `(or cl:array hash-table mgenarray))
+
+(defun marrayp (x)
+  (typep x 'marray))
+
 (defun marray-type (x)
-  (cond ((arrayp x) 'array)
-        ((hash-table-p x) 'hash-table)
-        ((eq (type-of x) 'mgenarray) (mgenarray-type x))))
+  ;; XXX: should this be etypecase? -rss
+  (typecase x
+    (cl:array   'array)
+    (hash-table 'hash-table)
+    (mgenarray  (mgenarray-type x))))
 
 (defmfun $make_array (type &rest diml)
   (let ((ltype (assoc type '(($float . flonum)
@@ -91,7 +97,7 @@
         (msize-atom (format nil "{Lisp Array: ~A}" x) l r))))
 
 (defun marray-check (a)
-  (if (arrayp a)
+  (if (marrayp a)
       (case (marray-type a)
 	(($fixnum $float) a)
 	(($any) (mgenarray-content a))
@@ -146,8 +152,8 @@
 (defun bad-index-error (indices)
   (let ((m-indices (cons '(mlist) indices)))
     (cond
-      ((every #'(lambda (x) (or ($ratp x) (integerp x))) indices)
-       (merror (intl::gettext "array: indices cannot be special expressions (CRE or Taylor); found: ~M") m-indices))
+      ((every #'(lambda (x) (or (specrepp x) (integerp x))) indices)
+       (merror (intl::gettext "array: indices cannot be special expressions (CRE, Taylor or Poisson); found: ~M") m-indices))
       ((every #'(lambda (x) (or ($mapatom x) (integerp x))) indices)
        (merror (intl::gettext "array: indices cannot be plain or subscripted symbols; found: ~M") m-indices))
       (t

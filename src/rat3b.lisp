@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,11 +14,6 @@
 
 ;;	THIS IS THE NEW RATIONAL FUNCTION PACKAGE PART 2.
 ;;	IT INCLUDES RATIONAL FUNCTIONS ONLY.
-
-(declare-top (special $algebraic $ratfac $keepfloat $float))
-
-(defmvar $ratwtlvl nil) 
-(defmvar $ratalgdenom t)       ;If T then denominator is rationalized.
 
 (defun ralgp (r) (or (palgp (car r)) (palgp (cdr r))))
 
@@ -36,6 +31,17 @@
      (declare (special v* *a flag trunclist))
      (and (member 'trunc (car e) :test #'eq) (setq trunclist (cadddr (cdar e))))
      (cond ((not (eq (caar e) (quote mrat))) (setq e (ratf e))))
+     ;; A tlist with non-atomic kernels means the series contains adjoined
+     ;; singular kernels like log(x) or %e^(-1/x). Their derivatives cannot be
+     ;; expressed in the DIFF property scheme used below, so differentiate the
+     ;; disrep'd expression and re-expand, following the pattern of RE-ERAT
+     ;; EXACT-POLY has no global binding, so bind it here as TAYLOR* would.
+     (and trunclist
+	  (find-if-not #'tvar? trunclist :key #'car)
+	  (return (let (exact-poly)
+		    (declare (special exact-poly))
+		    (taylor1 (sdiff ($ratdisrep e) *x*)
+			     (list (mapcar #'copy-tree trunclist))))))
      (setq varlist (caddar e))
      (setq genvar (car (cdddar e)))
      ;; Next cond could be flushed if genvar would shrink with varlist
@@ -113,15 +119,15 @@
 				       (subst (car v) (quote foo) x)
 				       t))))))
 
-(defun ratderivative (rat  var)
+(defun ratderivative (rat  var2)
   (let ((num (car rat))
 	(denom (cdr rat)))
-    (cond ((equal 1 denom) (cons (pderivative num var) 1))
-	  (t (setq denom (pgcdcofacts denom (pderivative denom var)))
+    (cond ((equal 1 denom) (cons (pderivative num var2) 1))
+	  (t (setq denom (pgcdcofacts denom (pderivative denom var2)))
 	     (setq num (ratreduce (pdifference (ptimes (cadr denom)
-						       (pderivative num var))
+						       (pderivative num var2))
 					       (ptimes num (caddr denom)))
-					;RATREDUCE ONLY NEEDS TO BE DONE WITH CONTENT OF GCD WRT VAR.
+					;RATREDUCE ONLY NEEDS TO BE DONE WITH CONTENT OF GCD WRT VAR2.
 				  (car denom)))
 	     (cond ((pzerop (car num)) num)
 		   (t (rplacd num (ptimes (cdr num)

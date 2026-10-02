@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -17,26 +17,13 @@
 ;;;property list of atoms
 ;;;except for the top level programs all program names have the prefix NIS
 
-(declare-top (special nistree nisrules nisflag $ratexpand varlist $ratfac)) 
+(declare-top (special nistree nisrules nisflag)) 
 
 (defmvar $letvarsimp nil)
 
-(defmvar $letrat nil) 
-
-(defmvar $default_let_rule_package '$default_let_rule_package
-  "The name of the default rule package used by `let' and `letsimp'")
-
-(putprop '$default_let_rule_package 'let-rule-setter 'assign)
-
-(defmvar $current_let_rule_package '$default_let_rule_package
-  "The name of the current rule package used by `let' and `letsimp'")
-
-(putprop '$current_let_rule_package 'let-rule-setter 'assign)
-
-(defmvar $let_rule_packages '((mlist) $default_let_rule_package)
-  "The names of the various let rule simplification packages")
-
-(putprop '$let_rule_packages 'let-rule-setter 'assign)
+(defmvar $letrat nil
+  nil
+  :properties ((evflag t))) 
 
 (setq nisrules nil nistree nil) 
 
@@ -220,9 +207,9 @@
 	  ;; representation, the original expr might be in CRE form.
 	  ;; Regardless, we use ratf to make sure varlist and genvar
 	  ;; know of expr's kernels.
-	  (setq expr (nisletsimp (if (atom expr)
+	  (setq expr (nisletsimp (nformat (if (atom expr)
 				     expr
-				     (ratf expr)))))))))
+				     (ratf expr))))))))))
 
 (defun nisletsimp (e) 
   (let (x)
@@ -231,8 +218,8 @@
 	       (and (eq (caar e) 'mtimes) (setq x (cdr e))))
 	   (setq x (nisnewlist x))
 	   (if x (nisletsimp ($ratexpand (cons '(mtimes) x))) e))
-	  ((member (caar e) '(mplus mequal mlist $matrix) :test #'eq)
-	   (cons (if (eq (caar e) 'mplus) '(mplus) (car e))
+	  ((member (caar e) '(mplus mequal mlist $matrix mminus) :test #'eq)
+	   (cons (remove 'simp (car e))
 		 (mapcar #'nisletsimp (cdr e))))
 	  ((or (eq (caar e) 'mrat) 
 	       (and (eq (caar e) 'mquotient) (setq e (ratf e))))
@@ -245,7 +232,20 @@
   (let ((num (cadr e)) (denom (cddr e)) $ratexpand)
     (if $letvarsimp (setq varlist (mapcar #'nisletsimp varlist)))
     (let (($ratexpand t))
-      (setq num (nisletsimp (pdis num)) denom (nisletsimp (pdis denom))))
+      ; Construct new CREs based on the numerator and denominator
+      ; of E and disrep them in the VARLIST and GENVAR context from
+      ; E.
+      ;
+      ; NISLETSIMP can change VARLIST and GENVAR, so the order of
+      ; the PDIS and NISLETSIMP forms matter here.  PDISing and
+      ; NISLETSIMPing the numerator before moving on to the
+      ; denominator is not correct.
+      (let ((varlist (mrat-varlist e))
+            (genvar (mrat-genvar e)))
+        (setq num (pdis num)
+              denom (pdis denom)))
+      (setq num (nisletsimp num)
+            denom (nisletsimp denom)))
     (setq e (list '(mquotient) num denom))
     (if $letrat (nisletsimp ($ratexpand e)) e)))
 
@@ -304,14 +304,16 @@
      (setq x (nisextract a))
      (setq y (nisextract b))
      (cond
-       ((cadr y)
-	(cond ((and (equal (car x) (car y))
-		    (setq newexpt (nisexpocheck (cddr x)
-						(cddr y)
-						c))
+       ((listp (cadr y))
+	(cond ((and (listp (cadr x))
+		    (equal (car x) (car y))
+		    (setq c (cons (cons (car x) (car y)) c))
 		    (setq c (nisargschecker (cadr x)
 					    (cadr y)
-					    c)))
+					    c))
+		    (setq newexpt (nisexpocheck (cddr x)
+						(cddr y)
+						c)))
 	       (cond ((equal '(rat) (car newexpt))
 		      (return (cons (cons a (nisbuild x newexpt))
 				    c)))
@@ -334,10 +336,10 @@
 
 (defun nisextract (x)
   (cond ((or (atom x) (eq (caar x) 'rat))
-	 (cons x (cons nil 1)))
+	 (cons x (cons t 1)))
 	((eq 'mexpt (caar x))
 	 (cond ((atom (cadr x))
-		(cons (cadr x) (cons nil (caddr x))))
+		(cons (cadr x) (cons t (caddr x))))
 	       (t (cons (if (member 'array (cdaadr x) :test #'eq)
 			    (list (caaadr x) 'array)
 			    (caaadr x))
@@ -415,7 +417,7 @@
 
 (defun nisbuild (x newexpt) 
   (list '(mexpt)
-	(if (cadr x)
+	(if (listp (cadr x))
 	    (cons (if (symbolp (car x)) (ncons (car x)) (car x))
 		  (cadr x))
 	    (car x))

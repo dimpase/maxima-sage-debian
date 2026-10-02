@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -89,7 +89,7 @@
 ;;; we must send down an expression to PART1 which when evaluated has
 ;;; the proper environment for the compiled-away variable names in the
 ;;; environment of the calling function. 
-;;; It is possible to get unbelivebly strange results from the order of
+;;; It is possible to get unbelievably strange results from the order of
 ;;; evaluation of the arguments to $SUBSTPART, these crocks shall not
 ;;; be supported.
 ;;; The PIECE feature is not as often used as say,
@@ -138,43 +138,19 @@
 				  ,@(for-eval-then-mquote-simp-argl argl))
 		      ,flag1 ,flag2 ,flag3 ',fn)))))))
 
-;;; This is could be done better on the LISPM
-
 (def%tr $errcatch (form)
-  (let ((form (translate `((mprogn) ,@(cdr form))))
-        (ret (tr-gensym)))
-    `($any . ((lambda (errcatch ,ret)
-                (declare (special errcatch))
-                ;; Very important to declare errcatch special
-                ;; here because merror uses it to figure out if
-                ;; someone is catching an error so it can be
-                ;; signaled in a way that we can catch.
-                (cond ((null (setq ,ret
-                                   (errset ,(cdr form))))
-                       (errlfun1 errcatch)))
-                (cons '(mlist) ,ret))
-              (cons bindlist loclist) nil))))
-
-
-;;; The MODE of a CATCH could either be the MODE of the last of the PROGN
-;;; or the mode of the THROW. The THROW may be hard to find, so this goes
-;;; on the assumption that the mode of the PROGN is enough to tell.
+  (destructuring-bind (mode . body) (translate `((mprogn) ,@(cdr form)))
+    (declare (ignore mode))
+    (cons '$any `(cons '(mlist) (errcatch ,body)))))
 
 (def%tr $catch (form)
-  (destructuring-let (((mode . body) (translate `((mprogn) . ,(cdr form)))))
-    `(,mode . ((lambda (mcatch)
-                 (prog1
-                   (catch 'mcatch ,body)
-                   (errlfun1 mcatch)))
-               (cons bindlist loclist)))))
+  (destructuring-bind (mode . body) (translate `((mprogn) . ,(cdr form)))
+    (declare (ignore mode))
+    (cons '$any `(mcatch ,body))))
 
 (def%tr $throw (form)
-  (destructuring-let (((mode . exp) (translate (cadr form))))
-    `(,mode . ((lambda (x)
-		 (when (null mcatch)
-		   (merror (intl:gettext "throw: not within 'catch'; expression: ~M") x))
-		 (throw 'mcatch x))
-	       ,exp))))
+  (destructuring-bind (mode . body) (translate (cadr form))
+    (cons mode `($throw ,body))))
 
 ;;; Makelist is a very sorry FSUBR. All these FSUBRS are just to avoid
 ;;; writing LAMBDA. But lots of users use MAKELIST now. 
@@ -184,17 +160,17 @@
 (def%tr $makelist (form)
   (setq form (cdr form))
   (cond 
-    ((= (length form) 0) '($any . '((mlist))))
+    ((= (length form) 0) '($any . (simplifya '((mlist)) t)))
     ((= (length form) 1)
      (destructuring-let
       (((exp) form))
-      `($any . (list '(mlist) ,(cdr (tr-local-exp exp))))))
+      `($any . (simplifya (list '(mlist) ,(cdr (tr-local-exp exp))) t))))
     ((= (length form) 2)
      (destructuring-let
       (((exp n) form) (sum (tr-gensym)) (nn (tr-gensym)) (|0| (tr-gensym)))
       (setq n (dtranslate n))
       `($any .
-             ((lambda (,nn)
+             (simplifya ((lambda (,nn)
                 (setq ,nn ($float ,nn))
                 (if (numberp ,nn)
                     (do ((,|0| 1 (add 1 ,|0|)) (,sum nil))
@@ -203,13 +179,13 @@
                             (cons ,(cdr (tr-local-exp exp)) ,sum)))
                     (merror
                      (intl:gettext "makelist: second argument must evaluate to a number; found: ~M") ,nn)))
-              ,n))))
+              ,n) t))))
     ((= (length form) 3)
      (destructuring-let
       (((exp x n) form) (sum (tr-gensym)) (nn (tr-gensym)) (lil (tr-gensym)))
       (setq n (dtranslate n))
       `($any .
-             ((lambda (,nn)
+             (simplifya ((lambda (,nn)
                 (if ($listp ,nn)
                    (do ((,lil (cdr ,nn) (cdr ,lil))
                         (,sum nil) (,x))
@@ -231,14 +207,14 @@
                            (declare (special ,x)))
                          (merror
                           (intl:gettext "makelist: third argument must be a number or a list; found: ~M") ,nn)))))
-              ,n))))
+              ,n) t))))
     ((= (length form) 4)
      (destructuring-let
       (((exp x |0| n) form) (|00| (tr-gensym)) (nn (tr-gensym))
        (sum (tr-gensym)) (ii (tr-gensym)))
       (setq |0| (dtranslate |0|) n (dtranslate n))
       `($any .
-             ((lambda (,|00| ,nn)
+             (simplifya ((lambda (,|00| ,nn)
                 (setq ,nn ($float (sub ,nn ,|00|)))
                 (if (numberp ,nn)
                     (do ((,x ,|00| (add 1 ,x)) (,ii 0 (add 1 ,ii))
@@ -251,14 +227,14 @@
                     (merror
                      (intl:gettext "makelist: the fourth argument minus the third one must evaluate to a number; found: ~M")
                      ,nn)))
-              ,|0| ,n))))
+              ,|0| ,n) t))))
     ((= (length form) 5)
      (destructuring-let
       (((exp x |0| n s) form) (|00| (tr-gensym)) (nn (tr-gensym))
        (ss (tr-gensym)) (sum (tr-gensym)) (ii (tr-gensym)))
       (setq |0| (dtranslate |0|) n (dtranslate n) s (dtranslate s))
       `($any .
-             ((lambda (,|00| ,nn ,ss)
+             (simplifya ((lambda (,|00| ,nn ,ss)
                 (setq ,nn ($float (div (sub ,nn ,|00|) ,ss)))
                 (if (numberp ,nn)
                     (do ((,x ,|00| (add ,ss ,x)) (,ii 0 (add 1 ,ii))
@@ -271,11 +247,11 @@
                     (merror
                      (intl:gettext "makelist: the fourth argument minus the third one, divided by the fifth one must evaluate to a number; found: ~M")
                      ,nn)))
-              ,|0| ,n ,s))))
+              ,|0| ,n ,s) t))))
     (t
      (tr-format (intl:gettext "makelist: maximum 5 arguments allowed; found: ~M.~%makelist: to create a list with sublists, use nested makelist commands.~%")
                 (length form))
-     (setq tr-abort t)
+     (tr-abort)
      '($any . '$**error**))))
 
 (def%tr $kill (form)
@@ -336,7 +312,8 @@
 ;;; The following special forms do not call the evaluator.
 
 (def%tr $alias (form)
-  `($any . (meval ',form)))  
+  (punt-to-meval form))
+
 ;;most of these will lose in common since a local variable will not
 ;;have its value accessible to the mfexpr*.  They should
 ;;be redone as macros with any necessary info passed along.
@@ -345,6 +322,8 @@
 (def%tr $batchload $alias)
 (def%tr $closefile $alias)
 (def%tr $compfile $alias)
+(def%tr $declare $alias)
+(def%tr $defstruct $alias)
 (def%tr $demo $alias)
 (def%tr $dependencies $alias)
 (def%tr $describe $alias)
@@ -355,6 +334,7 @@
 (def%tr $labels $alias)
 (def%tr $loadarrays $alias)
 (def%tr $loadfile $alias)
+(def%tr $new $alias)
 (def%tr $numerval $alias)
 (def%tr $options $alias)
 (def%tr $ordergreat $alias)

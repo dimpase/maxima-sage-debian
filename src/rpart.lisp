@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -20,24 +20,10 @@
 
 (load-macsyma-macros rzmac)
 
-(declare-top (special $%emode $radexpand rp-polylogp $domain $m1pbranch
-		      $logarc rischp $keepfloat))
-
-(defmvar implicit-real nil "If t RPART assumes radicals and logs
-	 of real quantities are real and doesn't ask sign questions")
-
-(defmvar generate-atan2 t "Controls whether RPART will generate ATAN's
-			or ATAN2's, default is to make ATAN2's")
-;; generate-atan2 is set to nil when doing integration to avoid
-;; generating discontinuities that defint can't handle.
+(declare-top (special $radexpand
+		      $keepfloat))
 
 ;;; Realpart gives the real part of an expr.
-
-(defmfun $realpart (xx) (car (trisplit xx)))
-
-(defprop $realpart %realpart verb)
-(defprop %realpart $realpart noun)
-(defprop %realpart simp-realpart operators)
 
 (defun risplit-signum (x) ;rectangular form for a signum expression
   (let*  ((z (risplit (cadr x))) (a (car z)) (b (cdr z)) (r)) ;signum(a+%i b), where a and b are real
@@ -48,55 +34,61 @@
 	   (cons (div a r) (div b r)))
 	  (t (cons (take '(%realpart) x) (take '(%imagpart) x)))))) ;nothing known
 
-(setf (get '%signum 'risplit-function) #'risplit-signum)
+(setf (get '%signum 'risplit-function) 'risplit-signum)
 
-(defun simp-realpart (expr z simpflag)
-  (oneargcheck expr)
-  (setq z (simpcheck (cadr expr) simpflag))
+(defmfun $realpart (xx) (car (trisplit xx)))
+
+(def-simplifier (realpart :custom-defmfun t
+                          ;; DO NOT set the ALIAS and REVERSEALIAS
+                          ;; properties for this simplifier.  It
+                          ;; causes failures in the testsuite.
+                          :skip-properties (alias reversealias))
+    (z)
   (let ((sgn nil))
     (cond ((mnump z) z)
           ((eq (setq sgn ($csign z)) '$imaginary)
            0)
           ((eq sgn '$complex)
-           (cond ((complex-number-p ($expand z) 'bigfloat-or-number-p)
-                  ($realpart z))
-                 (t 
-                  (eqtest (list '(%realpart) z) expr))))
-          (t 
-           (eqtest (list '(%realpart) z) expr)))))
+           (let ((z-expanded ($expand z)))
+           (cond ((complex-number-p z-expanded 'bigfloat-or-number-p)
+                  ($realpart z-expanded))
+                 (t
+                  (give-up)))))
+          (t
+           (give-up)))))
 
 ;;; Imagpart gives the imaginary part of an expr.
 
 (defmfun $imagpart (xx) (cdr (trisplit xx)))
 
-(defprop $imagpart %imagpart verb)
-(defprop %imagpart $imagpart noun)
-(defprop %imagpart simp-imagpart operators)
-
-(defun simp-imagpart (expr z simpflag)
-  (oneargcheck expr)
-  (setq z (simpcheck (cadr expr) simpflag))
+(def-simplifier (imagpart :custom-defmfun t
+                          ;; DO NOT set the ALIAS and REVERSEALIAS
+                          ;; properties for this simplifier.  It
+                          ;; causes failures in the testsuite.
+                          :skip-properties (alias reversealias))
+    (z)
   (let ((sgn nil))
     (cond ((mnump z) 0)
           ((eq (setq sgn ($csign z)) '$imaginary)
            (mul -1 '$%i z))
           ((eq sgn '$complex)
-           (cond ((complex-number-p ($expand z) 'bigfloat-or-number-p)
-                  ($imagpart z))
-                 (t 
-                  (eqtest (list '(%imagpart) z) expr))))
-          (t 
-           (eqtest (list '(%imagpart) z) expr)))))
+           (let ((z-expanded ($expand z)))
+           (cond ((complex-number-p z-expanded 'bigfloat-or-number-p)
+                  ($imagpart z-expanded))
+                 (t
+                  (give-up)))))
+          (t
+           (give-up)))))
 
 ;;; Rectform gives a result of the form a+b*%i.
 
-(defmfun $rectform (xx)
+(defmfun ($rectform :properties ((evfun t))) (xx)
   (let ((ris (trisplit xx)))
     (add (car ris) (mul (cdr ris) '$%i))))
 
 ;;; Polarform gives a result of the form a*%e^(%i*b).
 
-(defmfun $polarform (xx)
+(defmfun ($polarform :properties ((evfun t))) (xx)
   (cond ((mbagp xx)
 	 (cons (car xx) (mapcar #'$polarform (cdr xx))))
 	(t
@@ -107,61 +99,46 @@
 ;;; be syntactically real without being real (e.g. sqrt(x), x<0).  Thus
 ;;; Cabs must lead an independent existence from Abs.
 
-(defmfun $cabs (xx) (cabs xx))
+;; The internal cabs, used by other Macsyma programs.
+(defun cabs (xx)
+  (car (absarg xx t)))
 
-(defprop $cabs %cabs verb)
-(defprop %cabs $cabs noun)
-(defprop %cabs simp-cabs operators)
-
-(defun simp-cabs (expr z simpflag)
-  (oneargcheck expr)
-  (setq z (simpcheck (cadr expr) simpflag))
-  (let ((sgn nil))
-    (cond ((member (setq sgn ($csign z)) '($complex $imaginary))
-           (cond ((complex-number-p ($expand z) 'bigfloat-or-number-p)
-                  (simplify (list '(mabs) z)))
-                 (t
-                  (eqtest (list '(mabs) z) expr))))
+(def-simplifier cabs (z)
+  (if (and (consp z) (eq (caar z) 'mabs))
+  (ftake '%cabs (cadr z)) ; cabs(abs(x)) = cabs(x)
+  (let ((sgn ($csign z)))
+    (cond ((member sgn '($complex $imaginary))
+           (cabs z))
           ((eq sgn '$zero)
            0)
           ((member sgn '($pos $pz))
            z)
           ((eq sgn '$neg)
-            (mul -1 z))
-          (t 
-           (eqtest (list '(mabs) z) expr)))))
+           (mul -1 z))
+          (t
+           (cabs z))))))
 
 ;;; Carg gives the complex argument.
 
-(defmfun $carg (xx)
-  (cond ((mbagp xx)
-	 (cons (car xx) (mapcar #'$carg (cdr xx))))
-	(t (cdr (absarg xx)))))
-
-(defprop $carg %carg verb)
-(defprop %carg $carg noun)
-(defprop %carg simp-carg operators)
-
-(defun simp-carg (expr z simpflag)
-  (oneargcheck expr)
-  (setq z (simpcheck (cadr expr) simpflag))
+(def-simplifier carg (z)
   (let ((sgn nil))
-    (cond ((eq z '$%i)
-           (div '$%pi 2))
-          ((member (setq sgn ($csign z)) '($complex $imaginary))
-           (cond ((complex-number-p ($expand z) 'bigfloat-or-number-p)
-                  ($carg z))
-                 (t 
-                  (eqtest (list '(%carg) z) expr))))
-          ((member sgn '($pos $pz $zero))
-           0)
-          ((eq sgn '$neg)
-            '$%pi)
-          (t 
-           (eqtest (list '(%carg) z) expr)))))
-
-;; The internal cabs, used by other Macsyma programs.
-(defun cabs (xx) (car (absarg xx t)))
+    (labels
+        ((carg (xx)
+           (cond ((mbagp xx)
+	          (cons (car xx) (mapcar #'carg (cdr xx))))
+	         (t (cdr (absarg xx))))))
+      (cond ((eq z '$%i)
+             (div '$%pi 2))
+            ((member (setq sgn ($csign z)) '($complex $imaginary))
+             (carg z))
+            ((member sgn '($pos $pz $zero))
+             0)
+            ((eq sgn '$neg)
+             '$%pi)
+            ((eq sgn '$pnz)
+             (carg z))
+            (t
+             (give-up))))))
 
 ;; Some objects can only appear at the top level of a legal simplified
 ;; expression: CRE forms and equations in particular.
@@ -235,8 +212,8 @@
 	  (t
 	   (do ((rpart 1) (ipart 0) (m (cdr risl) (cdr m)))
 	       ((null m)
-		(cons (muln (cons rpart (car risl)) t)
-		      (muln (cons ipart (car risl)) t)))
+		(cons (if (=0 rpart) 0 (muln (cons rpart (car risl)) t))
+		      (if (=0 ipart) 0 (muln (cons ipart (car risl)) t))))
 	     (psetq rpart (sub (mul rpart (caar m)) (mul ipart (cdar m)))
 		    ipart (add (mul ipart (caar m)) (mul rpart (cdar m)))))))))
 
@@ -324,7 +301,7 @@
   (case (cond ((mnegp base) '$neg)
               (implicit-real '$pos)
               (t ($sign base)))    ; Use $sign not asksign
-    ($neg (risplit (mul2 (power -1 power) (power (neg base) power))))
+    ($neg (risplit-expt-general-form (neg base) '$%pi power 0))
     ($zero (cons (power 0 power) 0))
     ($pos (cons (power base power) 0))
     (t
@@ -391,10 +368,10 @@
 	   (setq arg arg1)
 	   (if implicit-real
 	       (cons arg 0)
+	       (let ((fact (assume `(($notequal) ,arg 0))))
 	       (unwind-protect
-		    (prog2 (assume `(($notequal) ,arg 0))
-			(absarg arg))
-		 (forget `(($notequal) ,arg 0)))))
+			(absarg arg)
+			(forget fact)))))
 	  (t (absarg arg)))))
 
 ;;;	Main function
@@ -463,14 +440,20 @@
 	  ((and (member (caar l) '(%atan %csc %sec %cot %csch %sech %coth) :test #'eq)
 		(=0 (cdr (risplit (cadr l)))))
 	   (cons l 0))
-          ((and (eq (caar l) '$atan2)
+          ((and (eq (caar l) '%atan2)
                 (not (zerop1 (caddr l)))
                 (=0 (cdr (risplit (div (cadr l) (caddr l))))))
            ;; Case atan2(y,x) and y/x a real expression.
            (cons l 0))
-	  ((or (arcp (caar l)) (eq (caar l) '$atan2))
-	   (let ((ans (risplit (logarc (caar l) (cadr l)))))
-	     (when (eq (caar l) '$atan2)
+	  ((or (arcp (caar l)) (eq (caar l) '%atan2))
+	   (let ((ans (risplit (logarc (caar l)
+				       ;; atan2 has 2 args, unlike all
+				       ;; the other inverse trig
+				       ;; functions.
+				       (if (eq (caar l) '%atan2)
+					   (rest l)
+					   (cadr l))))))
+	     (when (eq (caar l) '%atan2)
 	       (setq ans (cons (sratsimp (car ans)) (sratsimp (cdr ans)))))
 	     (if (and (free l '$%i) (=0 (cdr ans)))
 		 (cons l 0)
@@ -495,14 +478,17 @@
                (decl-realp (mop l)))
            ;; Simplification for a real-valued function
            (cons l 0))
-          ((or (safe-get (mop l) 'commutes-with-conjugate)
-               (safe-get (mop l) 'conjugate-function))
-	   ;; A function with Mirror symmetry. The general expressions for
-	   ;; the realpart and imagpart simplifies accordingly.
-	   (cons (mul (div 1 2)
-		      (add (simplify (list '($conjugate) l)) l))
-		 (mul (div 1 2) '$%i
-		      (sub (simplify (list '($conjugate) l)) l))))
+      ((and (or (safe-get (mop l) 'commutes-with-conjugate)
+                (safe-get (mop l) 'conjugate-function))
+       ;; An operator that $conjugate may be able to simplify.
+       ;; If $conjugate simplifies l to something not involving '$conjugate,
+       ;; use Re(z) = (conjugate(z) + z) / 2, Im(z) = %i * (conjugate(z) - z) / 2.
+       ;; Possible improvement: Ignore instances of '$conjugate already occurring
+       ;; in the original expression l.
+       (let* ((conjugate (ftake '$conjugate l)))
+         (when (freeof '$conjugate conjugate)
+           (cons (mul (div 1 2) (add conjugate l))
+                 (mul (div 1 2) '$%i (sub conjugate l)))))))
 ;;; A MAJOR ASSUMPTION:
 ;;;  All random functions are pure real, regardless of argument.
 ;;;  This is evidently assumed by some of the integration functions.
@@ -653,7 +639,7 @@
 	(t
 	 (let ((2pfma (2pistrip (car fm)))
 	       (2pfmd (2pirec (cdr fm))))
-	   (cond ((or (null 2pfmd) (=0 2pfmd)) 2pfma)
+	   (cond ((or (null 2pfmd) (=0 2pfmd)) (list 2pfma))
 		 ((and (eq 2pfmd (cdr fm)) (eq 2pfma (car fm))) fm)
 		 (t (cons 2pfma 2pfmd)))))))
 
@@ -707,7 +693,7 @@
 			(t (cons (take '(mabs) l) (genatan 0 l))))))))
 	((eq '$zero (let ((sign-imag-errp nil)) (catch 'sign-imag-err ($sign l))))
 	 (cond ((some-bfloatp l)
-		(cons bigfloatzero bigfloatzero))	; contagious
+		(cons *bigfloatzero* *bigfloatzero*))	; contagious
 	       ((some-floatp l)
 		(cons 0.0 0.0))
 	       (t (cons 0 0))))
@@ -742,7 +728,7 @@
                     (cons (mul (power (car aa) (car sp))
                                (power '$%e (neg (mul (cdr aa) (cdr sp)))))
                           (if generate-atan2
-			      (take '($atan2)
+			      (take '(%atan2)
 				    (take '(%sin) arg)
 				    (take '(%cos) arg))
 			    (take '(%atan) (take '(%tan) arg)))))))))
@@ -761,7 +747,7 @@
 		 (take '(%atan)
 		       (if (eq (caar l) '%tan)
 			   (div (take '(%sinh) 2frst) (take '(%sin) 2scnd))
-			   (div (take '(%sin) 2frst) (take '(%sinh) 2scnd)))))))
+			   (div (take '(%sin) 2scnd) (take '(%sinh) 2frst)))))))
 	((specrepp l) (absarg (specdisrep l) absflag))
 	((let ((foot (coversinemyfoot l)))
 	   (and foot (not (=0 (cdr (risplit (cadr l))))) (absarg foot absflag))))
@@ -774,16 +760,41 @@
 	    (if absflag 0 (genatan (cdr ris) (car ris)))
 	    (cond ((equal (car ris) 0) (absarg-mabs (cdr ris)))
 		  ((equal (cdr ris) 0) (absarg-mabs (car ris)))
-		  (t (powers ($expand (add (powers (car ris) 2)
-					   (powers (cdr ris) 2))
-				      1 0)
-			     (half)))))))))
+		  (t (hypotenuse (car ris) (cdr ris)))))))))
+
+(defun hypotenuse-numerical (re im)
+ "Dispatch the CL abs function to return |re + %i im|. The inputs re and im should be floating point numbers.
+  We trust the compiler to work correctly for all double floats, including denormalized floats, and not needlessly
+  over or underflow."
+  (cond ((zerop im) (abs re))
+        ((zerop re) (abs im))
+        (t (abs (complex re im)))))
+
+(defun hypotenuse (re im)
+ (flet ((hypotenuse-default (re im) ;ok to use when no worries about floating point over/underflow
+          ;; For mixed binary64 and symbolic cases, computing re^2 or im^2 can cause a 
+          ;; floating point overflow. When an error happens, we'll punt to an abs nounform.
+
+          ;; I'd prefer to eliminate the following calls to expand, but doing so causes
+          ;; some testsuite failures.
+          (setq re ($expand re 1 0)
+                im ($expand im 1 0))
+          (or (ignore-errors (ftake 'mexpt (add (mul re re) (mul im im)) 1//2))
+              (ftake 'mabs (add re (mul '$%i im))))))
+
+    (cond ((or ($bfloatp re) ($bfloatp im)) ; at least one bigfloat
+            (hypotenuse-default ($bfloat re) ($bfloat im)))
+
+          ((or (and (floatp re) (mnump im)) (and (mnump re) (floatp im))) ;at least one float part
+             (hypotenuse-numerical ($float re) ($float im)))
+
+          (t (hypotenuse-default re im))))) ;fall back
 
 (defun genatan (num den)
-  (let ((arg (take '($atan2) num den)))
+  (let ((arg (take '(%atan2) num den)))
     (if (or generate-atan2
             (zerop1 den)
-            (free arg '$atan2))
+            (free arg '%atan2))
         arg
         (take '(%atan) (div num den)))))
 

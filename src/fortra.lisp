@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -13,8 +13,7 @@
 (macsyma-module fortra)
 
 (declare-top (special *lb* *rb*	 ;Used for communication with MSTRING.
-		      $loadprint ;If NIL, no load message gets printed.
-		      1//2 -1//2))
+		      ))
 
 (defmvar $fortspaces nil
   "If T, Fortran card images are filled out to 80 columns using spaces."
@@ -25,9 +24,11 @@
   "The number of spaces (beyond 6) to indent Fortran statements as they
    are printed."
   fixnum
-  modified-commands '$fortran)
-
-(defmvar $fortfloat nil "Something JPG is working on.")
+  modified-commands '$fortran
+  :setting-predicate #'(lambda (val)
+			 ;; The value must be non-negative fixnum
+			 (and (fixnump val)
+			      (>= val 0))))
 
 ;; This function is called from Macsyma toplevel.  If the argument is a
 ;; symbol, and the symbol is bound to a matrix or list, then the value is printed
@@ -57,7 +58,7 @@
 
   ;; Linearize the expression using MSTRING.  Some global state must be
   ;; modified for MSTRING to generate using Fortran syntax.  This must be
-  ;; undone so as not to modifiy the toplevel behavior of MSTRING.
+  ;; undone so as not to modify the toplevel behavior of MSTRING.
   (unwind-protect
        (defprop mexpt msize-infix grind)
     (defprop mminus 100. lbp)

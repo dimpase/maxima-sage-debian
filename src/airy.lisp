@@ -19,25 +19,15 @@
 
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with command-line.lisp; see the file COPYING.  If not,
-;;;; write to the Free Software Foundation, Inc., 59 Temple Place -
-;;;; Suite 330, Boston, MA 02111-1307, USA.
+;;;; write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 (in-package :maxima)
 
-(declaim (special *flonum-op*))
-
 ;; Airy Ai function 
-(defmfun $airy_ai (z)
-  "Airy function Ai(z)"
-  (simplify (list '(%airy_ai) (resimplify z))))
 
-(defprop $airy_ai %airy_ai alias)
-(defprop $airy_ai %airy_ai verb)
-(defprop %airy_ai $airy_ai reversealias)
-(defprop %airy_ai $airy_ai noun)
-(defprop %airy_ai simp-%airy_ai operators)
 (defprop %airy_ai simplim%airy_ai simplim%function)
-(defprop %airy_ai ((z) ((%airy_dai) z)) grad)
+(defgrad %airy_ai ($z)
+  #$$airy_dai(z)$)
 
 ;; airy_ai distributes over lists, matrices, and equations
 (defprop %airy_ai (mlist $matrix mequal) distribute_over)
@@ -55,14 +45,14 @@
     ((mtimes) 
      ((mexpt) 3 ((rat) -2 3))
      ((mexpt) ((%gamma) ((rat) 2 3)) -1)
-     (($hypergeometric) 
+     ((%hypergeometric) 
       ((mlist) ((rat) 1 3))
       ((mlist) ((rat) 2 3) ((rat) 4 3)) 
       ((mtimes) ((rat) 1 9) ((mexpt) z 3)))
      z)
    ((mtimes) 
     ((rat) -1 4) ((mexpt) 3 ((rat) 1 6)) ((mexpt) $%pi -1) ((%gamma) ((rat) 2 3))
-    (($hypergeometric) 
+    ((%hypergeometric) 
      ((mlist) ((rat) 2 3)) 
      ((mlist) ((rat)  4 3) ((rat) 5 3))
      ((mtimes) ((rat) 1 9) ((mexpt) z 3)))
@@ -73,7 +63,7 @@
   (cond ((floatp z) (airy-ai-real z))
 	((complexp z) (airy-ai-complex z))))
 
-(setf (gethash '%airy_ai *flonum-op*) #'airy-ai)
+(setf (gethash '%airy_ai *flonum-op*) 'airy-ai)
 
 (defun simplim%airy_ai (expr var val)
   ; Look for the limit of the argument
@@ -85,30 +75,46 @@
 	   ; Handle other cases with the function simplifier
 	   (simplify (list '(%airy_ai) z))))))
 
-(defun simp-%airy_ai (form unused x)
-  (declare (ignore unused))
-  (oneargcheck form)
-  (let ((z (simpcheck (cadr form) x)))
-    (cond ((equal z 0) ; A&S 10.4.4: Ai(0) = 3^(-2/3)/gamma(2/3)
-	    '((mtimes simp)
-	      ((mexpt simp) 3 ((rat simp) -2 3))
-	      ((mexpt simp) ((%gamma simp) ((rat simp) 2 3)) -1)))
-	  ((flonum-eval (mop form) z))
-	  (t (eqtest (list '(%airy_ai) z) form)))))
+(defun airy-ai-hypergeometric (z)
+  "Returns the hypergeometric representation of Airy Ai"
+  ;; See http://functions.wolfram.com/03.05.26.0001.01 and
+  ;; https://fungrim.org/entry/01bbb6/:
+  ;;
+  ;;   Ai(z) = Ai(0)*hypergeometric([],[2/3],z^3/9)
+  ;;     + z*Ai'(0)*hypergeometric([],[4/3],z^3/9)
+  (add (mul (ftake '%airy_ai 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 2 3))
+		   (div (power z 3)
+			9)))
+       (mul z
+	    (ftake '%airy_dai 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 4 3))
+		   (div (power z 3)
+			9)))))
+
+(def-simplifier airy_ai (z)
+  (cond ((equal z 0)	     ; A&S 10.4.4: Ai(0) = 3^(-2/3)/gamma(2/3)
+	 (div (power 3 (div -2 3))
+	      (take '(%gamma) (div 2 3))))
+	((flonum-eval (mop form) z))
+	((or (bigfloat-numerical-eval-p z)
+	     (complex-bigfloat-numerical-eval-p z))
+	 ($rectform
+	  ($bfloat (airy-ai-hypergeometric z))))
+	($hypergeometric_representation
+	 (airy-ai-hypergeometric z))
+	(t (give-up))))
 
 
 ;; Derivative dAi/dz of Airy function Ai(z)
-(defmfun $airy_dai (z)
-  "Derivative dAi/dz of Airy function Ai(z)"
-  (simplify (list '(%airy_dai) (resimplify z))))
-
-(defprop $airy_dai %airy_dai alias)
-(defprop $airy_dai %airy_dai verb)
-(defprop %airy_dai $airy_dai reversealias)
-(defprop %airy_dai $airy_dai noun)
-(defprop %airy_dai simp-%airy_dai operators)
 (defprop %airy_dai simplim%airy_dai simplim%function)
-(defprop %airy_dai ((z) ((mtimes) z ((%airy_ai) z))) grad)
+(defgrad %airy_dai ($z)
+  #$$z*airy_ai(z)$)
+
 (defprop %airy_dai ((z) ((%airy_ai) z)) integral)
 
 ;; airy_dai distributes over lists, matrices, and equations
@@ -121,7 +127,7 @@
   (cond ((floatp z) (airy-dai-real z))
 	((complexp z) (airy-dai-complex z))))
 
-(setf (gethash '%airy_dai *flonum-op*) #'airy-dai)
+(setf (gethash '%airy_dai *flonum-op*) 'airy-dai)
 
 (defun simplim%airy_dai (expr var val)
   ; Look for the limit of the argument
@@ -134,29 +140,46 @@
 	   ; Handle other cases with the function simplifier
 	   (simplify (list '(%airy_dai) z))))))
 
-(defun simp-%airy_dai (form unused x)
-  (declare (ignore unused))
-  (oneargcheck form)
-  (let ((z (simpcheck (cadr form) x)))
-    (cond ((equal z 0) ; A&S 10.4.5: Ai'(0) = -3^(-1/3)/gamma(1/3)
-          '((mtimes simp) -1
-	      ((mexpt simp) 3 ((rat simp) -1 3))
-	      ((mexpt simp) ((%gamma simp) ((rat simp) 1 3)) -1)))
-	  ((flonum-eval (mop form) z))
-	  (t (eqtest (list '(%airy_dai) z) form)))))
+(defun airy-dai-hypergeometric (z)
+  "Returns the hypergeometric representation of Ai'(x), the derivative
+  of the Airy function Ai(x)"
+  ;; See http://functions.wolfram.com/03.07.26.0001.01 and
+  ;; https://fungrim.org/entry/20e530/.
+  ;;
+  ;;
+  ;;   Ai'(z) = Ai'(0)*hypergeometric([],[1/3],z^3/9)
+  ;;     + z^2/2*Ai(0)*hypergeometric([],[5/3],z^3/9)
+  (add (mul (ftake '%airy_dai 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 1 3))
+		   (div (power z 3)
+			9)))
+       (mul z z 1//2
+	    (ftake '%airy_ai 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 5 3))
+		   (div (power z 3)
+			9)))))
 
-;; Airy Bi function 
-(defmfun $airy_bi (z)
-  "Airy function Bi(z)"
-  (simplify (list '(%airy_bi) (resimplify z))))
+(def-simplifier airy_dai (z)
+  (cond ((equal z 0)	   ; A&S 10.4.5: Ai'(0) = -3^(-1/3)/gamma(1/3)
+	 (div -1
+	      (mul (power 3 (div 1 3))
+		   (take '(%gamma) (div 1 3)))))
+	((flonum-eval (mop form) z))
+	((or (bigfloat-numerical-eval-p z)
+	     (complex-bigfloat-numerical-eval-p z))
+	 ($rectform
+	  ($bfloat (airy-dai-hypergeometric z))))
+	($hypergeometric_representation
+	 (airy-dai-hypergeometric z))
+	(t (give-up))))
 
-(defprop $airy_bi %airy_bi alias)
-(defprop $airy_bi %airy_bi verb)
-(defprop %airy_bi $airy_bi reversealias)
-(defprop %airy_bi $airy_bi noun)
-(defprop %airy_bi simp-%airy_bi operators)
 (defprop %airy_bi simplim%airy_bi simplim%function)
-(defprop %airy_bi ((z) ((%airy_dbi) z)) grad)
+(defgrad %airy_bi ($z)
+  #$$ airy_dbi(z)$)
 
 ;; airy_bi distributes over lists, matrices, and equations
 (defprop %airy_bi (mlist $matrix mequal) distribute_over)
@@ -174,14 +197,14 @@
     ((mtimes) 
      ((mexpt) 3 ((rat) -1 6))
      ((mexpt) ((%gamma) ((rat) 2 3)) -1)
-     (($hypergeometric) 
+     ((%hypergeometric) 
       ((mlist) ((rat) 1 3))
       ((mlist) ((rat) 2 3) ((rat) 4 3)) 
       ((mtimes) ((rat) 1 9) ((mexpt) z 3)))
      z)
    ((mtimes) 
     ((rat) 1 4) ((mexpt) 3 ((rat) 2 3)) ((mexpt) $%pi -1) ((%gamma) ((rat) 2 3))
-    (($hypergeometric) 
+    ((%hypergeometric) 
      ((mlist) ((rat) 2 3)) 
      ((mlist) ((rat)  4 3) ((rat) 5 3))
      ((mtimes) ((rat) 1 9) ((mexpt) z 3)))
@@ -192,7 +215,7 @@
   (cond ((floatp z) (airy-bi-real z))
 	((complexp z) (airy-bi-complex z))))
 
-(setf (gethash '%airy_bi *flonum-op*) #'airy-bi)
+(setf (gethash '%airy_bi *flonum-op*) 'airy-bi)
 
 (defun simplim%airy_bi (expr var val)
   ; Look for the limit of the argument
@@ -205,29 +228,45 @@
 	   ; Handle other cases with the function simplifier
 	   (simplify (list '(%airy_bi) z))))))
 
-(defun simp-%airy_bi (form unused x)
-  (declare (ignore unused))
-  (oneargcheck form)
-  (let ((z (simpcheck (cadr form) x)))
-    (cond ((equal z 0) ; A&S 10.4.4: Bi(0) = sqrt(3) 3^(-2/3)/gamma(2/3)
-	    '((mtimes simp)
-	      ((mexpt simp) 3 ((rat simp) -1 6))
-	      ((mexpt simp) ((%gamma simp) ((rat simp) 2 3)) -1)))
-	  ((flonum-eval (mop form) z))
-	  (t (eqtest (list '(%airy_bi) z) form)))))
+(defun airy-bi-hypergeometric (z)
+  "Returns the hypergeometric representation of Airy Bi"
+  ;; See http://functions.wolfram.com/03.06.26.0001.01 and https://fungrim.org/entry/bd319e/ 
+  ;;
+  ;;  Bi(z) = Bi(0)*hypergeometric([],[2/3],z^3/9)
+  ;;    + z*Bi'(0)*hypergeometric([],[4/2],z^3/9)
+  (add (mul (ftake '%airy_bi 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 2 3))
+		   (div (power z 3)
+			9)))
+       (mul z
+	    (ftake '%airy_dbi 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 4 3))
+		   (div (power z 3)
+			9)))))
+
+(def-simplifier airy_bi (z)
+  (cond ((equal z 0) ; A&S 10.4.4: Bi(0) = sqrt(3) 3^(-2/3)/gamma(2/3)
+	 (div (mul (power 3 1//2)
+		   (power 3 (div -2 3)))
+	      (take '(%gamma) (div 2 3))))
+	((flonum-eval (mop form) z))
+	((or (bigfloat-numerical-eval-p z)
+	     (complex-bigfloat-numerical-eval-p z))
+	 ($rectform
+	  ($bfloat (airy-bi-hypergeometric z))))
+	($hypergeometric_representation
+	 (airy-bi-hypergeometric z))
+	(t (give-up))))
+
 
 ;; Derivative dBi/dz of Airy function Bi(z)
-(defmfun $airy_dbi (z)
-  "Derivative dBi/dz of Airy function Bi(z)"
-  (simplify (list '(%airy_dbi) (resimplify z))))
-
-(defprop $airy_dbi %airy_dbi alias)
-(defprop $airy_dbi %airy_dbi verb)
-(defprop %airy_dbi $airy_dbi reversealias)
-(defprop %airy_dbi $airy_dbi noun)
-(defprop %airy_dbi simp-%airy_dbi operators)
 (defprop %airy_dbi simplim%airy_dbi simplim%function)
-(defprop %airy_dbi ((z) ((mtimes) z ((%airy_bi) z))) grad)
+(defgrad %airy_dbi ($z)
+  #$$z*airy_bi(z)$)
 (defprop %airy_dbi ((z) ((%airy_bi) z)) integral)
 
 ;; airy_dbi distributes over lists, matrices, and equations
@@ -240,7 +279,7 @@
   (cond ((floatp z) (airy-dbi-real z))
 	((complexp z) (airy-dbi-complex z))))
 
-(setf (gethash '%airy_dbi *flonum-op*) #'airy-dbi)
+(setf (gethash '%airy_dbi *flonum-op*) 'airy-dbi)
 
 (defun simplim%airy_dbi (expr var val)
   ; Look for the limit of the argument
@@ -253,16 +292,41 @@
 	   ; Handle other cases with the function simplifier
 	   (simplify (list '(%airy_dbi) z))))))
 
-(defun simp-%airy_dbi (form unused x)
-  (declare (ignore unused))
-  (oneargcheck form)
-  (let ((z (simpcheck (cadr form) x)))
-    (cond ((equal z 0) ; A&S 10.4.5: Bi'(0) = sqrt(3) 3^(-1/3)/gamma(1/3)
-          '((mtimes simp) 
-	    ((mexpt simp) 3 ((rat simp) 1 6))
-	    ((mexpt simp) ((%gamma simp) ((rat simp) 1 3)) -1)))
-	  ((flonum-eval (mop form) z))
-	  (t (eqtest (list '(%airy_dbi) z) form)))))
+(defun airy-dbi-hypergeometric (z)
+  "Returns the hypergeometric representation of Bi'(z), the derivative
+  of Airy Bi"
+  ;; See http://functions.wolfram.com/03.08.26.0001.01 and
+  ;; https://fungrim.org/entry/4d65e5/.
+  ;;
+  ;;  Bi'(z) = Bi'(0)*hypergeometric([],[1/3],z^3/9)
+  ;;    + z^2/2*Bi(0)*hypergeometric([],[5/3],z^3/9)
+  (add (mul (ftake '%airy_dbi 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 1 3))
+		   (div (power z 3)
+			9)))
+       (mul z z 1//2
+	    (ftake '%airy_bi 0)
+	    (ftake '%hypergeometric
+		   (list '(mlist))
+		   (list '(mlist) (div 5 3))
+		   (div (power z 3)
+			9)))))
+
+(def-simplifier airy_dbi (z)
+  (cond ((equal z 0) ; A&S 10.4.5: Bi'(0) = sqrt(3) 3^(-1/3)/gamma(1/3)
+	 (div (mul (power 3 1//2)
+		   (power 3 (div -1 3)))
+	      (take '(%gamma) (div 1 3))))
+	((flonum-eval (mop form) z))
+	((or (bigfloat-numerical-eval-p z)
+	     (complex-bigfloat-numerical-eval-p z))
+	 ($rectform
+	  ($bfloat (airy-dbi-hypergeometric z))))
+	($hypergeometric_representation
+	 (airy-dbi-hypergeometric z))
+	(t (give-up))))
 
 ;; Numerical routines using slatec functions
 

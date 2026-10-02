@@ -106,6 +106,9 @@ checklimits(%);
 false$
 remvalue(a,b,f,x);
 [a,b,f,x]$
+
+/* test cases extracted from reference manual for 'let' */
+
 (kill(all),matchdeclare([a,a1,a2],true));
 done$
 oneless(x,y):=is(x = y-1);
@@ -122,22 +125,57 @@ sin(x)^4;
 sin(x)^4$
 letsimp(%);
 cos(x)^4-2*cos(x)^2+1$
-matchdeclare([a,a1,a2],true);
-done$
-oneless(x,y):=is(x = y-1);
-oneless(x,y):=is(x = y-1)$
-let(a1*a2!,a1!,oneless,a2,a1);
-?mtext(a1*a2!,?\ \-\-\>\ ,a1!,?\ where\ ,oneless(a2,a1))$
-ev(let(a1!/a1,(a1-1)!),letrat);
-?mtext(a1!/a1,?\ \-\-\>\ ,(a1-1)!)$
-ev(letsimp(n*m!*(n-1)!/m),letrat);
-(m-1)!*n!$
-let(sin(a)^2,1-cos(a)^2);
-?mtext(sin(a)^2,?\ \-\-\>\ ,1-cos(a)^2)$
-sin(x)^4;
-sin(x)^4$
-letsimp(%);
-cos(x)^4-2*cos(x)^2+1$
+
+/* test cases extracted from reference manual for 'letrat' */
+
+(kill (all), matchdeclare (n, true))$
+done;
+
+let (n!/n, (n-1)!);
+?mtext (n!/n, ?\ \-\-\>\ , (n - 1)!);
+
+(letrat: false, letsimp (a!/a));
+a!/a;
+
+(letrat: true, letsimp (a!/a));
+(a - 1)!;
+
+(reset (letrat), 0);
+0;
+
+/* test cases extracted from reference manual for 'letsimp' */
+
+(kill (all),
+ e0: e(k) = -(9*y(k))/(5*z)-u(k-1)/(5*z)+(4*y(k))/(5*z^2) +(3*u(k-1))/(5*z^2)+y(k)-(2*u(k-1))/5,
+ matchdeclare (h, any), 
+ let (u(h)/z, u(h - 1)));
+?mtext (u(h)/z, ?\ \-\-\>\ , u(h - 1));
+
+let (y(h)/z, y(h - 1));
+?mtext (y(h)/z, ?\ \-\-\>\ , y(h - 1));
+
+/* SF bug #4408: "letsimp doesn't simplify before returning result" */
+
+e1: letsimp (e0);
+e(k) = y(k)-(9*y(k-1))/5-(2*u(k-1))/5+(4*y(k-2))/5-u(k-2)/5+(3*u(k-3))/5$
+
+/* SF bug #4407: "letsimp doesn't commute with equation, list, matrix" */
+
+letsimp ([rhs (e0)]);
+[''(rhs (e1))];
+
+letsimp (matrix ([rhs (e0)]));
+matrix ([''(rhs (e1))]);
+
+letsimp (lhs (e0)) = letsimp (rhs (e0));
+''e1;
+
+[letsimp (rhs (e0))];
+[''(rhs (e1))];
+
+matrix ([letsimp (''(rhs (e0)))]);
+matrix ([''(rhs (e1))]);
+
 pfeformat:true;
 true$
 poissimp(sin(x)^2);
@@ -165,7 +203,7 @@ poissimp(sin(x)^5+cos(x)^5);
 pfeformat:false;
 false$
 
-/* test for bug [ 1648352 ] rules and pattern bug */
+/* test for bug #1097: rules and pattern bug */
 
 (kill (foo, bar),
  matchdeclare (aa, true, gg, lambda([yy], evenp(yy) and (yy > 1))),
@@ -182,6 +220,27 @@ foo(x)^3;
 letsimp (foo(x)^4);
 bar(x)^4 - 2*bar(x)^2 + 1;
 
+/* More tests for bug #1097: pattern variable appears in letsimp result */
+
+(kill (f, g, x, y),
+ matchdeclare ([arg1, arg2, exp], true),
+ let (f(arg1, arg2)^exp, g(arg2, arg1)^exp), 0);
+0;
+
+letsimp (f(x, y)); /* This used to yield g(arg2,arg1) */
+g(y, x);
+
+letsimp (f(x, y)^2); /* This used to yield g(arg2,arg1)^2 */
+g(y, x)^2;
+
+letsimp (f(x, y)^q); /* This used to yield g(arg2,arg1)^q */
+g(y, x)^q;
+
+(remlet (f(arg1, arg2)^exp),
+ remove ([arg1, arg2, exp], matchdeclare),
+ 0);
+0;
+
 /* letsimp confused by debug stuff in expression car
  * mailing list 2012-12-23: "let(simp) behaves different when loaded from batch file"
  */
@@ -195,3 +254,139 @@ bar(x)^4 - 2*bar(x)^2 + 1;
  test ());
 5;
 
+/* Bug #2709: `letsimp' is wrong if `ratexpand' is called */
+
+(let (U, T), 0);
+0;
+
+letsimp (U / n);
+T / n;
+
+ratexpand (a * b * c);
+a * b * c;
+
+letsimp (U / n); /* This used to yield 1 */
+T / n;
+
+(remlet (U), 0);
+0;
+
+/* Some basic letsimp tests, based on bug #3950 */
+
+(let (f, g), 0);
+0;
+
+letsimp (f);
+g;
+
+letsimp (f ());
+f ();
+
+letsimp (f (1));
+f (1);
+
+letsimp (f (1, 2, 3));
+f (1, 2, 3);
+
+(remlet (f), 0);
+0;
+
+(let (f (1), g (1)), 0);
+0;
+
+letsimp (f);
+f;
+
+letsimp (f ());
+f ();
+
+letsimp (f (1));
+g (1);
+
+letsimp (f (1, 2, 3));
+f (1, 2, 3);
+
+(remlet (f (1)), 0);
+0;
+
+(let (f (1, 2, 3), g (1, 2, 3)), 0);
+0;
+
+letsimp (f);
+f;
+
+letsimp (f ());
+f ();
+
+letsimp (f (1));
+f (1);
+
+letsimp (f (1, 2, 3));
+g (1, 2, 3);
+
+(remlet (f (1, 2, 3)), 0);
+0;
+
+/* Bug #3950: letsimp confuses symbols and nullary applications */
+
+(let (f (), g ()), 0);
+0;
+
+/* This used to yield g() */
+letsimp (f);
+f;
+
+/* This used to yield f() */
+letsimp (f ());
+g ();
+
+letsimp (f (1));
+f (1);
+
+letsimp (f (1, 2, 3));
+f (1, 2, 3);
+
+(remlet (f ()), 0);
+0;
+
+(matchdeclare (foo, true), 0);
+0;
+
+(let (foo (), bar ()), 0);
+0;
+
+/* This used to cause a stack overflow */
+letsimp (x);
+x;
+
+/* This also used to cause a stack overflow */
+letsimp (foo ());
+bar ();
+
+(remove (foo, matchdeclare),
+ remlet (foo ()),
+ 0);
+0;
+
+/* SF bug #4417: "letsimp treats minus expressions as -1 times something" */
+
+(kill (X, W, A),
+ matchdeclare (X, all),
+ let (W*X, X),
+ 0);
+0;
+
+letsimp (-W);
+-W;
+
+letsimp (expand ((A - W)^3));
+A^3-3*A^2+3*A-W^3;
+
+(let (W^2, W), 0);
+0;
+
+letsimp (expand ((A - W)^3));
+A^3-3*A^2+3*A-W;
+
+letsimp (expand ((A + W)^3));
+A^3+3*A^2+3*A+W;

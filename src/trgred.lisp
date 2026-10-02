@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,7 +12,7 @@
 
 (macsyma-module trgred)
 
-(declare-top (special var $verbose ans *trigred *noexpand *lin half%pi))
+(declare-top (special var *schatc-ans* *trigred *noexpand *lin))
 
 (load-macsyma-macros rzmac)
 
@@ -55,12 +55,18 @@
 ;;	*NOEXPAND	indicates that trig functions of sums of
 ;;			angles are not to be used.
 
-(defmfun $trigreduce (exp &optional (var '*novar))
+;; Without the check for the value of $simp, trigreduce can enter an
+;; endless loop--for example trigreduce((-1)*x). There is at least one
+;; test in the testsuite that sets simp to false and then needs to compute
+;; a limit. But the limit code calls trigreduce and the test fails. The
+;; top level check for simp seems like the best way to prevent infinite
+;; loops when simp is false.
+(defmfun ($trigreduce :properties ((evfun t))) (exp &optional (var '*novar))
   (let ((*trigred t)
         (*noexpand t)
         $trigexpand $verbose $ratprint)
-    (declare (special $trigexpand *trigred $ratprint))
-    (gcdred (sp1 exp))))
+    (declare (special $trigexpand *trigred))
+    (if $simp (gcdred (sp1 exp)) exp)))
 
 ;; The first pass in power series expansion (used by $powerseries in
 ;; series.lisp), but also used by $trigreduce. Expands / reduces the expression
@@ -159,8 +165,8 @@
 
     (mapc #'(lambda (q)  (sp1sincos q t)) *trigbuckets*)
     (mapc #'(lambda (q) (sp1sincos q nil)) *hyperbuckets*)
-    (setq fr (cons (m^ 1//2 (m+l *lin)) fr)
-	  *lin nil)
+    (setq fr (cons (let ($float) (m^ 1//2 (m+l *lin))) fr)
+      *lin nil)
     (setq tr (cons '* (mapcan #'sp1untrep *trigbuckets*)))
     (setq g (nconc (sp1tlin tr t) (sp1tplus *lin t) g)
 	  *lin nil)
@@ -459,9 +465,9 @@
 	((m^ b e))))
 
 (defun sp1expt2 (e)
-  (let* ((ans (m2 e '((mplus) ((coeffpp) (fr freevar)) ((coeffpp) (exp true)))))
-         (fr (cdr (assoc 'fr ans :test #'eq)))
-         (exp (cdr (assoc 'exp ans :test #'eq))))
+  (let* ((*schatc-ans* (m2 e '((mplus) ((coeffpp) (fr freevar)) ((coeffpp) (exp true)))))
+         (fr (cdr (assoc 'fr *schatc-ans* :test #'eq)))
+         (exp (cdr (assoc 'exp *schatc-ans* :test #'eq))))
     (cond ((equal fr 0)
 	   (m^ '$%e exp))
 	  ((m* (m^ '$%e fr) (m^ '$%e exp))))))
@@ -621,7 +627,12 @@
   (cond ((atom exp)
 	 (sp1atrig2 fn exp))
 	((eq fn (zl-get (caar exp) '$inverse))
-	 (sp1 (cadr exp)))
+	 ;; Punt to general simplifier, which has fairly extensive and more careful treatment of trig inverses.
+     ;; Start over with SP1 only if it looks like the simplifier was able to do something.
+     (let*
+       ((fn-exp (list (list fn) exp))
+        (fn-exp-1 (resimplify fn-exp)))
+       (if (alike1 fn-exp-1 fn-exp) fn-exp (sp1 fn-exp-1))))
 	(t (sp1atrig2 fn exp))))
 
 (defun sp1atrig2 (fn exp)

@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -26,16 +26,26 @@
 
 ;; subtitle polylogarithm routines
 
-(declare-top (special $zerobern tlist %e-val))
+;; li has mirror symmetry:
+;;
+;;   li[s](conjugate(z)) = conjugate(li[s](z))
+;;
+;; for z not on the negative real line.
+;;
+;; See http://functions.wolfram.com/10.08.04.0002.01
+(defprop %li t commutes-with-conjugate)
 
-(defun lisimp (expr vestigial z)
-  (declare (ignore vestigial))
-  (let ((s (simpcheck (car (subfunsubs expr)) z))
-        ($zerobern t)
-        (a))
-    (subargcheck expr 1 1 '$li)
-    (setq a (simpcheck (car (subfunargs expr)) z))
+(declare-top (special tlist))
+
+;; Simplifier for li[s](a).
+(def-simplifier (li :subfun-arglist (s)) (a)
+  (let (($zerobern t))
     (or (cond ((zerop1 a) a)
+	      ((and (mnump s) (ratgreaterp s 1) (eql a 1))
+	       ;; li[s](a) = zeta(s) if s > 1 and if a = 1.  We
+	       ;; simplify this only if s is a rational number and a
+	       ;; is the integer 1.
+	       (ftake '%zeta s))
               ((not (integerp s)) ())
               ((= s 1)
                (if (onep1 a)
@@ -69,8 +79,7 @@
 			    ($bfloat result))))
 		     ((integerp s)
 		      (to (bigfloat::li-s-simp s (bigfloat:to a)))))))
-        (eqtest (subfunmakes '$li (ncons s) (ncons a))
-                expr))))
+        (give-up))))
 
 ;; Expand the Polylogarithm li[s](z) for a negative integer parameter s.
 (defun lisimp-negative-integer (s z)
@@ -101,9 +110,53 @@
 	     (complex-bigfloat-numerical-eval-p arg))
 	 (to (bigfloat::li2numer (bigfloat:to ($rectform ($bfloat arg))))))
         ((alike1 arg '((rat) 1 2))
+         ;; li[2](1/2) = zeta(2)/2-log(2)^2/2
+         ;;            = %pi^2/12-log(2)^2/2
          (add (div (take '(%zeta) 2) 2)
               (mul '((rat simp) -1 2)
-                   (power (take '(%log) 2) 2))))))
+                   (power (take '(%log) 2) 2))))
+        ((eql arg 2)
+         ;; li[2](2) = %pi^2/4 - %i*%pi*log(2)
+         ;;
+         ;; See http://functions.wolfram.com/10.07.03.0007.01.  But
+         ;; this also follows from https://dlmf.nist.gov/25.12.E4:
+         ;;
+         ;; li[2](z) + li[2](1/z) = -%pi^2/6-log(-z)^2/2
+         ;;
+         ;; with z = 2.
+         (sub (div (power '$%pi 2)
+                   4)
+              (mul '$%pi '$%i (ftake '%log 2))))
+        ((eq arg '$%i)
+         ;; li[2](%i) = %i*%catalan - %pi^2/48
+         ;;
+         ;; See http://functions.wolfram.com/10.07.03.0008.01
+         (sub (mul '$%i '$%catalan)
+              (mul '$%pi '$%pi (div 1 48))))
+        ((alike1 arg (neg '$%i))
+         ;; li[2](-%i) = -%i*%catalan - %pi^2/48
+         ;;
+         ;; See http://functions.wolfram.com/10.07.03.0009.01, but
+         ;; this follows from the mirror symmetry: li[2](conjugate(z))
+         ;; = conjugate(li[2](z)), which holds when z is not on the
+         ;; negative real line.
+         (sub (mul -1 '$%i '$%catalan)
+              (mul '$%pi '$%pi (div 1 48))))
+        ((alike1 arg (sub 1 '$%i))
+         ;; li[2](1 - %i) = %pi^2/16 - %i*%catalan - %pi*%i*log(2)/4
+         ;;
+         ;; See http://functions.wolfram.com/10.07.03.0010.01
+         (sub (div (power '$%pi 2) 16)
+              (add (mul '$%i '$%catalan)
+                   (mul '$%pi '$%i (div 1 4) (ftake '%log 2)))))
+        ((alike1 arg (add 1 '$%i))
+         ;; li[2](1 + %i) = %pi^2/16 + %i*%catalan + %pi*%i*log(2)/4
+         ;;
+         ;; See http://functions.wolfram.com/10.07.03.0011.01, but
+         ;; this also follows from mirror symmetry.
+         (add (div (power '$%pi 2) 16)
+              (mul '$%i '$%catalan)
+              (mul '$%pi '$%i (div 1 4) (ftake '%log 2)))))) 
 
 (defun li3simp (arg)
   (cond ((or (float-numerical-eval-p arg)
@@ -151,13 +204,16 @@
 ;; equation 11.1
 (defun li-asymptotic-expansion (pw s z)
   (m+l (loop for k from 0 to pw collect
-	     (m* (m^ -1 k)
-		 (m- 1 (m^ 2 (m- 1 (m* 2 k))))
-		 (m^ (m* 2 '$%pi) (m* 2 k))
-		 (m// ($bern (m* 2 k))
-		      `((mfactorial) ,(m* 2 k)))
-		 (m// (m^ `((%log) ,(m- z)) (m- 2 (m* 2 k))) 
-		      ($gamma (m+ s 1 (m* -2 k))))))))
+	     (if (and ($integerp k)
+		      (mgqp 0 (m+ s 1 (m* -2 k) )))
+		 0 ;; gamma in denominator below is infinite, this term is 0
+		 (m* (m^ -1 k)
+		     (m- 1 (m^ 2 (m- 1 (m* 2 k))))
+		     (m^ (m* 2 '$%pi) (m* 2 k))
+		     (m// (ftake '%bern (m* 2 k))
+			  `((mfactorial) ,(m* 2 k)))
+		     (m// (m^ `((%log) ,(m- z)) (m- s (m* 2 k)))
+			  ($gamma (m+ s 1 (m* -2 k)))))))))
 
 ;; Numerical evaluation for Chebyschev expansions of the first kind
 
@@ -240,27 +296,10 @@
 
 ;; subtitle polygamma routines
 
-;; gross efficiency hack, exp is a function of *k*, *k* should be mbind'ed
-
-(defun msum (exp lo hi)
-  (if (< hi lo)
-      0
-      (let ((sum 0))
-	(do ((*k* lo (1+ *k*)))
-	    ((> *k* hi) sum)
-	  (declare (special *k*))
-	  (setq sum (add2 sum (meval exp)))))))
-
-
 (defun pole-err (exp)
-  (declare (special errorsw))
   (cond (errorsw (throw 'errorsw t))
 	(t (merror (intl:gettext "Pole encountered in: ~M") exp))))
 
-
-(declare-top (special $maxpsiposint $maxpsinegint $maxpsifracnum $maxpsifracdenom))
-
-(defprop $psi psisimp specsimp)
 
 ;; Integral of psi function psi[n](x)
 (putprop '$psi
@@ -275,135 +314,195 @@
       (t nil))))
      'integral)
 
-(mapcar #'(lambda (var val)
-	    (and (not (boundp var)) (setf (symbol-value var) val)))
-	'($maxpsiposint $maxpsinegint $maxpsifracnum $maxpsifracdenom)
-	'(20. -10. 6 6))
 
-(defun psisimp (expr a z)
-  (let ((s (simpcheck (car (subfunsubs expr)) z)))
-    (subargcheck expr 1 1 '$psi)
-    (setq a (simpcheck (car (subfunargs expr)) z))
-    (and (setq z (integer-representation-p a))
+;; Simplifier for psi[s](a).
+(def-simplifier (psi :subfun-arglist (s)) (a)
+  (let ((z (integer-representation-p a)))
+    (and z
          (< z 1)
-         (pole-err expr))
-    (eqtest (psisimp1 s a) expr)))
+         (pole-err form)))
+  (labels
+      ((msum (exp lo hi)
+         ;; Compute the sum(exp(k), k, lo, hi).  EXP must be a
+         ;; function that takes a single arg which is the index of the
+         ;; summation.  If HI < LO, immediately return 0.
+         (if (< hi lo)
+             0
+             (let ((sum 0))
+	       (do ((k lo (1+ k)))
+	           ((> k hi) sum)
+	         (setq sum (add2 sum (funcall exp k)))))))
+       (psisimp1 (s a)
+         ;; This gets pretty hairy now.
 
-;; This gets pretty hairy now.
-
-(defun psisimp1 (s a)
-  (let ((*k*))
-    (declare (special *k*))
-    (or
-     (and (integerp s) (>= s 0) (mnumericalp a)
-	  (let (($float2bf t)) ($float (mfuncall '$bfpsi s a 18))))
-     (and (integerp s) (>= s 0) ($bfloatp a)
-	  (mfuncall '$bfpsi s a $fpprec))
-     (and (not $numer) (not $float) (integerp s) (> s -1)
-	  (cond
-	    ((integerp a)
-	     (and (not (> a $maxpsiposint)) ; integer values
-		  (m*t (expt -1 s) (factorial s)
-		       (m- (msum (inv (m^t '*k* (1+ s))) 1 (1- a))
-			   (cond ((zerop s) '$%gamma)
-				 (($zeta (1+ s))))))))
-	    ((or (not (ratnump a)) (ratgreaterp a $maxpsiposint)) ())
-	    ((ratgreaterp a 0)
-	     (cond
-	       ((ratgreaterp a 1)
-		(let* ((int ($entier a)) ; reduction to fractional values
-		       (frac (m-t a int)))
-		  (m+t
-		   (psisimp1 s frac)
-		   (if (> int $maxpsiposint)
-		       (subfunmakes '$psi (ncons s) (ncons int))
+         (or
+          (and (integerp s) (>= s 0) (mnumericalp a)
+	       (let (($float2bf t)) ($float (mfuncall '$bfpsi s a 18))))
+          (and (integerp s) (>= s 0) ($bfloatp a)
+	       (mfuncall '$bfpsi s a $fpprec))
+          (and (not $numer) (not $float) (integerp s) (> s -1)
+	       (cond
+	         ((integerp a)
+                  ;; For s >= 1,
+                  ;;   psi[s](a) = (-1)^(s+1)*s!*(zeta(1+s) - sum(1/k^(s+1),k,1,a-1)
+                  ;;
+                  ;; The same formula can be used for s = 0 if we
+                  ;; replace zeta(1) with -%gamma.
+                  ;;
+                  ;; See https://en.wikipedia.org/wiki/Polygamma_function
+                  ;;
+                  ;; The computation below is
+                  ;;
+                  ;;   psi[s](a) = (-1)^s*s!*(sum(1/k^(s+1),k,1,a-1) - zeta(1+s))
+	          (and (not (> a $maxpsiposint)) ; integer values
 		       (m*t (expt -1 s) (factorial s)
-			    (msum (m^t (m+t (m-t a int) '*k*)
-				       (1- (- s)))
-				  0 (1- int)))))))
-	       ((= s 0)
-		(let ((p (cadr a)) (q (caddr a)))
-		  (cond
-		    ((or (> p $maxpsifracnum)
-			 (> q $maxpsifracdenom) (bignump p) (bignump q)) ())
-		    ((and (= p 1)
-			  (cond ((= q 2)
-				 (m+ (m* -2 '((%log) 2)) (m- '$%gamma)))
-				((= q 3)
-				 (m+ (m* '((rat simp) -1 2)
-					 (m^t 3 '((rat simp) -1 2)) '$%pi)
-				     (m* '((rat simp) -3 2) '((%log) 3))
-				     (m- '$%gamma)))
-				((= q 4)
-				 (m+ (m* '((rat simp) -1 2) '$%pi)
-				     (m* -3 '((%log) 2)) (m- '$%gamma)))
-				((= q 6)
-				 (m- (m+ (m* '((rat simp) 3 2) '((%log) 3))
-					 (m* 2 '((%log) 2))
-					 (m* '((rat simp) 1 2) '$%pi
-					     (m^t 3 '((rat simp) 1 2)))
-					 '$%gamma))))))
-		    ((and (= p 2) (= q 3))
-		     (m+ (m* '((rat simp) 1 2)
-			     (m^t 3 '((rat simp) -1 2)) '$%pi)
-			 (m* '((rat simp) -3 2) '((%log) 3))
-			 (m- '$%gamma)))
-		    ((and (= p 3) (= q 4))
-		     (m+ (m* '((rat simp) 1 2) '$%pi)
-			 (m* -3 '((%log) 2)) (m- '$%gamma)))
-		    ((and (= p 5) (= q 6))
-		     (m- (m* '((rat simp) 1 2) '$%pi
-			     (m^t 3 '((rat simp) 1 2)))
-			 (m+ (m* '((rat simp) 3 2) '((%log) 3))
-			     (m* 2 '((%log) 2))
-			     '$%gamma)))
-		    ;; Gauss's Formula
-		    ((let ((f (m* `((%cos) ,(m* 2 a '$%pi '*k*))
-				  `((%log) ,(m-t 2 (m* 2 `((%cos)
-							   ,(m//t (m* 2 '$%pi '*k*)
-								  q))))))))
-		       (m+t (msum f 1 (1- (truncate q 2)))
-			    (let ((*k* (truncate q 2)))
-			      (declare (special *k*))
-			      (m*t (meval f)
-				   (cond ((oddp q) 1)
-					 ('((rat simp) 1 2)))))
-			    (m-t (m+ (m* '$%pi '((rat simp) 1 2)
-					 `((%cot) ((mtimes simp) ,a $%pi)))
-				     `((%log) ,q)
-				     '$%gamma))))))))
-	       ((alike1 a '((rat) 1 2))
-		(m*t (expt -1 (1+ s)) (factorial s)
-		     (1- (expt 2 (1+ s))) (simplify ($zeta (1+ s)))))
-	       ((and (ratgreaterp a '((rat) 1 2))
-		     (ratgreaterp 1 a))
-		(m*t
-		 (expt -1 s)
-		 (m+t (psisimp1 s (m- 1 a))
-		      (let ((dif (m* '$%pi
-				     ($diff `((%cot) ,(m* '$%pi '$z)) '$z s)))
-			    ($z (m-t a)))
-			(declare (special $z))
-			(meval dif)))))))
-	    ((ratgreaterp a $maxpsinegint)  ;;; Reflection Formula
-	     (m*t
-	      (expt -1 s)
-	      (m+t (m+t (psisimp1 s (m- a))
-			(let ((dif (m* '$%pi
-				       ($diff `((%cot) ,(m* '$%pi '$z)) '$z s)))
-			      ($z (m-t a)))
-			  (declare (special $z))
-			  (meval dif)))
-		   (m*t (factorial s) (m^t (m-t a) (1- (- s)))))))))
-     (subfunmakes '$psi (ncons s) (ncons a)))))
-
-
+		            (m- (msum #'(lambda (k)
+                                          (inv (m^t k (1+ s))))
+                                      1 (1- a))
+			        (cond ((zerop s) '$%gamma)
+				      (($zeta (1+ s))))))))
+	         ((or (not (ratnump a)) (ratgreaterp a $maxpsiposint)) ())
+	         ((ratgreaterp a 0)
+	          (cond
+	            ((ratgreaterp a 1)
+		     (let* ((int ($entier a)) ; reduction to fractional values
+		            (frac (m-t a int)))
+                       ;; Uses the recurrence relation
+                       ;;
+                       ;; psi[s](z+m) = psi[s](z) + (-1)^s*s!*sum(1/(z+k)^(s+1),k,0,m-1)
+                       ;;
+                       ;; where a = z + m, m = int, frac = a - int.
+		       (m+t
+		        (psisimp1 s frac)
+		        (if (> int $maxpsiposint)
+                            (give-up :fun-args (list frac))
+		            (m*t (expt -1 s) (factorial s)
+			         (msum #'(lambda (k)
+                                           (m^t (m+t (m-t a int) k)
+				                (1- (- s))))
+				       0 (1- int)))))))
+	            ((= s 0)
+		     (let ((p (cadr a)) (q (caddr a)))
+                       ;; a is a rational of the form p/q.
+                       (cond
+		         ((or (> p $maxpsifracnum)
+			      (> q $maxpsifracdenom)
+                              (bignump p) (bignump q))
+                          ;; Give up if the numerator or denominator is too big.
+                          ())
+                         ;; These can be found at
+                         ;; https://mathworld.wolfram.com/GausssDigammaTheorem.html
+		         ((and (= p 1)
+			       (cond ((= q 2)
+                                      ;; psi[0](1/2) = -%gamma - log(4)
+				      (m+ (m* -2 '((%log) 2)) (m- '$%gamma)))
+				     ((= q 3)
+                                      ;; psi[0](1/3) = -3/2*log(3)-%pi/(2*sqrt(3))-%gamma
+				      (m+ (m* '((rat simp) -1 2)
+					      (m^t 3 '((rat simp) -1 2)) '$%pi)
+				          (m* '((rat simp) -3 2) '((%log) 3))
+				          (m- '$%gamma)))
+				     ((= q 4)
+                                      ;; psi[0](1/4) = -%pi/2-log(8)-%gamma
+				      (m+ (m* '((rat simp) -1 2) '$%pi)
+				          (m* -3 '((%log) 2)) (m- '$%gamma)))
+				     ((= q 6)
+                                      ;; psi[0](1/6) = -%gamma -sqrt(3)*%pi/2-2*log(2)-3/2*log(3)
+				      (m- (m+ (m* '((rat simp) 3 2) '((%log) 3))
+					      (m* 2 '((%log) 2))
+					      (m* 1//2 '$%pi
+					          (m^t 3 1//2))
+					      '$%gamma))))))
+		         ((and (= p 2) (= q 3))
+                          ;; psi[0](2/3) = (sqrt(3)*%pi-9*log(3))/6-%gamma
+		          (m+ (m* 1//2
+			          (m^t 3 '((rat simp) -1 2)) '$%pi)
+			      (m* '((rat simp) -3 2) '((%log) 3))
+			      (m- '$%gamma)))
+		         ((and (= p 3) (= q 4))
+                          ;; psi[0](3/4) = %pi/2-log(8)-%gamma
+		          (m+ (m* 1//2 '$%pi)
+			      (m* -3 '((%log) 2)) (m- '$%gamma)))
+		         ((and (= p 5) (= q 6))
+                          ;; psi[0](5/6) = -%gamma+sqrt(3)*%pi/2-2*log(2)-3/2*log(3)
+		          (m- (m* 1//2 '$%pi
+			          (m^t 3 1//2))
+			      (m+ (m* '((rat simp) 3 2) '((%log) 3))
+			          (m* 2 '((%log) 2))
+			          '$%gamma)))
+		         ;; Gauss's Formula.
+                         ;;
+                         ;; psi[0](p/q) = -%gamma - log(2*q) - %pi/2*cot(p/q*%pi)
+                         ;;   + 2 * sum(cos(2*%pi*p*k/q)*log(sin(%pi*k/q)), k, 1, floor(q/2)-1).
+                         ;;
+                         ;; However, the formula here is different.
+                         ;; Instead of log(sin(%pi*k/q)), we use
+                         ;; log(sin((2*%pi*k/q)/2)) and the
+                         ;; halfangle formula to get
+                         ;;
+                         ;;   log(sqrt(1-cos(2*%pi*k/q))/sqrt(2)) =
+                         ;;     1/2*log(1-cos(2*%pi*k/q)) - log(2)/2.
+                         ;;
+		         ((let ((f (lambda (k)
+                                     (m* `((%cos) ,(m* 2 a '$%pi k))
+				         `((%log) ,(m-t 2
+                                                       (m* 2 `((%cos)
+							       ,(m//t (m* 2 '$%pi k)
+								    q)))))))))
+		            (m+t (msum f 1 (1- (truncate q 2)))
+			         (m*t (funcall f (truncate q 2))
+                                      (if (oddp q)
+                                          1
+                                          1//2))
+			         (m-t (m+ (m* '$%pi 1//2
+					      `((%cot) ((mtimes simp) ,a $%pi)))
+				          `((%log) ,q)
+				          '$%gamma))))))))
+	            ((alike1 a '((rat) 1 2))
+                     ;; psi[s](1/2) = (-1)^(s+1)*s!*(2^(s+1)-1)*zeta(s+1)
+                     ;; See https://dlmf.nist.gov/5.15.E3
+		     (m*t (expt -1 (1+ s)) (factorial s)
+		          (1- (expt 2 (1+ s))) (simplify ($zeta (1+ s)))))
+	            ((and (ratgreaterp a '((rat) 1 2))
+		          (ratgreaterp 1 a))
+                     ;; psi[s](a) where a > 1/2 and 1 > a.
+                     ;;
+                     ;; From https://dlmf.nist.gov/5.15.E6:
+                     ;;
+                     ;;   psi[s](1-z) + (-1)^(s-1)*psi[s](z) = (-1)^s*%pi*diff(cot(%pi*z),z,s)
+                     ;;
+                     ;; Solve for psi[s](z):
+                     ;;
+                     ;;   psi[s](z) = -%pi*diff(cot(%pi*z),z,s) - (-1)^(s-1)*psi[s](1-z)
+                     ;;             = (-1)^s*%pi*diff(cot(-%pi*z),z,s) + (-1)^s*psi[s](1-z)
+                     ;;             = (-1)^s*(psi[s](1-z) + %pi*diff(cot(-%pi*z),z,s))
+		     (m*t
+		      (expt -1 s)
+		      (m+t (psisimp1 s (m- 1 a))
+		           (let ((dif (m* '$%pi
+				          ($diff `((%cot) ,(m* '$%pi '$z)) '$z s)))
+			         ($z (m-t a)))
+			     (declare (special $z))
+			     (meval dif)))))))
+	         ((ratgreaterp a $maxpsinegint) ;;; Reflection Formula
+	          (m*t
+	           (expt -1 s)
+	           (m+t (m+t (psisimp1 s (m- a))
+			     (let ((dif (m* '$%pi
+				            ($diff `((%cot) ,(m* '$%pi '$z)) '$z s)))
+			           ($z (m-t a)))
+			       (declare (special $z))
+			       (meval dif)))
+		        (m*t (expt -1 s) (factorial s) (m^t (m-t a) (1- (- s)))))))))
+          (give-up :fun-args (list a)))))
+    (psisimp1 s a)))
+  
 ;; subtitle polygamma tayloring routines
 
 ;; These routines are specially coded to be as fast as possible given the
 ;; current $TAYLOR; too bad they have to be so ugly.
 
-(declare-top (special var subl *last* sign last-exp))
+(declare-top (special var))
 
 (defun expgam-fun (pw temp)
   (setq temp (get-datum (get-key-var (car var))))
@@ -417,8 +516,8 @@
   (setq subl (car subl))
   (if (or (not (integerp subl)) (< subl -1))
       (tay-err "Unable to expand at a subscript in")
-      (prog ((e 0) (sign 0) npw)
-	 (declare (fixnum e) (fixnum sign))
+      (prog ((e 0) (sf-sign 0) npw sf-last)
+	 (declare (fixnum e) (fixnum sf-sign))
 	 (setq npw (/ (float (car pw)) (float (cdr pw))))
 	 (setq
 	  l (cond ((= subl -1)
@@ -428,33 +527,39 @@
 			 (if (> 0.0 npw) ()
 			     `(((0 . 1)
 				. ,(prep1 '((mtimes) -1 $%gamma)))))))
-		  (t (setq *last* (factorial subl))
+		  (t (setq sf-last (factorial subl))
 		     `(((,(- (1+ subl)) . 1)
 			,(* (expt -1 (1+ subl))
 				(factorial subl)) . 1))))
 	  e (if (< subl 1) (- subl) -1)
-	  sign (if (< subl 1) -1 (expt -1 subl)))
-	 a (setq e (1+ e) sign (- sign))
+	  sf-sign (if (< subl 1) -1 (expt -1 subl)))
+	 a (setq e (1+ e) sf-sign (- sf-sign))
 	 (if (> e npw) (return l)
 	     (rplacd (last l)
 		     `(((,e . 1)
-			. ,(rctimes (rcplygam e)
+			. ,(rctimes (rcplygam e sf-sign subl sf-last)
 				    (prep1 ($zeta (+ (1+ subl) e))))))))
 	 (go a))))
 
-(defun rcplygam (k)
+(defun rcplygam (k sf-sign subl sf-last)
   (declare (fixnum k) )
-  (cond ((= subl -1) (cons sign k))
-	((= subl 0) (cons sign 1))
+  (cond ((= subl -1) (cons sf-sign k))
+	((= subl 0) (cons sf-sign 1))
 	(t (prog1
-	       (cons (* sign *last*) 1)
-	     (setq *last*
-		   (quot (* *last* (+ subl (1+ k)))
+	       (cons (* sf-sign sf-last) 1)
+	     (setq sf-last
+		   (quot (* sf-last (+ subl (1+ k)))
 			 (1+ k)))))))
 
 (defun plygam-ord (subl)
-  (if (equal (car subl) -1) (ncons (rcone))
-      `((,(m- (m1+ (car subl))) . 1))))
+  (let ((sub (car subl)))
+    (cond
+      ((equal sub -1)
+        (ncons (rcone)))
+      ((or (not (integerp sub)) (< sub -1))
+        (tay-err "Unable to expand at a subscript in"))
+      (t
+        `((,(m- (m1+ sub)) . 1))))))
 
 (defun plygam-pole (a c func)
   (if (rcmintegerp c)
@@ -510,8 +615,6 @@
 	       (tsprsum `((mexpt) ,(m+t a '%%taylor-index%%) ,(- (1+ sub)))
 			`(%%taylor-index%% 0 ,(- (1+ const))) '%sum))))))))
 
-(declare-top (unspecial var subl *last* sign last-exp))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Lambert W function
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -536,31 +639,15 @@
 ;; Berlin, 2003, 780-789. DOI 10.1007/3-540-44839-X_82
 ;; http://homepages.physik.uni-muenchen.de/~Winitzki/papers/
 ;;
-;; Darko Verebic, 
+;; Darko Veberic, 
 ;; Having Fun with Lambert W(x) Function
 ;; arXiv:1003.1628v1, March 2010, http://arxiv.org/abs/1003.1628
 ;;
 ;; See also http://en.wikipedia.org/wiki/Lambert's_W_function
 
-(defmfun $lambert_w (z)
-  (simplify (list '(%lambert_w) (resimplify z))))
-
-;;; Set properties to give full support to the parser and display
-(defprop $lambert_w %lambert_w alias)
-(defprop $lambert_w %lambert_w verb)
-(defprop %lambert_w $lambert_w reversealias)
-(defprop %lambert_w $lambert_w noun)
-
-;;; lambert_w is a simplifying function
-(defprop %lambert_w simp-lambertw operators)
-
 ;;; Derivative of lambert_w
-(defprop %lambert_w
-  ((x) 
-   ((mtimes)
-    ((mexpt) $%e ((mtimes ) -1 ((%lambert_w) x)))
-    ((mexpt) ((mplus) 1 ((%lambert_w) x)) -1)))
-  grad)
+(defgrad %lambert_w ($x)
+  #$$%e^-lambert_w(x)/(lambert_w(x)+1)$)
 
 ;;; Integral of lambert_w
 ;;; integrate(W(x),x) := x*(W(x)^2-W(x)+1)/W(x)
@@ -575,14 +662,11 @@
     ((mexpt) ((%lambert_w) x) -1)))
   integral)
 
-(defun simp-lambertw (x yy z)
-  (declare (ignore yy))
-  (oneargcheck x)
-  (setq x (simpcheck (cadr x) z))
+(def-simplifier lambert_w (x)
   (cond ((equal x 0) 0)
 	((equal x 0.0) 0.0)
 	((zerop1 x) ($bfloat 0))	;bfloat case
-	((alike1 x '$%e)
+	((eq x '$%e)
 	 ;; W(%e) = 1
 	 1)
 	((alike1 x '((mtimes simp) ((rat simp) -1 2) ((%log simp) 2)))
@@ -602,7 +686,7 @@
 	    (to (bigfloat::lambert-w-k 0 (bigfloat:to x)))))
 	((complex-bigfloat-numerical-eval-p x)
 	 (to (bigfloat::lambert-w-k 0 (bigfloat:to x))))
-	(t (list '(%lambert_w simp) x))))
+	(t (give-up))))
 
 ;; An approximation of the k-branch of generalized Lambert W function
 ;;   k integer
@@ -610,9 +694,9 @@
 ;; Used as initial guess for Halley's iteration. 
 ;; When W(z) is real, ensure that guess is real.
 (defun init-lambert-w-k (k z)
-  (let ( ; parameters for k = +/- 1 near branch pont z=-1/%e
+  (let ( ; parameters for k = +/- 1 near branch point z=-1/%e
         (branch-eps 0.2e0)
-	(branch-point (/ -1 %e-val))) ; branch pont z=-1/%e
+	(branch-point (/ -1 %e-val))) ; branch point z=-1/%e
     (cond 
       ; For principal branch k=0, use expression by Winitzki
       ((= k 0) (init-lambert-w-0 z))
@@ -655,7 +739,7 @@
 ;; Approximate k=-1 branch of Lambert's W function over -1/e < z < 0. 
 ;; W(z) is real, so we ensure the starting guess for Halley iteration 
 ;; is also real.
-;; Verebic (2010)
+;; Veberic (2010)
 (defun init-lambert-w-minus1 (z)
   (cond 
     ((not (realp z)) 
@@ -673,7 +757,7 @@
 	 (dotimes (k maxiter w)
             (setq w (- ln-z (log (- w)))))))))
 
-(in-package #-gcl #:bigfloat #+gcl "BIGFLOAT")
+(in-package #:bigfloat)
 
 ;; Approximate Lambert W(k,z) for k=1 and k=-1 near branch point z=-1/%e
 ;; using power series in y=-sqrt(2*%e*z+2)
@@ -681,7 +765,7 @@
 ;;   for im(z) >= 0, approximates k=-1  branch
 ;;
 ;; Corless et al (1996) (4.22)
-;; Verebic (2010)
+;; Veberic (2010)
 ;;
 ;; z is a real or complex bigfloat: 
 (defun lambert-branch-approx (z)
@@ -769,8 +853,7 @@
 ;; k integer
 ;; z, w bigfloat: numbers
 (defun check-lambert-w-k (k w z)
-  (let ((tolerance #-gcl 1.0e-6
-                   #+gcl (cl:float 1/1000000)))
+  (let ((tolerance 1.0e-6))
   (if
      (cond 
        ;; k=-1 branch with z and w real.
@@ -797,26 +880,14 @@
 ;;; Generalized Lambert W function
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmfun $generalized_lambert_w (k z)
-  (simplify (list '(%generalized_lambert_w) (resimplify k) (resimplify z))))
-
-;;; Set properties to give full support to the parser and display
-(defprop $generalized_lambert_w %generalized_lambert_w alias)
-(defprop $generalized_lambert_w %generalized_lambert_w verb)
-(defprop %generalized_lambert_w $generalized_lambert_w reversealias)
-(defprop %generalized_lambert_w $generalized_lambert_w noun)
-
-;;; lambert_w is a simplifying function
-(defprop %generalized_lambert_w simp-generalized-lambertw operators)
 
 ;;; Derivative of lambert_w
-(defprop %generalized_lambert_w
-  ((k x)
-   nil
-   ((mtimes)
-    ((mexpt) $%e ((mtimes ) -1 ((%generalized_lambert_w) k x)))
-    ((mexpt) ((mplus) 1 ((%generalized_lambert_w) k x)) -1)))
-  grad)
+(defgrad %generalized_lambert_w ($k $x)
+  ;; wrt k
+  nil
+  ;; wrt x
+  #$$ %e^-generalized_lambert_w(k,x)/(generalized_lambert_w(k,x)+1)$
+  )
 
 ;;; Integral of lambert_w
 ;;; integrate(W(k,x),x) := x*(W(k,x)^2-W(k,x)+1)/W(k,x)
@@ -832,22 +903,81 @@
     ((mexpt) ((%generalized_lambert_w) k x) -1)))
   integral)
 
-(defun simp-generalized-lambertw (expr ignored z)
-  (declare (ignore ignored))
-  (twoargcheck expr)
-  (let ((k (simpcheck (cadr expr) z))
-        (x (simpcheck (caddr expr) z)))
+(def-simplifier generalized_lambert_w (k x)
+  (flet ((test-for-integer (arg)
+	   ;; The ARG must be some kind of number acceptable to
+	   ;; BIGFLOAT:TO.  If ARG is numerically equal to an integer,
+	   ;; return the integer value.  Otherwise, return NIL.
+	   (let* ((new-arg (bigfloat:to arg))
+		  (arg-truncate (bigfloat:truncate new-arg)))
+	     (when (bigfloat:= arg-truncate new-arg)
+	       arg-truncate))))
     (cond
-     ;; Numerical evaluation for real or complex x
-     ((and (integerp k) (complex-float-numerical-eval-p x))
+      ;; Numerical evaluation for real or complex x
+      ((complex-float-numerical-eval-p k x)
        ;; x may be an integer.  eg "generalized_lambert_w(0,1),numer;"
-       (if (integerp x) 
-	   (to (bigfloat::lambert-w-k k (bigfloat:to ($float x))))
-	   (to (bigfloat::lambert-w-k k (bigfloat:to x)))))
-     ;; Numerical evaluation for real or complex bigfloat x
-     ((and (integerp k) (complex-bigfloat-numerical-eval-p x))
-      (to (bigfloat::lambert-w-k k (bigfloat:to x))))
-     (t (list '(%generalized_lambert_w simp) k x)))))
+       ;; Also, we can only evaluate this if k is equal to an integer.
+       (let ((k-int (test-for-integer k)))
+	 (cond (k-int
+		(if (integerp x) 
+		    (to (bigfloat::lambert-w-k k-int (bigfloat:to ($float x))))
+		    (to (bigfloat::lambert-w-k k-int (bigfloat:to x)))))
+	       (t
+		(give-up)))))
+      ;; Numerical evaluation for real or complex bigfloat x
+      ((complex-bigfloat-numerical-eval-p k x)
+       (let ((k-int (test-for-integer k)))
+	 (cond (k-int
+		(to (bigfloat::lambert-w-k k-int (bigfloat:to x))))
+	       (t
+		(give-up)))))
+      (t
+       (give-up)))))
+
+;; References:
+;;  - https://en.wikipedia.org/wiki/Bateman_function 
+;;  - https://www.researchgate.net/publication/350992070_The_Bateman_Functions_Revisited_After_90_Years_--_A_Survey_of_Old_and_New_Results
+;;
+;; 
+(def-simplifier (kbateman :subfun-arglist (v)) (z)
+  (let ((vn (integer-representation-p v)))
+    (cond
+      ((and vn (>= vn 0))
+       ;; kbateman[n](z), for integer n >= 0
+       (let ((signz (asksign z)))
+         (cond
+           ((eq signz '$zero)
+            ;; kbateman[n](0) = 2/%pi/n*sin(%pi*n/2)
+            (if (zerop vn)
+                0
+                (mul (div 2 (mul '$%pi vn))
+                     (ftake '%sin (div (mul '$%pi vn) 2)))))
+           ((and (evenp vn) (eq signz '$positive))
+            ;; kbateman[2*n](x) = (-1)^n*x*exp(x)/n!*diff(x^(n-1)*exp(-2*x),x,n)
+            ;; for x >= 0.
+            (let ((n (/ vn 2))
+                  (zarg (gensym)))
+              ;; Handle small n directly and use the formula for larger values.
+              (cond
+                ((= n 0)
+                 (ftake '%exp (neg z)))
+                ((= n 1)
+                 (mul 2 z (ftake '%exp (neg z))))
+                ((= n 2)
+                 (mul 2 z (sub z 1)
+                      (ftake '%exp (neg z))))
+                (t
+                 ($factor
+                  ($substitute z zarg
+                               (mul
+                                (div (mul (expt -1 n) zarg (ftake '%exp zarg))
+                                     (ftake '%gamma (add 1 n)))
+                                ($diff (mul (power zarg (sub n 1))
+                                            (ftake '%exp (mul -2 zarg)))
+                                       zarg
+                                       n))))))))
+           (t (give-up)))))
+      (t (give-up)))))
 
 (in-package "BIGFLOAT")
 
@@ -938,8 +1068,19 @@
 			     (* (/ lg 6)
 				(+ (* lg lg) (* dpi dpi))))))
 		 result))
-	  ((> (abs x) .9)
-	   (li-using-powers-of-log 3 x))
+	  ((> (abs x) series-threshold)
+	   (let ((result (li-using-powers-of-log 3 x)))
+	     ;; For real x, li-using-power-of-log can return a complex
+	     ;; number with a tiny imaginary part.  Get rid of that
+	     ;; when x is real.
+	     (if (realp x)
+		 (realpart result)
+		 result)))
+	  ;; Don't use the identity below because the identity seems
+	  ;; to be incorrect.  For example, for x = -0.862 it returns
+	  ;; a complex value with an imaginary part that is not close
+	  ;; to zero as expected.
+	  #+nil
 	  ((> (abs x) series-threshold)
 	   ;; The series converges too slowly so use the identity:
 	   ;;
@@ -960,7 +1101,7 @@
 	     (incf s (/ (* dpi dpi u) 6))
 	     (decf s (li3numer (- (/ xc x))))
 	     (decf s (li3numer xc))
-	     (incf s (li3numer 1))))
+	     (incf s (li3numer (float 1 x)))))
 	  (t
 	   ;; Sum the power series.  threshold determines when the
 	   ;; summation has converted.
@@ -1097,7 +1238,15 @@
 	    ;; Return the result and the number of terms used for
 	    ;; helping in determining the series threshold and the
 	    ;; log-series threshold.
-	    (values sum k))
+	    ;;
+	    ;; Note that if z is real and less than 0, li[s](z) is
+	    ;; real.  The series can return a tiny complex value in
+	    ;; this case, so we want to clear that out before
+	    ;; returning the answer.
+	    (values (if (and (realp z) (minusp z))
+			(realpart sum)
+			sum)
+		    k))
 	(when *debug-li-eval*
 	  (format t "~3d: ~A / ~A = ~A~%" k top bot term))
 	(incf sum term)
@@ -1187,3 +1336,42 @@
 	   (values (polylog-log-series s z)))
 	  ((> (abs z) 1.5)
 	   (polylog-inversion-formula s z)))))
+
+
+;;; Computation of Catalan's constant
+(in-package #:bigfloat)
+;;
+;; catalan = 1/2*sum(a[n], k, 0, inf)
+;;
+;;  a[n] = (-8)^k*(3*k+2)/((2*k+1)^3*binomial(2*k,k)^3)
+;;
+;; This is the first of the other quickly converging series from
+;; https://en.wikipedia.org/wiki/Catalan%27s_constant
+;;
+;; There are other quickly converging series given in the Wikipedia
+;; article, that might work better, but this one has relatively simple
+;; form and is an alternating series so it's easy to know when to
+;; stop.
+;;
+;; This is an alternating series, so we can stop when the computed
+;; term is below our desired accuracy.
+;;
+;; The ratio between successive terms is
+;;
+;;   a[n+1]/a[n] = -(3*k+5)/(3*k+2)*((k+1)/(2*k+3))^3
+;;
+
+(defun comp-catalan (prec)
+  (let* ((limit (expt 2 (- prec))))
+    (do ((k 0 (+ k 1))
+         (a (bigfloat 2)
+            (* -1 a (* (/ (+ (* 3 k) 5)
+                          (+ (* 3 k) 2))
+                       (expt (/ (+ k 1)
+                                (+ (* 2 k) 3))
+                             3))))
+         (sum (bigfloat 0)
+              (+ sum a)))
+        ((< (abs a) limit)
+         (maxima::to (/ sum 2))))))
+

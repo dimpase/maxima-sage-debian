@@ -2,7 +2,7 @@
 * Functions and Variables for lindstedt::
 @end menu
 
-@node Functions and Variables for lindstedt,  , lindstedt-pkg, lindstedt-pkg
+@node Functions and Variables for lindstedt,  , Package lindstedt, Package lindstedt
 @section Functions and Variables for lindstedt
 
 
@@ -42,7 +42,7 @@ T = (- ---- - -- + 1) t]]
 
 To use this function write first @code{load("makeOrders")} and @code{load("lindstedt")}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Differential equations}
 @category{Share packages}
 @category{Package lindstedt}

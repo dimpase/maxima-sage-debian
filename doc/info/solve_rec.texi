@@ -3,7 +3,7 @@
 * Functions and Variables for solve_rec::
 @end menu
 
-@node Introduction to solve_rec, Functions and Variables for solve_rec, solve_rec-pkg, solve_rec-pkg
+@node Introduction to solve_rec, Functions and Variables for solve_rec, Package solve_rec, Package solve_rec
 @section Introduction to solve_rec
 
 @code{solve_rec} is a package for solving linear recurrences with polynomial
@@ -25,20 +25,77 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Linear recurrences}
 @category{Share packages}
 @category{Package solve_rec}
 @closecatbox
 
-@node Functions and Variables for solve_rec,  , Introduction to solve_rec, solve_rec-pkg
+@node Functions and Variables for solve_rec,  , Introduction to solve_rec, Package solve_rec
 @section Functions and Variables for solve_rec
+
+@anchor{harmonic_number}
+@deffn {Function} harmonic_number (@var{x})
+When @var{x} is positive integer @math{n}, @code{harmonic_number} is
+the @math{n}'th harmonic number.  More generally,
+@code{harmonic_number(x) = psi[0](x+1) + %gamma}.  (See @ref{polygamma}).
+
+@c ===beg===
+@c load("simplify_sum")$
+@c harmonic_number(5);
+@c sum(1/k, k, 1, 5);
+@c float(harmonic_number(sqrt(2)));
+@c float(psi[0](1+sqrt(2)))+%gamma;
+@c ===end===
+@example
+(%i1) load("simplify_sum")$
+@group
+(%i2) harmonic_number(5);
+                               137
+(%o2)                          ---
+                               60
+@end group
+@group
+(%i3) sum(1/k, k, 1, 5);
+                               137
+(%o3)                          ---
+                               60
+@end group
+@group
+(%i4) float(harmonic_number(sqrt(2)));
+(%o4)              %gamma + 0.6601971549171388
+@end group
+@group
+(%i5) float(psi[0](1+sqrt(2)))+%gamma;
+(%o5)              %gamma + 0.6601971549171388
+@end group
+@end example
+@end deffn
+
+@anchor{harmonic_to_psi}
+@deffn {Function} harmonic_to_psi (@var{x})
+Converts expressions with @code{harmonic_number} to the equivalent
+expression involving @code{psi[0]} (see @ref{polygamma}).
+
+@c ===beg===
+@c load("simplify_sum")$
+@c harmonic_to_psi(harmonic_number(sqrt(2)));
+@c ===end===
+@example
+(%i1) load("simplify_sum")$
+@group
+(%i2) harmonic_to_psi(harmonic_number(sqrt(2)));
+(%o2)              psi (sqrt(2) + 1) + %gamma
+                      0
+@end group
+@end example
+@end deffn
 
 @anchor{reduce_order}
 @deffn {Function} reduce_order (@var{rec}, @var{sol}, @var{var})
 
 Reduces the order of linear recurrence @var{rec} when a particular solution
-@var{sol} is known. The reduced reccurence can be used to get other solutions.
+@var{sol} is known. The reduced recurrence can be used to get other solutions.
 
 Example:
 
@@ -92,7 +149,7 @@ So the general solution is
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @closecatbox
 
@@ -107,7 +164,7 @@ simplify products in result.
 
 See also: @mrefdot{solve_rec}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @closecatbox
 
@@ -119,7 +176,7 @@ See also: @mrefdot{solve_rec}
 Tries to simplify all sums appearing in @var{expr} to a closed form.
 
 To use this function first load the @code{simplify_sum} package with
-@code{load(simplify_sum)}.
+@code{load("simplify_sum")}.
 
 Example:
 
@@ -131,7 +188,7 @@ Example:
 @example
 (%i1) load("simplify_sum")$
 @group
-(%i2) sum(binomial(n+k,k)/2^k,k,1,n)+sum(binomial(2*n,2*k),k,1,n);
+(%i2) sum(binomial(n+k,k)/2^k, k, 1, n) + sum(binomial(2*n, 2*k), k, 1,n);
         n                          n
        ====                       ====
        \     binomial(n + k, k)   \
@@ -142,13 +199,12 @@ Example:
 @end group
 @group
 (%i3) simplify_sum(%);
-
                          2 n - 1    n
 (%o3)                   2        + 2  - 2
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @category{Sums and products}
 @category{Simplification functions}
@@ -172,7 +228,7 @@ solutions is exponential in the degree of the leading and trailing
 coefficient.
 
 To use this function first load the @code{solve_rec} package with
-@code{load(solve_rec);}.
+@code{load("solve_rec");}.
 
 Example of linear recurrence with constant coefficients:
 
@@ -236,7 +292,7 @@ Example of Ricatti type recurrence:
 
 See also: @mrefcomma{solve_rec_rat} @mref{simplify_products} and @mrefdot{product_use_gamma}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @closecatbox
 
@@ -249,7 +305,7 @@ Solves for rational solutions to linear recurrences. See solve_rec for
 description of arguments.
 
 To use this function first load the @code{solve_rec} package with
-@code{load(solve_rec);}.
+@code{load("solve_rec");}.
 
 Example:
 
@@ -273,7 +329,7 @@ Example:
 
 See also: @mrefdot{solve_rec}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @closecatbox
 
@@ -288,7 +344,7 @@ into the expression if @code{product_use_gamma} is @code{true}.
 
 See also: @mrefcomma{simplify_products} @mrefdot{solve_rec}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @closecatbox
 
@@ -317,7 +373,7 @@ where summand is hypergeometrical in @var{k} and @var{n}. If @var{lo} and @var{h
 are omitted, they are assumed to be @code{lo = -inf} and @code{hi = inf}.
 
 To use this function first load the @code{simplify_sum} package with
-@code{load(simplify_sum)}.
+@code{load("simplify_sum")}.
 
 Example:
 
@@ -345,7 +401,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package solve_rec}
 @closecatbox
 

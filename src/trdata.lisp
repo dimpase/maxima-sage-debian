@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -23,8 +23,7 @@
 
 ;;I think all this can be done at load time only:--wfs
 (eval-when
-    #+gcl (load eval)
-    #-gcl (:load-toplevel :execute)
+    (:load-toplevel :execute)
 
     (mapc #'(lambda (x) (putprop x '$fixnum 'function-mode))
 	  '($length $nterms $nroots $rank $polysign $time
@@ -62,7 +61,7 @@
 ;;; ELL has just shown a bug with FIRST and REST interaction with
 ;;; DEFMATCH and MATCHDECLARE. The extra simplification needed
 ;;; it seems. LIST mode must be implemented, until then the
-;;; cost of the extra SIMPLFY call is not much compared with the
+;;; cost of the extra SIMPLIFY call is not much compared with the
 ;;; consing involved. Above all, we must have correct code !!!
 
     (mapc #'(lambda (l) (putprop l t 'tr-nosimp))

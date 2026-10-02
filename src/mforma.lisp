@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -149,8 +149,7 @@
 		      (return nil))
 		     (t
 		      (setq parameter (+ (- (char-code char) (char-code #\0))
-					 (* 10. parameter))
-			    parameter-p t)))))
+					 (* 10. parameter)))))))
 
 	    (t
 	     (push char text-temp))))))
@@ -176,7 +175,6 @@
 (def-mformat-var-c |:-FLAG| nil t)
 (def-mformat-var-c |@-FLAG| nil t)
 (def-mformat-var-c parameter 0  t) 
-(def-mformat-var-c parameter-p nil t)
 (def-mformat-var-c text-temp nil nil)
 (def-mformat-var-c code nil nil)
 

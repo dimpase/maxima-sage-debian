@@ -67,7 +67,7 @@ x : 374599943;
 rems : map(lambda([z], mod(x, z)), mods);
 [621, 647, 258];
 
-chinese(rems, mods);
+solve_congruences(rems, mods);
 374599943;
 
 (remvalue(p,fs,g,a,n,mods,x,rems), 0);
@@ -694,3 +694,148 @@ x * %i;
 
 gcfactor (%i / 2);
 %i / 2;
+
+/* Exhaustive testing of zn_determinant and zn_invert_by_lu,
+ * inspired by:
+ * https://stackoverflow.com/questions/68541899/maxima-wrongly-says-a-matrix-is-non-invertible
+ *
+ * Enumerate all matrices of size 2x2 and 3x3 and calculate
+ * zn_determinant and zn_invert_by_lu with modulus = 2.
+ * Repeat with modulus = 3 but process only 2x2 matrices.
+ * There are enough 3x3 matrices with modulus = 3 to cause
+ * trouble with some Lisp implementations; too many arguments.
+ */
+
+(enumerate_matrices_modulo (p, n) :=
+  (enumerate_lists_modulo (p, n^2),
+   map (lambda ([L], reshape_matrix_from_list (L, n)), %%)),
+
+ enumerate_lists_modulo (p, nn) :=
+   if nn = 1
+     then makelist ([i], i, 0, p - 1)
+     else tree_reduce ('append,
+                       map (lambda ([L], makelist (cons (i, L), i, 0, p - 1)),
+                            enumerate_lists_modulo (p, nn - 1))),
+
+ reshape_matrix_from_list (L, n) :=
+   apply ('matrix, makelist (makelist (L[1 + (i - 1)*n + (j - 1)], j, 1, n), i, 1, n)),
+
+ test_zn_determinant (p, M) :=
+   block ([det_M: determinant (M),
+           zn_det_M: zn_determinant (M, p)],
+           if zn_det_M = mod (det_M, p)
+             then true
+             else failed ('zn_determinant (M, p))),
+
+ test_zn_invert_by_lu (p, M) :=
+   block ([zn_inv_M: zn_invert_by_lu (M, p)],
+          if zn_inv_M = false
+            then if mod (determinant (M), p) = 0
+                   then true
+                   else failed_a ('zn_invert_by_lu (M, p))
+            else block ([M_Minv, Minv_M,
+                         scalarmatrixp: false],
+                        M_Minv: mod (M . zn_inv_M, p),
+                        Minv_M: mod (zn_inv_M . M, p),
+                        if identity_matrix_p (M_Minv) and identity_matrix_p (Minv_M)
+                          then true
+                          else failed_b ('zn_invert_by_lu (M, p)))),
+
+ identity_matrix_p (M) := is (M = ident (length (M))),
+
+ 0);
+0;
+
+(enumerate_matrices_modulo (2, 1),
+ map (lambda ([M], test_zn_determinant (2, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (2, 2),
+ map (lambda ([M], test_zn_determinant (2, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (2, 3),
+ map (lambda ([M], test_zn_determinant (2, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (3, 1),
+ map (lambda ([M], test_zn_determinant (3, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (3, 2),
+ map (lambda ([M], test_zn_determinant (3, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+/* time consuming, skip it for now
+(enumerate_matrices_modulo (3, 3),
+ map (lambda ([M], test_zn_determinant (3, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+ */
+
+(enumerate_matrices_modulo (2, 1),
+ map (lambda ([M], test_zn_invert_by_lu (2, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (2, 2),
+ map (lambda ([M], test_zn_invert_by_lu (2, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (2, 3),
+ map (lambda ([M], test_zn_invert_by_lu (2, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (3, 1),
+ map (lambda ([M], test_zn_invert_by_lu (3, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+(enumerate_matrices_modulo (3, 2),
+ map (lambda ([M], test_zn_invert_by_lu (3, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+
+/* time consuming, skip it for now
+(enumerate_matrices_modulo (3, 3),
+ map (lambda ([M], test_zn_invert_by_lu (3, M)), %%),
+ sublist (%%, lambda ([x], x # true)));
+[];
+ */
+
+/* Bug #4623: "gcfactor(4), expand(%%) => -4" */
+sublist(create_list([r, i], r, makelist(r, r, -4, 4), i, makelist(i, i, -4, 4)),
+        lambda([ri], ri[1] + %i * ri[2] # expand(gcfactor(ri[1] + %i * ri[2]))));
+[];
+
+
+/* Bug #4765: "gfactor not idempotent" */
+
+[gfactor((%i+1)^(-1/2)), gfactor(gfactor((%i+1)^(-1/2)))];
+[-((%i-1)*sqrt(%i+1)/2), -((%i-1)*sqrt(%i+1)/2)];
+
+
+/* Bug #4169: "spmod bug when algebraic is true" */
+
+gcd(-(z-1)*(2*z-%i-2)^2, -(2*z-%i-2)*(6*z-%i-6)), gcd : spmod, algebraic;
+2*z-%i-2;
+
+
+/* Bug #4814: "Default GCD algorithm can't handle algebraic" */
+
+gcd(x^2 - 2*sqrt(2)* x + 2, x - sqrt(2)), algebraic;
+x-sqrt(2);
+
+
+/* Bug #4916: "CEXPT does not reduce results to the balanced range when modulus is set" */
+
+block([modulus : 5],
+ [ratdisrep(rat(3)^2), ratdisrep(rat(3)*rat(3)), ratdisrep(rat(3)^rat(2))]);
+[-1, -1, -1];

@@ -6,6 +6,9 @@
 ***************************************************************************/
 
 
+kill(all);
+done;
+
 1/(x^2+2);
 1/(x^2+2)$
 substpart(3/2,%,2,1,2);
@@ -74,3 +77,106 @@ tex1(sin(x)^-2);
 tex1(f(x)^-2);
 "{{1}\\over{f\\left(x\\right)^2}}";
 
+/* see: https://stackoverflow.com/questions/66056058/wxmaxima-texput-for-powers-of-expressions
+ */
+
+logexpand: false; /* disable log simplifications */
+false;
+
+foo: map (tex1, [log(x), log(x+1), log(x)^n]);
+["\\log x","\\log \\left(x+1\\right)","\\left(\\log x\\right)^{n}"];
+
+texput (log, "\\ln ");
+"\\ln ";
+
+bar: map (tex1, [log(x), log(x+1), log(x)^n]);
+["\\ln x","\\ln \\left(x+1\\right)","\\left(\\ln x\\right)^{n}"];
+
+/* verify that log is just as it was before but with \ln instead of \log */
+
+if bar = map (lambda ([s], ssubst ("ln", "log", s)), foo) then true else bar;
+true;
+
+/* there's no user-level interface for this, and :lisp isn't recognized in test scripts, so ... */
+block([simp:false], ?\*tex\-mexpt\-trig\-like\-fns\*: ?cons(log, ?\*tex\-mexpt\-trig\-like\-fns\*), 0);
+0;
+
+baz: map (tex1, [log(x), log(x+1), log(x)^n]);
+["\\ln x","\\ln \\left(x+1\\right)","\\ln ^{n}x"];
+
+/* verify that now, log acts just like tan in tex output */
+
+map (lambda ([s], ssubst ("ln", "tan", s)), map (tex1, [tan(x), tan(x+1), tan(x)^n]));
+''baz;
+
+/* SF bug #4388: "tex() output under simp:false, incorrect placement of `+`" */
+
+(kill (x, y, z, a, b, c), simp: false, 0);
+0;
+
+tex1 (x^(+5));
+"x^{+5}";
+
+tex1 (sin(+x));
+"\\sin \\left(+x\\right)";
+
+tex1 ([+x, +y, +z]);
+"\\left[ +x , +y , +z \\right] ";
+
+tex1 (abs (+a));
+"\\left| +a\\right| ";
+
+tex1(a + + b);
+"a+\\left(+b\\right)";
+
+tex1 (+a/b);
+"{{+a}\\over{b}}";
+
+tex1(+(a/b));
+"+{{a}\\over{b}}";
+
+tex1((+a)/b);
+"{{+a}\\over{b}}";
+
+tex1((+a)/(+b));
+"{{+a}\\over{+b}}";
+
+tex1 (x^(-5));
+"x^ {- 5 }";
+
+tex1 (sin(-x));
+"\\sin \\left(-x\\right)";
+
+tex1 ([-x, -y, -z]);
+"\\left[ -x , -y , -z \\right] ";
+
+tex1 (abs (-a));
+"\\left| -a\\right| ";
+
+tex1(a - - b);
+"a-\\left(-b\\right)";
+
+tex1 (-a/b);
+"{{-a}\\over{b}}";
+
+tex1(-(a/b));
+"-\\left({{a}\\over{b}}\\right)";
+
+tex1((-a)/b);
+"{{-a}\\over{b}}";
+
+tex1((-a)/(-b));
+"{{-a}\\over{-b}}";
+
+(reset (simp), 0);
+0;
+
+/* restore TeX properties */
+
+(kill (log),
+ ?pop (?\*tex\-mexpt\-trig\-like\-fns\*),
+ 0);
+0;
+
+(reset (), 0);
+0;

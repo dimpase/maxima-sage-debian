@@ -4,17 +4,21 @@
 @end menu
 
 @c -----------------------------------------------------------------------------
-@node Documentation, Functions and Variables for Help, Help, Help
+@node Documentation, Functions and Variables for Help, , Help
 @section Documentation
 @c -----------------------------------------------------------------------------
 
 @c SHOULD TALK ABOUT OTHER FORMS OF DOCUMENTATION ASIDE FROM ON-LINE MANUAL.
 
-The Maxima on-line user's manual can be viewed in different forms.  From the
-Maxima interactive prompt, the user's manual is viewed as plain text by the
-@mref{?} command (i.e., the @mref{describe} function).  The user's manual is
-viewed as @code{info} hypertext by the @code{info} viewer program and as a
-web page by any ordinary web browser.
+The Maxima on-line user's manual can be viewed in different forms.  From
+the Maxima interactive prompt, the user's manual is viewed as plain text
+by the @mref{?} command (i.e., the @mref{describe} function). Command
+@mref{?} can also display its result in a Web browser, if the variable
+@mref{output_format_for_help} is set to "html"; furthermore, the HTML
+page shown can be the official documentation in Maxima's website, as
+explained in @mrefdot{url_base} The user's manual can be viewed as
+@code{info} hypertext with the @code{info} viewer program, or as Web
+pages by any ordinary Web browser.
 
 @mref{example} displays examples for many Maxima functions.  For example,
 
@@ -38,7 +42,7 @@ yields
 
 and additional output.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Console interaction}
 @closecatbox
 
@@ -99,7 +103,7 @@ The number of symbols in the current Maxima session. This will vary.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Help}
 @closecatbox
 @end deffn
@@ -144,7 +148,7 @@ _
 _
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Help}
 @category{Console interaction}
 @category{File input}
@@ -178,6 +182,10 @@ on-line manual.
 
 @code{describe} quotes its argument.  @code{describe} returns @code{true} if
 some documentation is found, otherwise @code{false}.
+
+To display the topics using a Web browser see @mrefdot{output_format_for_help}
+Also see @mref{browser} and @mref{url_base} to configure how to display
+the HTML files.
 
 See also @ref{Documentation}.
 
@@ -222,11 +230,93 @@ by @code{[...]}).  All or none of the items could have been selected by entering
 @code{all} or @code{none}, which can be abbreviated @code{a} or @code{n},
 respectively.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Help}
 @category{Console interaction}
 @closecatbox
 @end deffn
+
+@anchor{output_format_for_help}
+@defvr {Option variable} output_format_for_help
+Default value: @code{text}
+
+@code{output_format_for_help} controls how @code{describe} displays
+help.
+
+@code{output_format_for_help} can be set to one of the following
+values:
+@table @code
+@item text
+Help is displayed as plain text sent to a terminal.  This is the default.
+@item html
+Help is displayed using a Web browser to display the HTML version of the
+manual.
+@item frontend
+When Maxima is being run from a graphical interface (for example,
+wxMaxima or xmaxima), lets that program decide how to display the help
+results. If no frontend is running then an error is signaled.
+@end table
+
+Any other value is a error.
+
+
+See also @mrefcomma{browser} and @mrefdot{url_base}
+
+@opencatbox{Categories:}
+@category{Help}
+@category{Global variables}
+@closecatbox
+@end defvr
+
+@anchor{browser}
+@defvr {Option variable} browser
+
+This specifies the command to use to open an HTML file.  This is a
+format string of the form @code{"browser_command"} that corresponds to a
+valid command that when given a URL as argument, as in
+@code{'browser_command URL'}, it will open up a browser to the given URL.
+
+The default setting is @code{"start"} on Windows, @code{"xdg-open"} on
+Linux/Unix, and @code{"open"} on MacOS, all of which will open the default Web
+browser. In other systems, the default value of @code{browser} is set as
+@code{"firefox"}, which will open the Firefox browser if it is
+installed (if it is not installed, the user should change the value of
+@code{browser} to some other valid browser).
+
+You may replace the default value of @code{browser} with other valid browser
+in your system, e.g. @code{"chrome"} or @code{"iexplore"}.
+
+See also @mrefcomma{output_format_for_help} and @mrefdot{url_base}
+
+@opencatbox{Categories:}
+@category{Help}
+@category{Global variables}
+@closecatbox
+@end defvr
+
+@anchor{url_base}
+@defvr {Option variable} url_base
+
+When displaying help using a browser, @code{url_base} defines the URL to
+use.  It defaults to a @code{file://} path pointing to the directory
+containing the html files for documentation; something such as,
+@code{file:///home/user/.local/share/maxima/5.48.1/doc/html"}. However,
+you could change the value of @code{url_base} to any valid URL that has
+the HTML help files of the manual. For instance to see the official
+manual in Maxima's website instead of the local copy in your disk, set
+@code{url_base} to @code{"https://maxima.sourceforge.io/docs/manual"}.
+
+But keep in mind that the URL to where @code{url_base} points must have
+exactly the same HTML files as in the Maxima version that you are using,
+otherwise the help topics you are searching might not be found.
+
+See also @ref{output_format_for_help} and @mrefdot{browser}
+
+@opencatbox{Categories:}
+@category{Help}
+@category{Global variables}
+@closecatbox
+@end defvr
 
 @c -----------------------------------------------------------------------------
 @anchor{example}
@@ -273,7 +363,7 @@ Examples:
 (%o6)                         done
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Help}
 @category{Console interaction}
 @closecatbox
@@ -287,7 +377,7 @@ Default value: @code{"manual.demo"}
 @code{manual_demo} specifies the name of the file containing the examples for 
 the function @code{example}.  See @mrefdot{example}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Help}
 @category{Global variables}
 @closecatbox

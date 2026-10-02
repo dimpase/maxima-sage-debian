@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -63,7 +63,6 @@
 (defvar ulabs nil)
 
 
-(defvar *world*)
 (defvar *db*)
 
 ;; Macro for indirecting through the contents of a cell.
@@ -91,12 +90,6 @@
 (defun markp (x)
   (and (symbolp x) (get x 'mark)))
 
-(defun zl-remprop (sym indicator)
-  (if (symbolp sym)
-      (remprop sym indicator)
-      (unless (atom sym)
-        (remf (cdr sym) indicator))))
-
 (defun unmrk (x)
   (zl-remprop x 'mark))
 
@@ -123,7 +116,7 @@
   selector)
 
 (defmode datum ()
-  (atom (selector ulabs) (selector con) (selector wn))
+  (atom (selector ulabs) (selector con))
   selector)
 
 (defmode context ()
@@ -161,6 +154,13 @@
 
 (defun dbvarp (x)
   (getl x '(un ex)))
+
+(declaim (inline dnump))
+(defun dnump (nd)
+  "Is ND a node cell standing for a number?"
+  ;; Symbols are atoms, and expression nodes have a non-MNUMP CAR,
+  ;; so this separates the three kinds cleanly:
+  (and (consp nd) (mnump (car nd))))
 
 (defun lab (n)
   (ash 1 (1- n)))
@@ -227,7 +227,8 @@
 	 (putprop dat (copyn lab) 'ulabs))))
 
 (defun queue+p (nd lab)
-  (cond ((null (setq *db* (+labs nd)))
+  (cond ((atom (setq *db* (+labs nd)))
+	 ;; No label, or a stale sign symbol left by DMARK: Start fresh.
 	 (push nd +labs)
 	 (setq lab (unlab lab))
 	 (putprop nd (copyn (logior +lab-high-bit+ lab)) '+labs))
@@ -369,7 +370,7 @@
 (defun truep (pat)
   (clear)
   (cond ((atom pat) pat)
-	((prog2 (setq pat (mapcar #'semant pat)) nil))
+	((prog2 (setq pat (mapcar #'query-semant pat)) nil))
 	((eq (car pat) 'kind)
 	 (beg (cadr pat) 1)
 	 (beg- (caddr pat) 1)
@@ -400,26 +401,78 @@
       (setq +labs nil))
     isp))
 
+;; Return NIL for all non-symbols.
 (defun kindp (x y)
-  (unless (symbolp x)
-    (merror (intl:gettext "declare: argument must be a symbol; found ~M") x))
-  (clear)
-  (beg x 1)
-  (do ((p (dq+) (dq+)))
-      ((null p))
-    (if (eq y p)
-	(return t)
-	(mark+ p (+labs p)))))
+  (when (and (symbolp x) (get x 'data))
+    (clear)
+    (beg x 1)
+    (do () ((null +s))
+      (let ((p (dq+)))
+        (if (eq y p)
+          (return t)
+          (mark+ p (+labs p)))))))
+
+(defun kind-any-of (x kinds)
+  "Looks up the kind information on symbol X and returns the first kind that is
+  encountered that is a member of KINDS. The order of symbols in KINDS doesn't
+  affect the result. This function should only be used for mutually exclusive
+  kinds, e.g. '$EVEN and '$ODD. Returns NIL if no matching kind is found.
+  This is faster than (OR (KINDP X K1) (KINDP X K2) ...), since it only requires
+  a single database query."
+  (when (and (symbolp x) (get x 'data))
+    (clear)
+    (beg x 1)
+    (do () ((null +s))
+      (let* ((p (dq+))
+             (k (member p kinds :test #'eq)))
+        (if k
+          (return (car k))
+          (mark+ p (+labs p)))))))
+
+(defun kind-all-of-p (x kinds)
+  "Returns T iff (KINDP X K) would return T for all K in KINDS. This is faster
+  than (AND (KINDP X K1) (KINDP X K2) ...), since it only requires a single
+  database query. The implementation relies on counting matching kinds, therefore
+  KINDS should not contain repeated items."
+  (let ((remaining (length kinds)))
+    (when (and (symbolp x) (get x 'data))
+      (clear)
+      (beg x 1)
+      (do () ((null +s))
+        (let ((p (dq+)))
+          (when (and (member p kinds :test #'eq)
+                     (zerop (decf remaining)))
+            (return))
+          (mark+ p (+labs p)))))
+    (zerop remaining)))
+
+(defun decl-complex-kind (x)
+  "Returns '$IMAGINARY if the symbol X is declared imaginary, '$COMPLEX if it is
+  declared complex but not imaginary, else NIL. This is faster than two checks."
+  (when (and (symbolp x) (get x 'data))
+    (clear)
+    (beg x 1)
+    (let (complexp)
+      (do () ((null +s) (and complexp '$complex))
+        (let ((p (dq+)))
+          (if (eq p '$imaginary)
+            (return '$imaginary)
+            (progn
+              (when (eq p '$complex)
+                (setq complexp t))
+              (mark+ p (+labs p)))))))))
 
 (defun true* (pat)
-  (let ((dum (semant pat)))
+  (if (eq (car pat) 'kind)
+   (mkind (cadr pat) (caddr pat))
+   (let ((dum (semant pat)))
     (if dum
-	(cntxt (ind (ncons dum)) context))))
+	(cntxt (ind (ncons dum)) context)))))
 
 (defun fact (fun arg val)
   (cntxt (ind (datum (list fun arg val))) context))
 
-(defun kind (x y &aux #+kcl (y y))
+(defun kind (x y)
   (setq y (datum (list 'kind x y)))
   (cntxt y context)
   (addf y x))
@@ -455,21 +508,47 @@
 (defun maxima-remf (dat nd)
   (push+sto (sel nd data) (fdel dat (sel nd data))))
 
+(defun uncntxt (dat)
+  (let* ((ctxt (or (zl-get dat 'con) 'global))
+         (l (zl-get ctxt 'data)))
+    (when l
+      (putprop ctxt (delete dat l :test #'eq :count 1) 'data)))
+  dat)
+
+(defun removablep (dat)
+  "Can the datum DAT be removed from the current context? A datum with no CON
+  is one of DINTNUM's chain edges, which is not a fact and must survive. A datum
+  owned by $GLOBAL is a built-in assertion: It can only be removed from within
+  $GLOBAL itself (which the user cannot set as the current context)."
+  (let ((con (zl-get dat 'con)))
+    (cond
+      ((null con) nil)
+      ((not (eq con '$global)) t)
+      ((eq context '$global) t)
+      (t (setq *fact-protected* t) nil))))
+
 (defun fdel (fact data)
   (cond ((and (eq (car fact) (caaar data))
 	      (eq (cadr fact) (cadaar data))
-	      (eq (caddr fact) (caddar (car data))))
-	 (cdr data))
+	      (eq (caddr fact) (caddar (car data)))
+	      (removablep (car data)))
+	 (let ((rest (cdr data)))
+	   (uncntxt (car data))
+	   (setq *fact-removed* t)
+	   rest))
 	(t
 	 (do ((ds data (cdr ds))
-	      (d))
+	      (dat))
 	     ((null (cdr ds)))
-	   (setq d (caadr ds))
-	   (cond ((and (eq (car fact) (car d))
-		       (eq (cadr fact) (cadr d))
-		       (eq (caddr fact) (caddr d)))
-		  (push+sto (sel d con data) (delete d (sel d con data) :test #'eq))
-		  (rplacd ds (cddr ds)) (return t))))
+	   (setq dat (cadr ds))
+	   (cond ((and (eq (car fact) (caar dat))
+		       (eq (cadr fact) (cadar dat))
+		       (eq (caddr fact) (caddar dat))
+		       (removablep dat))
+		  (rplacd ds (cddr ds))
+		  (uncntxt dat)
+		  (setq *fact-removed* t)
+		  (return t))))
 	 data)))
 
 (defun semantics (pat)
@@ -488,8 +567,14 @@
 	((db-mnump pat) (dintnum pat))
 	(t (mapcar #'semant pat))))
 
+(defun query-semant (pat)
+  (cond ((symbolp pat) (or (get pat 'var) pat))
+	((db-mnump pat) (or (dinternp pat) (dbnode pat)))
+	(t (mapcar #'query-semant pat))))
+
 (defun dinternp (x)
-  (cond ((mnump x) (dintnum x))
+  "The database node for X, or NIL when the database has none."
+  (cond ((mnump x) (assol x *nobjects*))
 	((atom x) x)
 	((assol x dobjects))))
 
@@ -500,7 +585,36 @@
 	(t (setq dobjects (cons (dbnode x) dobjects))
 	   (car dobjects))))
 
+(defun dnum-neighbors (x)
+  "Where the number X belongs in the *NOBJECTS* chain, without putting it there.
+   Returns three values: the node X is numerically equal to, if there is one;
+   otherwise the nearest node above X and the nearest node below X, either of
+   which is NIL when that side is empty. These are precisely the nodes DINTNUM
+   links a new number to, located by the same scan - the two must stay in step.
+   *NOBJECTS* is sorted descending, so the scan stops as soon as it has passed
+   X: at once for a number above everything on record."
+  (do ((lis *nobjects* (cdr lis))
+       (above nil)
+       (r))
+      ((null lis) (values nil above nil))
+    (setq r (rgrp x (caar lis)))
+    (cond
+      ((eq '$zero r) (return (values (car lis) nil nil)))
+      ((eq '$pos r) (return (values nil above (car lis))))
+      (t (setq above (car lis))))))
+
 (defun dintnum (x &aux foo)
+ (flet ((unlink-edge-below (node)
+          (dolist (d (sel node data))
+              (let ((p (car d)))
+                (when (and (eq 'mgrp (car p))
+                           (eq node (cadr p))
+                           (null (zl-get d 'con)))
+                  (remov d)
+                  (putprop 'global
+                           (delete d (get 'global 'data) :test #'eq :count 1)
+                           'data)
+                  (return))))))
   (cond ((assol x *nobjects*))
 	((progn (setq x (dbnode x)) nil))
 	((null *nobjects*)
@@ -529,44 +643,19 @@
               (rplacd lis (cons x (cdr lis)))
               (return x))
          ((eq '$pos foo)
+		  ;; X goes strictly between (CAR LIS) and (CADR LIS). Drop the edge
+		  ;; leaving (CAR LIS) so that the number nodes stay a chain and don't
+		  ;; become a DAG.
+		  (unlink-edge-below (car lis))
+		  ;; Insert the new edge.
 		  (let ((context 'global))
 		    (fact 'mgrp (car lis) x)
 		    (fact 'mgrp x (cadr lis)))
 		  (rplacd lis (cons x (cdr lis)))
-		  (return x)))))))
+		  (return x))))))))
 
 (defun doutern (x)
   (if (atom x) x (car x)))
-
-(defun untrue (pat)
-  (kill (car pat) (semant (cadr pat)) (semant (caddr pat))))
-
-(defun kill (fun arg val)
-  (kill2 fun arg val arg)
-  (kill2 fun arg val val))
-
-(defun kill2 (fun arg val cl)
-  (cond ((not (atom cl)) (mapc #'(lambda (lis) (kill2 fun arg val lis)) cl))
-	((numberp cl))
-	(t (push+sto (sel cl data) (kill3 fun arg val (sel cl data))))))
-
-(defun kill3 (fun arg val data)
-  (cond ((and (eq fun (caaar data))
-	      (eq arg (cadaar data))
-	      (eq val (caddar (car data))))
-	 (cdr data))
-	(t
-	 (do ((ds data (cdr ds))
-	      (d))
-	     ((null (cdr ds)))
-	 (setq d (caadr ds))
-	 (cond ((not (and (eq fun (car d))
-			  (eq arg (cadr d))
-			  (eq val (caddr d))))
-		t)
-	       (t (push+sto (sel d con data) (delete d (sel d con data) :test #'eq))
-		  (rplacd ds (cddr ds)) (return t))))
-	 data)))
 
 (defun unkind (x y)
   (setq y (car (datum (list 'kind x y))))
@@ -574,8 +663,7 @@
   (maxima-remf y x))
 
 (defun remov (fact)
-  (remov4 fact (cadar fact))
-  (remov4 fact (caddar fact)))
+  (mapc #'(lambda (arg) (remov4 fact arg)) (cdar fact)))
 
 (defun remov4 (fact cl)
   (cond ((or (symbolp cl)		;if CL is a symbol or
@@ -585,25 +673,27 @@
 	((or (atom cl) (atom (car cl)))) ;if CL is an atom (not a symbol)
 					;or its CAR is an atom then we don't want to do
 					;anything to it.
-	(t
-	 (mapc #'(lambda (lis) (remov4 fact lis))
-	       (cond ((atom (caar cl)) (cdr cl)) ;if CL's CAAR is
-					;an atom, then CL is an expression, and
-					;we want to REMOV4 FACT from the parts
-					;of the expression.
-		     ((atom (caaar cl)) (cdar cl)))))))
-					;if CL's CAAAR is an atom, then CL is a
-					;fact, and we want to REMOV4 FACT from
-					;the parts of the fact.
+	((atom (caar cl))		;if CL's CAAR is an atom, then CL is an
+					;expression, and we want to REMOV4 FACT
+					;from the parts of the expression.
+	 (mapc #'(lambda (lis) (remov4 fact lis)) (cdr cl)))
+	((atom (caaar cl))		;if CL's CAAAR is an atom, then CL is the
+					;node that DINTERN made for a compound
+					;expression. MFACT hangs the fact on that
+					;node itself, so take it off there; the
+					;recursion below reaches only the symbols
+					;inside the expression, which is where
+					;IND/IND1 put the facts they build.
+	 (push+sto (sel cl data) (delete fact (sel cl data) :test #'eq))
+	 (mapc #'(lambda (lis) (remov4 fact lis)) (cdar cl)))))
 
 (defun killframe (cl)
-  (mapc #'remov (sel cl data))
+  (mapc #'(lambda (dat) (uncntxt dat) (remov dat)) (sel cl data))
   (zl-remprop cl '+labs)
   (zl-remprop cl '-labs)
   (zl-remprop cl 'obj)
   (zl-remprop cl 'var)
-  (zl-remprop cl 'fact)
-  (zl-remprop cl 'wn))
+  (zl-remprop cl 'fact))
 
 (defun activate (&rest l)
   (dolist (e l)
@@ -680,6 +770,58 @@
     (cond (cm (putprop con (1- cm) 'cmark)))
     (mapc #'cunmrk (zl-get con 'subc))))
 
+;;; Garbage collection of the interning tables.
+;;;
+;;; DOBJECTS and *NOBJECTS* hold the nodes that give a Maxima object its place
+;;; in the database. A node is worth keeping exactly as long as some fact names
+;;; it, and the node itself answers that: ADDF puts every fact naming a node on
+;;; that node's own DATA property, and MAXIMA-REMF, KILL3 and REMOV4 take it off
+;;; again.
+;;;
+;;; Number nodes carry the MGRP/MEQP edges that order them against their
+;;; neighbors on top of that. Those are bookkeeping, not information: DINTNUM
+;;; makes them in the pseudo-context GLOBAL, the one context CNTXT stores no
+;;; back pointer for, so they are exactly the datums with no CON property. A
+;;; number node whose DATA holds nothing else is a waypoint on the chain and
+;;; can go, once the chain is closed up behind it.
+
+(defun dnode-live-p (nd)
+  "Does some fact still name the node ND?"
+  (and (zl-get nd 'data) t))
+
+(defun dnum-live-p (nd)
+  "Does some fact other than its own chain edges name the number node ND?"
+  (dolist (dat (zl-get nd 'data))
+    (when (zl-get dat 'con) (return t))))
+
+(defun db-gc ()
+  "Drop the database nodes that no longer carry a fact."
+  (db-gc-dobjects)
+  (db-gc-nobjects))
+
+(defun db-gc-dobjects ()
+  (unless (every #'dnode-live-p dobjects)
+    (setq dobjects (remove-if-not #'dnode-live-p dobjects))))
+
+(defun db-gc-nobjects ()
+  (unless (every #'dnum-live-p *nobjects*)
+    ;; Take the chain down ...
+    (dolist (dat (get 'global 'data)) (remov dat))
+    (remprop 'global 'data)
+    (setq *nobjects* (remove-if-not #'dnum-live-p *nobjects*))
+    ;; ... and lay it again over what is left. *NOBJECTS* is sorted
+    ;; descending, so linking each node to its successor reproduces both what
+    ;; DINTNUM builds and the order it builds it in: The edge to the smaller
+    ;; neighbor is pushed onto a node's DATA last and so is tried first.
+    ;; Reachability among the surviving nodes is unchanged, since a node that
+    ;; goes carried no fact and was only ever a waypoint between the two nodes
+    ;; that are now joined directly.
+    (let ((context 'global))
+      (do ((l *nobjects* (cdr l)))
+	  ((null (cdr l)))
+	(fact (if (eq '$zero (rgrp (caar l) (caadr l))) 'meqp 'mgrp)
+	      (car l) (cadr l))))))
+
 (defun killc (con)
   (contextmark)
   (unless (null con)
@@ -693,12 +835,15 @@
   (do ((x)
        (lab))
       (nil)
-    (cond ((setq x (dq+))
+    (cond
+	  (+s
+	   (setq x (dq+))
 	   (setq lab (+labs x))
 	   (if (zerop (logand (unlab lab) (unlab (-labz x))))
 	       (mark+ x lab)
 	       (return t)))
-	  ((setq x (dq-))
+	  (-s
+	   (setq x (dq-))
 	   (setq lab (-labs x))
 	   (if (zerop (logand (unlab lab) (unlab (+labz x))))
 	       (mark- x lab)
@@ -712,21 +857,13 @@
     (prlab lab))
   (mapc #'(lambda (lis) (mark+0 cl lab lis)) (sel cl data)))
 
-(defun mark+3 (dat)
-  (if (/= 0 (logand (unlab (+labz (caddar dat)))
-		    (unlab (dbv (+labz (cadar dat)) (-labz (caar dat))))))
-      (beg- (sel dat wn) *world*)))
-
 (defun mark+0 (cl lab fact)
   (when *dbcheck*
     (format *trace-output* "~%MARK+0: checking ~a from ~A+" (car fact) cl)
     (prlab lab))
   (cond ((onpu lab fact))
 	((not (cntp fact)))
-	((null (sel fact wn)) (mark+1 cl lab fact))
-	((onp (sel fact wn) *world*) (mark+1 cl lab fact))
-	((offp (sel fact wn) *world*) nil)
-	(t (mark+3 fact))))
+	(t (mark+1 cl lab fact))))
 
 (defun mark+1 (cl lab dat)
   (cond ((eq (caar dat) 'kind)
@@ -759,9 +896,7 @@
     (prlab lab))
   (cond ((onpu lab fact))
 	((not (cntp fact)))
-	((null (sel fact wn)) (mark-1 cl lab fact))
-	((onp (sel fact wn) *world*) (mark-1 cl lab fact))
-	((offp (sel fact wn) *world*) nil)))
+	(t (mark-1 cl lab fact))))
 
 (defun mark-1 (cl lab dat)
   (cond ((eq (caar dat) 'kind)

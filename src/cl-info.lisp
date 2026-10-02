@@ -2,6 +2,14 @@
 
 (defvar *info-tables* (make-hash-table :test 'equal))
 
+;; Gcl doesn't like equalp hashtables.
+(defvar *html-index*
+  (make-hash-table :test #'equal)
+  "Hash table for looking up which html file contains the
+  documentation.  The key is the topic we're looking for and the value
+  is a cons consisting of the html file and the id for the key.")
+
+
 (defun print-prompt (prompt-count)
   (fresh-line)
   (maxima::format-prompt
@@ -50,26 +58,46 @@
 ; ------------------ search help topics ------------------
 
 (defun maxima::combine-path (&rest list)
-  "splice a '/' between the path components given as arguments"
-  (format nil "~{~A~^/~}" list))
+  "Splice a \"/\" between the path components given as arguments,
+   collapsing multiple consecutive slashes into a single slash."
+  (let ((raw-path (format nil "~{~A~^/~}" list)))
+    (with-output-to-string (out)
+      (let ((prev-slash))
+        (loop for char across raw-path
+              do (if (char= char #\/)
+                     (unless prev-slash
+                       (write-char char out)
+                       (setf prev-slash t))
+                     (progn
+                       (write-char char out)
+                       (setf prev-slash nil))))))))
 
 (defun load-primary-index ()
-  (declare (special maxima::*maxima-lang-subdir* maxima::*maxima-infodir*))
-  ;; Load the index, but make sure we use a sensible *read-base*.
-  ;; See bug 1951964.  GCL doesn't seem to have
-  ;; with-standard-io-syntax.  Is just binding *read-base* enough?  Is
-  ;; with-standard-io-syntax too much for what we want?
+  ;; Is with-standard-io-syntax too much for what we want?
   (let*
       ((subdir-bit (or maxima::*maxima-lang-subdir* "."))
-       (path-to-index (maxima::combine-path maxima::*maxima-infodir* subdir-bit "maxima-index.lisp")))
+       (path-to-index (maxima::combine-path maxima::*maxima-infodir* subdir-bit "maxima-index.lisp"))
+       (path-to-html-index
+	 (maxima::combine-path maxima::*maxima-infodir* subdir-bit "maxima-index-html.lisp")))
+    ;; Set the default of the html URL base to be a file URL pointing
+    ;; to the info dir.
+    (setf maxima::$url_base (concatenate 'string
+			     "file://"
+			     (if maxima::*maxima-lang-subdir*
+				 (maxima::combine-path maxima::*maxima-htmldir*
+						       maxima::*maxima-lang-subdir*)
+				 maxima::*maxima-htmldir*)))
+			     
     (handler-case
-	#-gcl
       (with-standard-io-syntax (load path-to-index))
-      #+gcl
-      (let ((*read-base* 10.)) (load path-to-index))
+      (error (condition) (warn (intl:gettext (format nil "~&Maxima is unable to set up the help system.~&(Details: CL-INFO::LOAD-PRIMARY-INDEX: ~a)~&" condition)))))
+    (handler-case
+	(with-standard-io-syntax (load path-to-html-index))
       (error (condition) (warn (intl:gettext (format nil "~&Maxima is unable to set up the help system.~&(Details: CL-INFO::LOAD-PRIMARY-INDEX: ~a)~&" condition)))))))
 
+  
 (defun info-exact (x)
+  (setq x (strip-quotes x))
   (let ((exact-matches (exact-topic-match x)))
     (if (not (some-exact x exact-matches))
       (progn
@@ -109,6 +137,7 @@
       (find-regex-matches regex2 defn-table))))
 
 (defun info-inexact (x)
+  (setq x (strip-quotes x))
   (let ((inexact-matches (inexact-topic-match x)))
     (when inexact-matches
       (display-items inexact-matches))
@@ -149,13 +178,22 @@
     (finish-output *debug-io*)
     (when (consp wanted)
       (format t "~%")
-      (loop for item in wanted
-	    do (let ((doc (read-info-text (first item) (second item))))
-		 (if doc
-		     (format t "~A~%~%" doc)
-		     (format t "Unable to find documentation for `~A'.~%~
+      (funcall maxima::*help-display-function* wanted)
+      #+nil
+      (cond
+	(maxima::$describe_uses_html
+	 (when maxima::*debug-display-html-help*
+	   (format *debug-io* "wanted = ~A~%" wanted))
+	 (loop for (dir entry) in wanted
+	       do (maxima::display-html-help (car entry))))
+	(t
+	  (loop for item in wanted
+		do (let ((doc (read-info-text (first item) (second item))))
+		     (if doc
+			 (format t "~A~%~%" doc)
+			 (format t "Unable to find documentation for `~A'.~%~
                                 Possible bug maxima-index.lisp or build_index.pl?~%"
-			     (first (second item)))))))))
+				 (first (second item)))))))))))
 
 (defun inexact-topic-match (topic)
   (setq topic (regex-sanitize topic))
@@ -171,31 +209,34 @@
       (find-regex-matches topic section-table)
       (find-regex-matches topic defn-table))))
 
+;; If S is enclosed in single quotes or double quotes,
+;; return the quoted string.
+(defun strip-quotes (s)
+  (let ((n (length s)))
+    (if (<= n 2) s ;; incidentally return "" or '' verbatim
+      (let ((first-char (aref s 0)) (last-char (aref s (1- n))))
+        (if (or (and (eql first-char #\') (eql last-char #\'))
+                (and (eql first-char #\") (eql last-char #\")))
+          (subseq s 1 (1- n))
+          s)))))
+
 (defun regex-sanitize (s)
   "Precede any regex special characters with a backslash."
-  (let
-    ((L (coerce maxima-nregex::*regex-special-chars* 'list)))
-
-    ; WORK AROUND NREGEX STRANGENESS: CARET (^) IS NOT ON LIST *REGEX-SPECIAL-CHARS*
-    ; INSTEAD OF CHANGING NREGEX (WITH POTENTIAL FOR INTRODUCING SUBTLE BUGS)
-    ; JUST APPEND CARET TO LIST HERE
-    (setq L (cons #\^ L))
-
-    (coerce (apply #'append
-                   (mapcar #'(lambda (c) (if (member c L :test #'eq)
-					     `(#\\ ,c) `(,c))) (coerce s 'list)))
-            'string)))
+  (pregexp:pregexp-quote s))
 
 (defun find-regex-matches (regex-string hashtable)
   (let*
-    ((regex (maxima-nregex::regex-compile regex-string :case-sensitive nil))
-     (regex-fcn (coerce regex 'function))
-     (regex-matches nil))
+      ;; Do the search ignoring case by wrapping the regex-string in
+      ;; "(?i:...)"
+      ((regex (concatenate 'string "(?i:" regex-string ")"))
+       (regex-matches nil))
     (maphash
-      #'(lambda (key value)
-          (if (funcall regex-fcn key)
-            (setq regex-matches (cons `(,key . ,value) regex-matches))
-            nil))
+     #'(lambda (key value)
+         (when (pregexp:pregexp-match-positions regex key)
+	   #+nil
+	   (format t "key value: ~S ~S: match ~A~%"
+		   key value (pregexp:pregexp-match-positiions regex key))
+	   (setq regex-matches (cons `(,key . ,value) regex-matches))))
       hashtable)
     (stable-sort regex-matches #'string-lessp :key #'car)))
 
@@ -207,21 +248,17 @@
      (char-count (caddr value))
      (text (make-string char-count))
      (path+filename (merge-pathnames (make-pathname :name filename) dir-name)))
-    (with-open-file (in path+filename :direction :input)
-      (unless (plusp byte-offset)
-	;; If byte-offset isn't positive there must be some error in
-	;; the index.  Return nil and let the caller deal with it.
-	(return-from read-info-text nil))
-      (file-position in byte-offset)
-      (#-gcl read-sequence
-       #+gcl gcl-read-sequence
-       text in :start 0 :end char-count))
-    text))
-
-#+gcl
-(defun gcl-read-sequence (s in &key (start 0) (end nil))
-  (dotimes (i (- end start))
-    (setf (aref s i) (read-char in))))
+    (handler-case
+	(with-open-file (in path+filename :direction :input)
+	  (unless (plusp byte-offset)
+	    ;; If byte-offset isn't positive there must be some error in
+	    ;; the index.  Return nil and let the caller deal with it.
+	    (return-from read-info-text nil))
+	  (file-position in byte-offset)
+	  (read-sequence text in :start 0 :end char-count)
+	  text)
+      (error () (maxima::merror "Cannot find documentation for `~M': missing info file ~M~%"
+				(car parameters) (namestring path+filename))))))
 
 ; --------------- build help topic indices ---------------
 
@@ -242,3 +279,13 @@
        (t2 (make-hash-table :test 'equal)))
       (setf (gethash dir-name *info-tables*) (list t1 t2)))))
 
+(defun load-html-index (entries)
+  (clrhash *html-index*)
+  ;; Go through the entries and add it to the html index hashtable.
+  ;; Each entry is a list of 3 items: the item key for the hash table,
+  ;; the path to the html file containing the item we're interested in
+  ;; and the html id for the item.
+  (dolist (entry entries)
+    (destructuring-bind (item path id)
+	entry
+      (setf (gethash item *html-index*) (cons path id)))))

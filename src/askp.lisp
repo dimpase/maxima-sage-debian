@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -31,8 +31,6 @@
 (in-package :maxima)
 
 (macsyma-module askp)
-
-(declare-top (special limitp integer-info))
 
 (defmfun $askinteger (x &optional (mode '$integer))
   (if (member mode '($even $odd $integer) :test #'eq)
@@ -78,7 +76,7 @@
   (cond ((atom x)
 	 (meval `(($declare) ,x ,property))
 	 (if limitp 
-	     (setq integer-info (cons `(($kind) ,x ,property) integer-info))))
+	     (setq *integer-info* (cons `(($kind) ,x ,property) *integer-info*))))
 	((and limitp (eq property '$integer))
 	 (setq integerl (cons x integerl)))
 	((and limitp (eq property '$noninteger))
@@ -87,7 +85,7 @@
 ;;; Asks the user a question about the property of an object.
 ;;; Returns only $yes, $no or $unknown.
 (defun ask-prop (object property fun-or-number)
-  (if fun-or-number (setq fun-or-number (list '| | fun-or-number)))
+  (if fun-or-number (setq fun-or-number (list " " fun-or-number)))
   (do ((end-flag) (answer))
       (end-flag (cond ((member answer '($yes |$Y| |$y|) :test #'eq) '$yes)
 		      ((member answer '($no |$N| |$n|) :test #'eq) '$no)
@@ -99,7 +97,7 @@
 			 " an "
 			 " a ")
 		    ,property ,@fun-or-number "?")
-		  nil))
+		  (if $ask_hide_prompt 'noprint)))
     (cond ((member answer '($yes |$Y| |$y| |$N| |$n| $no $unknown $uk) :test #'eq)
 	   (setq end-flag t))
 	  (t (mtell "~%Acceptable answers are: yes, y, Y, no, n, N, unknown, uk~%")))))

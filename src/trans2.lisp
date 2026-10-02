@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -25,7 +25,7 @@
 
 (def%tr mcall (form)
   (setq form (cdr form))
-  (let ((mode (cond ((atom (car form))
+  (let ((mode (cond ((symbolp (car form))
 		     (function-mode (car form)))
 		    (t '$any))))
     (setq form (tr-args form))
@@ -57,8 +57,8 @@
 (defun tr-maset (ar val  inds)
   ;; Top-level forms need to define the variable first.
   (if *macexpr-top-level-form-p* 
-      `(nil progn (defvar ,ar ',ar) (maset ,val ,ar  ,@ inds))
-      `(nil maset ,val ,ar  ,@ inds)))
+      `($any progn (defvar ,ar ',ar) (maset ,val ,ar  ,@ inds))
+      `($any maset ,val ,ar  ,@ inds)))
 
 (defun maset1 (val ar &rest inds)
   (cond
@@ -118,7 +118,7 @@
 ;;in maref in transl now
 
 (defun tr-maref (ar inds)
-  `(nil maref , ar ,@ (copy-list inds)))
+  `($any maref , ar ,@ (copy-list inds)))
 
 (defun maref1 (ar &rest inds)
   (cond
@@ -172,7 +172,7 @@
 
 (def%tr marrayref (form)
   (setq form (cdr form))
-  (let ((mode (cond ((atom (car form))
+  (let ((mode (cond ((symbolp (car form))
 		     (get (car form) 'array-mode)))))
     (cond ((null mode) (setq mode '$any)))
     (setq form (tr-args form))
@@ -185,7 +185,7 @@
 
 (def%tr marrayset (form)
   (setq form (cdr form))
-  (let ((mode (cond ((atom (cadr form))
+  (let ((mode (cond ((symbolp (cadr form))
 		     (get (cadr form) 'array-mode)))))
     (when (null mode) (setq mode '$any))
     (setq form (tr-args form))

@@ -18,7 +18,8 @@
 
 
 (defun dqwgtc (x c p2 p3 p4 kp)
-  (declare (type (f2cl-lib:integer4) kp) (type (double-float) p4 p3 p2 c x))
+  (declare (type (f2cl-lib:integer4) kp) (type (double-float) p4 p3 p2 c x)
+           (ignore p2 p3 p4 kp))
   (prog ((dqwgtc 0.0))
     (declare (type (double-float) dqwgtc))
     (setf dqwgtc (/ 1.0 (- x c)))
@@ -26,7 +27,7 @@
    end_label
     (return (values dqwgtc nil nil nil nil nil nil))))
 
-(in-package #-gcl #:cl-user #+gcl "CL-USER")
+(in-package #:cl-user)
 #+#.(cl:if (cl:find-package '#:f2cl) '(and) '(or))
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (setf (gethash 'fortran-to-lisp::dqwgtc

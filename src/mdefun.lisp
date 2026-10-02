@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -21,13 +21,6 @@
 ;;; available. I have tried to generalize this enough to do
 ;;; macsyma macros also.
 
-;;; (DEFMTRFUN-EXTERNAL ($FOO <mode> <property> <&restp>))
-
-;;we don't make function type declarations yet.
-(defmacro defmtrfun-external (&rest ig)
-  (declare (ignore ig))
-  nil)
-
 ;;; (DEFMTRFUN ($FOO <mode> <property> <&restp>) <ARGL> . BODY)
 ;;; If the MODE is numeric it should do something about the
 ;;; number declarations for compiling. Also, the information about the
@@ -42,13 +35,12 @@
 	 (setq array-flag (car array-flag)))
     (setq def-header
 	  (cond ((eq prop 'mdefine)
-		 (cond (array-flag `(:property ,name a-subr))
+		 (cond (array-flag `(,name a-subr))
 		       (t name)))
 		(t `(,name translated-mmacro))))
 
     `(eval-when
-      #+gcl (compile load eval)
-      #-gcl (:compile-toplevel :load-toplevel :execute)
+      (:compile-toplevel :load-toplevel :execute)
 
       ,@(and (not array-flag) `((remprop ',name 'translate)))
       ,@(and mode `((defprop ,name ,mode

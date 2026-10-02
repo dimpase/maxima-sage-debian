@@ -2,8 +2,7 @@
 * Functions and Variables for makeOrders::
 @end menu
 
-
-@node Functions and Variables for makeOrders,  , makeOrders-pkg, makeOrders-pkg
+@node Functions and Variables for makeOrders,  , Package makeOrders, Package makeOrders
 @section Functions and Variables for makeOrders
 
 @anchor{makeOrders_func}
@@ -26,7 +25,7 @@ where @code{[0, 1]} is associated with the term @math{b} and @code{[2, 3]} with 
 
 To use this function write first @code{load("makeOrders")}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Polynomials}
 @category{Share packages}
 @category{Package makeOrders}

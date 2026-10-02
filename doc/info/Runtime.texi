@@ -11,11 +11,18 @@
 
 @c THIS DISCUSSION OF maxima-init.mac REPLACES AN EARLIER WRITE-UP. !!!
 @c HOWEVER IT SEEMS THAT THIS TEXT REALLY WANTS TO BE UNDER A DIFFERENT HEADING. !!!
-@code{maxima-init.mac} is a file which is loaded automatically when Maxima
-starts.  You can use @code{maxima-init.mac} to customize your Maxima
-environment.  @code{maxima-init.mac}, if it exists, is typically placed in the
-directory named by @code{maxima_userdir},
-although it can be in any directory searched by the function @code{file_search}.
+
+@cindex maxima-init.mac
+@cindex maxima-init.lisp
+
+@code{maxima-init.mac} and @code{maxima-init.lisp} are loaded automatically when Maxima
+starts. @code{maxima-init.mac} contains Maxima code and is loaded using @mref{batchload},
+@code{maxima-init.lisp} contains Lisp code and is loaded using @mref{load}.
+
+You can use @code{maxima-init.mac} (and @code{maxima-init.lisp}) to customize your Maxima
+environment. These files typically placed in the directory named by
+@code{maxima_userdir}, although it can be in any directory searched by the function
+@code{file_search}.
 
 Here is an example @code{maxima-init.mac} file:
 
@@ -34,7 +41,42 @@ The statement @code{showtime: all} tells Maxima to set the @code{showtime}
 variable.  The @code{maxima-init.mac} file can contain any other assignments or
 other Maxima statements.
 
-@opencatbox
+@code{maxima-init.mac} and @code{maxima-init.lisp} are loaded automatically when Maxima
+starts. @code{maxima-init.mac} contains Maxima code and is loaded using @mref{batchload},
+@code{maxima-init.lisp} contains Lisp code and is loaded using @mref{load}.
+
+
+@cindex maximarc
+
+@code{maximarc} is sourced by the maxima script at startup. It should be located in @code{$MAXIMA_USERDIR}.
+If Maxima was compiled with several Lisp compilers, @code{maximarc} can be used, e.g., to change the
+user's default lisp implementation. E.g. to select CMUCL create a @code{maximarc} file containing the line:
+@code{MAXIMA_LISP=cmucl}
+
+You can also use the command option @code{-l <lisp>} or @code{--lisp=<lisp>} to select the Lisp when starting Maxima.
+
+@cindex .xmaximarc
+@cindex xmaxima_default
+@cindex .xmaxima_history
+@cindex xmaxima_history
+
+If you run Maxima using the graphical interface Xmaxima, the default
+configuration of that interface will be saved in the file
+@code{xmaxima_default} and the history of the last 200 commands will be
+saved in the file @code{xmaxima_history} in a sub-directory maxima (or
+Maxima in Windows) of the user's local configuration directory.
+
+In Linux systems, the user's local configuration directory is usually
+@code{/home/<username>/.config} and in Windows systems it is usually
+@code{<Drive_letter>:/Users/<username>/AppData/Local}. Notice that in
+both systems those directories are hidden, and their default value can
+be changed with an environment variable (@code{XDG_CONFIG_HOME} in Linux
+or @code{LOCALAPPDATA} in Windows). If the local configuration directory
+is not found, those two files will be saved in the users home directory
+and with the names @code{.xmaximarc} and @code{.xmaxima_history}, as in
+older versions of Xmaxima.
+
+@opencatbox{Categories:}
 @category{Session management}
 @closecatbox
 
@@ -69,7 +111,7 @@ to stop altogether, and control is returned to the shell prompt.
 The @code{fg} command causes Maxima
 to resume from the point at which it was stopped.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Console interaction}
 @closecatbox
 
@@ -93,7 +135,7 @@ Maxima can locate it; otherwise Maxima makes a guess about a suitable directory.
 
 @code{maxima_tempdir} may be assigned a string which names a directory.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Global variables}
 @closecatbox
 @end defvr
@@ -115,7 +157,7 @@ However, assigning to @code{maxima_userdir} does not automatically change
 @code{file_search_maxima} and @code{file_search_lisp};
 those variables must be changed separately.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Global variables}
 @closecatbox
 @end defvr
@@ -140,7 +182,7 @@ the same name.
 @code{room (false)} prints out a terse description.
 @end itemize
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Debugging}
 @closecatbox
 @end deffn
@@ -158,7 +200,7 @@ loaded in.
 
 See also @mrefdot{status}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Programming}
 @closecatbox
 @end deffn
@@ -193,7 +235,7 @@ The variable @code{features} contains a list of features which apply to
 mathematical expressions. See @code{features} and @code{featurep} for more 
 information.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Programming}
 @closecatbox
 @end deffn
@@ -202,28 +244,106 @@ information.
 
 @c -----------------------------------------------------------------------------
 @anchor{system}
-@deffn {Function} system (@var{command})
+@deffn {Function} system @
+@fname {system} (@var{command}, @var{arg_1}, ..., @var{arg_n}) @
+@fname {system} (@var{command})
 
-Executes @var{command} as a separate process.  The command is passed to the
-default shell for execution.  @code{system} is not supported by all operating
-systems, but generally exists in Unix and Unix-like environments.
+Executes @var{command} as a separate process.
+The command is passed to the default shell for execution.
 
-Supposing @code{_hist.out} is a list of frequencies which you wish to plot as a
-bar graph using @code{xgraph}.
+@code{system} is implemented by a command execution function
+in the Lisp implementation which compiled Maxima,
+and therefore the behavior of @code{system}
+varies with the operating system and Lisp implementation.
+@code{system} is known to work on Windows and Linux systems,
+and might also work on other systems.
+
+All combinations of Lisp implementation and operating system
+allow command arguments as @var{arg_1}, ..., @var{arg_n},
+and some allow command arguments as part of @var{command}.
+SBCL on Windows and Clozure CL on Windows are known to require
+command arguments to be specified as @var{arg_1}, ..., @var{arg_n}.
+
+@code{system} does not attempt to quote or escape spaces or other characters
+in @var{command} or in @var{arg_1}, ..., @var{arg_n};
+all arguments are supplied verbatim to the command execution function of the Lisp implementation.
+
+Standard output from @var{command} is displayed on the Maxima console by default,
+and may be captured by @code{with_stdout}.
+
+For most Lisp implementations,
+the call to @code{system} returns after @var{command} has completed.
+Job control operations,
+such as executing a command asynchronously with respect to Maxima,
+are not known to have the expected effect.
+
+Examples:
+
+@c OMIT ===beg=== / ===end=== IN THESE EXAMPLES SINCE OUTPUT VARIES FROM SYSTEM TO SYSTEM
+
+@code{system} executes @var{command} as a separate process.
+The output of the command @code{dir} varies from one system to another.
+
+@c system ("dir", maxima_tempdir);
 
 @example
-(%i1) (with_stdout("_hist.out",
-           for i:1 thru length(hist) do (
-             print(i,hist[i]))),
-       system("xgraph -bar -brw .7 -nl < _hist.out"));
+(%i1) system ("dir", maxima_tempdir);
+config-err-UsLLQM
+gnome-software-0TNK22
+MozillaUpdateLock-6939C585ADF59520
+snap-private-tmp
+systemd-private-169e359ab2d94b208622fa96dd88c05e-colord.service-ZP9Xn7
+(%o1)                           0
 @end example
 
-In order to make the plot be done in the background (returning control to
-Maxima) and remove the temporary file after it is done do:
+All combinations of Lisp implementation and operating system
+allow command arguments as @var{arg_1}, ..., @var{arg_n}.
+
+@c system ("echo", "Hello", "world", "glad", "to", "meet", "you");
 
 @example
-system("(xgraph -bar -brw .7 -nl < _hist.out;  rm -f _hist.out)&")
+(%i1) system ("echo", "Hello", "world", "glad", "to", "meet", "you");
+Hello world glad to meet you
+(%o1)                           0
 @end example
+
+Standard output from @var{command} is displayed on the Maxima console by default,
+and may be captured by @code{with_stdout}.
+
+@c my_output: sconcat (maxima_tempdir, "/tmp.out");
+@c with_stdout (my_output, system ("dir"));
+@c S: openr (my_output);
+@c readline (S);
+@c readline (S);
+@c readline (S);
+
+@example
+(%i1) my_output: sconcat (maxima_tempdir, "/tmp.out");
+(%o1)                     /tmp/tmp.out
+(%i2) with_stdout (my_output, system ("dir"));
+(%o2)                           0
+(%i3) S: openr (my_output);
+(%o3)               #<FILE-STREAM @{7B500975@}>
+(%i4) readline (S);
+(%o4)                      aclocal.m4
+(%i5) readline (S);
+(%o5)                         admin
+(%i6) readline (S);
+(%o6)                        archive
+@end example
+
+For most Lisp implementations,
+the call to @code{system} returns after @var{command} has completed.
+@code{xfontsel} is a utility to inspect fonts for the X Windows system;
+@code{system} returns after the user clicks the "quit" button.
+
+@c system ("xfontsel");
+
+@example
+(%i1) system ("xfontsel");
+(%o1)                           0
+@end example
+
 @end deffn
 
 @c -----------------------------------------------------------------------------
@@ -239,7 +359,7 @@ can only be applied to output line variables; for any other variables,
 Set @code{showtime: true} to make Maxima print out the computation time 
 and elapsed time with each output line.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Debugging}
 @closecatbox
 @end deffn
@@ -311,7 +431,7 @@ timedate reports current time 2010-06-08 04:08:09+01:00
 (%o1)               1931-09-09 16:16:40-09:30
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn
@@ -436,7 +556,7 @@ Midnight, January 1, 1900, GMT, in different indicated time zones.
 (%o7)                           0
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn
@@ -510,7 +630,7 @@ Examples:
                               1000
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn
@@ -567,7 +687,7 @@ Examples:
                                       1000
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn
@@ -594,7 +714,7 @@ Example:
 (%o2)                   2007.265612087104
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn
@@ -624,7 +744,7 @@ Example:
 (%o3)                       7.552087
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn
@@ -654,7 +774,7 @@ Example:
 (%o3)                         1.26
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Time and date functions}
 @closecatbox
 @end deffn

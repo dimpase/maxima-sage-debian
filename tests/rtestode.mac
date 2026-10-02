@@ -190,6 +190,10 @@ eqn3: 'diff(f(x),x,2)+f(x)=2*x;
 desolve(eqn3,f(x));
 ''(f(x) = sin(x)*(at('diff(f(x),x,1),x = 0)-2)+f(0)*cos(x)+2*x);
 
+/* BUG 3899 */
+errcatch(desolve('diff(f(x),x),x));
+[];
+
 /* Examples mentioned in bug report [ 1063454 ] bug in ode2
  * First one was reported to fail in CMUCL with "run out of heap" message.
  * Others were reported to be OK. Put them all here for good measure.
@@ -248,13 +252,15 @@ ratsimp(ic2([soln, [soln, soln]], x=0, y=0, 'diff(y,x,1)=2));
  * Maxima no longer gives an error, but does not find the solution.
  */
 
-ode2(y*'diff(y,x,2)=a, y, x);
-[sqrt(%pi)*%i*%e^-%k1*erf(%i*sqrt(a*log(y)+%k1*a)/sqrt(a))/(sqrt(2)*sqrt(a))
-   = x+%k2,
- -sqrt(%pi)*%i*%e^-%k1*erf(%i*sqrt(a*log(y)+%k1*a)/sqrt(a))/(sqrt(2)*sqrt(a))
-   = x+%k2];
+block([expintrep : 'gamma_incomplete], ode2(y*'diff(y,x,2)=a, y, x));
+[(%e^-%k1*gamma_incomplete(1/2,-log(y)-%k1)*sqrt(a*log(y)+%k1*a))
+        /(sqrt(2)*a*sqrt(-log(y)-%k1))
+         = x+%k2,
+       -((%e^-%k1*gamma_incomplete(1/2,-log(y)-%k1)*sqrt(a*log(y)+%k1*a))
+        /(sqrt(2)*a*sqrt(-log(y)-%k1)))
+         = x+%k2]$
 
-ic2(%,x=0,y=b,diff(y,x)=0);
+ic2(%,x=0,y=b,'diff(y,x)=0);
 [];
 
 /* Bug report ID: 2997443 - ic2 fails
@@ -303,3 +309,42 @@ y=(-t^3/6)+%k2*t+%k1;
 forget(equal(a,0));
 [equal(a,0)];
 
+
+/* Feature request #192 Modified Bessel's differential equation DLMF 10.25.1
+ *
+ * x^2*'diff(y,x,2)+x*'diff(y,x)-(x^2+n^2)*y = 0
+ *
+ */
+
+mbde:x^2*'diff(y,x,2)+x*'diff(y,x)+(-x^2-n^2)*y = 0;
+x^2*'diff(y,x,2)+x*'diff(y,x)+(-x^2-n^2)*y = 0;
+
+s:ode2(eq:subst(n=1,mbde),y,x);
+y = bessel_k(1,x)*%k2+bessel_i(1,x)*%k1;
+method;
+modifiedbessel;
+
+s:ode2(eq:subst(n=2,mbde),y,x);
+y = bessel_k(2,x)*%k2+bessel_i(2,x)*%k1;
+method;
+modifiedbessel;
+
+s:ode2(eq:subst(n=1/2,mbde),y,x);
+y = (%k1*sinh(x)+%k2*%e^-x)/sqrt(x);
+method;
+modifiedbessel;
+
+s:ode2(eq:subst(n=3/2,mbde),y,x);
+y = bessel_i(-(3/2),x)*%k2+bessel_i(3/2,x)*%k1;
+method;
+modifiedbessel;
+
+declare(n,integer);
+done;
+ode2(mbde,y,x);
+y = %k2*bessel_k(n,x)+%k1*bessel_i(n,x);
+method;
+modifiedbessel;
+
+(kill(all),remove(n,integer));
+done;

@@ -5,7 +5,12 @@
 require 5.008;
 
 $main_info = $ARGV[0];
-$infofile_encoding = $ARGV[1];
+
+if ($#ARGV == 1) {
+    $info_installation_path = $ARGV[1];
+}
+
+$infofile_encoding = ":utf8";
 
 binmode STDOUT, $infofile_encoding;
 
@@ -154,8 +159,8 @@ foreach $key (sort keys %topic_locator) {
     my $nchars = $topic_locator{$key}[3];
     my $node_name = $topic_locator{$key}[0];
     if ($sanitized_key eq '' or $file_name eq '' or $byte_offset < 0 or $nchars < 0 or $node_name eq '') {
-        print STDERR "build_info.pl: something seems wrong for key=\"$sanitized_key\"; emit it anyway.\n";
-        print STDERR "build_info.pl: sanitized_key=\"$sanitized_key\", file_name=\"$file_name\", byte_offset=$byte_offset, nchars=$nchars, node_name=\"$node_name\"\n";
+        print STDERR "build_index.pl: something seems wrong for key=\"$sanitized_key\"; emit it anyway.\n";
+        print STDERR "build_index.pl: sanitized_key=\"$sanitized_key\", file_name=\"$file_name\", byte_offset=$byte_offset, nchars=$nchars, node_name=\"$node_name\"\n";
         print ";; build_index.pl: something seems wrong for this next item\n";
     }
     print "(\"$sanitized_key\" . (\"$file_name\" $byte_offset $nchars \"$node_name\"))\n";
@@ -241,8 +246,8 @@ foreach $node_title (sort keys %node_locator) {
     my $sanitized_title = $node_title;
     $sanitized_title =~ s/"/\\"/g;
     if ($sanitized_title eq '' or $filename eq '' or $begin_node_offset < 0 or $length < 0) {
-        print STDERR "build_info.pl: something seems wrong for title=\"$sanitized_title\"; emit it anyway.\n";
-        print STDERR "build_info.pl: sanitized_title=\"$sanitized_title\", filename=\"$filename\", begin_node_offset=$begin_node_offset, length=$length\n";
+        print STDERR "build_index.pl: something seems wrong for title=\"$sanitized_title\"; emit it anyway.\n";
+        print STDERR "build_index.pl: sanitized_title=\"$sanitized_title\", filename=\"$filename\", begin_node_offset=$begin_node_offset, length=$length\n";
         print ";; build_index.pl: something seems wrong for this next item\n";
     }
     print "(\"$sanitized_title\" . (\"$filename\" $begin_node_offset ", $length, "))\n";
@@ -252,14 +257,21 @@ print ")))\n";
 
 #        Construct hashtables from the lists given above.
 
-print "(load-info-hashtables (maxima::maxima-load-pathname-directory) deffn-defvr-pairs section-pairs))\n";
+if ($info_installation_path) {
+    $info_path_or_how_to_get_it = "#p\"$info_installation_path/\"";
+}
+else {
+    $info_path_or_how_to_get_it = "(maxima::maxima-load-pathname-directory)";
+}
+
+print "(load-info-hashtables $info_path_or_how_to_get_it deffn-defvr-pairs section-pairs))\n";
 
 # (2.3)  Do we have any items or sections?
 #
 #        Warn if no index items or secions found. 
 
 ($item_cnt+$section_cnt)>0 || 
-    print STDERR "WARNING: Empty index. Probably makeinfo is too old. Version 4.7 or 4.8 required.\n";
+    print STDERR "WARNING: Empty index. Not sure what's going on.\n";
 
 # ------------------------------------------------------------------
 # Helper functions

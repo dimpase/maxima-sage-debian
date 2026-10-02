@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -262,9 +262,6 @@
 (defmacro zero-warn (exp)
   `(mtell (intl:gettext "taylor: assumed to be zero: ~M~%")
     `((mlabel) () ,,exp)))
-
-
-(defmacro merrcatch (form) `(catch 'errorsw ,form))
 
 ;;There is a duplicate version of this in MAXMAC
 ;;(defmacro infinities () ''($inf $minf $infinity))

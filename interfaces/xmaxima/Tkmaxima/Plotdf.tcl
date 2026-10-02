@@ -4,11 +4,9 @@
 # For distribution under GNU public License.  See COPYING. #
 #                                                          #
 #     Modified by Jaime E. Villate                         #
-#     Time-stamp: "2021-04-02 14:39:08 villate"            #
 ############################################################
 
-global plotdfOptions
-set plotdfOptions {
+set ::plotdfOptions {
     {dxdt "x-y^2+sin(x)*.3" {specifies dx/dt = dxdt.  eg -dxdt "x+y+sin(x)^2"} }
     {dydt "x+y" {specifies dy/dt = dydt.  eg -dydt "x-y^2+exp(x)"} }
     {dydx "" { may specify dy/dx = x^2+y,instead of dy/dt = x^2+y and dx/dt=1 }}
@@ -18,11 +16,13 @@ set plotdfOptions {
     {xradius 10 "Width in x direction of the x values" }
     {yradius 10 "Height in y direction of the y values"}
     {width 700 "Width of canvas in pixels"}
-    {height 500 "Height of canvas in pixels" }
+    {height 600 "Height of canvas in pixels" }
+    {background white "background color"}
     {scrollregion {} "Area to show if canvas is larger" }
     {xcenter 0.0 {(xcenter,ycenter) is the origin of the window}}
     {ycenter 0.0 "see xcenter"}
     {bbox "" "xmin ymin xmax ymax .. overrides the -xcenter etc"}
+    {algorithm "adamsMoulton" "can be rungeKutta, rungeKuttaA or adamsMoulton"}
     {tinitial 0.0 "The initial value of variable t"}
     {nsteps 300 "Number of steps to do in one pass"}
     {xfun "" "A semi colon separated list of functions to plot as well"}
@@ -48,13 +48,14 @@ set plotdfOptions {
     {psfile "" "A filename where the graph will be saved in PostScript."}
     {nobox 0 "if not zero, do not draw the box around the plot."}
     {axes "xy" "if zero, no axes are drawn. x, y or xy to draw the axes."}
-    {number_of_arrows 225 "Approximate. Choose a square number as the number of arrows to draw"}
+    {narrows "15" "Minimum number of arrows to draw in x and y directions"}
     {nolegend 0 "if not zero, do not write down the legend."}
+    {bargraph 0 "If not 0 this is the width of the bars on a bar graph" }
 }
 
 proc makeFrameDf { win } {
-    set w [makeFrame $win df]
-    if { "$w" == "." } { set w "" }
+    set w [makeFrame $win df [oget $win background]]
+    if { $w eq "." } { set w "" }
     makeLocal $win c dydx buttonFont type
 
     set top $win
@@ -73,7 +74,6 @@ proc makeFrameDf { win } {
 
 proc swapChoose {win msg winchoose } {
     # global dydx dxdt dydt
-
     if { "$msg" == "dydt" } {
 	pack $winchoose.dxdt -before $winchoose.dydt -side bottom
 	oset $win dydx ""
@@ -82,9 +82,7 @@ proc swapChoose {win msg winchoose } {
 	pack forget $winchoose.dxdt
 	oset $win dxdt 1
 	oset $win dydx " "
-	$winchoose.dydt.lab config -text "dy/dx:"
-    }
-}
+	$winchoose.dydt.lab config -text "dy/dx:"}}
 
 proc setForIntegrate { win} {
     makeLocal $win c
@@ -102,104 +100,95 @@ proc doIntegrateScreen { win sx sy  } {
 }
 
 proc doIntegrate { win x0 y0 } {
-    # global xradius yradius c tstep  nsteps
-    #    puts "dointegrate $win $x0 $y0"
-    makeLocal $win xradius yradius c tstep  nsteps direction linewidth tinitial versus_t xmin xmax ymin ymax number_of_arrows
+    makeLocal $win xradius yradius c dxdt dydt algorithm tinitial tstep nsteps \
+        direction linewidth tinitial versus_t xmin xmax ymin ymax parameters \
+        width height
     linkLocal $win didLast trajectoryStarts
-    set rtosx rtosx$win ; set rtosy rtosy$win
-    set x1 [$rtosx $xmin]
-    set y1 [$rtosy $ymax]
-    set x2 [$rtosx $xmax]
-    set y2 [$rtosy $ymin]
+    set linewidth [expr {$linewidth*[vectorlength $width $height]/1000.}]
+    set arrowshape [scalarTimesVector $linewidth {3 5 2}]
+
     oset $win trajectory_at [format "%.10g  %.10g" $x0 $y0]
     lappend trajectoryStarts [list $x0 $y0]
-
     set didLast {}
     # puts "doing at $trajectory_at"
     set steps $nsteps
-    set hx [expr {$xradius / 100.0}]
-    set hy [expr {$yradius / 100.0}]
-    if { "$tstep" == "" } {
-	set h [expr {[vectorlength $xradius $yradius] / 200.0}]
-	set tstep $h
-    } else {set h $tstep }
+    set integrator $algorithm
 
-    # puts h=$h
-    set todo "1"
+    set todo {1}
     switch -- $direction {
-	forward { set todo "1" }
-	backward { set todo "-1" }
-	both { set todo "-1 1" }
-    }
-    set methods ""
-    foreach method { fieldlines curves } {
-				    set color [oget $win $method]
-				    if {"$color" != "" && "$color" != "blank"} {
-					lappend methods $method
-					lappend useColors $method $color
-				    }
-				}
-    set methodNo -1
-    foreach method $methods {
-			     incr methodNo
-			     set linecolor [assoc $method $useColors ]
-			     #    puts method=$method
-			     set signs $todo
-			     if {"$method" == "curves"} {
-				 set signs "-1 1"
-				 set coords {}
-			     }
-			     foreach sgn $signs {
-				 set arrow "none"
-				 if { "$method"=="fieldlines" } {
-				     if { $sgn < 0 } {
-					 set arrow "first"
-					 set coords {}
-				     } else {
-					 if { "$direction" == "forward"} {
-					     set arrow "last"
-					     set coords {}
-					 }
-				     }
-				 }
-				 set h1 [expr {- $hx}]
-				 set h2 [expr {- $hy}]
-				 set form [list $method xff yff $tinitial $x0 $y0 $hx $hy $steps $sgn]
-				 set ans [eval $form]
-				 lappend didLast $form
+	forward { set todo {1}}
+	backward { set todo {-1}}
+	both { set todo {-1 1}}}
+    set tasks {}
+    foreach task {fieldlines curves} {
+        set color [oget $win $task]
+        if {($color ne {}) && ($color ne {blank})} {
+            lappend tasks $task
+            lappend useColors $task $color}}
+    set taskNo -1
+    foreach task $tasks {
+        incr taskNo
+        set linecolor [assoc $task $useColors]
+        set signs $todo
+        set coords {}
+        if {$task eq {curves}} {
+            setCurvesFunctions $dxdt $dydt $parameters
+            set signs {-1 1}
+        } else {
+             setFieldFunctions $dxdt $dydt $parameters}                 
+        foreach sgn $signs {
+            set arrow {none}
+            if {$task eq {fieldlines}} {
+                if { $sgn < 0 } {
+                    set arrow {first}
+                    set coords {}
+                } else {
+                    if {$direction eq {forward}} {
+                        set arrow {last}
+                        set coords {}}}}
+            set h [expr {$sgn*$tstep}]
+            set form [list $integrator xff yff $tinitial $x0 $y0 $h $nsteps]
 
-				 #puts "doing: $form"
-				 set i 0
-				 set lim [expr {$steps * 3}]
-				 catch {
-				     while { $i <= $lim } {
-					 set xn [$rtosx [lindex $ans [incr i]]]
-					 set yn [$rtosy [lindex $ans [incr i]]]
-					 incr i
-					 # puts "$xn $yn"
-					 # Tests if point is inside the domain.
-					 # In version 1.14 there was an if:
-					 # abs($xn1)+abs($yn1)+abs($xn2)
-					 # +abs($yn2) < [expr {pow(10.0,9)}]
-					 # to fix a bug in win95 version.
-					 # That's now out of context, but the
-					 # bug might reappear. (J. Villate)
-					 if { ($xn-$x1)*($xn-$x2) <= 0 &&
-					      ($yn-$y1)*($yn-$y2) <= 0 } {
-					     lappend coords $xn $yn
-					 }
-				     }
-				 }
-				 if { [llength $coords] > 3 } {
-				     $c create line $coords -tags path \
-					 -width $linewidth -fill $linecolor \
-					 -arrow $arrow
-				     if { "$direction" == "both" } {
-					 set coords [lrange $coords 2 3]
-				     }
-				 }
-			     }
-			 }
+            # puts "doing: $form"
+            # pts will be a list with values of t, x and y, at the initial
+            # point and at each of the steps
+            set pts [eval $form]
+            lappend didLast $form
+            set first 1
+            # puts "clipping box: ($x1,$y1), ($x2,$y2)"
+            foreach {t xr yr} $pts {
+                if {$first} {
+                        set p1 [list $xr $yr]
+                        set c1 [PointCode $p1 $xmin $ymin $xmax $ymax]
+                        # puts "point $p1 with code $c1"
+                        if {!$c1} {
+                            set coords [list [rtosx$win $xr] [rtosy$win $yr]]
+                        } else {set coords {}}
+                        set first 0
+                    } else {
+                        set p2 [list $xr $yr]
+                        set c2 [PointCode $p2 $xmin $ymin $xmax $ymax]
+                        # puts "point $p2 with code $c2"
+                        if {$c1|$c2} {
+                            set clip \
+                                [ClipLine $p1 $p2 $c1 $c2 $xmin $ymin $xmax $ymax]
+                            if {[llength $clip]} {
+                                foreach p $clip {
+                                    lappend coords [rtosx$win [lindex $p 0]]
+                                    lappend coords [rtosy$win [lindex $p 1]]}}
+                            if {$c2 && ([llength $coords] >= 4)} {
+                                $c create line $coords -tags path -width \
+                                    $linewidth -fill $linecolor -arrow $arrow \
+                                    -arrowshape $arrowshape
+                                set coords {}}
+                        } else {
+                            lappend coords [rtosx$win [lindex $p2 0]]
+                            lappend coords [rtosy$win [lindex $p2 1]]}
+                        set p1 $p2
+                        set c1 $c2}}
+            if {[llength $coords] >= 4} {
+                $c create line $coords -tags path -width $linewidth \
+                    -fill $linecolor -arrow $arrow -arrowshape $arrowshape}}}
     if { $versus_t } { plotVersusT $win}
 }
 
@@ -207,62 +196,46 @@ proc plotVersusT { win } {
     linkLocal $win didLast dydt dxdt parameters xcenter xradius ycenter yradius
     if { $didLast == {} } { return }
     set w [winfo parent $win]
-    if { "$w" == "." } { set w "" }
-    set nwin .versust.plot2d
-    if { "$parameters" != ""  } {
-	set pars ", $parameters"
-    } else {
-	set pars ""
-    }
-    oset $nwin themaintitle "dy/dt=$dydt, dx/dt=$dxdt $pars"
-    lappend plotdata [list maintitle [list oget $nwin themaintitle]]
-
-    set max [expr {$xcenter + $xradius}]
-    set min [expr {$xcenter - $xradius}]
-    if { ($ycenter + $yradius) > $max } {
-	set max [expr {$ycenter + $yradius}]
-    }
-    if { ($ycenter - $yradius) < $min } {
-	set min [expr {$ycenter - $yradius}]
-    }
+    if {$w eq {.}} { set w {}}
+    set xwin .versust.plotx
+    set ywin .versust.ploty
+    set xdata {}
+    set ydata {}
 
     foreach v $didLast {
 	set ans [eval $v]
-	desetq "tinitial x0 y0 hx hy steps sgn" [lrange $v 3 end]
-	set this [lrange $v 0 5]
+	desetq "tinitial x0 y0 h steps" [lrange $v 3 end]
+	set this [lrange $v 0 4]
 	if { [info exists doing($this) ] } { set tem $doing($this) } else {
 	    set tem ""
 	}
 	set doing($this) ""
-	set allx "" ; set ally "" ; set allt ""
-	set ii 0
+	set allx ""; set ally ""; set allt ""
 	foreach {t x y } $ans {
-	    lappend allx $x
-	    lappend ally $y
-	    lappend allt $t
-	    incr ii
-	}
-	
+            if {($x>=$xcenter-1.1*$xradius) && ($x<=$xcenter+1.1*$xradius)
+                && ($y>=$ycenter-1.1*$yradius) && ($y<=$ycenter+1.1*$yradius)} {
+                lappend allx $x
+                lappend ally $y
+                lappend allt $t}}
 	foreach u $tem v [list $allx $ally $allt] {
-	    if { $sgn > 0 } { lappend doing($this) [concat $u $v]} else {
-		lappend doing($this) [concat [lreverse $v] $u]
-	    }
-	}
-    }
+	    if { $h > 0 } { lappend doing($this) [concat $u $v]} else {
+		lappend doing($this) [concat [lreverse $v] $u]}}}
 
     foreach {na val } [array get doing] {
-	lappend plotdata [list xaxislabel "t"]
-	lappend plotdata [list label [oget $win xaxislabel]] [list plotpoints 0]
-	lappend plotdata [list xversusy [lindex $val 2] [lindex $val 0] ]
-	lappend plotdata [list label [oget $win yaxislabel]]	
-	lappend plotdata [list xversusy [lindex $val 2] [lindex $val 1] ]
-    }
-    if { ![winfo exists .versust] } {
-	toplevel .versust
-    }
-
-    plot2d -data $plotdata -windowname $nwin -ycenter [expr {($max+$min)/2.0}] -yradius [expr {($max-$min)/2.0}]
-    wm title .versust [concat [oget $win xaxislabel] [mc " and "] [oget $win yaxislabel] [mc " versus t"]]
+	lappend xdata [list xaxislabel "t"]
+	lappend xdata [list yaxislabel [oget $win xaxislabel]]
+        lappend xdata [list plotpoints 0] [list nolegend 1]
+	lappend xdata [list xversusy [lindex $val 2] [lindex $val 0] ]
+	lappend ydata [list xaxislabel "t"]
+	lappend ydata [list yaxislabel [oget $win yaxislabel]]
+        lappend ydata [list plotpoints 0] [list nolegend 1]
+	lappend ydata [list xversusy [lindex $val 2] [lindex $val 1] ]}
+    if { ![winfo exists .versust] } {toplevel .versust}
+    # puts "plotdata: $plotdata"
+    plot2d -data $xdata -windowname $xwin -ycenter $xcenter -yradius $xradius
+    wm title $xwin [concat [oget $win xaxislabel] [mc " versus t"]]
+    plot2d -data $ydata -windowname $ywin -ycenter $ycenter -yradius $yradius
+    wm title $ywin [concat [oget $win yaxislabel] [mc " versus t"]]
 }
 
 proc lreverse { lis } {
@@ -274,117 +247,80 @@ proc lreverse { lis } {
     return $ans
 }
 
-
-#
-#-----------------------------------------------------------------
-#
-# $rtosx,$rtosy --  convert Real coordinate to screen coordinate
-#
-#  Results: a window coordinate
-#
-#  Side Effects:
-#
-#----------------------------------------------------------------
-
-
-#
-#-----------------------------------------------------------------
-#
-# $storx,$story --  Convert a screen coordinate to a Real coordinate.
-#
-#  Results:
-#
-#  Side Effects:
-#
-#----------------------------------------------------------------
-#
-
 proc drawArrowScreen { c atx aty dfx dfy color } {
-
+    set win [winfo parent $c]
+    makeLocal $win width height
+    set linewidth [expr {[vectorlength $width $height]/1000.}]
+    set arrowshape [scalarTimesVector $linewidth {3 5 2}]
     set x1 [expr {$atx + $dfx}]
     set y1 [expr {$aty + $dfy}]
-    #   set x2 [expr {$atx + .8*$dfx +.1* $dfy}]
-    #   set y2 [expr {$aty + .8*$dfy - .1* $dfx}]
-    #   set x3 [expr {$atx + .8*$dfx -.1* $dfy}]
-    #   set y3 [expr {$aty + .8*$dfy + .1* $dfx}]
-    $c create line $atx $aty $x1 $y1 -tags arrow -fill $color -arrow last -arrowshape {3 5 2}
-    #  $c create line $x2 $y2  $x1 $y1 -tags arrow -fill red
-    #  $c create line $x3 $y3 $x1 $y1 -tags arrow -fill red
-}
+    $c create line $atx $aty $x1 $y1 -tags arrow -fill $color -arrow last \
+        -arrowshape $arrowshape -width $linewidth }
 
 proc drawDF { win tinitial } {
     global axisGray
-    makeLocal  $win xmin xmax xcenter ycenter c ymin ymax transform vectors xaxislabel yaxislabel number_of_arrows
-    linkLocal $win nobox axes
-
-    # flush stdout
-    set rtosx rtosx$win ; set rtosy rtosy$win
-    set storx   storx$win  ;   set story   story$win
-    set stepsize [expr  { 420.0/sqrt($number_of_arrows) }]
-    set min 100000000000.0
+    makeLocal  $win xmin xmax xcenter ycenter c ymin ymax transform vectors \
+        xaxislabel yaxislabel nobox axes width height narrows
+    set rtosx rtosx$win
+    set rtosy rtosy$win
+    set storx storx$win
+    set story story$win
+    set stepsize [expr {$width/($narrows+2.0)}]
+    set stepy [expr {$height/($narrows+2.0)}]
+    if { $stepy < $stepsize } {set stepsize $stepy}
+    set margin [expr {0.7*$stepsize}]
+    set min 1.0E42
     set max 0.0
     set t0 $tinitial
     set xfactor [lindex $transform 0]
     set yfactor [lindex $transform 3]
-    set extra $stepsize
-    set uptox [$rtosx $xmax]
-    set uptoy [$rtosy $ymin]
-#    set uptox [expr {[$rtosx $xmax] + $extra}]
-#    set uptoy [expr {[$rtosy $ymin] + $extra}]
-#    set uptox [expr {[$rtosx $xmax] + $extra}]
-#    set uptoy [expr {[$rtosy $ymin] + $extra}]
+    set uptox [expr {[$rtosx $xmax] - $margin}]
+    set uptoy [expr {[$rtosy $ymin] - $margin}]
     # draw the axes:
     #puts "draw [$rtosx $xmin] to $uptox"
-    if { "$vectors" != "" && "$vectors" != "blank" } {
-	for { set x [expr {[$rtosx $xmin] + $extra}] } { $x < $uptox } { set x [expr {$x +$stepsize}] } {
-	    for { set y [expr {[$rtosy $ymax] + $extra}] } { $y < $uptoy } { set y [expr {$y + $stepsize}] } {
+    if {($vectors ne "") && ($vectors ne "blank") } {
+	for {set x [expr {[$rtosx $xmin] + $margin}]} {$x < $uptox} \
+            {set x [expr {$x + $stepsize}]} {
+                for {set y [expr {[$rtosy $ymax] + $margin}]} {$y < $uptoy} \
+                    {set y [expr {$y + $stepsize}]} {
 		set args "$t0 [$storx $x] [$story $y]"
 		set dfx [expr {$xfactor * [eval xff $args]}]
 		# screen y is negative of other y
 		set dfy [expr  {$yfactor * [eval yff $args]}]
 		# puts "$dfx $dfy"
-		set len  [vectorlength $dfx $dfy]
+		set len [vectorlength $dfx $dfy]
 		append all " $len $dfx $dfy "
-		if { $min > $len } { set min $len }
-		if { $max < $len } {set  max $len}
-	    }
-	}
-	set fac [expr {($stepsize -5 -8)/($max - $min)}]
-	set arrowmin 8
-	set arrowrange [expr {$stepsize -4 - $arrowmin}]
+		if { $min > $len } {set min $len}
+                        if { $max < $len } {set max $len}}}
+	set arrowmin [expr {0.25*$stepsize}]
+	set arrowrange [expr {0.85*$stepsize - $arrowmin}]
 	set s1 [expr {($arrowrange*$min+$arrowmin*$min-$arrowmin*$max)/($min-$max)}]
-	set s2 [expr {$arrowrange/($max-$min) }]
+	set s2 [expr {$arrowrange/($max-$min)}]
 	# we calculate fac for each length, so that
 	# when we multiply the vector times fac, its length
 	# will fall somewhere in [arrowmin,arrowmin+arrowrange].
-	# vectors of length min and max resp. should get mapped
+	# Vectors of length min and max resp. should get mapped
 	# to the two end points.
 	# To do this we set fac [expr {$s1/$len + $s2}]
-	# puts "now to draw,s1=$s1 s2=$s2,max=$max,min=$min"
-	# puts "xfactor=$xfactor,yfactor=$yfactor"
-	
-	set i -1
-	for { set x [expr {[$rtosx $xmin] + $stepsize}] } { $x < $uptox } { set x [expr {$x +$stepsize}] } {
-	    for { set y [expr {[$rtosy $ymax] + $stepsize}] } { $y < $uptoy } { set y [expr {$y + $stepsize}] } {
-		
-		
-		set len [lindex $all [incr i]]
+        set i -1
+	for {set x [expr {[$rtosx $xmin] + $margin}]} {$x < $uptox} \
+            {set x [expr {$x + $stepsize}]} {
+                for {set y [expr {[$rtosy $ymax] + $margin}]} {$y < $uptoy} \
+                    {set y [expr {$y + $stepsize}]} {
+                set len [lindex $all [incr i]]
 		set dfx [lindex $all [incr i]]
 		set dfy [lindex $all [incr i]]
 		#puts "[$storx $x] [$story $y] x=$x y=$y dfx=$dfx dfy=$dfy
 		# puts "$len $dfx $dfy"
                 if {$len != 0.0} {
                     set fac [expr {$s1/$len + $s2}]
-                    drawArrowScreen $c $x $y [expr {$fac * $dfx}] [expr {$fac * $dfy} ] $vectors
-                }
-	    }
-	}
-    }
-
+                    drawArrowScreen $c $x $y [expr {$fac * $dfx}] \
+                        [expr {$fac * $dfy} ] $vectors}}}}
     set x1 [rtosx$win $xmin]
     set y1 [rtosy$win $ymax]
     set x2 [rtosx$win $xmax]
     set y2 [rtosy$win $ymin]
+    
     # Draw the two axes
     $c del axes
     if { $xmin*$xmax < 0 && ($axes == {y} || $axes == {xy}) } {
@@ -393,25 +329,19 @@ proc drawDF { win tinitial } {
 		-tags axes
 	} else {
 	    $c create line [$rtosx 0] $y1 [$rtosx 0] $y2 -width 2 \
-		-arrow "first" -tags axes
-	}
-    }
+		-arrow "first" -tags axes}}
     if { $ymin*$ymax < 0  && ($axes == {x} || $axes == {xy}) } {
 	if { $nobox == 0 } {
 	    $c create line $x1 [$rtosy 0] $x2 [$rtosy 0] -fill $axisGray \
 		-tags axes
 	} else {
 	    $c create line $x1 [$rtosy 0] $x2 [$rtosy 0] -width 2 \
-		-arrow "last" -tags axes
-	}
-    }
+		-arrow "last" -tags axes}}
     # Draw the plot box
     if { "[$c find withtag printrectangle]" == "" && $nobox == 0 } {
 	$c create rectangle $x1 $y1 $x2 $y2 -tags printrectangle -width 2
 	marginTicks $c [storx$win $x1] [story$win $y2] [storx$win $x2] \
-	    [story$win $y1] "printrectangle marginticks"
-
-    }
+	    [story$win $y1] "printrectangle marginticks"}
     # Write down the axes labels
     $c del axislabel
     set width [oget $win width]
@@ -422,15 +352,15 @@ proc drawDF { win tinitial } {
 	set xbound [expr {$x1-0.08*$width}]
     }
     $c create text $xbound [expr {($y1+$y2)/2.0}] -anchor center -angle 90 \
-       -text [oget $win yaxislabel] -font {helvetica 16 normal} -tags axislabel
+       -text [oget $win yaxislabel] -font {TkDefaultFont 16 normal} -tags axislabel
     if {$nobox != 0  && $ymin*$ymax < 0  && ($axes == {x} || $axes == {xy})} {
 	$c create text [expr {$x2-0.01*$width}] \
             [expr { [$rtosy 0]+0.02*$height}] -anchor ne -tags axislabel \
-            -text [oget $win xaxislabel] -font {helvetica 16 normal}
+            -text [oget $win xaxislabel] -font {TkDefaultFont 16 normal}
     } else {
 	$c create text [expr {($x1 + $x2)/2}] [expr {$y2 + 0.08*$height}] \
 	    -anchor center -text [oget $win xaxislabel] \
-	    -font {helvetica 16 normal} -tags axislabel
+	    -font {TkDefaultFont 16 normal} -tags axislabel
     }
 }
 
@@ -452,18 +382,26 @@ proc parseOdeArg {  s } {
 }
 
 proc plotdf { args } {
-    global plotdfOptions   printOption printOptions plot2dOptions
+    global printOption printOptions
     # puts "args=$args"
     # to see options add: -debug 1
     set win [assoc -windowname $args]
-    if { "$win" == "" } {set win [getOptionDefault windowname $plotdfOptions] }
+    if { "$win" == "" } {set win [getOptionDefault windowname $::plotdfOptions] }
     if { "[set ode [assoc "-ode" $args]]" != "" }  {
 	set args [delassoc -ode $args]
 	set args [concat [parseOdeArg $ode] $args]
     }
     global [oarray $win]
-    getOptions $plotdfOptions $args -usearray [oarray $win]
+    getOptions $::plotdfOptions $args -usearray [oarray $win]
     oset $win didLast {}
+    # Makes extra vertical space for sliders
+    linkLocal $win sliders height tstep xradius yradius
+    # Default value for tstep equal to the plot box's diagonal divided by 400
+    if { "$tstep" == "" } {
+	set tstep [expr {[vectorlength $xradius $yradius] / 200.0}]
+    }
+    if {[string length $sliders] > 0} {
+        oset $win height [expr {$height + 40*[llength [split $sliders ,]]}]}
 
     makeLocal $win dydx
 
@@ -484,46 +422,39 @@ proc plotdf { args } {
 }
 
 proc replotdf { win } {
-    global printOption plotdfOptions
+    global printOption 
     linkLocal $win xfundata data psfile
-    if { ![info exists data] } {
-	set data ""
-	
-    }
-    makeLocal $win c dxdt dydt tinitial nsteps xfun trajectory_at parameters number_of_arrows
+    if { ![info exists data] } {set data ""}
+    makeLocal $win c dxdt dydt tinitial nsteps xfun trajectory_at parameters
     set_xy_region $win 0.8
     set_xy_transforms $win
-    setXffYff $dxdt $dydt $parameters
+    setFieldFunctions $dxdt $dydt $parameters
     $c delete all
     setForIntegrate $win
     oset $win curveNumber -1
     drawDF $win $tinitial
-    if { "$trajectory_at" != "" } {
-	eval doIntegrate $win  $trajectory_at
-    }
+    if { $trajectory_at ne "" } {eval doIntegrate $win  $trajectory_at}
     set xfundata ""
     foreach v [sparseListWithParams $xfun {x y t} $parameters ] {
 	proc _xf {  x  } "return \[expr { $v } \]"
-	regsub "\\$" $v "" label
-	lappend xfundata [list label $label] \
-	    [linsert [calculatePlot $win _xf $nsteps]  \
-		 0 xversusy]
-    }
+	lappend xfundata [list nolegend 1] \
+	    [linsert [calculatePlot $win _xf $nsteps] 0 xversusy] }
     redraw2dData $win -tags path
 
     # Create a PostScript file, if requested
-    if { $psfile != "" } {
+    if { $psfile ne "" } {
 	set printOption(psfilename) $psfile
 	writePostscript $win
 	$c delete printoptions
-	eval [$win.menubar.close cget -command]
-    }
+	eval [$win.menubar.close cget -command] }}
+
+proc setFieldFunctions { dxdt dydt parameters } {
+    proc xff {t x y} "expr {[sparseWithParams $dxdt {x y} $parameters]}"
+    proc yff {t x y} "expr {[sparseWithParams $dydt {x y} $parameters] } "
 }
-
-proc setXffYff { dxdt dydt parameters } {
-
-    proc xff { t x y } "expr { [sparseWithParams $dxdt { x y} $parameters] }"
-    proc yff { t x y } "expr { [sparseWithParams $dydt { x y} $parameters] } "
+proc setCurvesFunctions { dxdt dydt parameters } {
+    proc xff {t x y} "expr {[sparseWithParams $dydt {x y} $parameters]}"
+    proc yff {t x y} "expr {[sparseWithParams -($dxdt) {x y} $parameters]}"
 }
 
 proc doConfigdf { win } {
@@ -540,10 +471,21 @@ proc doConfigdf { win } {
     pack $frdydx.dxdt  $frdydx.dydt -side bottom  -fill x -expand 1
     pack $frdydx.dydxbut $frdydx.dydtbut -side left -fill x -expand 1
 
-    foreach w {number_of_arrows parameters xfun linewidth xradius yradius xcenter ycenter tinitial versus_t nsteps direction curves vectors fieldlines } {
+    foreach w {narrows parameters xfun linewidth xradius yradius xcenter \
+        ycenter tinitial versus_t tstep nsteps direction curves vectors \
+        fieldlines} {
 	mkentry $wb1.$w [oloc $win $w] $w $buttonFont
 	pack $wb1.$w -side bottom -expand 1 -fill x
     }
+    radiobutton $wb1.rk -text "4th order Runge Kutta" \
+        -variable [oloc $win algorithm] -value rungeKutta -anchor w
+    radiobutton $wb1.rka -text "Adaptive-step Runge Kutta" \
+        -variable [oloc $win algorithm] -value rungeKuttaA -anchor w
+    radiobutton $wb1.am -text "Adams-Moulton" \
+        -variable [oloc $win algorithm] -value adamsMoulton -anchor w
+    pack $wb1.rk -side bottom -expand 1 -fill x
+    pack $wb1.rka -side bottom -expand 1 -fill x
+    pack $wb1.am -side bottom -expand 1 -fill x
     mkentry $wb1.trajectory_at [oloc $win trajectory_at] \
 	"Trajectory at" $buttonFont
     bind $wb1.trajectory_at.e <KeyPress-Return> \
@@ -572,16 +514,15 @@ proc recomputeDF { win } {
 	#	puts "set recompute 1"
 	set recompute 1
     }
-    linkLocal $win trajectoryStarts  c tinitial dxdt dydt parameters
+    linkLocal $win trajectoryStarts c tinitial dxdt dydt parameters
     set redo 0
     set trajs ""
 
-    catch {     set trajs $trajectoryStarts}
-
+    catch {set trajs $trajectoryStarts}
 
     while { $redo != $recompute } {
-	#	puts "	setXffYff $dxdt $dydt $parameters"
-	setXffYff $dxdt $dydt $parameters
+	#	puts "	setFieldFunctions $dxdt $dydt $parameters"
+	setFieldFunctions $dxdt $dydt $parameters
 	#	$c delete path point arrow
 	$c delete all
 	catch { unset  trajectoryStarts }

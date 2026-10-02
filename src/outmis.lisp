@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -19,10 +19,14 @@
 (macsyma-module outmis)
 
 
-(declare-top (special $exptisolate $labels $dispflag errorsw))
+(declare-top (special $exptisolate))
 
-(defmvar $exptisolate nil)
-(defmvar $isolate_wrt_times nil)
+(defmvar $exptisolate nil
+  nil
+  :properties ((evflag t)))
+(defmvar $isolate_wrt_times nil
+  nil
+  :properties ((evflag t)))
 
 (defmfun $isolate (e *xvar)
   (iso1 e (getopr *xvar)))
@@ -119,9 +123,6 @@
 		   ((eq (caar e) 'mplus) (cons u (nreverse v)))
 		   (t (cons u v)))))))
 
-(declare-top (special atvars munbound $props $gradefs $features opers
-		      $contexts $activecontexts $aliases))
-
 (defmspec $properties (x)
   (setq x (getopr (fexprcheck x)))
   (unless (or (symbolp x) (stringp x))
@@ -150,6 +151,8 @@
   	       (if (fboundp x) (nconc l (list "system function")))))
 	 l)
 
+     ;; Only process properties with non-NIL values.
+     (when (cadr y)
       ;; TOP-LEVEL PROPERTIES
       (cond ((setq prop 
                    (assoc (car y)
@@ -181,11 +184,13 @@
   	        ;; Do not add more than one entry to the list.
   	        (not (member '$transfun l))
   	        (not (member '$rule l))
-  		(not (member "system function" l :test #'equal)))
+  		(not (member "system function" l :test #'equal))
+  		(progn
   	   (nconc l
   		  (list (cond ((get x 'translated) '$transfun)
   			      ((mgetl x '($rule ruleof)) '$rule)
-  			      (t "system function")))))
+  			      (t "system function"))))
+  		  nil)))
   	  ((and (eq (car y) 'autoload) 
   	        (not (member "system function" l :test #'equal)))
   	   (nconc l (ncons (if (member x (cdr $props) :test #'eq)
@@ -225,7 +230,7 @@
   			   (do ((y (cdadr y) (cddr y))
   				(l (list '(mlist) "user properties")))
   			       ((null y) (list l))
-  			     (nconc l (list (car y)))))))))))))
+  			     (nconc l (list (car y))))))))))))))
 
 (defmspec $propvars (x)
   (setq x (fexprcheck x))
@@ -319,7 +324,7 @@
 			    (ncons (car i)))
 		    ret))))
 
-(declare-top (special $programmode *roots *failures varlist genvar $ratfac))
+(declare-top (special *roots *failures))
 
 (defmfun $changevar (expr trans nvar ovar)
   (let ($ratfac)
@@ -391,8 +396,8 @@
 					     trans ovar)))))
 	     (cond
 	       (nfun
-		;; nfun is basically the result of subtituting ovar
-		;; with tfun in the integratand (summand).
+		;; nfun is basically the result of substituting ovar
+		;; with tfun in the integrand (summand).
 		(cond	
 		  ((cdddr expr)
 		   ;; Handle definite integral, summation, or product.
@@ -432,7 +437,7 @@
 		     varlist nvarlist)
 	    (rdis (cdr expr))))))
 
-(declare-top (special $listconstvars facfun))
+(declare-top (special facfun))
 
 (defmfun $factorsum (e)
   (factorsum0 e '$factor))

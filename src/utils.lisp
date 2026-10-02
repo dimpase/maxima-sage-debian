@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -20,11 +20,6 @@
 ;;;
 ;;; Every function in this file is known about externally.
 
-(defmacro while (cond &rest body)
-  `(do ()
-       ((not ,cond))
-     ,@body))
-
 (defun maxima-getenv (envvar)
   #+gcl     (si::getenv envvar)
   #+ecl     (si::getenv envvar)
@@ -33,27 +28,35 @@
   #+sbcl    (sb-ext:posix-getenv envvar)
   #+clisp   (ext:getenv envvar)
   #+(or openmcl mcl)     (ccl::getenv envvar)
-  #+lispworks (hcl:getenv envvar)
+  #+lispworks (lw:environment-variable envvar)
   #+abcl (ext:getenv envvar)
   )
 
 ;; CMUCL needs because when maxima reaches EOF, it calls BYE, not $QUIT.
 
-(defun bye ()
-  #+(or cmu scl clisp) (ext:quit)
-  #+sbcl               (sb-ext:quit)
-  #+allegro            (excl:exit 0 :quiet t)
-  #+(or mcl openmcl)   (ccl:quit)
-  #+gcl                (system::quit)
-  #+ecl                (si:quit)
-  #+lispworks          (lispworks:quit)
-  #+abcl               (cl-user::quit)
-  #+kcl                (lisp::bye)
+(defun bye (&optional (exit-code 0))
+  (declare (ignorable exit-code))
+  #+scl       (ext:quit)
+  #+clisp              (ext:quit exit-code)
+  #+sbcl               (sb-ext:quit :unix-status exit-code)
+  #+allegro            (excl:exit exit-code :quiet t)
+  #+(or mcl openmcl)   (ccl:quit exit-code)
+  #+ecl                (si:quit exit-code)
+  #+lispworks          (lispworks:quit :status exit-code)
+  #+abcl               (ext:quit :status exit-code)
+  #+gcl                (system:bye exit-code)
+  #+cmucl
+  (handler-case (ext:quit nil exit-code)
+    ;; Only the most recent versions of cmucl support an exit code.
+    ;; If it doesn't, we get a program error (wrong number of args),
+    ;; so catch that and just call quit without the arg.
+    (program-error ()
+      (ext:quit)))
   )
 
 
 ;;; F is assumed to be a function of two arguments.  It is mapped down L
-;;; and applied to consequtive pairs of elements of the list.
+;;; and applied to consecutive pairs of elements of the list.
 ;;; Useful for iterating over property lists.
 
 (defun map2c (f l)
@@ -75,16 +78,6 @@
 (defun xor (a b)
   (or (and (not a) b) (and (not b) a)))
   
-;;; A MEMQ which works at all levels of a piece of list structure.
-;;;
-;;; Note that (AMONG NIL '(A B C)) is T, however.  This could cause bugs.
-;;; > This is false. (AMONG NIL anything) returns NIL always. -kmp
-
-(defun among (x l) 
-  (cond ((null l) nil)
-	((atom l) (eq x l))
-	(t (or (among x (car l)) (among x (cdr l)))))) 
-
 ;;; Similar to AMONG, but takes a list of objects to look for.  If any
 ;;; are found in L, returns T.
 
@@ -121,9 +114,17 @@
 ;;;     else store the value under the appropriate property.
 ;;;
 
-(defun cput (bas val sel)
+(defun cput (base val sel)
   (cond ((null val)
-	 (zl-remprop bas sel)
+	 (zl-remprop base sel)
 	 nil)
 	(t
-	 (putprop bas val sel))))
+	 (putprop base val sel))))
+
+(defun prefixp (prefix sequence &key (test #'eql))
+  "Returns T if PREFIX is a prefix of SEQUENCE.
+  Accepts any sequence type and an optional :TEST function (defaults to EQL).
+  E.g. '(1 2) is a prefix of '(1 2 3), and \"hell\" is a prefix of \"hello\".
+  Any sequence is a prefix of itself."
+  (let ((m (mismatch sequence prefix :test test)))
+    (or (not m) (>= m (length prefix)))))

@@ -6,19 +6,19 @@
 * References for contrib_ode::
 @end menu
 
-@node Introduction to contrib_ode, Functions and Variables for contrib_ode, contrib_ode-pkg, contrib_ode-pkg
+@node Introduction to contrib_ode, Functions and Variables for contrib_ode, Package contrib_ode, Package contrib_ode
 
 @section Introduction to contrib_ode 
 
-Maxima's ordinary differential equation (ODE) solver @code{ode2} solves
+Maxima's ordinary differential equation (ODE) solver @mref{ode2} solves
 elementary linear ODEs of first and second order.  The function
-@code{contrib_ode} extends @code{ode2} with additional methods for linear
+@mref{contrib_ode} extends @code{ode2} with additional methods for linear
 and non-linear first order ODEs and linear homogeneous second order ODEs.  
 The code is still under development and the calling sequence may change
 in future releases.  Once the code has stabilized it may be
 moved from the contrib directory and integrated into Maxima.
 
-This package must be loaded with the command @code{load('contrib_ode)}
+This package must be loaded with the command @code{load("contrib_ode")}
 before use.
 
 The calling convention for @code{contrib_ode} is identical to @code{ode2}.  
@@ -46,8 +46,10 @@ a transformation into another ODE in variable @code{%u}.
 
 @end itemize
 
-@code{%c} is used to represent the constant of integration for first order equations.
-@code{%k1} and @code{%k2} are the constants for second order equations.  
+@code{contrib_ode} uses the global variables @mrefcomma{%c} 
+@mrefcomma{%k1} @mrefcomma{%k2} @mref{method} and @mref{yp}
+similarly to @code{ode2}.
+
 If @code{contrib_ode}
 cannot obtain a solution for whatever reason, it returns @code{false}, after
 perhaps printing out an error message.
@@ -56,13 +58,13 @@ It is necessary to return a list of solutions, as even first order
 non-linear ODEs can have multiple solutions.  For example:
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c eqn:x*'diff(y,x)^2-(1+x*y)*'diff(y,x)+y=0;
 @c contrib_ode(eqn,y,x);
 @c method;
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) eqn:x*'diff(y,x)^2-(1+x*y)*'diff(y,x)+y=0;
                     dy 2             dy
@@ -90,13 +92,13 @@ Nonlinear ODEs can have singular solutions without constants of
 integration, as in the second solution of the following example:
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c eqn:'diff(y,x)^2+x*'diff(y,x)-y=0;
 @c contrib_ode(eqn,y,x);
 @c method;
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) eqn:'diff(y,x)^2+x*'diff(y,x)-y=0;
                        dy 2     dy
@@ -116,7 +118,7 @@ integration, as in the second solution of the following example:
                                           4
 @group
 (%i4) method;
-(%o4)                       clairault
+(%o4)                       clairaut
 @end group
 @end example
 
@@ -126,13 +128,13 @@ variable @code{%t}.  In this case the parametric solutions can be manipulated
 to give explicit solutions.
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c eqn:'diff(y,x)=(x+y)^2;
 @c contrib_ode(eqn,y,x);
 @c method;
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) eqn:'diff(y,x)=(x+y)^2;
                           dy          2
@@ -153,14 +155,14 @@ to give explicit solutions.
 The following example (Kamke 1.112) demonstrates an implicit solution.
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c assume(x>0,y>0);
 @c eqn:x*'diff(y,x)-x*sqrt(y^2+x^2)-y;
 @c contrib_ode(eqn,y,x);
 @c method;
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) assume(x>0,y>0);
 (%o2)                    [x > 0, y > 0]
@@ -189,13 +191,13 @@ The following Riccati equation is transformed into a linear
 second order ODE in the variable @code{%u}.  Maxima is unable to
 solve the new ODE, so it is returned unevaluated.
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c eqn:x^2*'diff(y,x)=a+b*x^n+c*x^2*y^2;
 @c contrib_ode(eqn,y,x);
 @c method;
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) eqn:x^2*'diff(y,x)=a+b*x^n+c*x^2*y^2;
                     2 dy      2  2      n
@@ -219,24 +221,24 @@ solve the new ODE, so it is returned unevaluated.
 
 
 For first order ODEs @code{contrib_ode} calls @code{ode2}.  It then tries the
-following methods: factorization, Clairault, Lagrange, Riccati,
+following methods: factorization, Clairaut, Lagrange, Riccati,
 Abel and Lie symmetry methods.  The Lie method is not attempted
 on Abel equations if the Abel method fails, but it is tried
 if the Riccati method returns an unsolved second order ODE.
 
-For second order ODEs @code{contrib_ode} calls @code{ode2} then @code{odelin}.
+For second order ODEs @code{contrib_ode} calls @code{ode2} then @mref{odelin}.
 
 Extensive debugging traces and messages are displayed if the command
 @code{put('contrib_ode,true,'verbose)} is executed.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Differential equations}
 @category{Share packages}
 @category{Package contrib_ode}
 @closecatbox
 
 
-@node Functions and Variables for contrib_ode, Possible improvements to contrib_ode, Introduction to contrib_ode, contrib_ode-pkg
+@node Functions and Variables for contrib_ode, Possible improvements to contrib_ode, Introduction to contrib_ode, Package contrib_ode
 @section Functions and Variables for contrib_ode
 
 @anchor{contrib_ode}
@@ -245,7 +247,8 @@ Extensive debugging traces and messages are displayed if the command
 Returns a list of solutions of the ODE @var{eqn} with 
 independent variable @var{x} and dependent variable @var{y}.
 
-@opencatbox
+
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -264,11 +267,11 @@ and Lafaille, that searches for solutions in terms of given
 special functions. 
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c odelin(x*(x+1)*'diff(y,x,2)+(x+5)*'diff(y,x,1)+(-4)*y,y,x);
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) odelin(x*(x+1)*'diff(y,x,2)+(x+5)*'diff(y,x,1)+(-4)*y,y,x);
        gauss_a(- 6, - 2, - 3, - x)  gauss_b(- 6, - 2, - 3, - x)
@@ -278,7 +281,7 @@ special functions.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -292,14 +295,14 @@ possible solution @var{soln}.  The value is equivalent to
 zero if @var{soln} is a solution of @var{eqn}.
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c eqn:'diff(y,x,2)+(a*x+b)*y;
 @c ans:[y = bessel_y(1/3,2*(a*x+b)^(3/2)/(3*a))*%k2*sqrt(a*x+b)
 @c          +bessel_j(1/3,2*(a*x+b)^(3/2)/(3*a))*%k1*sqrt(a*x+b)];
 @c ode_check(eqn,ans[1]);
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) eqn:'diff(y,x,2)+(a*x+b)*y;
                          2
@@ -324,68 +327,29 @@ zero if @var{soln} is a solution of @var{eqn}.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
 @end deffn
 
-@defvr {System variable} method
-
-The variable @code{method} is set to the successful solution
-method. 
-
-@opencatbox
-@category{Package contrib_ode}
-@closecatbox
-
-@end defvr
-
-@defvr {Variable} %c
-
-@code{%c} is the integration constant for first order ODEs.
-
-@opencatbox
-@category{Package contrib_ode}
-@closecatbox
-
-@end defvr
-
-@defvr {Variable} %k1
-
-@code{%k1} is the first integration constant for second order ODEs.
-
-@opencatbox
-@category{Package contrib_ode}
-@closecatbox
-
-@end defvr
-
-@defvr {Variable} %k2
-
-@code{%k2} is the second integration constant for second order ODEs.
-
-@opencatbox
-@category{Package contrib_ode}
-@closecatbox
-
-@end defvr
 
 @anchor{gauss_a}
 @deffn {Function} gauss_a (@var{a}, @var{b}, @var{c}, @var{x})
 
 @code{gauss_a(a,b,c,x)} and @code{gauss_b(a,b,c,x)} are 2F1 
-geometric functions.  They represent any two independent
+hypergeometric functions.  They represent any two independent
 solutions of the hypergeometric differential equation 
-@code{x(1-x) diff(y,x,2) + [c-(a+b+1)x] diff(y,x) - aby = 0} (A&S 15.5.1).  
+@code{x*(1-x) diff(y,x,2) + [c-(a+b+1)x] diff(y,x) - a*b*y = 0}
+See @urlaands{eqn 15.5.1, 562} and @urldlmf{15.10}.  
 
 The only use of these functions is in solutions of ODEs returned by 
-@code{odelin} and @code{contrib_ode}.  The definition and use of these 
+@mref{odelin} and @mref{contrib_ode}.  The definition and use of these 
 functions may change in future releases of Maxima.
 
 See also @mrefcomma{gauss_b} @mref{dgauss_a} and @mrefdot{gauss_b}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -395,7 +359,7 @@ See also @mrefcomma{gauss_b} @mref{dgauss_a} and @mrefdot{gauss_b}
 @deffn {Function} gauss_b (@var{a}, @var{b}, @var{c}, @var{x})
 See @mrefdot{gauss_a}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -403,9 +367,10 @@ See @mrefdot{gauss_a}
 
 @anchor{dgauss_a}
 @deffn {Function} dgauss_a (@var{a}, @var{b}, @var{c}, @var{x})
-The derivative with respect to @var{x} of @code{gauss_a(@var{a}, @var{b}, @var{c}, @var{x})}.
+The derivative with respect to @var{x} 
+of @mref{gauss_a}@code{(@var{a}, @var{b}, @var{c}, @var{x})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -413,9 +378,10 @@ The derivative with respect to @var{x} of @code{gauss_a(@var{a}, @var{b}, @var{c
 
 @anchor{dgauss_b}
 @deffn {Function} dgauss_b (@var{a}, @var{b}, @var{c}, @var{x})
-The derivative with respect to @var{x} of @code{gauss_b(@var{a}, @var{b}, @var{c}, @var{x})}.
+The derivative with respect to @var{x} 
+of @mref{gauss_b}@code{(@var{a}, @var{b}, @var{c}, @var{x})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -425,16 +391,15 @@ The derivative with respect to @var{x} of @code{gauss_b(@var{a}, @var{b}, @var{c
 @anchor{kummer_m}
 @deffn {Function} kummer_m (@var{a}, @var{b}, @var{x})
 
-Kummer's M function, as defined in Abramowitz and Stegun,
-@i{Handbook of Mathematical Functions}, Section 13.1.2.
+Kummer's M function, see @urlaands{eqn 13.1.2, 504} and @urldlmf{13.2}.
 
 The only use of this function is in solutions of ODEs returned by 
-@code{odelin} and @code{contrib_ode}.  The definition and use of this 
+@mref{odelin} and @mref{contrib_ode}.  The definition and use of this 
 function may change in future releases of Maxima.
 
 See also @mrefcomma{kummer_u} @mrefcomma{dkummer_m} and @mrefdot{dkummer_u}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -443,12 +408,11 @@ See also @mrefcomma{kummer_u} @mrefcomma{dkummer_m} and @mrefdot{dkummer_u}
 @anchor{kummer_u}
 @deffn {Function} kummer_u (@var{a}, @var{b}, @var{x})
 
-Kummer's U function, as defined in Abramowitz and Stegun,
-@i{Handbook of Mathematical Functions}, Section 13.1.3.
+Kummer's U function, see @urlaands{eqn 13.1.3, 504} and @urldlmf{13.2.6}.
 
 See @mrefdot{kummer_m}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -456,9 +420,10 @@ See @mrefdot{kummer_m}
 
 @anchor{dkummer_m}
 @deffn {Function} dkummer_m (@var{a}, @var{b}, @var{x})
-The derivative with respect to @var{x} of @code{kummer_m(@var{a}, @var{b}, @var{x})}.
+The derivative with respect to @var{x}
+of @mref{kummer_m}@code{(@var{a}, @var{b}, @var{x})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -466,9 +431,10 @@ The derivative with respect to @var{x} of @code{kummer_m(@var{a}, @var{b}, @var{
 
 @anchor{dkummer_u}
 @deffn {Function} dkummer_u (@var{a}, @var{b}, @var{x})
-The derivative with respect to @var{x} of @code{kummer_u(@var{a}, @var{b}, @var{x})}.
+The derivative with respect to @var{x}
+of @mref{kummer_u}@code{(@var{a}, @var{b}, @var{x})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @closecatbox
 
@@ -476,18 +442,20 @@ The derivative with respect to @var{x} of @code{kummer_u(@var{a}, @var{b}, @var{
 
 @anchor{bessel_simplify}
 @deffn {Function} bessel_simplify (@var{expr})
-Simplifies expressions containing Bessel functions bessel_j, bessel_y,
-bessel_i, bessel_k, hankel_1, hankel_2, strauve_h and strauve_l.
-Recurrence relations (given in Abramowitz and Stegun,
-@i{Handbook of Mathematical Functions},
-Section 9.1.27) are used to replace functions of highest order n
+Simplifies expressions containing Bessel functions @mrefcomma{bessel_j}
+@mrefcomma{bessel_y} @mrefcomma{bessel_i} @mrefcomma{bessel_k}
+@mrefcomma{hankel_1} @mrefcomma{hankel_2} @mref{struve_h}
+and @mrefdot{struve_l}
+Recurrence relations  @urlaands{eqn 9.1.27, 361} and @urldlmf{10.6#i}
+@c (DLMF §10.6(i))(A&S 9.1.27)
+are used to replace functions of highest order n
 by functions of order n-1 and n-2.
 
-This process repeated until all the orders
+This process is repeated until all the orders
 differ by less than 2.
 
 @c ===beg===
-@c load('contrib_ode)$
+@c load("contrib_ode")$
 @c bessel_simplify(4*bessel_j(n,x^2)*(x^2-n^2/x^2) 
 @c   +x*((bessel_j(n-2,x^2)-bessel_j(n,x^2))*x
 @c   -(bessel_j(n,x^2)-bessel_j(n+2,x^2))*x)
@@ -499,7 +467,7 @@ differ by less than 2.
 @c    *struve_h(2,z) + 30*%pi*struve_h(1,z)*bessel_j(2,z));
 @c ===end===
 @example
-(%i1) load('contrib_ode)$
+(%i1) load("contrib_ode")$
 @group
 (%i2) bessel_simplify(4*bessel_j(n,x^2)*(x^2-n^2/x^2)
   +x*((bessel_j(n-2,x^2)-bessel_j(n,x^2))*x
@@ -517,7 +485,7 @@ differ by less than 2.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @category{Bessel functions}
 @category{Special functions}
@@ -527,13 +495,13 @@ differ by less than 2.
 
 @anchor{expintegral_e_simplify}
 @deffn {Function} expintegral_e_simplify (@var{expr})
-Simplify expressions containing exponential integral expintegral_e
-using the recurrence (A&S 5.1.14).
+Simplify expressions containing exponential integral @mref{expintegral_e}
+using the recurrence @urlaands{eqn 5.1.14, 229}.
 
    expintegral_e(n+1,z) 
         = (1/n) * (exp(-z)-z*expintegral_e(n,z))      n = 1,2,3 ....
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Package contrib_ode}
 @category{Exponential Integrals}
 @category{Special functions}
@@ -542,7 +510,7 @@ using the recurrence (A&S 5.1.14).
 @end deffn
 
 
-@node Possible improvements to contrib_ode, Test cases for contrib_ode, Functions and Variables for contrib_ode, contrib_ode-pkg
+@node Possible improvements to contrib_ode, Test cases for contrib_ode, Functions and Variables for contrib_ode, Package contrib_ode
 @section Possible improvements to contrib_ode
 
 
@@ -579,7 +547,7 @@ Add more test cases.
 
 @end itemize
 
-@node Test cases for contrib_ode, References for contrib_ode, Possible improvements to contrib_ode, contrib_ode-pkg
+@node Test cases for contrib_ode, References for contrib_ode, Possible improvements to contrib_ode, Package contrib_ode
 @section Test cases for contrib_ode
 
 
@@ -589,8 +557,8 @@ Kamke, Zwillinger and elsewhere.  These are included in the tests subdirectory.
 
 @itemize @bullet
 @item
-The Clairault routine @code{ode1_clairault} finds all known solutions,
-  including singular solutions, of the Clairault equations in Murphy and
+The Clairaut routine @code{ode1_clairaut} finds all known solutions,
+  including singular solutions, of the Clairaut equations in Murphy and
   Kamke.
 
 @item
@@ -606,7 +574,7 @@ There are some crashes.
 
 @end itemize
 
-@node References for contrib_ode, ,Test cases for contrib_ode, contrib_ode-pkg
+@node References for contrib_ode, ,Test cases for contrib_ode, Package contrib_ode
 @section References for contrib_ode
 
 

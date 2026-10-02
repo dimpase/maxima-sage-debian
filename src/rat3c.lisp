@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,13 +14,6 @@
 
 ;;	THIS IS THE NEW RATIONAL FUNCTION PACKAGE PART 3.
 ;;	IT INCLUDES THE GCD ROUTINES AND THEIR SUPPORTING FUNCTIONS
-
-(declare-top (special $keepfloat $algebraic $ratfac genvar))
-
-;; List of GCD algorithms.  Default one is first.
-(defmvar *gcdl* '($spmod $subres $ez $red $mod $algebraic))
-
-(defmvar $gcd (car *gcdl*))		;Sparse Modular
 
 (defun cgcd (a b)
   (cond (modulus 1)
@@ -119,15 +112,26 @@
 	       (t (setq a (linhack y x a (cadr c) cofac?))
 		  (if (cdr a) (rplacd a (nreverse (cdr a))))
 		  a)))
-	((eq $gcd '$spmod) (list (zgcd x y)))
+	((eq $gcd '$spmod)
+	 (if (and (not cofac?) (or (palgp x) (palgp y)))
+	   (let (($gcd '$subres)) (list (oldgcd x y)))
+	   (list (zgcd x y))))
 	((eq $gcd '$subres) (list (oldgcd x y)))
 	((eq $gcd '$algebraic)
 	 (if (or (palgp x) (palgp y))
 	     (let (($gcd '$subres)) (list (oldgcd x y)))
 	     (let (($gcd '$spmod)) (list (zgcd x y)))))
-	((eq $gcd '$ez) (ezgcd2 x y))
+	((eq $gcd '$ez)
+	  (if (or (palgp x) (palgp y))
+        ;; EZGCD2 may loop infinitely on algebraic variables - switch to OLDGCD.
+	    (let (($gcd '$subres)) (list (oldgcd x y)))
+	    (ezgcd2 x y)))
 	((eq $gcd '$red) (list (oldgcd x y)))
-	((eq $gcd '$mod) (newgcd x y modulus))
+	((eq $gcd '$mod)
+	  (if (or (palgp x) (palgp y))
+	    ;; NEWGCD gcd may loop infinitely on algebraic variables - switch to OLDGCD.
+	    (let (($gcd '$subres)) (list (oldgcd x y)))
+	    (newgcd x y modulus)))
 	((not (member $gcd *gcdl* :test #'eq))
 	 (merror (intl:gettext "gcd: 'gcd' variable must be one of ~M; found: ~M") *gcdl* $gcd))
 	(t (list 1 x y))))
@@ -144,9 +148,9 @@
 	((pointergp (car p) (car q)) (monomgcd (p-lc p) q))
 	(t (monomgcd p (p-lc q)))))
 
-(defun linhack (pol1 pol2 nonlindeg var cofac?)
+(defun linhack (pol1 pol2 nonlindeg var2 cofac?)
   (prog (coeff11 coeff12 gcdab rpol1 rpol2 gcdcd gcdcoef)
-     (desetq (coeff11 . coeff12) (bothprodcoef (make-poly var) pol1))
+     (desetq (coeff11 . coeff12) (bothprodcoef (make-poly var2) pol1))
      (setq gcdab (if (pzerop coeff12) coeff11
 		     (pgcd coeff11 coeff12)))
      (cond ((equal gcdab 1)
@@ -154,14 +158,14 @@
 		   (return (list pol1 1 coeff11)))
 		  (t (return (list 1 pol1 pol2))))))
      (setq rpol1 (pquotient pol1 gcdab))
-     (desetq (gcdcd rpol2) (linhackcontent var pol2 nonlindeg))
+     (desetq (gcdcd rpol2) (linhackcontent var2 pol2 nonlindeg))
      (cond ((equal gcdcd 1)
 	    (cond ((setq coeff12 (testdivide rpol2 rpol1))
 		   (return (list rpol1 gcdab coeff12)))
 		  (t (return (list 1 pol1 pol2))))))
      (cond (cofac? (desetq (gcdcoef coeff11 coeff12)
 			   (pgcdcofacts gcdab gcdcd))
-		   (cond ((setq gcdcd (testdivide rpol2 rpol1))
+		   (cond ((setq gcdcd (testdivide* rpol2 rpol1))
 			  (return (list (ptimes gcdcoef rpol1)
 					coeff11
 					(ptimes coeff12 gcdcd))))
@@ -169,7 +173,7 @@
 					  (ptimes coeff11 rpol1)
 					  (ptimes coeff12 rpol2))))))
 	   (t (setq gcdcoef (pgcd gcdcd gcdab))
-	      (cond ((testdivide rpol2 rpol1)
+	      (cond ((testdivide* rpol2 rpol1)
 		     (return (list (ptimes gcdcoef rpol1))))
 		    (t (return (list gcdcoef))))))))
 
@@ -181,10 +185,10 @@
     (if (equal (min (car degl1) (car degl2)) 1)
 	(return (list (car degl1) (car degl2) (car varl))))))
 
-(defun linhackcontent (var pol nonlindeg &aux (npol pol) coef gcd)
+(defun linhackcontent (var2 pol nonlindeg &aux (npol pol) coef gcd)
   (do ((i nonlindeg (1- i)))
       ((= i 0) (list (setq gcd (pgcd gcd npol)) (pquotient pol gcd)))
-    (desetq (coef . npol) (bothprodcoef (make-poly var i 1) npol))
+    (desetq (coef . npol) (bothprodcoef (make-poly var2 i 1) npol))
     (unless (pzerop coef)
       (setq gcd (if (null gcd) coef (pgcd coef gcd)))
       (if (equal gcd 1) (return (list 1 pol))))))
@@ -295,7 +299,7 @@
 (defun pgcd1 (u v) (caddr (psquorem1 u v nil)))
 
 (defun pgcd2 (u v k &aux (i 0))
-  (declare (special lcu lcv) (fixnum k i))
+  (declare (special lcu lcv) (fixnum i))
   (cond ((null u) (pcetimes1 v k lcu))
 	((null v) (pctimes1 lcv u))
 	((zerop (setq i (+ (pt-le u) (- k) (- (car v)))))
@@ -413,7 +417,7 @@
 
 (defun pgcdu1 (u v pquo*)
   (let ((invv (painvmod (pt-lc v))) (k 0) q*)
-    (declare (special k quo q*) (fixnum k))
+    (declare (special k quo q*))
     (loop until (minusp (setq k (- (pt-le u) (pt-le v))))
 	   do (setq q* (ptimes invv (pt-lc u)))
 	   if pquo* do (setq quo (nconc quo (list k q*)))
@@ -421,15 +425,6 @@
                                   (pt-red u) (pt-red v) q* k)))
 	   return (ptzero)
 	   finally (return u))))
-
-;; it is convenient to have the *bigprimes* be actually less than
-;; half the size of the most positive fixnum, so that arithmetic is easier
-
-(defvar *bigprimes* (loop with p = (ash most-positive-fixnum -1) repeat 20 do
-			 (setq p (next-prime (1- p) -1))
-		       collect p))
-
-(defmvar *alpha (car *bigprimes*))
 
 (defun newprime (p)
   (do ((pl *bigprimes* (cdr pl)))
@@ -460,12 +455,12 @@
 (defun norm1 (poly)
   (if (null poly) 0 (+ (norm (cadr poly)) (norm1 (cddr poly)) )) )
 
-(defun pdegree (p var)
+(defun pdegree (p var2)
   (cond ((pcoefp p) 0)
-	((eq var (p-var p)) (p-le p))
-	((pointergp var (p-var p)) 0)
+	((eq var2 (p-var p)) (p-le p))
+	((pointergp var2 (p-var p)) 0)
 	(t (do ((l (p-red p) (pt-red l))
-		(e (pdegree (p-lc p) var) (max e (pdegree (pt-lc l) var))))
+		(e (pdegree (p-lc p) var2) (max e (pdegree (pt-lc l) var2))))
 	       ((null l) e)))))
 
 (defun poly-in-var (p v)

@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -9,6 +9,9 @@
 (in-package :maxima)
 
 (defvar $manual_demo "manual.demo")
+
+(defvar *debug-display-html-help* nil
+  "Set to non-NIL to get some debugging messages from hdescribe.")
 
 (defmspec $example (l)
   (declare (special *need-prompt*))
@@ -87,18 +90,18 @@
   (cons '(mlist) (apply #'create-list1 (cadr l) (cddr l))))
 
 (defun create-list1 (form &rest l &aux lis var1 top)
-  (cond ((null l) (list (meval* form)))
+  (cond ((null l) (list (meval form)))
 	(t
 	 (setq var1 (first l)
 	       lis (second l)
 	       l (cddr l))
 	 (unless (symbolp var1) (merror (intl:gettext "create_list: expected a symbol; found: ~A") var1))
- 	 (setq lis (meval* lis))
+ 	 (setq lis (meval lis))
 	 (mbinding ((list var1))
 	   (cond ((and (numberp lis)
 		       (progn
 			 (setq top (car l) l (cdr l))
-			 (setq top (meval* top))
+			 (setq top (meval top))
 			 (numberp top)))
 		  (loop for i from lis to top
 		     do (mset var1 i)
@@ -143,3 +146,136 @@
         (t
          (merror
           (intl:gettext "apropos: argument must be a string or symbol; found: ~M") s))))
+
+;;; Function to encode special characters in a URL string
+(defun needs-encoding-p (char) (position char "$*! \"\'?<>&%"))
+(defun encode-char (char) (format nil "%~2,'0X" (char-code char)))
+(defun url-encode (url)
+  (apply #'concatenate 'string
+         (map 'list (lambda (char)
+                      (if (needs-encoding-p char)
+                          (encode-char char)
+                          (string char)))
+              url)))
+
+
+;;; Display help in browser instead of the terminal
+(defun display-html-help (x)
+  ;; The pattern is basically " <nnn>" where "nnn" is any number of
+  ;; digits.
+  (let* ((topic ($sconcat x))
+         (found-it (gethash topic cl-info::*html-index*)))
+    (when *debug-display-html-help*
+      (format *debug-io* "topic = ~S~%" topic)
+      (format *debug-io* "found-it = ~S~%" found-it))
+    (when found-it
+      (destructuring-bind (base-name . id)
+	  found-it
+	  (let ((url (concatenate 'string
+                                ;; If BASE-NAME is an absolute path,
+                                ;; use "FILE://" as the protocol.
+                                ;; Otherwise use $URL_BASE.
+                                (if (eq :absolute (car (pathname-directory base-name)))
+                                    "file://"
+				    $url_base)
+				"/"
+				(namestring base-name)
+				"#"
+				id))
+                ;; $system will concatenate the words in list cmd_list
+                ;; to create the command to be executed
+	        (cmd_list ()))
+            (setq url (url-encode url))
+	    (when *debug-display-html-help*
+	      (format *debug-io* "URL: ~S~%" url))
+            (when (and (boundp '*autoconf-windows*)
+	               (string-equal *autoconf-windows* "true")
+                       (not (string-equal $browser "start")))
+              ;; In Windows if the browser is not the default,
+              ;; its name should be placed after "start".
+              (setf cmd_list (append cmd_list '("start"))))
+	    (setf cmd_list (append cmd_list (list $browser url)))
+	    (when *debug-display-html-help*
+	      (format *debug-io* "Command: ~{~a ~}~%" cmd_list))
+	    (apply '$system cmd_list))))))
+
+(defun display-html-topics (wanted)
+  (when maxima::*debug-display-html-help*
+    (format *debug-io* "wanted = ~S~%" wanted))
+  (loop for (nil entry) in wanted
+	do (display-html-help (car entry))))
+  
+(defun display-text-topics (wanted)
+  (loop for item in wanted
+	do (let ((doc (cl-info::read-info-text (first item) (second item))))
+	     (if doc
+		 (format t "~A~%~%" doc)
+		 (format t "Unable to find documentation for `~A'.~%~
+                                Possible bug maxima-index.lisp or build_index.pl?~%"
+			 (first (second item)))))))  
+
+;; Escape the characters that are special to XML. This mechanism excludes
+;; the possibility that any keyword might coincide with the any xml tag
+;; start or tag end marker.
+#+(or)
+(defun xml-fix-string (x)
+  (when (stringp x)
+    (let* ((tmp-x (wxxml-string-substitute "&amp;" #\& x))
+           (tmp-x (wxxml-string-substitute "&lt;" #\< tmp-x))
+           (tmp-x (wxxml-string-substitute "&gt;" #\> tmp-x))
+           (tmp-x (wxxml-string-substitute "&#13;" #\Return tmp-x))
+           (tmp-x (wxxml-string-substitute "&#13;" #\Linefeed tmp-x))
+           (tmp-x (wxxml-string-substitute "&#13;" #\Newline tmp-x))
+           (tmp-x (wxxml-string-substitute "&quot;" #\" tmp-x)))
+      tmp-x)
+    x))
+
+
+#+(or)
+(defun display-wxmaxima-topics (wanted)
+  (loop for (dir entry) in wanted
+	do
+	   ;; Tell wxMaxima to jump to the manual entry for "keyword"
+	   (format t "<html-manual-keyword>~a</html-manual-keyword>~%"
+		   (xml-fix-string (car entry)))
+	   ;; Tell the lisp to make sure that this string is actually output
+	   ;; as soon as possible
+	   (finish-output)))
+
+;; When a frontend is running, this function should be redefined to
+;; display the help in whatever way the frontend wants to.
+(defun display-frontend-topics (wanted)
+  (declare (ignore wanted))
+  (merror (intl:gettext "output_format_for_help: frontend not implemented.")))
+
+(defvar *verify-html-index-on-output-format* t
+  "Verify the html index when the output format is set to html.  This
+  check is only done once.")
+
+(defun set-output-format-for-help (assign-var val)
+  "When $output_format_for_help is set, this function validates the
+  value and sets *help-display-function* to the function to display
+  the help item in the specified format."
+  ;; Don't need assign-var here.  It should be $output_format_for_help
+  ;; since this function is only called when $output_format_for_help
+  ;; is assigned.
+  (declare (ignore assign-var))
+  (case val
+    ($text
+     (setf *help-display-function* 'display-text-topics))
+    ($html
+     (setf *help-display-function* 'display-html-topics)
+     (when *verify-html-index-on-output-format*
+       (setf *verify-html-index-on-output-format* nil)
+       ;; Verify the html index.  This happens only when the output
+       ;; format is set to html the first time.  It is also
+       ;; independent of the value of *verify-html-index* (set via the
+       ;; command-line option --verify-html-index).
+       ($verify_html_index)))
+    ($frontend
+     (if $maxima_frontend
+	 (setf *help-display-function* 'display-frontend-topics)
+	 (merror (intl:gettext "output_format_for_help set to frontend, but no frontend is running."))))
+    (otherwise
+     (merror (intl:gettext "output_format_for_help should be one of text, html, or frontend: ~M")
+	     val))))

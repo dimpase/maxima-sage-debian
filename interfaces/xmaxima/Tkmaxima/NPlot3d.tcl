@@ -1,11 +1,8 @@
-# -*-mode: tcl; fill-column: 75; tab-width: 8; coding: iso-latin-1-unix -*-
-#
-#       $Id: NPlot3d.tcl,v 1.9 2009-11-16 22:41:47 villate Exp $
-#
-###### NPlot3d.tcl ######
 ############################################################
-# Netmath       Copyright (C) 1998 William F. Schelter     #
+# NPlot3d.tc                                              #
+# Copyright (C) 1998 William F. Schelter                   #
 # For distribution under GNU public License.  See COPYING. #
+#                                                          #
 ############################################################
 
 # source plotting.tcl ; source nplot3d.tcl ; catch { destroy .plot3d} ;  plot3d -zfun "" -data $sample -xradius 10 -yradius 10
@@ -77,8 +74,6 @@ proc normalizeToLengthOne { v } {
     }
 }
 
-
-
 proc vectorCross { x1 x2 }  {
     list \
 	[expr { [lindex $x1 1]*[lindex $x2 2]- [lindex $x2 1]*[lindex $x1 2]}] \
@@ -87,7 +82,7 @@ proc vectorCross { x1 x2 }  {
 }
 
 proc linspace { a b n } {
-    if { $n < 2 } { error [M [mc "from %s to %s requires at least 2 points"] "$a" "$b" ] }
+    if { $n < 2 } { error [mc "from %s to %s requires at least 2 points" $a $b ] }
     set del [expr {($b - $a)*1.0/($n -1)  }]
     for { set i 0 } { $i < $n } { incr i } {
 	lappend ans [expr {$a + $del * $i}]
@@ -104,7 +99,6 @@ proc addOnePlot3d { win data } {
     makeLocal $win flatten
     oset $win colorfun plot3dcolorFun
     oset $win cmap c1
-    global plot3dOptions
     catch { unset  meshes }
     set points ""
 
@@ -188,29 +182,43 @@ proc addOnePlot3d { win data } {
 	    }
 	    set nj [expr {[llength [lindex $xmat 0]] -1 }]
 	    set ni [expr {[llength $xmat ] -1 }]
-	    set i -1
 	    set k [llength $points]
-	    foreach rowx $xmat rowy $ymat rowz $zmat {
-		set j -1
-		incr i
-		if { [llength $rowx] != [llength $rowy] } {
-		    error [concat [mc "mismatch"] "rowx:$rowx,rowy:$rowy"]
-		}
-		if { [llength $rowx] != [llength $rowz] } {
-		    error [concat [mc "mismatch"] "rowx:$rowx,rowz:$rowz"]
-		}
-		foreach x $rowx y $rowy z $rowz {
-		    incr j
-		    if { $j != $nj && $i != $ni } {
-			#puts "tes=($i,$j) $x, $y, $z"
-			lappend lmesh [ list \
-					    $k [expr { $k+3 } ] [expr { $k + 3  + ($nj+1)*3}] \
-					    [expr { $k+($nj+1)*3 }] ]
-		    }
-		    incr k 3
-		    lappend points $x $y $z
-		}
-	    }
+            set crn {}
+            foreach rowx $xmat rowy $ymat rowz $zmat {
+                set rowc {}
+                foreach x $rowx y $rowy z $rowz {
+                    if { [catch {expr {$x+$y+$z}}] } {
+                        lappend rowc {NaN}
+                    } else {
+                        lappend rowc $k
+                        lappend points $x $y $z
+                        incr k 3
+                    }
+                }
+                lappend crn $rowc
+            }
+            for { set i 0 } { $i < $ni } { incr i } {
+                set ip1 [expr {$i+1}]
+                for { set j 0 } { $j < $nj } { incr j } {
+                    set jp1 [expr {$j+1}]
+                    set quad [list [lindex $crn $i $j] [lindex $crn $i $jp1] \
+                                  [lindex $crn $ip1 $jp1] [lindex $crn $ip1 $j]]
+                    set k [lsearch $quad {NaN}]
+                    if { $k < 0 } {
+                        lappend lmesh $quad
+                    } else {
+                        set quad [lreplace $quad $k $k]
+                        if { [lsearch $quad {NaN} ] < 0 } {
+                            lappend lmesh $quad
+                        }
+                    }
+                }
+            }
+            if { [llength $lmesh] == 0 } {
+                tk_messageBox -title Error -icon error -message \
+                    [mc "plot3d was not given enough data to be plotted."]
+                return
+            }
 	    setupPlot3dColors $win $first_mesh
 	} elseif { 0 && "$type" == "mesh" } {
 	    set first_mesh [llength $lmesh]
@@ -240,7 +248,7 @@ proc addOnePlot3d { win data } {
 		incr j
 	    }
 	    setupPlot3dColors $win $first_mesh
-	} elseif { "[assq $type $plot3dOptions notthere]" != "notthere" } {
+	} elseif { "[assq $type $::plot3dOptions notthere]" != "notthere" } {
 	    oset $win $type [lindex $data 1]
 	    if { $type == "zradius" } {
 		# check whether zradius is a number or "auto"
@@ -283,7 +291,9 @@ proc addOnePlot3d { win data } {
 	set ${v}radius [expr {($b - $a)/2.0}]
 	set ${v}center [expr {($b + $a)/2.0}]
     }
-    set rotationcenter "[expr {.5*($xmax + $xmin)}] [expr {.5*($ymax + $ymin)}]   [expr {.5*($zmax + $zmin)}] "
+    set rotationcenter [list [list [expr {.5*($xmax+$xmin)}]] \
+                            [list [expr {.5*($ymax+$ymin)}]] \
+                            [list [expr {.5*($zmax+$zmin)}]]]
 
     #puts "meshes data=[array get meshes]"
     #global plot3dMeshes.plot3d

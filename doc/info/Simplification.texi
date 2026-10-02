@@ -4,51 +4,54 @@
 @end menu
 
 @c -----------------------------------------------------------------------------
-@node Introduction to Simplification, Functions and Variables for Simplification,  , Simplification
+@node Introduction to Simplification, Functions and Variables for Simplification, Simplification , Simplification
 @section Introduction to Simplification
 @c -----------------------------------------------------------------------------
 
 @c -----------------------------------------------------------------------------
-Maxima performs a cycle of actions in response to each new user-typed command. This 
-consists of four steps: reading or "parsing" the input, evaluation, simplification 
-and output. Parsing converts a syntactically valid sequence of typed characters into 
-a data structure to be used for the rest of the operations. Evaluation includes 
-replacing names with their assigned values. Simplification means rewriting an 
-expression to be easier for the user or other programs to understand. Output includes 
-displaying computational results in a variety of different formats and notations.
+Maxima interacts with the user through a cycle of actions called the read-eval-print loop (REPL).
+This consists of three steps: reading and parsing, evaluating and simplifying, 
+and outputting. Parsing converts a syntactically valid sequence of typed characters into
+a internal data structure. Evaluation
+replaces variable and function names with their values and simplification rewrites 
+expressions to be easier for the user or other programs to understand. Output 
+displays results in a variety of different formats and notations.
 
-Evaluation and simplification sometimes appear to have similar functionality as they 
-both have the goal of removing "complexity" and system designers have sometimes divided a 
-task so that it is performed partly in each. For example, @code{integrate(x,x)} evaluates 
-the answer as @code{x*x/2}, which is then simplified to @code{x^2/2}.
+Evaluation and simplification sometimes appear to have similar functionality, and
+Maxima uses simplification in many cases where other systems use evaluation.
+For example, arithmetic both on numbers and on symbolic expressions is simplification, not evaluation:
+@code{2+2} simplifies to @code{4}, @code{2+x+x} simplifies to @code{2+2*x}, and
+@code{sqrt(7)^4} simplifies to @code{49}.
+Evaluation and simplification are interleaved.
+For example, @code{factor(integrate(x+1,x))} first calls the built-in function @mref{integrate},
+giving @code{x+x*x*2^-1};
+that simplifies to @code{x+(1/2)*x^2}; this in turn is passed to the @mref{factor} function,
+which returns @code{(x*(x+2))/2}.
 
-Evaluation is always present: it is the consequence of having a programming system with 
-functions, subroutines, variables, values, loops, assignments and so on. In the 
-evaluation step, built-in or user-defined function names are replaced by their definitions, 
-variables are replaced by their values. This is largely the same as activities of a 
+Evaluation is what makes Maxima a programming language: it implements
+functions, subroutines, variables, values, loops, assignments and so on.
+Evaluation replaces built-in or user-defined function names by their definitions and
+variables by their values. This is largely the same as activities of a 
 conventional programming language, but extended to work with symbolic mathematical data. 
-Because of the generality of the mathematics at hand, there are different possible models 
-of evaluation and so the systems has optional "flags" that can steer the process of 
+The system has various optional "flags" which the user can set to control the details of
 evaluation. @xref{Functions and Variables for Evaluation}.
 
-By contrast, the intent of simplification is to maintain the value of an expression 
-while re-formulating its representation to be smaller, simpler to understand, or to 
-conform to particular specifications (like factored, expanded). For
-example, @code{sin(0)} to @code{0} or @code{x+x to 2*x}.
-There are several powerful tools to alter the results 
-of simplification, since it is largely in this part of the system that an user can 
-incorporate knowledge of newly introduced functions or symbolic notation into Maxima.
+Simplification maintains the value of an expression 
+while re-formulating its form to be smaller, simpler to understand, or to 
+conform to a particular specification (like expanded). For
+example, @code{sin(%pi/2)} to @code{1}, and @code{x+x} to @code{2*x}.
+There are many flags which control simplification. For example,
+with @code{triginverses:true}, @code{atan(tan(x))} does not simplify to @code{x},
+but with @code{triginverses:all}, it does.
 
-Simplification is generally done at four different levels:
+Simplification can be provided in three ways:
 @itemize @bullet
 @item The internal, built-in automated simplifier,
-@item Built-in simplification routines that can be explicitly called by the user
-      at selected places in a program or command sequence,
-@item User-written simplification routines, linked to the simplifier by using
+@item User-written pattern-matching transformations, linked to the simplifier by using
       "tellsimp" or "tellsimpafter" and called automatically,
-@item User-written routines that can be explicitly called by the user at selected 
-      places in a program or command sequence.
+@item User-written simplification routines adding using the @code{simplifying} subsystem.
 @end itemize
+
 The internal simplifier belongs to the heart of Maxima. It is a large and 
 complicated collection of programs, and it has been refined over many years and by 
 thousands of users. Nevertheless, especially if you are trying out novel ideas or 
@@ -68,16 +71,25 @@ the simplifier encounters the respective arithmetic operators in an expression
 tree to be analyzed. 
 
 The structure of the simplifier dates back to 1965, and many hands have worked 
-on it through the years. The structure turns out to be, in modern jargon, data-
-directed, or object-oriented. The program dispatches to the appropriate routine 
+on it through the years. It is data-directed, or object-oriented in the sense that
+it dispatches to the appropriate routine 
 depending on the root of some sub-tree of the expression, recursively. This general
-notion means you can make modifications to the simplification process by very local 
-changes to the program. In many cases it is conceptually straightforward to add an 
-operator and add its simplification routine without disturbing existing code.
+approach means that modifications to simplification are generally localized.
+In many cases it is straightforward to add an 
+operator and its simplification routine without disturbing existing code.
 
-We note that in addition to this general simplifier operating on algebraic 
+Maxima also provides a variety of transformation routines that can change the form of an
+expression, including @mref{factor} (polynomial factorization), @mref{horner}
+(reorganize a polynomial using Horner's rule), @mref{partfrac}
+(rewrite a rational function as partial fractions),
+@mref{trigexpand} (apply the sum formulas for trigonometric functions),
+and so on.
+
+Users can also write routines that change the form of an expression.
+
+Besides this general simplifier operating on algebraic 
 expression trees, there are several other representations of expressions in 
-Maxima which have separate methods and simplifiers. For example, the
+Maxima which have separate methods. For example, the
 @mref{rat} function converts polynomials to vectors of coefficients to
 assist in rapid manipulation of such forms. Other representations include
 Taylor series and the (rarely used) Poisson series.
@@ -104,11 +116,10 @@ expressed in Maxima). However, some aspects of the expression, such as the
 ordering of terms in a sum or product, are made uniform. This is important 
 for the other programs to work properly.
 
-You can set a number of option variables which direct Maxima's processing to 
-favor particular kinds of patterns as being goals. You can even use the most 
-extreme option which is to turn the simplifier off by simp:false. We do not 
-recommend this since many internal routines expect their arguments to be 
-simplified. (About the only time it seems plausible to turn off the simplifier 
+A number of option variables control simplification. Indeed, simplification
+can be turned off entirely using @code{simp:false}. However, many
+internal routines will not operate correctly with @code{simp:false}.
+(About the only time it seems plausible to turn off the simplifier 
 is in the rare case that you want to over-ride a built-in simplification. 
 In that case  you might temporarily disable the simplifier, put in the new 
 transformation via @mrefcomma{tellsimp} and then re-enable the simplifier
@@ -142,7 +153,7 @@ Example: @code{sin(n*%pi)} is simplified to zero, if @var{n} is an integer.
 @c declare(n, integer);
 @c sin(n*%pi);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) sin(n*%pi);
 (%o1)                      sin(%pi n)
@@ -158,7 +169,7 @@ Example: @code{sin(n*%pi)} is simplified to zero, if @var{n} is an integer.
 @end example
 
 If automated simplification is not sufficient, you can consider a variety of 
-built-in, but explicitly called simplfication functions (@mrefcomma{ratsimp}
+built-in, but explicitly called simplification functions (@mrefcomma{ratsimp}
 @mrefcomma{expand} @mrefcomma{factor} @mref{radcan} and others). There are
 also flags that will push simplification into one or another direction.
 Given @code{demoivre:true} the simplifier rewrites 
@@ -178,7 +189,7 @@ Over the years (Maxima/Macsyma's origins date back to about 1966!) users have
 contributed numerous application packages and tools to extend or alter its 
 functional behavior. Various non-standard and "share" packages exist to modify 
 or extend simplification as well. You are invited to look into this more 
-experimental material where work is still in progress @xref{simplification-pkg}.
+experimental material where work is still in progress @xref{Package simplification}.
 
 The following appended material is optional on a first reading, and reading it 
 is not necessary for productive use of Maxima. It is for the curious user who 
@@ -217,7 +228,7 @@ Example:
 @c declare (F3, additive);
 @c F3 (a + b + c);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) F3 (a + b + c);
 (%o1)                     F3(c + b + a)
@@ -232,7 +243,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Operators}
 @category{Declarations and inferences}
 @closecatbox
@@ -245,7 +256,7 @@ Example:
 If @code{declare(h,antisymmetric)} is done, this tells the simplifier that
 @code{h} is antisymmetric.  E.g.  @code{h(x,z,y)} will simplify to 
 @code{- h(x, y, z)}.  That is, it will give (-1)^n times the result given by
-@code{symmetric} or @code{commutative}, where n is the number of interchanges
+@mref{symmetric} or @mrefcomma{commutative} where n is the number of interchanges
 of two arguments necessary to convert it to that form.
 
 Examples:
@@ -260,7 +271,7 @@ Examples:
 @c T (b, a);
 @c T (a, c, e, d, b);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) S (b, a);
 (%o1)                        S(b, a)
@@ -295,7 +306,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Operators}
 @category{Declarations and inferences}
 @closecatbox
@@ -316,7 +327,7 @@ Example:
 @c 1*f/2*b + 2*c/3*a + 3*f/4*b +c/5*b*a;
 @c combine (%);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) 1*f/2*b + 2*c/3*a + 3*f/4*b +c/5*b*a;
                       5 b f   a b c   2 a c
@@ -331,7 +342,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -342,7 +353,7 @@ Example:
 
 If @code{declare(h, commutative)} is done, this tells the simplifier that
 @code{h} is a commutative function.  E.g.  @code{h(x, z, y)} will simplify to
-@code{h(x, y, z)}.  This is the same as @code{symmetric}.
+@code{h(x, y, z)}.  This is the same as @mrefdot{symmetric}
 
 Example:
 
@@ -354,7 +365,7 @@ Example:
 @c S (a, b) + S (b, a);
 @c S (a, c, e, d, b);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) S (b, a);
 (%o1)                        S(b, a)
@@ -381,7 +392,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Operators}
 @category{Declarations and inferences}
 @closecatbox
@@ -408,7 +419,7 @@ The default value of @code{demoivre} is @code{false}.
 form.  @code{demoivre} and @code{exponentialize} cannot both be true at the same
 time.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @category{Trigonometric functions}
 @category{Hyperbolic functions}
@@ -434,22 +445,30 @@ Examples:
 @c distrib (1/((a+b) * (c+d)));
 @c expand (1/((a+b) * (c+d)), 1, 0);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) distrib ((a+b) * (c+d));
 (%o1)                 b d + a d + b c + a c
+@end group
+@group
 (%i2) multthru ((a+b) * (c+d));
 (%o2)                 (b + a) d + (b + a) c
+@end group
+@group
 (%i3) distrib (1/((a+b) * (c+d)));
                                 1
 (%o3)                    ---------------
                          (b + a) (d + c)
+@end group
+@group
 (%i4) expand (1/((a+b) * (c+d)), 1, 0);
                                 1
 (%o4)                 ---------------------
                       b d + a d + b c + a c
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -462,7 +481,7 @@ Default value: @code{true}
 @code{distribute_over} controls the mapping of functions over bags like lists, 
 matrices, and equations.  At this time not all Maxima functions have this 
 property.  It is possible to look up this property with the command
-@code{properties}.
+@mrefdot{properties}.
 
 The mapping of functions is switched off, when setting @code{distribute_over} 
 to the value @code{false}.
@@ -474,7 +493,7 @@ The @code{sin} function maps over a list:
 @c ===beg===
 @c sin([x,1,1.0]);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) sin([x,1,1.0]);
 (%o1)         [sin(x), sin(1), 0.8414709848078965]
@@ -488,7 +507,7 @@ nested lists is possible too:
 @c mod([x,11,2*a],10);
 @c mod([[x,y,z],11,2*a],10);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) mod([x,11,2*a],10);
 (%o1)             [mod(x, 10), 1, 2 mod(a, 5)]
@@ -505,7 +524,7 @@ Mapping of the @code{floor} function over a matrix and an equation:
 @c floor(matrix([a,b],[c,d]));
 @c floor(a=b);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) floor(matrix([a,b],[c,d]));
                      [ floor(a)  floor(b) ]
@@ -524,7 +543,7 @@ arguments:
 @c ===beg===
 @c expintegral_e([1,2],[x,y]);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) expintegral_e([1,2],[x,y]);
 (%o1) [[expintegral_e(1, x), expintegral_e(1, y)], 
@@ -537,11 +556,11 @@ Check if a function has the property distribute_over:
 @c ===beg===
 @c properties(abs);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) properties(abs);
-(%o1) [integral, rule, distributes over bags, noun, gradef, 
-                                                 system function]
+(%o1) [limit function, integral, rule, distributes over bags, 
+                                          noun, gradef, transfun]
 @end group
 @end example
 
@@ -554,7 +573,7 @@ to the value @code{false}.
 @c distribute_over : not distribute_over;
 @c sin([x,1,1.0]);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) distribute_over;
 (%o1)                         true
@@ -573,7 +592,7 @@ to the value @code{false}.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -590,7 +609,7 @@ When @code{domain} is set to @code{complex}, @code{sqrt (x^2)} will remain
 @c The notion of a "domain" of simplification is still in its infancy,
 @c and controls little more than this at the moment.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -614,19 +633,31 @@ Examples:
 @c declare (e, evenfun);
 @c e (- x) - e (x);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) o (- x) + o (x);
 (%o1)                     o(x) + o(- x)
+@end group
+@group
 (%i2) declare (o, oddfun);
 (%o2)                         done
+@end group
+@group
 (%i3) o (- x) + o (x);
 (%o3)                           0
+@end group
+@group
 (%i4) e (- x) - e (x);
 (%o4)                     e(- x) - e(x)
+@end group
+@group
 (%i5) declare (e, evenfun);
 (%o5)                         done
+@end group
+@group
 (%i6) e (- x) - e (x);
 (%o6)                           0
+@end group
 @end example
 @end defvr
 
@@ -666,7 +697,8 @@ less than @code{n}.
 
 @code{expand(expr, 0, 0)} causes a resimplification of @code{expr}.  @code{expr}
 is not reevaluated.  In distinction from @code{ev(expr, noeval)} a special
-representation (e. g. a CRE form) is removed.  See also @mrefdot{ev}
+representation (e. g. a CRE form) is removed.  See also @mref{resimplify} and
+@mrefdot{ev}
 
 The @code{expand} flag used with @code{ev} causes expansion.
 
@@ -693,7 +725,7 @@ Examples:
 @c expand(expr);
 @c expand(expr,2,2);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) expr:(x+1)^2*(y+1)^3;
                                2        3
@@ -744,7 +776,7 @@ Resimplify an expression without expansion:
 @c exponentialize:true;
 @c expand(expr,0,0);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) expr:(1+x)^2*sin(x);
                                 2
@@ -756,14 +788,14 @@ Resimplify an expression without expansion:
 @end group
 @group
 (%i3) expand(expr,0,0);
-                            2    %i x     - %i x
-                  %i (x + 1)  (%e     - %e      )
+                     %i x     - %i x            2
+                  (%e     - %e      ) %i (x + 1)
 (%o3)           - -------------------------------
                                  2
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -787,7 +819,7 @@ means of the switch @code{expandwrt_denom}.
 This function is autoloaded from
 @file{simplification/stopex.mac}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -803,7 +835,7 @@ denominator of the expression will be expanded according to the
 arguments of @code{expandwrt}, but if @code{expandwrt_denom} is @code{false},
 then only the numerator will be expanded in that way.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end defvr
@@ -822,7 +854,7 @@ of @code{expr} that contain the variables @var{x_1}, @dots{}, @var{x_n}.
 @c NOT SURE WHY WE SHOULD MENTION THIS HERE
 This function is autoloaded from @file{simplification/stopex.mac}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -837,7 +869,7 @@ is automatically expanded (independent of calls to @code{expand}).  For
 example, if @code{expon} is 4 then @code{(x+1)^(-5)} will not be automatically
 expanded.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end defvr
@@ -859,7 +891,7 @@ The default value is @code{false}.
 @code{exponentialize} and @code{demoivre} cannot
 both be true at the same time.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @category{Trigonometric functions}
 @category{Hyperbolic functions}
@@ -881,7 +913,7 @@ Thus @code{(x + 1)^3}, when typed, will be automatically expanded only if
 executing @code{expand ((x + 1)^n)} will work only if @code{maxposex} is not
 less than n.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end defvr
@@ -896,7 +928,9 @@ less than n.
 left-associative.  E.g., @code{g (g (a, b), g (c, d))} will simplify to
 @code{g (g (g (a, b), c), d)}.
 
-@opencatbox
+See also @mrefdot{rassociative}
+
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Operators}
 @category{Simplification}
@@ -914,7 +948,7 @@ One of Maxima's operator properties.  For univariate @code{f} so
 declared, "expansion" @code{f(x + y)} yields @code{f(x) + f(y)},
 @code{f(a*x)} yields @code{a*f(x)} takes
 place where @code{a} is a "constant".  For functions of two or more arguments,
-"linearity" is defined to be as in the case of @code{sum} or @code{integrate},
+"linearity" is defined to be as in the case of @mref{sum} or @mrefcomma{integrate}
 i.e., @code{f (a*x + b, x)} yields @code{a*f(x,x) + b*f(1,x)}
 for @code{a} and @code{b} free of @code{x}.
 
@@ -926,7 +960,7 @@ Example:
 @c declare (a, constant);
 @c f(a*x);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) declare (f, linear);
 (%o1)                         done
@@ -945,7 +979,7 @@ Example:
 @end group
 @end example
 
-@code{linear} is equivalent to @code{additive} and @code{outative}.
+@code{linear} is equivalent to @mref{additive} and @mrefdot{outative}
 See also @mrefdot{opproperties}
 
 Example:
@@ -955,15 +989,15 @@ Example:
 @c declare (nounify (sum), linear);
 @c 'sum (F(k) + G(k), k, 1, inf);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) 'sum (F(k) + G(k), k, 1, inf);
                        inf
-                       ====
+                       ____
                        \
 (%o1)                   >    (G(k) + F(k))
                        /
-                       ====
+                       ----
                        k = 1
 @end group
 @group
@@ -973,16 +1007,16 @@ Example:
 @group
 (%i3) 'sum (F(k) + G(k), k, 1, inf);
                      inf          inf
-                     ====         ====
+                     ____         ____
                      \            \
 (%o3)                 >    G(k) +  >    F(k)
                      /            /
-                     ====         ====
+                     ----         ----
                      k = 1        k = 1
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Operators}
 @category{Simplification}
@@ -999,7 +1033,7 @@ Default value: 1000
 @code{maxnegex} is the largest negative exponent which will
 be expanded by the @code{expand} command, see also @mrefdot{maxposex}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end defvr
@@ -1014,7 +1048,7 @@ Default value: 1000
 @code{maxposex} is the largest exponent which will be
 expanded with the @code{expand} command, see also @mrefdot{maxnegex}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end defvr
@@ -1049,7 +1083,7 @@ Example:
 @c declare (F2, multiplicative);
 @c F2 (a * b * c);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) F2 (a * b * c);
 (%o1)                       F2(a b c)
@@ -1071,14 +1105,14 @@ Example:
 @c declare (nounify (product), multiplicative);
 @c product (a[i] * b[i], i, 1, n);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) product (a[i] * b[i], i, 1, n);
                              n
-                           /===\
-                            ! !
-(%o1)                       ! !  a  b
-                            ! !   i  i
+                           _____
+                           |   |
+(%o1)                      |   | a  b
+                           |   |  i  i
                            i = 1
 @end group
 @group
@@ -1088,15 +1122,15 @@ Example:
 @group
 (%i3) product (a[i] * b[i], i, 1, n);
                           n         n
-                        /===\     /===\
-                         ! !       ! !
-(%o3)                  ( ! !  a )  ! !  b
-                         ! !   i   ! !   i
+                        _____     _____
+                        |   |     |   |
+(%o3)                  (|   | a ) |   | b
+                        |   |  i  |   |  i
                         i = 1     i = 1
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Expressions}
 @category{Simplification}
@@ -1134,37 +1168,49 @@ noncommutative) over sums.  Since quotients are represented as products
 @c multthru (a.(b+c.(d+e)+f));
 @c expand (a.(b+c.(d+e)+f));
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) x/(x-y)^2 - 1/(x-y) - f(x)/(x-y)^3;
                       1        x         f(x)
 (%o1)             - ----- + -------- - --------
                     x - y          2          3
                             (x - y)    (x - y)
+@end group
+@group
 (%i2) multthru ((x-y)^3, %);
-                           2
-(%o2)             - (x - y)  + x (x - y) - f(x)
+                                      2
+(%o2)              x (x - y) - (x - y)  - f(x)
+@end group
+@group
 (%i3) ratexpand (%);
                            2
 (%o3)                   - y  + x y - f(x)
+@end group
+@group
 (%i4) ((a+b)^10*s^2 + 2*a*b*s + (a*b)^2)/(a*b*s^2);
                         10  2              2  2
                  (b + a)   s  + 2 a b s + a  b
 (%o4)            ------------------------------
                                   2
                              a b s
+@end group
+@group
 (%i5) multthru (%);  /* note that this does not expand (b+a)^10 */
                                         10
                        2   a b   (b + a)
 (%o5)                  - + --- + ---------
                        s    2       a b
                            s
-(%i6) multthru (a.(b+c.(d+e)+f));
 (%o6)            a . f + a . c . (e + d) + a . b
-(%i7) expand (a.(b+c.(d+e)+f));
+@end group
+@group
+(%i7) multthru (a.(b+c.(d+e)+f));
 (%o7)         a . f + a . c . e + a . c . d + a . b
+@end group
+(%i8) expand (a.(b+c.(d+e)+f));
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn
@@ -1189,13 +1235,19 @@ Example:
 @c declare (H, nary);
 @c H (H (a, b), H (c, H (d, e)));
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) H (H (a, b), H (c, H (d, e)));
 (%o1)               H(H(a, b), H(c, H(d, e)))
+@end group
+@group
 (%i2) declare (H, nary);
 (%o2)                         done
+@end group
+@group
 (%i3) H (H (a, b), H (c, H (d, e)));
 (%o3)                   H(a, b, c, d, e)
+@end group
 @end example
 @end defvr
 
@@ -1221,14 +1273,14 @@ Example:
 @c negdistrib : not negdistrib ;
 @c -(x+y);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) negdistrib;
 (%o1)                         true
 @end group
 @group
 (%i2) -(x+y);
-(%o2)                       (- y) - x
+(%o2)                        - y - x
 @end group
 @group
 (%i3) negdistrib : not negdistrib ;
@@ -1240,7 +1292,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -1252,14 +1304,14 @@ Example:
 @code{opproperties} is the list of the special operator properties recognized
 by the Maxima simplifier.
 
-Items are added to the @code{opproperties} list by the function @code{define_opproperty}.
+Items are added to the @code{opproperties} list by the function @mrefdot{define_opproperty}
 
 Example:
 
 @c ===beg===
 @c opproperties;
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) opproperties;
 (%o1) [linear, additive, multiplicative, outative, evenfun, 
@@ -1268,7 +1320,7 @@ lassociative, rassociative]
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Global variables}
 @category{Operators}
 @category{Simplification}
@@ -1296,7 +1348,7 @@ Therefore @var{simplifier_fn} must be able to carry out its simplification
 without making use of the general simplifier.
 
 @code{define_opproperty} appends @var{property_name} to the
-global list @code{opproperties}.
+global list @mrefdot{opproperties}
 
 @code{define_opproperty} returns @code{done}.
 
@@ -1312,7 +1364,7 @@ Declare that @code{f} and @code{g} have the new property.
 @c f(10 + t);
 @c g(3*u) - f(2*u);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) define_opproperty (identity, simplify_identity);
 (%o1)                         done
@@ -1335,7 +1387,7 @@ Declare that @code{f} and @code{g} have the new property.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Operators}
 @category{Simplification}
 @closecatbox
@@ -1357,11 +1409,11 @@ and factors that are not and the constant factors will be pulled out.  E.g.,
 Non-atomic constant factors will not be pulled out.
 @item
 If @code{f} is a function of 2 or more arguments, outativity is defined as in
-the case of @code{sum} or @code{integrate}, i.e., @code{f (a*g(x), x)} will
+the case of @mref{sum} or @mrefcomma{integrate} i.e., @code{f (a*g(x), x)} will
 simplify to @code{a * f(g(x), x)} for @code{a} free of @code{x}.
 @end enumerate
 
-@code{sum}, @code{integrate}, and @code{limit} are all @code{outative}.
+@mrefcomma{sum} @mrefcomma{integrate} and @mref{limit} are all @code{outative}.
 
 Example:
 
@@ -1372,7 +1424,7 @@ Example:
 @c declare (zz, constant);
 @c F1 (zz * y);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) F1 (100 * x);
 (%o1)                       F1(100 x)
@@ -1395,7 +1447,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Operators}
 @closecatbox
@@ -1408,7 +1460,7 @@ Example:
 Simplifies @var{expr}, which can contain logs, exponentials, and radicals, by 
 converting it into a form which is canonical over a large class of expressions 
 and a given ordering of variables; that is, all functionally equivalent forms 
-are mapped into an unique form.  For a somewhat larger class of expressions, 
+are mapped into a unique form.  For a somewhat larger class of expressions,
 @code{radcan} produces a regular form.  Two equivalent expressions in this class 
 do not necessarily have the same appearance, but their difference can be 
 simplified by @code{radcan} to zero.
@@ -1440,7 +1492,7 @@ Examples:
 @c radcan((log(1+2*a^x+a^(2*x))/log(1+a^x)));
 @c radcan((%e^x-1)/(1+%e^(x/2)));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) radcan((log(x+x^2)-log(x))^a/log(1+x)^(a/2));
                                     a/2
@@ -1457,7 +1509,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification functions}
 @closecatbox
 @end deffn
@@ -1492,7 +1544,7 @@ If @code{radexpand} is @code{false}, or @code{radexpand} is @code{true} and
 @c CORRECT STATEMENT HERE ???
 Note that @code{domain} only matters when @code{radexpand} is @code{true}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
@@ -1507,13 +1559,65 @@ Note that @code{domain} only matters when @code{radexpand} is @code{true}.
 simplifier that @code{g} is right-associative.  E.g.,
 @code{g(g(a, b), g(c, d))} simplifies to @code{g(a, g(b, g(c, d)))}.
 
-@opencatbox
+See also @mrefdot{lassociative}
+
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Operators}
 @closecatbox
 @end defvr
 
 @c NEEDS CLARIFICATION, EXAMPLES
+
+@c -----------------------------------------------------------------------------
+@anchor{resimplify}
+@deffn {Function} resimplify (@var{expr})
+
+Resimplifies the expression @var{expr} based on the current environment.  This
+function is useful when the fact database, option variables, or tellsimp rules
+have changed since the expression was last simplified.
+
+Example:
+
+@c ===beg===
+@c expr : sin(x)^2 + cos(x)^2;
+@c exponentialize : true;
+@c expr;
+@c resimplify(%);
+@c ratsimp(%);
+@c ===end===
+@example maxima
+@group
+(%i1) expr : sin(x)^2 + cos(x)^2;
+                           2         2
+(%o1)                   sin (x) + cos (x)
+@end group
+@group
+(%i2) exponentialize : true;
+(%o2)                         true
+@end group
+@group
+(%i3) expr;
+                           2         2
+(%o3)                   sin (x) + cos (x)
+@end group
+@group
+(%i4) resimplify(%);
+              %i x     - %i x 2      %i x     - %i x 2
+           (%e     + %e      )    (%e     - %e      )
+(%o4)      -------------------- - --------------------
+                    4                      4
+@end group
+@group
+(%i5) ratsimp(%);
+(%o5)                           1
+@end group
+@end example
+
+@opencatbox{Categories:}
+@category{Simplification functions}
+@closecatbox
+@end deffn
 
 @c -----------------------------------------------------------------------------
 @anchor{scsimp}
@@ -1528,7 +1632,7 @@ simplifications are tried, it returns the original answer.
 @c MERGE EXAMPLES INTO THIS FILE
 @code{example (scsimp)} displays some examples.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Simplification functions}
 @closecatbox
 @end deffn
@@ -1561,7 +1665,7 @@ simplification on.
 @c sin(1.0);
 @c sin(1.0),simp;
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) simp:false;
 (%o1)                         false
@@ -1586,7 +1690,7 @@ assignment has occurred during the evaluation phase of the expression.
 @c x:sin(1.0),simp:false;
 @c :lisp $x
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) simp:true;
 (%o1)                         true
@@ -1601,7 +1705,7 @@ assignment has occurred during the evaluation phase of the expression.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Evaluation flags}
 @closecatbox
 @end defvr
@@ -1616,9 +1720,9 @@ assignment has occurred during the evaluation phase of the expression.
 simplifier that @code{h} is a symmetric function.  E.g., @code{h (x, z, y)} 
 simplifies to @code{h (x, y, z)}.
 
-@code{commutative} is synonymous with @code{symmetric}.
+@mref{commutative} is synonymous with @code{symmetric}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Declarations and inferences}
 @category{Operators}
 @closecatbox
@@ -1645,7 +1749,7 @@ Examples:
 @c ((x+2)^20 - 2*y)/(x+y)^20 + (x+y)^(-19) - x/(x+y)^20;
 @c xthru (%);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) ((x+2)^20 - 2*y)/(x+y)^20 + (x+y)^(-19) - x/(x+y)^20;
                                 20
@@ -1664,7 +1768,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Expressions}
 @closecatbox
 @end deffn

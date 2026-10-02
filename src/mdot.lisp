@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -33,60 +33,10 @@ to be simplified to a commutative product.")
   "Causes a non-commutative product of one and another term to be
 simplified to  a commutative product.")
 
-(defmvar $dotscrules nil
-  "Causes a non-commutative product of a scalar and another term to
-be simplified to a commutative product.  Scalars and constants are carried
-to the front of the expression.")
-
-(defmvar $dotdistrib nil
-  "Causes every non-commutative product to be expanded each time it
-is simplified, i.e.  A . (B + C) will simplify to A . B + A . C.")
-
-(defmvar $dotexptsimp t "Causes A . A to be simplified to A ^^ 2.")
-
-(defmvar $dotassoc t
-  "Causes a non-commutative product to be considered associative, so
-that A . (B . C) is simplified to A . B . C.  If this flag is off, dot is
-taken to be right associative, i.e.  A . B . C is simplified to A . (B . C).")
-
-(defmvar $doallmxops t
-  "Causes all operations relating to matrices (and lists) to be
-carried out.  For example, the product of two matrices will actually be
-computed rather than simply being returned.  Turning on this switch
-effectively turns on the following three.")
-
-(defmvar $domxmxops t "Causes matrix-matrix operations to be carried out.")
-
-(defmvar $doscmxops nil "Causes scalar-matrix operations to be carried out.")
-
 (defmvar $domxnctimes nil
   "Causes non-commutative products of matrices to be carried out.")
 
-(defmvar $scalarmatrixp t
-  "Causes a square matrix of dimension one to be converted to a
-scalar, i.e. its only element.")
-
 (defmvar $dotident 1 "The value to be returned by X^^0.")
-
-(defmvar $assumescalar t
-  "This governs whether unknown expressions 'exp' are assumed to behave
-like scalars for combinations of the form 'exp op matrix' where op is one of
-{+, *, ^, .}.  It has three settings:
-
-FALSE -- such expressions behave like non-scalars.
-TRUE  -- such expressions behave like scalars only for the commutative
-	 operators but not for non-commutative multiplication.
-ALL   -- such expressions will behave like scalars for all operators
-	 listed above.
-
-Note:  This switch is primarily for the benefit of old code.  If possible,
-you should declare your variables to be SCALAR or NONSCALAR so that there
-is no need to rely on the setting of this switch.")
-
-;; Specials defined elsewhere.
-
-(declare-top (special $expop $expon	; Controls behavior of EXPAND
-		      errorsw))
 
 ;; The operators "." and "^^" distribute over equations.
 
@@ -351,7 +301,7 @@ is no need to rely on the setting of this switch.")
 (defun simpnct-merge-product (first-factor remainder)
   (let ((half-product-length (ash (1+ (length remainder)) -1))
 	(inner-product (car remainder))
-	(outer-product (list '(mnctimes) first-factor (car remainder))))
+	(outer-product (list '(mnctimes simp) first-factor (car remainder))))
     (do ((merge-length 2 (1+ merge-length))
 	 (rest (cdr remainder) (cdr rest)))
 	((null rest) outer-product)
@@ -369,7 +319,7 @@ is no need to rely on the setting of this switch.")
 		t)))
 	    ((and (not (> merge-length half-product-length))
 		  (alike1 outer-product
-			  (cons '(mnctimes)
+			  (cons '(mnctimes simp)
 				(subseq rest 0 merge-length))))
 	     (return
 	       (ncmuln (cons (ncpower outer-product 2)
@@ -377,7 +327,7 @@ is no need to rely on the setting of this switch.")
 		       t)))
 	    ((= merge-length 2)
 	     (setq inner-product
-		   (cons '(mnctimes) (cddr outer-product)))))
+		   (cons '(mnctimes simp) (cddr outer-product)))))
       (rplacd (last inner-product) (ncons (car rest))))))
 
 (defun simpnct-antisym-check (l check)

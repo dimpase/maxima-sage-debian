@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -11,12 +11,12 @@
 (in-package :maxima)
 (macsyma-module logarc)
 
-;;;  Logarc and Halfangles
+;;;  Logarithmic form of inverse-trig and trig functions.
 
 (defmfun $logarc (exp)
   (cond ((atom exp) exp)
 	((arcp (caar exp)) (logarc (caar exp) ($logarc (cadr exp))))
-	((eq (caar exp) '$atan2)
+	((eq (caar exp) '%atan2)
 	 (logarc '%atan2 (list ($logarc (second exp)) ($logarc (third exp)))))
 	(t (recur-apply #'$logarc exp))))
 
@@ -53,53 +53,12 @@
 	 (logarc (zl-get (zl-get (get f '$inverse) 'recip) '$inverse) (inv x)))
 	(t (merror "LOGARC: unrecognized argument: ~M" f))))
 
-(defun halfangle (f a)
-  (and (mtimesp a)
-       (ratnump (cadr a))
-       (equal (caddr (cadr a)) 2)
-       (halfangleaux f (mul 2 a))))
-
-(defun halfangleaux (f a) ;; f=function; a=twice argument
-  (let ((sw (member f '(%cos %cot %coth %cosh) :test #'eq)))
-    (cond ((member f '(%sin %cos) :test #'eq)
-           (mul (halfangleaux-factor f a)
-                (power (div (add 1 (porm sw (take '(%cos) a))) 2) 1//2)))
-          ((member f '(%tan %cot) :test #'eq)
-           (div (add 1 (porm sw (take '(%cos) a))) (take '(%sin) a)))
-          ((member f '(%sinh %cosh) :test #'eq)
-           (mul (halfangleaux-factor f a)
-                (power (div (add (take '(%cosh) a) (porm sw 1)) 2) 1//2)))
-	  ((member f '(%tanh %coth) :test #'eq)
-	   (div (add (take '(%cosh) a) (porm sw 1)) (take '(%sinh) a)))
-	  ((member f '(%sec %csc %sech %csch) :test #'eq)
-	   (inv (halfangleaux (get f 'recip) a))))))
-
-(defun halfangleaux-factor (f a)
-  (cond 
-    ((member f '(%sin %cos))
-     (let ((arg (div (if (eq f '%sin) 
-                         ($realpart a)
-                         (add ($realpart a) '$%pi)) 
-                     (mul 2 '$%pi))))
-       (mul 
-         (power -1 (simplify (list '($floor) arg)))
-         (sub 1
-           (mul 
-             (add 1
-               (power -1 (add (simplify (list '($floor) arg))
-                              (simplify (list '($floor) (mul -1 arg))))))
-               (simplify (list '($unit_step) (mul -1 ($imagpart a)))))))))
-    ((member f '(%sinh %cosh))
-     (let ((arg (div (add ($imagpart a) '$%pi) (mul 2 '$%pi)))
-           (fac (if (eq f '%sinh)
-                    (div (power (power a 2) (div 1 2)) a)
-                    1)))
-       (mul fac
-         (power -1 (simplify (list '($floor) arg)))
-         (sub 1
-           (mul 
-             (add 1
-               (power -1 (add (simplify (list '($floor) arg))
-                              (simplify (list '($floor) (mul -1 arg))))))
-               (simplify (list '($unit_step) ($realpart a))))))))
-    (t 1)))
+;; Conditionally apply a logarc transformation to operators that have the 
+;; arcp property but are *not* members of the list `l`. Note: %atan2 is not converted.
+;; We could blend this functionality into $logarc, but I'm not sure there is much
+;; demand for it.
+(defun partial-logarc (e l)
+  (cond ((atom e) e)
+        ((and (arcp (caar e)) (not (member (caar e) l)))
+          (logarc (caar e) (partial-logarc (cadr e) l)))
+        (t (recur-apply #'(lambda (q) (partial-logarc q l)) e))))

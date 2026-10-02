@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -28,9 +28,9 @@
 (declare-top (special *stop* trl* *xn sharpcont subvar1 anotype invc fctc
 		      subval1 var mcflag alcinv *ab* monic* intbs*
 		      *prime *g* modulu* plim listelm many* *inl3
-		      *sharpa *sharpb limk split* alc ind p l dosimp *odr*
+		      *sharpa *sharpb limk split* alc ind *odr*
 		      *i* mcflag elm ne res fact1 fact2 subvar
-		      subval ovarlist valist dlp nn* df1 df2 dn* fcs* uu*))
+		      subval ovarlist valist dlp df1 df2 fcs* uu*))
 
 (defvar *afixn*)
 (defvar *fctcfixn*)
@@ -40,18 +40,7 @@
 
 ;; Internal specials
 
-(defmvar gauss nil)
-(defmvar *min* nil)
-(defmvar *mx* nil)
-(defmvar minpoly* nil)
-(defmvar mplc* nil)
-(defmvar mm* 1)
-(defmvar alpha nil)
 ;(defmvar smallprimes '(3 5 7 11. 13. 17. 19. 23. 29. 31. 37. 41. 43. 47. 53. 59. 61.))
-
-;; External specials
-
-(defmvar $nalgfac t "If t use bmt's algebraic factoring algorithm")
 
 (defun primcyclo (n)
   (let ((*g* (gensym "PRIMCYCLO-"))
@@ -84,7 +73,7 @@
 	 (let* ((gauss nil) (facl (factxn+1 n)))
 	   (cond ((oddp n) facl)
 		 (t (let (($gcd '$subres)
-			  (pfac (list *g* (ash n -1) 1 0 alpha)))
+			  (pfac (list *g* (ash n -1) 1 0 *alpha*)))
 		      (mapcan #'(lambda (q) (subseq (pgcdcofacts q pfac) 0 2)) facl))))))
 	(t (let ((m 1) (nl (reverse (cfactor n))))
 	     (when (equal 2 (cadr nl))
@@ -211,10 +200,23 @@
 (defun zerolp (a)
   (every #'zerop1 a))
 
+;;; TESTDIVIDE
+;;;
+;;; Check if y divides x, assuming that x and y are polynomials in the
+;;; same variable.
 (defun testdivide (x y)
   (if algfac*
       (algtestd x y)
       (eztestdivide x y)))
+
+;;; TESTDIVIDE*
+;;;
+;;; Check if y divides x, for general polynomials x and y (not
+;;; necessarily in the same variable).
+(defun testdivide* (x y)
+  (if algfac*
+      (algtestd x y)
+      (ignore-rat-err (pquotient x y))))
 
 (defun algtestd (x y)
   (and (div-deg-chk (nreverse (pdegreevector x)) (nreverse (pdegreevector y))
@@ -409,8 +411,8 @@
    loop (cond ((null c) (return ans)))
    (setq ans
 	 (nconc (degvector (cons (car c) lf) (1+ j) (cadr c)) ans))
-   (cond (*mx* (setq ans (ncons (maxlist ans))))
-	 (*min* (setq ans (ncons (minlist ans)))))
+   (cond (*mx* (setq ans (ncons (maxlist-in-place ans))))
+	 (*min* (setq ans (ncons (minlist-in-place ans)))))
    (setq c (cddr c))
    (go loop)))
 
@@ -475,8 +477,6 @@
      (incf limk)
      (go test)))
 
-(declare-top (special b b2))
-
 (defun cpberl (u)
   (prog (ql d)
      (setq ql (catch 'splt (cpber1 u)) u (caddr ql))
@@ -484,7 +484,7 @@
      (cond ((null ql)(return d))
 	   ((null (cdr ql)) (return (cons u d))))
      (return (append d
-		     (cond ((or alpha (> modulus 70.))
+		     (cond ((or *alpha* (> modulus 70.))
 			    (cpbgzass ql (pmod u) (length ql)))
 			   (t (cpbg ql (pmod u) (length ql))))))))
 
@@ -508,7 +508,7 @@
      (setq b2 1)
      (setq r1 f1)
      (setq r2 (cdr ql))
-     test (cond ((or (numberp r2) (and alpha (alg r2))) (go end)))
+     test (cond ((or (numberp r2) (and *alpha* (alg r2))) (go end)))
      (setq ql (pmodquo r1 r2))
      (setq ap (pdifference a1 (ptimes (car ql) a2)))
      (setq bp (pdifference b1 (ptimes (car ql) b2)))
@@ -601,7 +601,12 @@
 	 (or (numberp u) (alg u)))
 	(t (quick-sqfr-check u var))))
 
-(declare-top (special p))
+(declare-top (special *p*))
+
+;; Note: *P* used to be P. In some functions below, *P* can probably be
+;;       renamed back to P (lexical variable), but some do really need a special
+;;       variable because they use it to transport state from one function to
+;;       another.
 
 (defun fixvl0 (l1 l2 ov)
   (prog (a b c)
@@ -633,12 +638,12 @@
 
 (defun multfact (poly)
   (prog (*inl3 *i* *min* *mx* nn* *odr* lc elm listelm plim origenvar ne var valist val1
-	 ovarlist p subvar subvar1 subval1 subval dlp)
-     ;;	     (declare (special p))
+	 ovarlist *p* subvar subvar1 subval1 subval dlp)
+     ;;	     (declare (special *p*))
      (setq var (car poly) elm (listovars poly)
 	   origenvar genvar
 	   genvar (intersect genvar (if algfac*
-					(delete (car alpha) elm :test #'equal)
+					(delete (car *alpha*) elm :test #'equal)
 					elm))
 	   ovarlist (butlast genvar)	;this depends on the order of the above intersection!
 	   nn* (1+ (length ovarlist)))
@@ -652,7 +657,7 @@
 					  (> (cadddr subval) 1))
 				      (degvector nil 1 (car subval)))))))
      (setq subval nil)
-     (setq p poly)
+     (setq *p* poly)
      (when (null val1)
        (setq subvar1 ovarlist)
        (setq subval1 (polysubst (make-list (length subvar1) :initial-element 0) subvar1))
@@ -664,25 +669,23 @@
      tag  (fixvl subval1 subvar1)
      (setq subval1 nil subvar1 nil)
      (fixvl0 subvar subval (reverse ovarlist))
-     (when algfac* (push (car alpha) genvar))
-     (setq poly (cpber3 poly p))
+     (when algfac* (push (car *alpha*) genvar))
+     (setq poly (cpber3 poly *p*))
      (setq genvar origenvar)
      (return poly)))
 
 (defun polysubst (a b)
   (prog (lc *inl3 d n modulus)
      (when modulu* (setq modulus modulu*))
-     (setq *inl3 t lc (caddr p) n (length a))
+     (setq *inl3 t lc (caddr *p*) n (length a))
      loop (setq d (pcsubsty a b lc))
      (when (equal 0 d) (go inl))
      (let ((modulus nil))
-       (setq d (pcsubsty a b p)))
+       (setq d (pcsubsty a b *p*)))
      (when (sqfrp (pmod d) (car d))
-       (setq p d) (return a))
+       (setq *p* d) (return a))
      inl  (setq a (increaselist a n))
      (go loop)))
-
-(declare-top (unspecial p))
 
 (defun fixvl1 (l r)
   (prog nil
@@ -708,30 +711,28 @@
    (setq r (cdr r))
    (go loop)))
 
-(defun maxcoef (p)
-  (maxcoefficient p))
+(defun maxcoef (*p*)
+  (maxcoefficient *p*))
 
-(defun incrlimk (p)
+(defun incrlimk (*p*)
   (prog (v min-plim)
      (cond (modulu* (setq plim modulu* *prime modulu* limk -1) (return nil))
 	   ((null limk)(setq plim *alpha *prime *alpha limk -1)(return nil)))
-     (setq v (butlast (pdegreevector p)))
+     (setq v (butlast (pdegreevector *p*)))
      (setq v
 	   (apply
 	    '*
 	    (mapcar
 	     #'(lambda (a b)
 		 (cond ((equal b 0) 1)
-		       (t (max (* (simpbinocoef (list '(%binocoef)
-						      a
-						      (ash a -1))
-						1
-						t)
+		       (t (max (* (ftake '%binomial
+					 a
+					 (ash a -1))
 				  (expt b (ash a -1)))
 			       (expt b a)))))
 	     v
 	     valist)))
-     (setq min-plim (* (max (maxcoef p) plim) v))
+     (setq min-plim (* (max (maxcoef *p*) plim) v))
      loop (cond ((< min-plim plim) (return nil)))
      (incf limk)
      (setq plim (* plim plim))
@@ -802,12 +803,12 @@
      (go test)
      out  (return ans)))
 
-(defun multideg (p)
+(defun multideg (*p*)
   (prog (m d)
-     (cond ((numberp p) (return 0)) ((onevarp p) (return (cadr p))))
-     (setq p (cdr p) m (car p))
-     loop (cond ((null p) (return m)))
-     (setq d (+ (car p) (multideg (cadr p))) p (cddr p) m (max d m))
+     (cond ((numberp *p*) (return 0)) ((onevarp *p*) (return (cadr *p*))))
+     (setq *p* (cdr *p*) m (car *p*))
+     loop (cond ((null *p*) (return m)))
+     (setq d (+ (car *p*) (multideg (cadr *p*))) *p* (cddr *p*) m (max d m))
      (go loop)))
 
 (defun oddelm (list)
@@ -852,12 +853,31 @@
      (cond ((null (cdr vfact)) (return (list u)))
 	   (t (return (mapcar #'oldrep vfact))))))
 
+;; A tuple is a sorted list of distinct positive indices - ORDE builds them
+;; that way, and the (MEMBER L TUPLE) guard keeps them distinct - so the set of
+;; indices is a faithful key for it, and as a bitmask it is a fixnum for the
+;; factor counts that occur in practice.
+(defun nprod-tuple-key (l)
+  (let ((k 0))
+    (dolist (i l k)
+      (setq k (logior k (ash 1 i))))))
 
+(defun nprod-reindex (h lt)
+  (clrhash h)
+  (dolist (e lt)
+    (when e
+      (setf (gethash (nprod-tuple-key e) h) t))))
 
 (defun nprod (lc u lfunct)
   (prog (stage v d2 af0 r lcindex factor llc ltuple lprod lindex qnt af
-	 funct tuple ltemp lpr f l li lf modulus)
+	 funct tuple ltemp lpr f l li lf modulus seen ltemp-tail lpr-tail)
      (setq lpr (copy-tree (setq ltemp (cons nil nil))))
+     ;; SEEN mirrors the set of tuples in LTEMP, so that "Have we tried this
+     ;; combination?" is a hash lookup instead of a walk of a list that grows
+     ;; to binomial(r, stage). The tails make appending to LTEMP and LPR O(1)
+     ;; instead of re-walking them on every candidate. Neither changes what
+     ;; is searched, in what order, or what is returned.
+     (setq seen (make-hash-table :test #'eql) ltemp-tail ltemp lpr-tail lpr)
      (setq lprod (cons nil lfunct))
      (setq d2 (ash (cadr u) -1))
      (remov0 lprod d2)
@@ -889,7 +909,7 @@
      (setq lf (cdr lf))
      (cond ((and (not (member l tuple :test #'equal))
 		 (not (> (+ (cadr f) (cadr funct)) d2))
-		 (not (member (setq l (orde l tuple)) ltemp :test #'equal)))
+		 (not (gethash (nprod-tuple-key (setq l (orde l tuple))) seen)))
 	    (set-modulus plim)
 	    (setq af0 (setq af (ptimes(pmod f) (pmod funct))))
 	    (cond (llc (setq af (ptimes (pmod (lchk llc lcindex l)) af))))
@@ -910,12 +930,20 @@
 		   (remov1 l ltuple lprod d2)
 		   (remov1 l ltemp lpr d2)
 		   (remov2 l lindex lfunct d2)
+		   (nprod-reindex seen ltemp)
+		   (setq ltemp-tail (last ltemp) lpr-tail (last lpr))
 		   (setq r (- r stage))
 		   (setq li nil))	; exit iloop
-		  (t (setq ltemp (nconc ltemp (list l)))
-		     (setq lpr (nconc lpr (list af0)))))))
+		  (t (if ltemp-tail
+			 (setq ltemp-tail (setf (cdr ltemp-tail) (list l)))
+			 (setq ltemp (setq ltemp-tail (list l))))
+		     (setf (gethash (nprod-tuple-key l) seen) t)
+		     (if lpr-tail
+			 (setq lpr-tail (setf (cdr lpr-tail) (list af0)))
+			 (setq lpr (setq lpr-tail (list af0))))))))
      (cond (li (go iloop)) ((cdr ltuple) (go nextuple)))
-     (setq ltuple ltemp lprod lpr ltemp nil lpr nil)
+     (setq ltuple ltemp lprod lpr ltemp nil lpr nil ltemp-tail nil lpr-tail nil)
+     (clrhash seen)
      (go tloop)))
 
 (defun remov2 (a b c d2)
@@ -1008,7 +1036,7 @@
 	    (setq linfac (car ql) uu* (caddr ql) ql (cadr ql))))
      (setq *prime modulus)
      tag0	     (cond ((eq ql 'splitcase)
-			    (setq poly(nalgfac poly (cons (car alpha) (cdr minpoly*))))
+			    (setq poly(nalgfac poly (cons (car *alpha*) (cdr minpoly*))))
 			    (setq plim *alpha *prime plim limk -1)
 			    (return poly))
 			   ((null (cdr (append linfac ql)))
@@ -1087,9 +1115,9 @@
 
 
 (defun fact2z (u f g limk)
-  (prog (a a1 w pk mpk b c r p ql qlp h (k 0) b1)
+  (prog (a a1 w pk mpk b c r *p* ql qlp h (k 0) b1)
      (declare (fixnum k))
-     (setq p modulus)
+     (setq *p* modulus)
      (setq r (ppprog f g))
      (setq a (car r))
      (setq b (cadr r))
@@ -1123,35 +1151,35 @@
      (setq b (pplus b (npctimes mpk b1)))
      (setq h nil b1 nil qlp nil)
      (go sharp)
-     on   (set-modulus p)
+     on   (set-modulus *p*)
      (return (list f g))))
 
 
 
-(defun npctimes (c p)
-  (setq p (npctimes1 c p))
-  (if (and (not (atom p)) (null (cdr p)))
+(defun npctimes (c *p*)
+  (setq *p* (npctimes1 c *p*))
+  (if (and (not (atom *p*)) (null (cdr *p*)))
       0
-      p))
+      *p*))
 
-(defun npquo (p c)
+(defun npquo (*p* c)
   (prog (u modulus)
-     (cond ((equal c 1) (return p))
-	   ((pcoefp p) (return (quotient p c))))
-     (setq u p)
-     loop (cond ((null (cdr u)) (return p)))
+     (cond ((equal c 1) (return *p*))
+	   ((pcoefp *p*) (return (quotient *p* c))))
+     (setq u *p*)
+     loop (cond ((null (cdr u)) (return *p*)))
      (setq u (cddr u))
      (rplaca u (cond ((pcoefp (car u))
 		      (quotient (car u) c))
 		     (t (npquo (copy-list (car u)) c))))
      (go loop)))
 
-(defun npctimes1 (c p)
+(defun npctimes1 (c *p*)
   (prog (u a)
-     (cond((equal c 1)(return p))
-	  ((pcoefp p)(return (ctimes c p))))
-     (setq u p)
-     loop (cond ((null (cdr u))(return p)))
+     (cond((equal c 1)(return *p*))
+	  ((pcoefp *p*)(return (ctimes c *p*))))
+     (setq u *p*)
+     loop (cond ((null (cdr u))(return *p*)))
      (setq a (cond ((pcoefp (caddr u)) (ctimes c (caddr u)))
 		   (t (npctimes c (copy-list (caddr u))))))
      (cond ((equal a 0) (rplacd u (cdddr u)))
@@ -1159,33 +1187,33 @@
 	      (rplaca u a)))
      (go loop)))
 
-(defun x**q1 (term u m p)
+(defun x**q1 (term u m *p*)
   (declare (fixnum m))
   (prog ((i 1))
      (declare (fixnum i))
      (setq trl* (list term))
-     loop (when (= i m) (return (pexptmod term p u)))
-     (setq term (pexptmod term p u))
+     loop (when (= i m) (return (pexptmod term *p* u)))
+     (setq term (pexptmod term *p* u))
      (setq trl* (cons term trl*))
      (incf i)
      (go loop)))
 
-(defun cptomf (p u n)
-  (declare (fixnum n p))
+(defun cptomf (*p* u n)
+  (declare (fixnum n *p*))
   (prog (l s *xn (j 0) (i 0) ind (n-1 (1- n)) )
      (declare (fixnum i j))
      loop (incf j)
      (cond ((= j n) (return nil))
 	   (ind (go sa))
-	   ((> (* p j) n-1)
+	   ((> (* *p* j) n-1)
 	    (setq *xn (mapcar #'- (p2cpol (cddr u) n-1))
 		  s (copy-tree *xn)
 		  ind t)
-	    (setq i (- (* p j) n))
+	    (setq i (- (* *p* j) n))
 	    (go sa1)))
-     (setq s (p2cpol (list var (* p j) 1) n-1))
+     (setq s (p2cpol (list var (* *p* j) 1) n-1))
      (go st)
-     sa   (setq i p)
+     sa   (setq i *p*)
      sa1  (cond ((= i 0) (go st)))
      (cptimesx s)
      (decf i)
@@ -1204,25 +1232,25 @@
      on   (decf (aref *afixn* j j))
      (go loop)))
 
-(defun p2cpol (p n)
+(defun p2cpol (*p* n)
   (declare (fixnum n))
   (prog (l)
-     (setq p (cdr p))
+     (setq *p* (cdr *p*))
      loop (cond ((= n -1) (return (nreverse l)))
-		((or (null p) (> n (car p))) (setq l (cons 0 l)))
-		((= n (car p))
-		 (setq l (cons (cadr p) l))
-		 (setq p (cddr p))))
+		((or (null *p*) (> n (car *p*))) (setq l (cons 0 l)))
+		((= n (car *p*))
+		 (setq l (cons (cadr *p*) l))
+		 (setq *p* (cddr *p*))))
      (decf n)
      (go loop)))
 
-(defun cptimesx (p)
+(defun cptimesx (*p*)
   (prog (xn q lc)
-     (setq xn *xn q p lc (car p))
+     (setq xn *xn q *p* lc (car *p*))
      loop (cond ((cdr q)
 		 (rplaca q (cplus (cadr q) (ctimes lc (car xn))))
 		 (setq q (cdr q) xn (cdr xn)))
-		(t (rplaca q (ctimes lc (car xn))) (return p)))
+		(t (rplaca q (ctimes lc (car xn))) (return *p*)))
      (go loop)))
 
 
@@ -1343,25 +1371,25 @@
      (return (list linfac (cpbq1 u (cadr u)) u))))
 
 
-(defun factor1972 (p)
+(defun factor1972 (*p*)
   (let ((modulu* modulus) many* *stop* modulus mcflag *negflag*)
-    (if (or (atom p) (numberp p) (and algfac* (alg p)))
-	(list p)
-	(factor72 p))))
+    (if (or (atom *p*) (numberp *p*) (and algfac* (alg *p*)))
+	(list *p*)
+	(factor72 *p*))))
 
-(defun factor72 (p)
+(defun factor72 (*p*)
   (let ((sharpcont 1) plim)
-    (setq p (cond ((onevarp p)
-		   (mapcar #'posize (fact5 p)))
+    (setq *p* (cond ((onevarp *p*)
+		   (mapcar #'posize (fact5 *p*)))
 		  (t
 		   (setq many* t)
-		   (multfact p))))
+		   (multfact *p*))))
     (if *negflag*
-	(cons (pminus (car p)) (cdr p))
-	p)))
+	(cons (pminus (car *p*)) (cdr *p*))
+	*p*)))
 
-(defun posize (p)
-  (cond ((pminusp p)
+(defun posize (*p*)
+  (cond ((pminusp *p*)
 	 (setq *negflag* (not *negflag*))
-	 (pminus p))
-	(t p)))
+	 (pminus *p*))
+	(t *p*)))

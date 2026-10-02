@@ -1,7 +1,10 @@
-# -*-mode: tcl; fill-column: 75; tab-width: 8; coding: iso-latin-1-unix -*-
-#
-#       $Id: RunMaxima.tcl,v 1.36 2011-03-20 23:15:48 villate Exp $
-#
+############################################################
+# RunMaxima.tcl                                            #
+# Copyright (C) 1998 William F. Schelter                   #
+# For distribution under GNU public License.  See COPYING. #
+#                                                          #
+#     Modified by Jaime E. Villate                         #
+############################################################
 proc textWindowWidth { w } {
     set font [$w cget -font]
     set w20 [font measure [$w cget -font] -displayof $w "01234567890123456789"]
@@ -18,7 +21,7 @@ proc resizeMaxima { win width height } {
     linkLocal $win pid
     if { [info exists pid] && $pid != "none" } {
 	set wid [expr [textWindowWidth $win]-6]
-	sendMaxima $win ":lisp-quiet (setq linel $wid)\n"
+	sendMaxima $win ":lisp-quiet (setq \$linel $wid)\n"
     }
 }
 
@@ -63,6 +66,7 @@ proc CMeval { w } {
     }
 
     $w tag add input lastStart-1c "end -1char"
+    $w tag add mprompt "lastStart linestart" lastStart
     $w mark set  lastStart "end -1char"
     lappend inputs $expr
 
@@ -93,26 +97,22 @@ proc acceptMaxima { win port filter } {
 }
 
 proc openMaxima { win filter } {
-    global maxima_priv env maxima_default
-
-    if {$maxima_priv(localMaximaServer) == ""} {
+    if {$::xmaxima_priv(localMaximaServer) == ""} {
 	return -code error [mc "Could not start Maxima - empty command"]
     }
-
-    set port $maxima_default(iLocalPort)
+    set port $::xmaxima_default(iLocalPort)
     set port [acceptMaxima $win $port $filter]
     if { $port >= 0 } {
 	set com ""
 	set command [list eval exec]
 	# This may be needed under CYGWIN
-	# if {$maxima_priv(platform) == "cygwin"} {lappend command "/bin/bash"}
-
-	append com    $maxima_priv(localMaximaServer)
+	# if {$::xmaxima_priv(platform) == "cygwin"} {lappend command "/bin/bash"}
+	append com    $::xmaxima_priv(localMaximaServer)
 	regsub PORT $com $port com
-	if { [info exists env(MAXIMA_INT_INPUT_STRING)] } {
-	    regsub PORT $env(MAXIMA_INT_INPUT_STRING) $port env(MAXIMA_INT_INPUT_STRING)
-	    #puts env(MAXIMA_INT_LISP_PRELOAD)=$env(MAXIMA_INT_LISP_PRELOAD)
-	    #puts env(MAXIMA_INT_INPUT_STRING)=$env(MAXIMA_INT_INPUT_STRING)
+	if { [info exists ::env(MAXIMA_INT_INPUT_STRING)] } {
+	    regsub PORT $::env(MAXIMA_INT_INPUT_STRING) $port ::env(MAXIMA_INT_INPUT_STRING)
+	    #puts ::env(MAXIMA_INT_LISP_PRELOAD)=$::env(MAXIMA_INT_LISP_PRELOAD)
+	    #puts ::env(MAXIMA_INT_INPUT_STRING)=$::env(MAXIMA_INT_INPUT_STRING)
 	}
 	#puts com=$com
 	set command [concat $command  $com]
@@ -129,8 +129,11 @@ proc openMaxima { win filter } {
 proc runMaxima { win  filter sock args } {
     linkLocal $win server
     oset $win maximaSocket $sock
-
     fconfigure $sock -blocking 0 -translation lf
+    
+    # Starting from 5.47post, Maxima now outputs UTF-8
+    fconfigure $sock -encoding utf-8
+    
     fileevent $sock readable "$filter $win $sock"
 
     if { [info exists server] } {
@@ -158,13 +161,13 @@ proc closeMaxima { win } {
 	    catch {
 		close $maximaSocket
 	    } err
-	    gui status [concat [mc "Closed socket"] "$maximaSocket: $err"]
+	    maxStatus [concat [mc "Closed socket"] "$maximaSocket: $err"]
 	    unset maximaSocket
 	    after 500
 	    # Maxima takes time to shutdown?
 	}
     } else {
-	# tide_failure "no socket $win"
+	# tk_messageBox -icon error -message "no socket $win"
     }
 
     if {[info exists pid]} {
@@ -173,13 +176,13 @@ proc closeMaxima { win } {
 	    catch {
 		CMkill -TERM $pid
 	    } err
-	    gui status [concat [mc "Killed process"] "'$pid': $err"]	    
+	    maxStatus [concat [mc "Killed process"] "'$pid': $err"]	    
 	    unset pid
 	    # Maxima takes time to shutdown?
 	    after 500
 	}
     } else {
-	# tide_failure "no pid $win"
+	# tk_messageBox -icon error -message "no pid $win"
     }
 
     if {[info exists pdata]} {
@@ -249,7 +252,15 @@ proc maximaFilter { win sock } {
 	if { [regexp -indices "\n\\((C|%i)\[0-9\]+\\)" $plotPending  inds] } {
 	    set it [string range $plotPending [lindex $inds 0] end]
 	    set plotPending [string range $plotPending 0 [lindex $inds 0]]
-	    set data $plotPending
+            # Work around for ccl, which does not put a new-line character
+            # between the plot command and the ouput prompt
+            if { [regexp -indices "\[^\n\]\\((D|%o)\[0-9\]+\\)" $plotPending \
+                      inds] } {
+                append data [string range $plotPending 0 [lindex $inds 0]] \
+                    "\n" [string range $plotPending [lindex $inds 0]+1 end]
+            } else {
+                set data $plotPending
+            }
 	    unset plotPending
 	    # puts "itplot=<$it>,$inds"
 	    # puts "plotdata=<$data>"
@@ -306,13 +317,12 @@ proc littleFilter {win sock } {
     }
 }
 
-if { ![info exists maxima_priv(timeout)] } {
+if { ![info exists ::xmaxima_priv(timeout)] } {
 
-    set maxima_priv(timeout) 60000
+    set ::xmaxima_priv(timeout) 60000
 }
 
 proc runOneMaxima { win } {
-    global maxima_priv
     global pdata
 
     closeMaxima $win
@@ -322,17 +332,18 @@ proc runOneMaxima { win } {
     openMaxima $win littleFilter
 
     while { $pid == "none" } {
-	set af [after $maxima_priv(timeout) oset $win pid "none" ]
+	set af [after $::xmaxima_priv(timeout) oset $win pid "none" ]
 	# puts "waiting pid=$pid"
-	gui status [mc "Starting Maxima"]
+	maxStatus [mc "Starting Maxima"]
 	vwait [oloc $win pid]
 	after cancel $af
 	if { $pid  == "none" } {
-	    if {[tide_yesno [mc "Starting maxima timed out.  Wait longer?"]]} {
+	    if {[tk_messageBox -type yesno -title "Connection" -icon question \
+                     -message [mc "Starting maxima timed out. Wait longer?"]]} {
 		continue
 	    } else {
 		catch {closeMaxima $win}
-		set err   [mc "Starting Maxima timed out"]
+		set err [mc "Starting Maxima timed out"]
 		if {![catch {oget $win socket} sock] && \
 			[info exists pdata(maximaInit,$sock)] } {
 		    append err : $pdata(maximaInit,$sock)
@@ -345,16 +356,18 @@ proc runOneMaxima { win } {
     if {[catch {oget $win socket} sock]} {
 	return -code error [mc "Failed to start Maxima"]
     }
-    gui status [mc "Started Maxima"]
+    maxStatus [mc "Started Maxima"]
     
-    SetPlotFormat $maxima_priv(cConsoleText)
+    SetPlotFormat $::xmaxima_priv(cConsoleText)
 
     set res [list [oget $win pid] $sock ]
     global pdata
     set pdata(maxima,socket) $sock
     fileevent $sock readable  [list maximaFilter $win $sock]
     sendMaxima $win ":lisp-quiet (setq \$maxima_frontend \"Xmaxima\")\n"
-    sendMaxima $win ":lisp-quiet (setq \$maxima_frontend_version *autoconf-version*)\n"
+    sendMaxima $win ":lisp-quiet (setq \$maxima_frontend_version \"$::autoconf(version)\")\n"
+    sendMaxima $win ":lisp-quiet (setq \$maxima_frontend_bugreportinfo \"XMaxima is part of maxima.\")\n"
+    sendMaxima $win ":lisp-quiet (defun display-frontend-topics (wanted) (display-html-topics wanted))\n"
     return $res
 
 }
@@ -374,11 +387,11 @@ proc sendMaxima { win form } {
 	    # The maxima went away
 	    set maximaSocket ""
 	    unset maximaSocket
-	    set mess [M [concat "$mess\n%s\n" [mc "You must Restart"]] $err]
+	    set mess [concat "$mess\n%s\n" [mc "You must Restart"] $err]
 	} else {
-	    set mess [M [concat "$mess:\n%s\n" [mc "You may need to Restart"]] $err]
+	    set mess [concat "$mess:\n%s\n" [mc "You may need to Restart"] $err]
 	}
-	tide_failure $mess
+	tk_messageBox -title Error -icon error -message $mess
     }
 }
 
@@ -450,11 +463,11 @@ proc sendMaximaCall { win form call } {
 	    # The maxima went away
 	    set maximaSocket ""
 	    unset maximaSocket
-	    set mess [M [concat "$mess\n%s\n" [mc "You must Restart"]] $err]
+	    set mess [concat "$mess\n%s\n" [mc "You must Restart"] $err]
 	} else {
-	    set mess [M [concat "$mess:\n%s\n" [mc "You may need to Restart"]] $err]
+	    set mess [concat "$mess:\n%s\n" [mc "You may need to Restart"] $err]
 	}
-	tide_failure $mess
+	tk_messageBox -title Error -icon error -message $mess
 	return
     }
     if { [info exists counter] } {
@@ -482,15 +495,13 @@ proc CMresetFilter { win } {
 }
 
 proc CMkill {  signal pid } {
-    global maxima_priv tcl_platform
-
     # Windows pids can be negative
     if {[string is int $pid]} {
-	gui status [M [mc "Sending signal %s to process %s"] "$signal" "$pid"]
-	if {$tcl_platform(platform) == "windows" } {
-	    exec $maxima_priv(kill) $signal $pid
+	maxStatus [mc "Sending signal %s to process %s" "$signal" "$pid"]
+	if {$::tcl_platform(platform) == "windows" } {
+	    exec $::xmaxima_priv(kill) $signal $pid
 	} else {
-	    exec $maxima_priv(kill) $signal $pid
+	    exec $::xmaxima_priv(kill) $signal $pid
 	}
     }
 }
@@ -505,8 +516,6 @@ proc CMinterrupt { win } {
 }
 
 proc doShowPlot { w data } {
-    global maxima_default
-
     #puts data=$data
     set command [lindex [lindex $data 0] 0]
     set name [plotWindowName $w $command]
@@ -600,8 +609,7 @@ proc maxima_insert { w this next val args } {
 }
 
 proc eval_maxima { prog win this nextResult } {
-    global maxima_priv
-    set w $maxima_priv(maximaWindow)
+    set w $::xmaxima_priv(maximaWindow)
     linkLocal $w maximaSocket
     if {![info exists maximaSocket] || $maximaSocket == ""} {return}
 
@@ -610,10 +618,10 @@ proc eval_maxima { prog win this nextResult } {
     if { "[lindex $nextResult 0]" != "" } {
 	sendMaximaCall $w "$form;\n" [list maxima_insert $win $this  $nextResult pdata($maximaSocket,result)]
 	
-	#         set res [sendMaximaWait $maxima_priv(maximaWindow) "$form;"]
+	#         set res [sendMaximaWait $::xmaxima_priv(maximaWindow) "$form;"]
 	#	insertResult_maxima $win $this  $nextResult $res
     } else {
-	sendMaxima $maxima_priv(maximaWindow) "$form;\n"
+	sendMaxima $::xmaxima_priv(maximaWindow) "$form;\n"
     }
     return 0
 }

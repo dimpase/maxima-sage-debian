@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -71,7 +71,17 @@
   (*define-initial-symbols (delete opr symbols-defined :test #'equal)))
 
 (defun define-symbol (x)
-  (*define-initial-symbols (cons x symbols-defined))
+  ;; Only extend SYMBOLS-DEFINED when X is not already known. A duplicate entry
+  ;; makes CSTRSETUP build a degenerate node carrying a spurious empty branch,
+  ;; e.g. declaring "%or" twice turns
+  ;;   (#\% #\o #\r (ANS $%OR))
+  ;; into
+  ;;   (#\% #\o #\r (ANS $%OR) ((ANS $%OR))),
+  ;; which pushes READ-COMMAND-TOKEN-AUX out of its leaf case. It also keeps
+  ;; SYMBOLS-DEFINED, and the trie rebuilt from it, from growing every time a
+  ;; package that declares operators is loaded again.
+  (unless (member x symbols-defined :test #'equal)
+    (*define-initial-symbols (cons x symbols-defined)))
   (symbolconc '$ (maybe-invert-string-case x)))
 
 (defun cstrsetup (arg)

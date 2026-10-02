@@ -15,70 +15,54 @@
 ;;apply, and tried to eliminate any / quoting.  Most of the relevant
 ;;stuff is in system.lisp for the lispm and nil friends.--wfs
 
+;; It would probably be better to bind *print-base* and *read-base* as
+;; needed in various functions instead of doing it this way with
+;; *old-ibase* and *old-base*.  There are already some cases where
+;; *print-base* is bound in various functions.
+(defvar *old-ibase*)
+(defvar *old-base*)
+
 (eval-when
-    #+gcl (compile eval)
-    #-gcl (:compile-toplevel :execute)
-  (setq old-ibase *read-base* old-base *print-base*)
+    (:compile-toplevel :execute)
+  (setq *old-ibase* *read-base* *old-base* *print-base*)
   (setq *read-base* 10. *print-base* 10.))
 
-(declare-top  (special bindlist loclist errset *mopl*
-		       $values $functions $arrays $gradefs $dependencies
-		       $rules $props $ratvars
-		       varlist genvar
-		       $gensumnum checkfactors $features featurel
-		       tellratlist $dontfactor
-		       dispflag savefile $%% $error
-		       opers *ratweights $ratweights
-		       $stringdisp $lispdisp
-		       transp $contexts $setcheck $macros autoload))
+(declare-top  (special errset
+		       $features featurel
+		       dispflag savefile
+		       opers *ratweights
+		       transp autoload))
 
 (defvar thistime 0)
-(defvar *refchkl* nil)
-(defvar *mdebug* nil)
-(defvar errcatch nil)
 (defvar mcatch nil)
 (defvar brklvl -1)
 (defvar allbutl nil)
-(defvar lessorder nil)
-(defvar greatorder nil)
-(defvar *in-translate-file* nil)
-(defvar *linelabel* nil)
 
-(defmvar $disptime nil)
 (defmvar $strdisp t)
-(defmvar $grind nil)
+
+(defmvar $grind nil
+  "When the variable 'grind' is 'true', the output of 'string' and
+  'stringout' has the same format as that of 'grind'; otherwise no
+  attempt is made to specially format the output of those functions.")
+
 (defmvar $backtrace '$backtrace)
-(defmvar $debugmode nil)
-(defmvar $poislim 5)
-(defmvar $loadprint nil)
-(defmvar $nolabels nil)
-(defmvar $aliases '((mlist simp)))
 
-(defmvar $infolists
-  '((mlist simp) $labels $values $functions $macros $arrays
-                 $myoptions $props $aliases $rules $gradefs
-                 $dependencies $let_rule_packages $structures))
+(defmvar $debugmode nil
+  "When 'debugmode' is 'true', Maxima will start the Maxima debugger
+  when a Maxima error occurs.
 
-(defmvar $labels (list '(mlist simp)))
-(defmvar $dispflag t)
+  When 'debugmode' is 'lisp', Maxima will start the Lisp debugger when
+  a Maxima error occurs.
 
-(defmvar $% '$% "The last out-line computed, corresponds to lisp *"
-	 no-reset)
+  In either case, enabling 'debugmode' will not catch Lisp errors."
+ :properties ((assign 'debugmode1)))
 
-(defmvar $inchar '$%i
-  "The alphabetic prefix of the names of expressions typed by the user.")
-
-(defmvar $outchar '$%o
-  "The alphabetic prefix of the names of expressions returned by the system.")
-
-(defmvar $linechar '$%t
-  "The alphabetic prefix of the names of intermediate displayed expressions.")
-
-(defmvar $linenum 1 "the line number of the last expression."
-	 fixnum no-reset)
-
-(defmvar $file_output_append nil
-  "Flag to tell file-writing functions whether to append or clobber the output file.")
+(defmvar $poislim 5
+  "Determines the domain of the coefficients in the arguments of the
+  trig functions.  The initial value of 5 corresponds to the interval
+  [-2^(5-1)+1,2^(5-1)], or [-15,16], but it can be set to [-2^(n-1)+1,
+  2^(n-1)]."
+  :properties ((assign 'poislim1)))
 
 ;; This version of meval* makes sure, that the facts from the global variable
 ;; *local-signs* are cleared with a call to clearsign. The facts are added by
@@ -87,17 +71,26 @@
 
 (defmvar $ratvarswitch t) ; If T, start an evaluation with a fresh list VARLIST.
 
-(defun meval* (expr)
+(defmacro with-top-level-environment (&rest body)
   ;; Make sure that clearsign is called after the evaluation.
-  (unwind-protect
-    (let (*refchkl* checkfactors)
+  `(unwind-protect
+    (let (*refchkl* *checkfactors*)
       (if $ratvarswitch (setq varlist (cdr $ratvars)))
-      (meval expr))
+      ,@ body)
     ;; Clear the facts from asksign and friends.
     (clearsign)))
 
+(defun meval* (expr)
+  (with-top-level-environment
+    (meval expr)))
+
+(defun makelabel10 (x)
+  (let (*print-radix*
+	(*print-base* 10.))
+    ;; x should be a symbol (one of $inchar, $outchar, $linechar)
+    ($concat x $linenum)))
 (defun makelabel (x)
-  (setq *linelabel* ($concat '|| x $linenum))
+  (setq *linelabel* (makelabel10 x))
   (unless $nolabels
     (when (or (null (cdr $labels))
 	      (when (member *linelabel* (cddr $labels) :test #'equal)
@@ -138,7 +131,7 @@
 (defun checklabel (x)	; CHECKLABEL returns T iff label is not in use
   (not (or $nolabels
 	   (= $linenum 0)
-	   (boundp ($concat '|| x $linenum)))))
+	   (boundp (makelabel10 x)))))
 
 (defun gctimep (timep tim)
   (cond ((and (eq timep '$all) (not (zerop tim))) (princ (intl:gettext "Total time = ")) t)
@@ -148,22 +141,6 @@
 ; Previous version didn't take Clisp, CMUCL, or SBCL into account.
 
 (defvar *autoloaded-files* ())
-
-(defun generic-autoload (file &aux type)
-  (unless (member file *autoloaded-files* :test #'equal)
-    (push file *autoloaded-files*)
-    (setq file (pathname (cdr file)))
-    (setq type (pathname-type file))
-    (let ((bin-ext #+gcl "o"
-		   #+cmu (c::backend-fasl-file-type c::*target-backend*)
-		   #+clisp "fas"
-		   #+allegro "fasl"
-		   #+openmcl (pathname-type ccl::*.fasl-pathname*)
-		   #+lispworks (pathname-type (compile-file-pathname "foo.lisp"))
-		   #-(or gcl cmu clisp allegro openmcl lispworks) ""))
-      (if (member type (list bin-ext "lisp" "lsp")  :test 'equalp)
-	  (let ((*read-base* 10.)) #-sbcl (load file) #+sbcl (with-compilation-unit nil (load file)))
-	  ($load file)))))
 
 (defvar autoload 'generic-autoload)
 
@@ -175,14 +152,6 @@
 (defmspec $loadfile (form)
   (loadfile (namestring (maxima-string (meval (cadr form)))) nil
 	    (not (member $loadprint '(nil $autoload) :test #'equal))))
-
-(defmfun $setup_autoload (filename &rest functions)
-  (let ((file ($file_search filename)))
-    (dolist (func functions)
-      (nonsymchk func '$setup_autoload)
-      (putprop (setq func ($verbify func)) file 'autoload)
-      (add2lnc func $props)))
-  '$done)
 
 (defun dollarify (l)
   (let ((errset t))
@@ -207,16 +176,15 @@
 	 (*package* (find-package :maxima))
 	 ($load_pathname path)
 	 (*read-base* 10.)
+	 (*print-base* 10.)
 	 (tem (errset #-sbcl (load (pathname file)) #+sbcl (with-compilation-unit nil (load (pathname file))))))
     (or tem (merror (intl:gettext "loadfile: failed to load ~A") (namestring path)))
     (namestring path)))
 
-(defmfun $directory (path)
-  (cons '(mlist) (mapcar 'namestring (directory ($filename_merge path)))))
-
 (defmspec $kill (form)
   (clear)	;; get assume db into consistent state
   (mapc #'kill1 (cdr form))
+  (db-gc)
   '$done)
 
 ;;; The following *builtin- variables are used to keep/restore builtin
@@ -229,7 +197,6 @@
 (defvar *builtin-$rules* nil)
 (defvar *builtin-symbols-with-values* nil)
 (defvar *builtin-symbol-values* (make-hash-table))
-(defvar *builtin-numeric-constants* '($%e $%pi $%phi $%gamma))
 
 (defun kill1-atom (x)
   (let ((z (or (and (member x (cdr $aliases) :test #'equal) (get x 'noun)) (get x 'verb))))
@@ -240,6 +207,8 @@
       (when (member x (cdr $contexts) :test #'equal)
 	($killcontext x))
       (when (mget x '$rule)
+	(free-rule-symbols (get x 'rule-symbols))
+	(remprop x 'rule-symbols)
 	(let ((y (ruleof x)))
 	  (cond (y ($remrule y x))
 		(t (when (not (member x *builtin-$rules* :test #'equal))
@@ -256,14 +225,14 @@
       (when (not (get x 'sysconst))
 	(remprop x 'lineinfo)
 	(remprop x 'mprops))
-      (dolist (u '(bindtest nonarray evfun evflag opers special mode))
+      (dolist (u '(bindtest nonarray evfun evflag opers mode))
 	(remprop x u))
       (dolist (u opers)
 	(when (and (remprop x u)
 		 (let ((xopval (get x 'operators)))
 		   (or (eq xopval 'simpargs1) (eq xopval nil))))
 	    (remprop x 'operators)))
-      (when (member x (cdr $props) :test #'equal)
+      (when (member (or (get x 'op) x) (cdr $props) :test #'equal)
 	(remprop x 'sp2)
 	(killframe x)
 	(i-$remove (list x $features)))
@@ -293,13 +262,18 @@
           (remprop x 'defstruct-template)
           (remprop x 'defstruct-default)
           (remprop x 'translate)
+          (remprop x 'operators)
           (setf $structures (delete y $structures :count 1 :test #'equal))))
+      (remprop x 'noun)
+      (remprop x 'verb)
       (when (and (member x *builtin-symbols* :test #'equal)
 		 (gethash x *builtin-symbol-props*))
 	(setf (symbol-plist x)
 	      (copy-tree (gethash x *builtin-symbol-props*))))
-      (when (member x *builtin-numeric-constants*)
+      (when (member x *builtin-numeric-constants* :test #'eq)
 	(initialize-numeric-constant x))	;; reset db value for $%pi, $%e, etc
+      (when (member x '($zeroa $zerob))
+        (initialize-zeroab x)) ;; restore db assumptions for $zeroa and $zerob
       (if z (kill1 z)))))
 
 (defun kill1 (x)
@@ -330,7 +304,7 @@
 	     ((or (eq x t) (eq x '$all))
 	      (mapc #'kill1 (cdr $infolists))
 	      (setq $ratvars '((mlist simp)) varlist nil genvar nil
-		    checkfactors nil greatorder nil lessorder nil $gensumnum 0
+		    *checkfactors* nil greatorder nil lessorder nil $gensumnum 0
 		    *ratweights nil $ratweights
 		    '((mlist simp))
 		    tellratlist nil $dontfactor '((mlist)) $setcheck nil)
@@ -355,7 +329,7 @@
 		(if (gethash 'dim1 z)
 		  (remhash (car indices) z)
 		  (remhash indices z))))
-         ((eq (caar x) '$@) (mrecord-kill x))
+             ((eq (caar x) '$@) (mrecord-kill x))
 	     ((and (eq (caar x) '$allbut)
 		   (not (dolist (u (cdr x))
 			  (if (not (symbolp u)) (return t)))))
@@ -391,7 +365,7 @@
 		    (setf (symbol-value x)
 			  (gethash x *builtin-symbol-values*)))
 		  t)
-		 ((get x 'special)
+		 ((get x 'reset-on-kill)
 		  (makunbound x)
 		  (when (member x *builtin-symbols-with-values* :test #'equal)
 		    (setf (symbol-value x)
@@ -416,11 +390,14 @@
 	     (member rule l :test #'equal) op))))
 
 (defmfun $debugmode (x)
-  (setq $debugmode x)
-  (debugmode1 nil x))
+  (debugmode1 nil x)
+  (setq $debugmode x))
 
 (defun debugmode1 (assign-var y)
-  (declare (ignore assign-var))
+  ;; The user manual says $debugmode has one of three values: false
+  ;; (NIL), true (T), or lisp ($lisp).  Enforce that.
+  (unless (member y '(nil t $lisp))
+    (mseterr assign-var y "Must be one of false, true, or lisp"))
   (setq *mdebug* y))
 
 (defun errlfun1 (mpdls)
@@ -431,11 +408,6 @@
   (do ()
       ((eq loclist (cdr mpdls)))
     (munlocal)))
-
-(defun getalias (x)
-  (cond ((get x 'alias))
-	((eq x '$false) nil)
-	(t x)))
 
 (defun makealias (x)
   (implode (cons #\$ (exploden x))))
@@ -464,7 +436,6 @@
 	(cadr (reverse l)))))
 
 (defmspec $playback (x)
-  (declare (special $showtime))
   (setq x (cdr x))
   (prog (l l1 l2 numbp slowp nostringp inputp timep grindp inchar largp)
      (setq inchar (getlabcharn $inchar)) ; Only the 1st alphabetic char. of $INCHAR is tested
@@ -551,17 +522,6 @@
 	     (setf $aliases (delete x $aliases :count 1 :test #'eq))
 	     (remprop (setq x y) 'alias) (remprop x 'verb) x))))
 
-(defun stripdollar (x)
-  (cond ((not (atom x))
-	 (cond ((and (eq (caar x) 'bigfloat) (not (minusp (cadr x)))) (implode (fpformat x)))
-	       (t (merror (intl:gettext "STRIPDOLLAR: argument must be an atom; found: ~M") x))))
-	((numberp x) x)
-	((null x) 'false)
-	((eq x t) 'true)
-        ((member (get-first-char x) '(#\$ #\%) :test #'char=)
-         (intern (subseq (string x) 1)))
-	(t x)))
-
 (defun fullstrip (x)
   (mapcar #'fullstrip1 x))
 
@@ -637,20 +597,24 @@
 	($go mgo) ($signum %signum)
 	($return mreturn) ($factorial mfactorial)
 	($ibase *read-base*) ($obase *print-base*)
-	($modulus modulus)
 	($mode_declare $modedeclare)))
+
+;; Validate values assigned to $ibase and $obase, which are aliased to
+;; *read-base* and *print-base*, respectively, above.
+(putprop '*read-base* #'(lambda (name val)
+			  (unless (typep val '(integer 2 36))
+			    (mseterr name val "must be an integer between 2 and 36, inclusive")))
+	 'assign)
+
+(putprop '*print-base* #'(lambda (name val)
+			  (unless (typep val '(integer 2 36))
+			    (mseterr name val "must be an integer between 2 and 36, inclusive")))
+	 'assign)
 
 (mapc #'(lambda (x) (putprop (car x) (cadr x) 'alias))
       '(($ratcoeff $ratcoef) ($ratnum $ratnumer) ($true t)
         ($derivative $diff) ($prod $product)
 	($bothcoeff $bothcoef)))
-
-(defun amperchk (name)
-  (cond
-    ((symbolp name) name)
-    ((stringp name)
-     (getalias (or (getopr0 name) (implode (cons #\$ (coerce name 'list))))))
-    (t name)))
 
 (defmspec $stringout (x)
   (setq x (cdr x))
@@ -753,28 +717,16 @@
 	c)))
 
 (defmspec $errcatch (form)
-  (let ((errcatch (cons bindlist loclist))
-        (*mdebug* nil))
-    (handler-case (list '(mlist) (rat-error-to-merror (mevaln (cdr form))))
-      (maxima-$error ()
-        ; merror already set the error variable and printed the error
-        ; message if errormsg is true, so we just need to clean up.
-        (errlfun1 errcatch)
-        (list '(mlist simp)))
-      (error (e)
-        ; We store the error report message in the error variable and
-        ; print the message if errormsg is true.  Then we clean up.
-        (setq $error (list '(mlist simp) (princ-to-string e)))
-        (when $errormsg
-          ($errormsg))
-        (errlfun1 errcatch)
-        (list '(mlist simp))))))
+  (cons '(mlist) (errcatch (mevaln (cdr form)))))
+
+(defmacro mcatch (form)
+  `(let ((mcatch (cons bindlist loclist)))
+     (unwind-protect
+         (catch 'mcatch (rat-error-to-merror ,form))
+       (errlfun1 mcatch))))
 
 (defmspec $catch (form)
-  (let ((mcatch (cons bindlist loclist)))
-    (prog1
-	(catch 'mcatch (rat-error-to-merror (mevaln (cdr form))))
-      (errlfun1 mcatch))))
+  (mcatch (mevaln (cdr form))))
 
 (defmfun $throw (exp)
   (if (null mcatch) (merror (intl:gettext "throw: not within 'catch'; expression: ~M") exp))
@@ -798,16 +750,21 @@
       (incf thistime (- (get-internal-run-time) tim))))
 
 
-(defmfun $quit ()
+(defvar *maxima-epilog* ""
+  "String printed when Maxima exits via $quit.")
+
+(defmfun $quit (&optional (exit-code 0))
+  "Quit Maxima with an optional exit code for Lisps and systems that
+  support exit codes."
   (princ *maxima-epilog*)
-  (bye)
+  (bye exit-code)
   (mtell (intl:gettext "quit: No known quit function for this Lisp.~%")))
 
 ;; File-processing stuff.
 
-(defun mterpri ()
-   (terpri)
-   (finish-output))
+(defun mterpri (&optional (ostream *standard-output*))
+   (terpri ostream)
+   (finish-output ostream))
 
 (defmspec $status (form)
   (setq form (cdr form))
@@ -835,9 +792,9 @@
         (t
          (merror (intl:gettext "sstatus: unknown argument: ~M") keyword))))
 
-(dolist (l '($sin $cos $tan $log $plog $sec $csc $cot $sinh $cosh
+(dolist (l '($sin $cos $tan  $sec $csc $cot $sinh $cosh
 	     $tanh $sech $csch $coth $asin $acos $atan $acot $acsc $asec $asinh
-	     $acosh $atanh $acsch $asech $acoth $binomial $gamma $genfact $del))
+	     $acosh $atanh $acsch $asech $acoth $del))
   (let ((x ($nounify l)))
     (putprop l x 'alias)
     (putprop x l 'reversealias)))
@@ -851,18 +808,61 @@
 (defprop $diff %derivative verb)
 (defprop %derivative $diff noun)
 
-(mapc #'(lambda (x) (putprop (car x) (cadr x) 'assign))
-      '(($debugmode debugmode1)
-	($fpprec fpprec1) ($poislim poislim1)
-	($default_let_rule_package let-rule-setter)
-	($current_let_rule_package let-rule-setter)
-	($let_rule_packages let-rule-setter)))
+(defmfun $at_difference (e x a b)
+  (m- ($at e `((mequal) ,x ,b)) ($at e `((mequal) ,x ,a))))
 
-(mapc #'(lambda (x) (putprop x 'neverset 'assign)) (cdr $infolists))
+;; 2-d pretty printer display for antiderivative-like expressions
 
-(defprop $contexts neverset assign)
+(defun dimension-%at_difference (form result)
+
+  (unless (= (length (cdr form)) 4)
+    (return-from dimension-%at_difference (dimension-function form result)))
+
+  (let*
+    ((args (rest form))
+     (expr (first args))
+     (my-var (second args))
+     (lower-val (third args))
+     (upper-val (fourth args))
+     (lower-eqn (list '(mequal) my-var lower-val))
+     (upper-eqn (list '(mequal) my-var upper-val))
+     (vertical-bar-char (if (display2d-unicode-enabled) at-char-unicode (car (coerce $absboxchar 'list))))
+     vertical-bar
+     expr-result lower-result upper-result
+     expr-w expr-h expr-d lower-w lower-h lower-d upper-w upper-h upper-d)
+    (declare (ignorable expr-w expr-h expr-d lower-w lower-h lower-d upper-w upper-h upper-d))
+
+    (setq expr-result (dimension expr nil 'mparen 'mparen nil 0)
+          expr-w width expr-h height expr-d depth)
+
+    (setq lower-result (dimension-infix lower-eqn nil)
+          lower-w width lower-h height lower-d depth)
+
+    (setq upper-result (dimension-infix upper-eqn nil)
+          upper-w width upper-h height upper-d depth)
+
+    (setq vertical-bar (list 'd-vbar (1+ (max expr-h upper-d)) (max (1+ expr-d) lower-h) vertical-bar-char))
+
+    (setq result (append (list (list (- (max lower-w upper-w) upper-w) 0))
+                         (list (append (list (- lower-w) (max expr-h upper-d)) upper-result)
+                               (append (list 0 (- (max (1+ expr-d) lower-h))) lower-result (list (list 0 (if (> lower-w upper-w) (- lower-w upper-w) 0))))
+                               vertical-bar
+                               (append (list 0 0) expr-result))
+                         result))
+
+    (setq height (+ (max expr-h upper-d) upper-h)
+          width (+ 1 expr-w (max lower-w upper-w))
+          depth (+ (max (1+ expr-d) lower-h) lower-d))
+
+    ;; Edrx:
+    (setq width (+ expr-w 1 (max upper-w lower-w)))
+
+    (update-heights height depth)
+
+    result))
+
+(setf (get '%at_difference 'dimension) 'dimension-%at_difference)
 
 (eval-when
-    #+gcl (compile eval)
-    #-gcl (:compile-toplevel :execute)
-    (setq *print-base* old-base *read-base* old-ibase))
+    (:compile-toplevel :execute)
+    (setq *print-base* *old-base* *read-base* *old-ibase*))

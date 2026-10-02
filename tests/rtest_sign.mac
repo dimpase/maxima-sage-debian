@@ -256,7 +256,56 @@ pnz$
 sign(tanh(x));
 pnz$
 
+(assume(x >= -1), assume(x < 1),0);
+0$
 
+sign(acos(x));
+pos$
+
+(forget(x >= -1), forget(x < 1),0);
+0$
+
+(assume(x > 0), assume(x <= 1),0);
+0$
+
+sign(asin(x));
+pos$
+
+sign(atanh(x));
+pos$
+
+(forget(x > 0), forget(x <= 1),0);
+0$
+
+(assume(x >= -1), assume(x <= 0),0);
+0$
+
+sign(asin(x));
+nz$
+
+sign(atanh(x));
+nz$
+
+(forget(x >= -1), forget(x <= 0),0);
+0$
+
+/* expt */
+(assume(xpos > 0), assume(xneg < 0), assume(xpz >= 0), assume(xnz <= 0), assume(notequal(xpn, 0)), assume(equal(xzero, 0)), declare(xeven, even), declare(xodd, odd),0);
+0$
+
+create_list(errcatch(sign(x^y)),
+            x, [xpos, xneg, xpz, xnz, xpn, xzero, xpnz],
+            y, [xpos, xneg, xpz, xnz, xpn, xzero, xpnz, xeven, xodd]);
+[[pos], [pos], [pos], [pos], [pos], [pos], [pos], [pos], [pos],   /* xpos^y */
+ [pn], [pn], [pn], [pn], [pn], [pos], [pn], [pos], [neg],         /* xneg^y */
+ [pz], [pos], [pz], [pos], [pz], [pos], [pz], [pz], [pz],         /* xpz^y */
+ [pnz], [pn], [pnz], [pn], [pnz], [pos], [pnz], [pz], [nz],       /* xnz^y */
+ [pn], [pn], [pn], [pn], [pn], [pos], [pn], [pos], [pn],          /* xpn^y */
+ [zero], [], [zero], [], [zero], [], [zero], [zero], [zero],      /* xzero^y */
+ [pnz], [pn], [pnz], [pn], [pnz], [pos], [pnz], [pz], [pnz]]$     /* xpnz^y */
+
+(forget(xpos > 0), forget(xneg < 0), forget(xpz >= 0), forget(xnz <= 0), forget(notequal(xpn, 0)), forget(equal(xzero, 0)), remove(xeven, even), remove(xodd, odd),0);
+0$
 
 /* SF bug 798571 */
 
@@ -398,10 +447,8 @@ pz$
 csign(x^2 + x);
 pnz$
 
-/* This is expected to be wrong
 csign(x^2 + x + 42);
-pos$
-*/
+pnz$
 
 csign(x^2 + sqrt(5) + 101);
 pos$
@@ -412,10 +459,8 @@ pos$
 csign((sqrt(97) - 1) * x^2 + sqrt(5) + 101);
 pos$
 
-/* This is expected to be wrong
 csign(-x^2 + x - 42);
-neg$
-*/
+pnz$
 
 csign(x^2 - 2 * x + 1);
 pz$
@@ -429,10 +474,8 @@ pnz$
 csign(x^2 + 2 * x * y + y^2);
 pz$
 
-/* This is expected to be wrong.
 csign(x^2 + 2 * x * y + y^2 + 1);
 pos$
-*/
 
 csign((x+y)^2 + (z-x)^2);
 pz$
@@ -464,10 +507,8 @@ pnz$
 csign(x/(1+x^2));
 pnz$
 
-/* This is expected to be wrong.
 csign(1 + x/(1+x^2));
-pos$
-*/
+pnz$
 
 csign((1+x^2)/x);
 pn$
@@ -513,48 +554,42 @@ pos$
 /* algebraic */
 
 csign(sqrt(x));
-pz$
+complex$
 
 csign(sqrt(x^2 + 1));
 pos$
 
 csign(sqrt(a) + sqrt(b));
-pz$
+complex$
 
 csign(x^(1/3));
 pnz$
 
 csign(x^(1/4));
-pz$
+complex$
 
 csign(x^(1/4) + 1);
-pos$
+complex$
 
 csign(-(x^(1/4) + 1));
-neg$
+complex$
 
 /* exp-like */
 
 csign(cos(x));
 pnz$
 
-/* This is expected to be wrong.
 csign(cos(x) + 42);
 pos$
-*/
 
-/* This is expected to be wrong.
 csign(sin(x) - 42);
 neg$
-*/
 
 csign(cosh(x));
 pos$
 
-/* This is exprected to be wrong.
 csign(cosh(x)-1);
 pz$
-*/
 
 csign(sinh(x));
 pnz$
@@ -576,13 +611,11 @@ pos$
 
 /* log-like */
 
-/* This is expected to be wrong.
 csign(acos(x));
-pz$
-*/
+complex$
 
 csign(asin(x));
-pnz$
+complex$
 
 csign(atan(x));
 pnz$
@@ -608,16 +641,84 @@ pz$
 (forget(x >= 1),0);
 0$
 
-/* This is expected to be wrong.
 csign(acosh(x));
-pz$
-*/
+complex$
 
 csign(asinh(x));
 pnz$
 
-csign(tanh(x));
+csign(atanh(x));
+complex$
+
+(assume(x >= -1), assume(x <= 1),0);
+0$
+
+csign(acos(x));
+pz$
+
+csign(asin(x));
 pnz$
+
+csign(atanh(x));
+pnz$
+
+(forget(x >= -1), forget(x <= 1),0);
+0$
+
+(assume(x >= -1), assume(x < 1),0);
+0$
+
+csign(acos(x));
+pos$
+
+(forget(x >= -1), forget(x < 1),0);
+0$
+
+(assume(x > 0), assume(x <= 1),0);
+0$
+
+csign(asin(x));
+pos$
+
+csign(atanh(x));
+pos$
+
+(forget(x > 0), forget(x <= 1),0);
+0$
+
+(assume(x >= -1), assume(x <= 0),0);
+0$
+
+csign(asin(x));
+nz$
+
+csign(atanh(x));
+nz$
+
+(forget(x >= -1), forget(x <= 0),0);
+0$
+
+/* expt */
+(assume(xpos > 0), assume(xneg < 0), assume(xpz >= 0), assume(xnz <= 0), assume(notequal(xpn, 0)), assume(equal(xzero, 0)),
+ declare(xeven, even), declare(xodd, odd), declare(ximag, imaginary), declare(xcomplex, complex),0);
+0$
+
+create_list(errcatch(csign(x^y)),
+            x, [xpos, xneg, xpz, xnz, xpn, xzero, xpnz, ximag, xcomplex],
+            y, [xpos, xneg, xpz, xnz, xpn, xzero, xpnz, xeven, xodd, ximag, xcomplex]);
+[[pos], [pos], [pos], [pos], [pos], [pos], [pos], [pos], [pos], [complex], [complex],                         /* xpos^y */
+ [complex], [complex], [complex], [complex], [complex], [pos], [complex], [pos], [neg], [complex], [complex], /* xneg^y */
+ [pz], [pos], [pz], [pos], [pz], [pos], [pz], [pz], [pz], [complex], [complex],                               /* xpz^y */
+ [complex], [complex], [complex], [complex], [complex], [pos], [complex], [pz], [nz], [complex], [complex],   /* xnz^y */
+ [complex], [complex], [complex], [complex], [complex], [pos], [complex], [pos], [pn], [complex], [complex],  /* xpn^y */
+ [zero], [], [zero], [], [zero], [], [zero], [zero], [zero], [zero], [zero],                                  /* xzero^y */
+ [complex], [complex], [complex], [complex], [complex], [pos], [complex], [pz], [pnz], [complex], [complex],  /* xpnz^y */
+ [complex], [complex], [complex], [complex], [complex], [pos], [complex], [complex], [complex], [complex], [complex], /* ximag^y */
+ [complex], [complex], [complex], [complex], [complex], [pos], [complex], [complex], [complex], [complex], [complex]]$  /* xcomplex^y */
+
+(forget(xpos > 0), forget(xneg < 0), forget(xpz >= 0), forget(xnz <= 0), forget(notequal(xpn, 0)), forget(equal(xzero, 0)),
+ remove(xeven, even), remove(xodd, odd), remove(ximag, imaginary), remove(xcomplex, complex),0);
+0$
 
 /* SF bug 798571 */
 
@@ -625,8 +726,6 @@ csign(sqrt(2)/2 - 1/sqrt(2));
 zero$
 
 /* SF bug 1045920 */
-
-/* 
 
 (assume(a > 1, b > 1),0);
 0$
@@ -636,8 +735,6 @@ pos$
 
 (forget(a > 1, b > 1),0);
 0$
-
-*/
 
 /* SF bug 1724592  */
 
@@ -1202,6 +1299,7 @@ unknown;
 unknown;
 
 (killcontext (myctxt),
+ remvalue(myctxt),
  reset (domain));
 [domain];
 
@@ -1219,3 +1317,904 @@ errcatch (sign (1 / zero))$
 
 (forget (equal (zero, 0), equal (q, r)), 0)$
 0;
+
+/* bug reported to mailing list 2021-06-27: "ev(xxx,pred) vs is(xxx)" */
+
+xxx:  '((0 < 1) or (0 < 2));
+(0 < 1) or (0 < 2);
+
+ev(xxx, pred);
+true;
+
+ev(xxx, nouns);
+true;
+
+is(xxx);
+true;
+
+yyy: '((0 < 1) and (0 < 2));
+(0 < 1) and (0 < 2);
+
+is(yyy);
+true;
+
+zzz: '((0 > 1) or (0 < 2));
+(0 > 1) or (0 < 2);
+
+is(zzz);
+true;
+
+aaa: '((0 > 1) and (0 < 2));
+(0 > 1) and (0 < 2);
+
+is(aaa);
+false;
+
+bbb: '((0 > 1) or (0 > 2));
+(0 > 1) or (0 > 2);
+
+is(bbb);
+false;
+
+(kill(xyz), ccc: '((xyz > 4) or (3 > 2)));
+(xyz > 4) or (3 > 2);
+
+is(ccc);
+true;
+
+ddd: '((2 < 1) or (2 < 2) or (1 < 3) and (2 < 4));
+(2 < 1) or (2 < 2) or ((1 < 3) and (2 < 4));
+
+is(ddd);
+true;
+
+/* SF bug #3324: "Stack overflow in sign() when domain complex" */
+
+(kill(a, b, c, xxx, yyy, zzz, aaa, bbb, ccc, ddd),
+ domain: complex,
+ declare([a,b,c], real),
+ mycontext: newcontext (),
+ assume(a>0, b>0, c>0),
+ sign(c - b^(1/3)*c^(1/3)));
+pnz;
+
+sign(c - (b*c)^(1/3));
+pnz;
+
+(killcontext (mycontext), remvalue(mycontext),0);
+0;
+
+/* SF bug #3440: "complex domain + real variable = seg-fault"
+ * possibly related to #3324
+ */
+
+(kill (m1, m2, m3, r12, r13, r23, A),
+ mycontext: newcontext (),
+ domain:complex,
+ declare([m1,m2,m3],real),
+ declare([r12,r13,r23],real),
+ assume(r12>0,r13>0,r23>0),
+ assume(r12<r13+r23,r13<r12+r23,r23<r12+r13),
+ assume(m1>0,m2>0,m3>0),
+ A : (-((((-r23^2)+r13^2+r12^2)*(r23^2-r13^2+r12^2))/((m2+m1)*r12^2*r13*r23)+(2*((-r23^2)-r13^2+r12^2))/(m3*r13*r23))^2/(4*((4*(m3+m1))/(m1*m3)-(m2*((-r23^2)+r13^2+r12^2)^2)/(m1*(m2+m1)*r12^2*r13^2))))-(m1*(r23^2-r13^2+r12^2)^2)/(4*m2*(m2+m1)*r12^2*r23^2)+(m3+m2)/(m2*m3),
+ is(equal(A,0)));
+unknown;
+
+(reset (),
+ killcontext (mycontext),
+ remvalue(A),
+ remvalue(mycontext), 0);
+0;
+
+/* SF bug #4120: is("foo"<3) gives internal error */
+
+block ([prederror: false], is("foo"<3));
+false;
+
+errcatch (block ([prederror: true], is("foo"<3)));
+[];
+
+block ([prederror: false], is(3 < "foo"));
+false;
+
+errcatch (block ([prederror: true], is(3 < "foo")));
+[];
+
+block ([prederror: false],
+       kill (foo),
+       [is ("foo" < 3), is ("foo" < foo), is ("foo" < sin (foo))]);
+[false, false, false];
+
+block ([prederror: true],
+       [errcatch (is ("foo" < 3)), errcatch (is ("foo" < foo)), errcatch (is ("foo" < sin (foo)))]);
+[[], [], []];
+
+block ([prederror: false], is("foo"<=3));
+false;
+
+errcatch (block ([prederror: true], is("foo"<=3)));
+[];
+
+block ([prederror: false], is(3 <= "foo"));
+false;
+
+errcatch (block ([prederror: true], is(3 <= "foo")));
+[];
+
+block ([prederror: false],
+       [is ("foo" <= 3), is ("foo" <= foo), is ("foo" <= sin (foo))]);
+[false, false, false];
+
+block ([prederror: true],
+       [errcatch (is ("foo" <= 3)), errcatch (is ("foo" <= foo)), errcatch (is ("foo" <= sin (foo)))]);
+[[], [], []];
+
+block ([prederror: false],
+       [is ("abc" > "ab"), is ("abc" > "abc"), is ("abc" > "abcd")]);
+[true, false, false];
+
+block ([prederror: true],
+       [is ("abc" > "ab"), is ("abc" > "abc"), is ("abc" > "abcd")]);
+[true, false, false];
+
+block ([prederror: false],
+       [is ("abc" >= "ab"), is ("abc" >= "abc"), is ("abc" >= "abcd")]);
+[true, true, false];
+
+block ([prederror: true],
+       [is ("abc" >= "ab"), is ("abc" >= "abc"), is ("abc" >= "abcd")]);
+[true, true, false];
+
+block ([prederror: false], sort (["xyz", "xy", "vwxy", "vw", "uvwxyz", "uv"], ">"));
+["xyz", "xy", "vwxy", "vw", "uvwxyz", "uv"];
+
+/* Consistency check for `is(expr >= 0)` and `sign(expr)` */
+
+is(sqrt(x) >= 0);
+true$
+
+/* Tests for sign-cos & sign-sin */
+sign(sin(x^2+1));
+pnz$
+
+sign(sin(z));
+pnz$
+
+block([ans], assume(0 < z, z < %pi), ans : sign(sin(z)), forget(0 < z, z < %pi), ans);
+pos$
+
+block([ans], assume(0 <= z, z <= %pi), ans : sign(sin(z)), forget(0 <= z, z <= %pi), ans);
+pz$
+
+block([ans], assume(0 < z, z < %pi), ans : sign(sin(z)), forget(0 < z, z < %pi), ans);
+pos$
+
+block([ans], assume(-%pi < z, z < 0), ans : sign(sin(z)), forget(-%pi < z, z < 0), ans);
+neg$
+
+block([ans], assume(-%pi <= z, z <= 0), ans : sign(sin(z)), forget(-%pi <= z, z <= 0), ans);
+nz$
+
+csign(sin(-28/3 +%i));
+complex$
+
+sign(cos(x^2+1));
+pnz$
+
+sign(cos(z));
+pnz$
+
+block([ans], assume(-%pi/2 < z, z < %pi/2), ans : sign(cos(z)), forget(-%pi/2 < z, z < %pi/2), ans);
+pos$
+
+block([ans], assume(-%pi/2 <= z, z <= %pi/2), ans : sign(cos(z)), forget(-%pi/2 <= z, z <= %pi/2), ans);
+pz$
+
+block([ans], assume(%pi/2 < z, z < 3*%pi/2), ans : sign(cos(z)), forget(%pi/2 < z, z < 3*%pi/2), ans);
+neg$
+
+block([ans], assume(%pi/2 <= z, z <= 3*%pi/2), ans : sign(cos(z)), forget(%pi/2 <= z, z <= 3*%pi/2), ans);
+nz$
+
+csign(cos(11/5 +%i));
+complex$
+
+/* Tests for sign of ceiling & floor */
+
+block([ans], assume(x >= 0), ans : sign(floor(x)), forget(x >= 0), ans);
+pz$
+
+block([ans], assume(x >= 1), ans : sign(floor(x)), forget(x >= 1), ans);
+pos$
+
+block([ans], assume(x > 1), ans : sign(floor(x)), forget(x > 1), ans);
+pos$
+
+block([ans], assume(x < 0), ans : sign(floor(x)), forget(x < 0), ans);
+neg$
+
+block([ans], assume(x <= 0), ans : sign(floor(x)), forget(x <= 0), ans);
+nz$
+
+block([ans], assume(x > 0), ans : sign(ceiling(x)), forget(x > 0), ans);
+pos$
+
+block([ans], assume(x > -1), ans : sign(ceiling(x)), forget(x > -1), ans);
+pz$
+
+block([ans], assume(x <= -1), ans : sign(ceiling(x)), forget(x <= -1), ans);
+neg$
+
+block([ans], assume(x < 0), ans : sign(ceiling(x)), forget(x < 0), ans);
+nz$
+
+/* SF bug #2910: "In maxima 5.35.1 powerseries fail if there complex root" */
+
+niceindices(powerseries(1/(z+%i),z,0));
+-%i*'sum((-1)^(i/2)*z^i,i,0,inf);
+
+/* Tests for #4462 sign(1/sqrt(x))*/
+sign(1/sqrt(x));
+pos$
+
+sign(sqrt(x));
+pz$
+
+sign(x^(-3/4));
+pos$
+
+sign(x^(3/4));
+pz$
+
+/* \#4642 sign(1.0e-310*%i) gives error because 1e-310*x/1e-310 fails */
+errcatch(sign(1.0e-310*%i));
+[]$
+
+sign(1.0e-310);
+pos$
+
+sign(-1.0e-310);
+neg$
+
+csign(1.0e-310*%i);
+imaginary$
+
+csign(1.2e-310 + 1.0e-310*%i);
+complex$
+
+
+/* Clean up!*/
+
+(kill(all),0);
+0$
+
+facts();
+[]$
+
+values;
+[]$
+
+contexts;
+[initial,global]$
+
+/* SF bug #4655: sign("foo") => Lisp error */
+
+block ([S: make_string_output_stream (), S1],
+       with_stdout (S, errcatch (sign ("foo"))),
+       S1: get_output_stream_string (S),
+       close (S),
+       S1);
+"sign: sign undefined for foo
+";
+
+/* Bug #2288: "x^2<1 can't get x^2<2, but can get x^2<100" */
+/* and related tests */
+
+assume(x > -1, x < 1);
+[x > -1, x < 1];
+
+[sign(abs(x) - 1), sign(1 - abs(x))];
+[neg, pos];
+
+[sign(abs(x) - 2), sign(2 - abs(x))];
+[neg, pos];
+
+[sign(abs(x) - 1/2), sign(1/2 - abs(x))];
+[pnz, pnz];
+
+[sign(x^2 - 1), sign(1 - x^2)];
+[neg, pos];
+
+[sign(x^2 - 2), sign(2 - x^2)];
+[neg, pos];
+
+[sign(x^2 - 1/2), sign(1/2 - x^2)];
+[pnz, pnz];
+
+[sign(x^2 - 100), sign(100 - x^2)];
+[neg, pos];
+
+[sign(x^2 - 10000), sign(10000 - x^2)];
+[neg, pos];
+
+[sign(x^4 - 2), sign(2 - x^4)];
+[neg, pos];
+
+[sign(x^3 - 1), sign(1 - x^3)];
+[neg, pos];
+
+[sign(x^3 - 2), sign(2 - x^3)];
+[neg, pos];
+
+[sign(x^3 - 1/2), sign(1/2 - x^3)];
+[pnz, pnz];
+
+[sign(x^3 + 1), sign(-1 - x^3)];
+[pos, neg];
+
+[sign(x^3 + 2), sign(-2 - x^3)];
+[pos, neg];
+
+[sign(x^3 + 1/2), sign(-1/2 - x^3)];
+[pnz, pnz];
+
+forget(x > -1, x < 1);
+[x > -1, x < 1];
+
+/* Bug #3155: "is(abs(cos(x))<=1) is unknown, but is(cos(x)<=1) and is(cos(x)>=-1) are true" */
+
+is(abs(cos(x)) <= 1);
+true;
+
+/* Bug #4752: "csign doesn't handle subscripted functions like li correctly" */
+
+csign(li[n](x));
+complex;
+
+declare(f, imaginary);
+done;
+
+csign(f[n](x));
+imaginary;
+
+forget(kind(f, imaginary));
+[kind(f, imaginary)];
+
+
+/* Bug #4816: "csign(imaginary + imaginary) = complex" */
+
+csign(log(%i) + %i);
+imaginary;
+
+(declare(j, imaginary), csign(a*%i + b*j));
+imaginary;
+
+csign(a*%i + b*j + c*k);
+complex;
+
+(assume(equal(c, 0)), csign(a*%i + b*j + c*k));
+imaginary;
+
+(forget(equal(c, 0)), remove(j, imaginary));
+done;
+
+
+/* Bug #4318: "is(x^a > x) with x > 1 & a > 1 gives stack overflow exception" */
+
+(assume(x > 1, a > 1), 0);
+0;
+
+sign(x^a - x);
+pos;
+
+sign(x - x^a);
+neg;
+
+sign(x^(1/a) - x);
+neg;
+
+sign(x - x^(1/a));
+pos;
+
+(forget(x > 1, a > 1), 0);
+0;
+
+
+/* some more cases related to the fix of #4318 */
+
+(assume(x > 1, a < b), 0);
+0;
+
+sign(x^a - x^b);
+neg;
+
+(forget(x > 1, a < b),
+ assume(a > 1), 0);
+0;
+
+sign(2^a - 2);
+pos;
+
+sign(2 - 2^a);
+neg;
+
+(forget(a > 1),
+ assume(c > 0, c < 1, a > 1), 0);
+0;
+
+sign(c^a - c);
+neg;
+
+sign(c - c^a);
+pos;
+
+(forget(c > 0, c < 1, a > 1),
+ assume(x > 1, a >= 1), 0);
+0;
+
+sign(x^a - x);
+pz;
+
+(forget(a >= 1),
+ assume(a <= 1), 0);
+0;
+
+sign(x^a - x);
+nz;
+
+(forget(x > 1, a <= 1),
+ assume(a > 1), 0);
+0;
+
+sign(x^a - x);
+pnz;
+
+(forget(a > 1),
+ assume(bb > 1), 0);
+0;
+
+csign(bb^(2 + %i) - bb^(1 + %i));
+complex;
+
+(forget(bb > 1),
+ assume(cc > 0, cc < 1), 0);
+0;
+
+csign(cc^(2 + %i) - cc^(1 + %i));
+complex;
+
+(forget(cc > 0, cc < 1),
+ assume(s > t), 0);
+0;
+
+sign(2^s - 2^t);
+pos;
+
+(forget(s > t),
+ assume(w > 0), 0);
+0;
+
+sign(%e^w - 1);
+pos;
+
+(forget(w > 0),
+ assume(x > 1, a < b, equal(y, x)), 0);
+0;
+
+sign(x^a - y^b);
+neg;
+
+(forget(x > 1, a < b, equal(y, x)), 0);
+0;
+
+
+/* Bug #4837: "sign-sin / sign-cos return a strict sign at closed endpoints where the value is 0" */
+
+(assume(x > 0, x <= %pi, y > %pi/2, y <= 3*%pi/2), 0);
+0;
+
+sign(sin(x));
+pz;
+
+sign(cos(y));
+nz;
+
+(forget(x > 0, x <= %pi, y > %pi/2, y <= 3*%pi/2), killcontext(learndata), 0);
+0;
+
+
+/* Bug #4863: "sign(abs(x+%i)) returns pz instead of pos" */
+
+sign(abs(x+%i));
+pos;
+
+
+/* Bug #4866: "csign(log(abs(x))) = complex" */
+
+csign(log(abs(x)));
+pnz;
+
+csign(imagpart(acos(x)));
+pnz;
+
+(assume(equal(x, 0)), 0);
+0;
+
+errcatch(csign(log(x)));
+[];
+
+(forget(equal(x, 0)), 0);
+0;
+
+
+/* Bug #4867: "sign(log(-1-x^2)) returns pnz" */
+
+errcatch(sign(log(-1-x^2)));
+[];
+
+
+/* some more tests for bug #4837 */
+
+second([assume(x > 0, x <= %pi), sign(sin(x)), forget(facts(x))]);
+pz;
+
+second([assume(x >= -%pi, x < 0), sign(sin(x)), forget(facts(x))]);
+nz;
+
+second([assume(x >= -%pi, x <= %pi, notequal(x, 0)), sign(sin(x)), forget(facts(x))]);
+pnz;
+
+second([assume(x >= -%pi/2, x < %pi/2), sign(cos(x)), forget(facts(x))]);
+pz;
+
+second([assume(x > %pi/2, x <= 3*%pi/2), sign(cos(x)), forget(facts(x))]);
+nz;
+
+second([assume(x >= -%pi/2, x <= 3*%pi/2, notequal(x, %pi/2)), sign(cos(x)), forget(facts(x))]);
+pnz;
+
+second([assume(x > 0, x < %pi), sign(sin(x)), forget(facts(x))]);
+pos;
+
+second([assume(x > -%pi/2, x < %pi/2), sign(cos(x)), forget(facts(x))]);
+pos;
+
+killcontext(learndata);
+done;
+
+
+/* Bug #4873: "limit can destroy pre-existing facts" (actually not a limit bug, so the test is here) */
+
+(assume(notequal(x, 0)), 0);
+0;
+
+limit(sqrt(x^2 + a), a, 0), ask_hide_prompt; pos;
+x;
+
+facts();
+[notequal(x, 0)];
+
+(forget(notequal(x, 0)), 0);
+0;
+
+
+/* Bug #4876: "sign(%i) gives error, but sign(declared_imaginary) doesn't" */
+
+declare(j, imaginary);
+done;
+
+errcatch(sign(j));
+[];
+
+errcatch(sign(j(x)));
+[];
+
+errcatch(sign(j[n](x)));
+[];
+
+remove(j, imaginary);
+done;
+
+
+/* Bug #4886: "forget(number > number) works" */
+
+(assume(x > 1e-100, y < -1e-99),
+ forget(1e-100 > 0),
+ ?dcomp(x, y));
+pos;
+
+(forget(x > 1e-100, y < -1e-99), 0);
+0;
+
+
+/* Bug #4887: "Removed fact still listed by facts()" */
+
+(assume(x > 5),
+ newcontext(other),
+ forget(x > 5),
+ context : initial,
+ kill(other),
+ facts());
+[];
+
+
+/* Bug #4888: "Facts created in local block still listed by facts() afterwards" */
+
+(block(local(x), assume(x > sin(y))),
+ facts());
+[];
+
+
+/* assume(kind(...)) */
+
+(kill(k1, k2, k3, k4, k5, k6, k7), ctx: supcontext(), 0);
+0;
+
+/* Basic functionality: assume(kind(...)) */
+assume(kind(k1, complex));
+[kind(k1, complex)];
+featurep(k1, complex);
+true;
+facts(k1);
+[kind(k1, complex)];
+member(k1, props);
+true;
+
+/* remove() and forget() both undo what assume() did. */
+(remove(k1, complex), [featurep(k1, complex), facts(k1)]);
+[false, []];
+(assume(kind(k1, complex)), forget(kind(k1, complex)), facts(k1));
+[];
+
+/* Redundant, stated directly and derived. */
+(declare(k2, integer), assume(kind(k2, integer)));
+[redundant];
+assume(kind(k2, rational));
+[redundant];
+
+/* Inconsistent - the fact must not be installed. */
+(declare(k3, integer), assume(kind(k3, noninteger)));
+[inconsistent];
+featurep(k3, noninteger);
+false;
+(declare(k4, even), assume(kind(k4, odd)));
+[inconsistent];
+featurep(k4, odd);
+false;
+
+/* Properties that facts() cannot emit are not kind facts. */
+assume(kind(k5, mainvar));
+[meaningless];
+assume(kind(k5, no_such_property));
+[meaningless];
+facts(k5);
+[];
+
+/* Same input, two reports: assume() answers, declare() signals. */
+assume(kind(%pi, constant));
+[redundant];
+assume(kind(%pi, imaginary));
+[inconsistent];
+errcatch(declare(%pi, imaginary));
+[];
+featurep(%pi, imaginary);
+false;
+
+/* Several facts at once, and the "and" form. */
+assume(kind(k6, integer), kind(k7, complex));
+[kind(k6, integer), kind(k7, complex)];
+(forget(kind(k6, integer), kind(k7, complex)),
+ assume(kind(k6, integer) and kind(k7, complex)));
+[kind(k6, integer), kind(k7, complex)];
+
+/* A kind fact belongs to the context it was assumed in. */
+(ctx2: supcontext(), assume(kind(k5, complex)), featurep(k5, complex));
+true;
+(killcontext(ctx2), featurep(k5, complex));
+false;
+
+/* The round trip that motivates the change: facts() fed back into assume() */
+(forget(facts()),
+ assume(k6 > 0, kind(k6, integer), kind(k7, complex)),
+ f: facts(),
+ 0);
+0;
+(forget(f), facts());
+[];
+(apply(assume, f), is(sort(facts()) = sort(f)));
+true;
+
+(killcontext(ctx),
+ kill(k1, k2, k3, k4, k5, k6, k7, f, ctx, ctx2),
+ 0);
+0;
+
+
+/* Bug #4918: "assume(not foo(...)) returns [not con]"
+   assume() and forget() accept only what the database can hold. */
+
+(kill(k),
+ ctx : supcontext(),
+ 0);
+0;
+
+assume(not k);
+[meaningless];
+
+forget(not k);
+[meaningless];
+
+assume(not kind(k, complex));
+[meaningless];
+
+forget(not kind(k, complex));
+[meaningless];
+
+assume(k[1]);
+[meaningless];
+
+forget(k[1]);
+[meaningless];
+
+forget(F(%phi, constant));
+[meaningless];
+
+forget(2*k);
+[meaningless];
+
+forget(k);
+[meaningless];
+
+facts();
+[];
+
+(assume(not equal(k, 0)), facts(k));
+[not equal(k, 0)];
+
+(forget(not equal(k, 0)), facts(k));
+[];
+
+(killcontext(ctx),
+ kill(k, ctx),
+ 0);
+0;
+
+
+/* Bug #4746: The built-in assertions in global survive forget() and remove(),
+   and "global" cannot be made the current context. */
+
+(kill(k),
+ ctx : supcontext(),
+ num_facts : length(facts(global)),
+ 0);
+0;
+
+(forget(kind(%pi, constant)),
+ featurep(%pi, constant));
+true;
+
+(remove(%pi, constant),
+ featurep(%pi, constant));
+true;
+
+(forget(kind(%i, imaginary)),
+ featurep(%i, imaginary));
+true;
+
+(remove(acosh, complex),
+ featurep(acosh, complex));
+true;
+
+(forget(zeroa > 0),
+ sign(zeroa));
+pos;
+
+(forget(zerob < 0),
+ sign(zerob));
+neg;
+
+length(facts(global)) - num_facts;
+0;
+
+errcatch(context : global);
+[];
+
+killcontext(global);
+not_done;
+
+is(context = ctx);
+true;
+
+(killcontext(ctx),
+ kill(k, ctx, num_facts),
+ 0);
+0;
+
+
+/* Bugs #4919 and #4920: forget() and remove() report what they did */
+
+(kill(k1, k2, ctx),
+ supcontext(ctx),
+ 0);
+0;
+
+forget(k1 > 0);
+[redundant];
+
+forget(kind(k1, complex));
+[redundant];
+
+(assume(k1 > 0),
+ forget(k1 > 0));
+[k1 > 0];
+
+forget(k1 > 0);
+[redundant];
+
+(assume(kind(k1, complex)),
+ forget(kind(k1, complex)));
+[kind(k1, complex)];
+
+forget(kind(k1, complex));
+[redundant];
+
+/* Datums, not knowledge: k1 > 0 was derivable but never stored. */
+(assume(k1 > 1),
+ forget(k1 > 0));
+[redundant];
+
+is(k1 > 0);
+true;
+
+(forget(k1 > 1), 0);
+0;
+
+/* One answer per argument, in order. */
+(assume(k1 > 0),
+ forget(k1 > 0, k1 < 5));
+[k1 > 0, redundant];
+
+/* Built-in facts are declined, and say so. */
+forget(kind(%pi, constant));
+[not_done];
+
+forget(zeroa > 0);
+[not_done];
+
+remove(%pi, constant);
+not_done;
+
+featurep(%pi, constant);
+true;
+
+/* remove() reports a refusal, not an absence. */
+(declare(k2, integer),
+ remove(k2, integer));
+done;
+
+remove(k2, integer);
+done;
+
+(kill(k1, k2, ctx), 0);
+0;
+
+(kill(ctx), 0);
+0;
+
+(newcontext(ctx),
+ killcontext(global, ctx));
+not_done;
+
+member(ctx, contexts);
+false;
+
+killcontext(ctx);
+not_done;
+
+context;
+initial;
+
+
+/* Leave this at the end of the file! */
+[facts(), contexts];
+[[], [initial, global]];

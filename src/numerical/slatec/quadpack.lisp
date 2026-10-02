@@ -2,6 +2,12 @@
 
 (in-package :maxima)
 
+;; This should really be necessary, but the order of compilation in
+;; maxima.system is messed up so that this file is compiled before
+;; plot.lisp.  Rearranging the order of the modules to compile
+;; plot.lisp before quadpack.lisp causes other problems.
+(declaim (special *plot-realpart*))
+
 (defvar *debug-quadpack*
   nil
   "Set to non-NIL to enable printing of the error object when the
@@ -32,8 +38,8 @@
     `(let ((,f (get-integrand ,fun ,var)))
        (lambda (,x)
 	 (let ((,result (funcall ,f ,x)))
-	   (unless (cl:numberp ,result)
-	     (merror (intl:gettext "~M: Cannot numerically evaluate ~M at ~M") ,name ,fun ,x))
+	   (unless (cl:floatp ,result)
+	     (merror (intl:gettext "~M: Numerical evaluation of ~M at ~M is not a float or is not defined") ,name ,fun ,x))
 	   (float ,result))))))
      
 (defmfun $quad_qag (fun var a b key &key
@@ -46,7 +52,8 @@
 	    %%pretty-fname key))
   (let* ((lenw (* 4 limit))
 	 (work (make-array lenw :element-type 'flonum))
-	 (iwork (make-array limit :element-type 'f2cl-lib:integer4)))
+	 (iwork (make-array limit :element-type 'f2cl-lib:integer4))
+         (*plot-realpart* nil))
     (handler-case
 	(multiple-value-bind (junk z-a z-b z-epsabs z-epsrel z-key result abserr neval ier
 				   z-limit z-lenw last)
@@ -75,10 +82,11 @@
   (quad_argument_check %%pretty-fname fun var a b) 
   (let* ((lenw (* 4 limit))
 	 (work (make-array lenw :element-type 'flonum))
-	 (iwork (make-array limit :element-type 'f2cl-lib:integer4)))
+	 (iwork (make-array limit :element-type 'f2cl-lib:integer4))
+         (*plot-realpart* nil))
     (handler-case
 	(multiple-value-bind (junk z-a z-b z-epsabs z-epsrel result abserr neval ier
-				   z-limit z-lenw last)
+			      z-limit z-lenw last)
 	    (slatec:dqags (float-integrand-or-lose '$quad_qags fun var)
 			  (float-or-lose a)
 			  (float-or-lose b)
@@ -106,16 +114,16 @@
 	   (let (bnd inf)
 	     ;; Cases to handle: (minf, x), (x, inf), (minf, inf).
 	     ;; Everything else is an error.
-	     (cond ((eq low '$minf)
-		    (cond ((eq high '$inf)
+	     (cond ((eq ($limit low) '$minf)
+		    (cond ((eq ($limit high) '$inf)
 			   (setf bnd 0)
 			   (setf inf 2))
 			  (t
 			   (setq bnd ($float high))
-			   (setq inf low))))
-		   ((eq high '$inf)
+			   (setq inf ($limit low)))))
+		   ((eq ($limit high) '$inf)
 		    (setq bnd ($float low))
-		    (setq inf high))
+		    (setq inf ($limit high)))
 		   (t
 		    (merror "~M: Unexpected limits of integration: ~M, ~M~%"
 			    %%pretty-fname low high)))
@@ -135,7 +143,8 @@
 			  -1)
 			 ((2 $both)
 			  ;; Interval is [-infinity, infinity]
-			  2))))
+			  2)))
+             (*plot-realpart* nil))
 	(handler-case
 	    (multiple-value-bind (junk z-bound z-inf z-epsabs z-epsrel
 				       result abserr neval ier
@@ -165,7 +174,8 @@
   (quad_argument_check %%pretty-fname fun var a b) 
   (let* ((lenw (* 4 limit))
 	 (work (make-array lenw :element-type 'flonum))
-	 (iwork (make-array limit :element-type 'f2cl-lib:integer4)))
+	 (iwork (make-array limit :element-type 'f2cl-lib:integer4))
+         (*plot-realpart* nil))
     (handler-case
 	(multiple-value-bind (junk z-a z-b z-c z-epsabs z-epsrel result abserr neval ier
 				   z-limit z-lenw last)
@@ -196,9 +206,14 @@
 	 (lenw (+ (* 2 leniw) (* 25 maxp1)))
 	 (work (make-array lenw :element-type 'flonum))
 	 (iwork (make-array leniw :element-type 'f2cl-lib:integer4))
-	 (integr (ecase trig
+	 (integr (case trig
 		   ((1 %cos $cos) 1)
-		   ((2 %sin $sin) 2))))
+		   ((2 %sin $sin) 2)
+                   (otherwise
+                    (merror "~M: the name of the trig function should be sin or cos, not ~M."
+                            %%pretty-fname
+                            trig))))
+         (*plot-realpart* nil))
     (handler-case
 	(multiple-value-bind (junk z-a z-omega z-integr
 				   epsabs result abserr neval ier
@@ -223,7 +238,7 @@
 	  ((mequal) $maxp1 ,maxp1)
 	  ((mequal) $limlst ,limlst))))))
 
-(defmfun $quad_qawo (fun var a b omega trig &key
+(defmfun $quad_qawo (fun var a b omega trig_name &key
 		  (epsrel 1e-8)
 		  (limit 200)
 		  (maxp1 100)
@@ -233,9 +248,14 @@
 	 (lenw (+ (* 2 leniw) (* 25 maxp1)))
 	 (work (make-array lenw :element-type 'flonum))
 	 (iwork (make-array leniw :element-type 'f2cl-lib:integer4))
-	 (integr (ecase trig
-		   ((1 %cos $cos) 1)
-		   ((2 %sin $sin) 2))))
+	 (integr (case trig_name
+		   ((%cos $cos) 1)
+		   ((%sin $sin) 2)
+                   (otherwise
+                    (merror "~M: the name of the trig function should be sin or cos, not ~M."
+                            %%pretty-fname
+                            trig_name))))
+         (*plot-realpart* nil))
     (handler-case
 	(multiple-value-bind (junk z-a z-b z-omega z-integr z-epsabs z-epsrel
 				   result abserr neval ier
@@ -255,7 +275,7 @@
       (error (e)
 	(when *debug-quadpack*
 	  (format t "~S" e))
-	`(($quad_qawo) ,fun ,var ,a ,b ,omega ,trig
+	`(($quad_qawo) ,fun ,var ,a ,b ,omega ,trig_name
 	  ((mequal) $epsrel ,epsrel)
 	  ((mequal) $epsabs ,epsabs)
 	  ((mequal) $limit ,limit)
@@ -268,7 +288,8 @@
   (quad_argument_check %%pretty-fname fun var a b) 
   (let* ((lenw (* 4 limit))
 	 (work (make-array lenw :element-type 'flonum))
-	 (iwork (make-array limit :element-type 'f2cl-lib:integer4)))
+	 (iwork (make-array limit :element-type 'f2cl-lib:integer4))
+         (*plot-realpart* nil))
     (handler-case
 	(multiple-value-bind (junk z-a z-b z-alfa z-beta z-int z-epsabs z-epsrel
 				   result abserr neval ier
@@ -302,31 +323,52 @@
 	 (leniw (max limit (- (* 3 npts2) 2)))
 	 (lenw (- (* 2 leniw) npts2))
 	 (work (make-array lenw :element-type 'flonum))
-	 (iwork (make-array limit :element-type 'f2cl-lib:integer4)))
-    (map-into p #'float-or-lose (cdr points))
-    (handler-case
-	(multiple-value-bind (junk z-a z-b z-npts z-points z-epsabs z-epsrel
-				   result abserr neval ier
-				   z-leniw z-lenw last)
-	    (slatec:dqagp (float-integrand-or-lose '$quad_qagp fun var)
-			  (float-or-lose a)
-			  (float-or-lose b)
-			  npts2
-			  p
-			  (float-or-lose epsabs)
-			  (float-or-lose epsrel)
-			  0.0 0.0 0 0
-			  leniw lenw 0 iwork work)
-	  (declare (ignore junk z-a z-b z-npts z-points z-epsabs z-epsrel
-			   z-leniw z-lenw last))
-	  (list '(mlist) result abserr neval ier))
-      (error (e)
-	(when *debug-quadpack*
-	  (format t "~S" e))
-	`(($quad_qagp) ,fun ,var ,a ,b ,points
-	  ((mequal) $epsrel ,epsrel)
-	  ((mequal) $epsabs ,epsabs)
-	  ((mequal) $limit ,limit))))))
+	 (iwork (make-array limit :element-type 'f2cl-lib:integer4))
+         (*plot-realpart* nil))
+    ;; Check the list of singular points.  Each point must be a real
+    ;; in the open interval (a, b).  If the point is valid, save it to
+    ;; the array P.  Otherwise accumulate a list of the invalid points
+    ;; so we can print a nice error message with a list of the invalid
+    ;; points.
+    (let* ((a (float-or-lose a))
+           (b (float-or-lose b))
+           (invalid-points
+             (loop for xp in (cdr points)
+                   for x = (float-or-lose xp)
+                   for k from 0
+                   if (< a x b)
+                     do (setf (aref p k) x)
+                   else
+                     collect x)))
+      ;; If there are invalid points, throw an error.
+      (when invalid-points
+        (merror
+         (intl:gettext "~M: singular points must be in the open interval (~M, ~M):  ~M")
+         %%pretty-fname a b (make-mlist-l invalid-points)))
+                              
+      (handler-case
+	  (multiple-value-bind (junk z-a z-b z-npts z-points z-epsabs z-epsrel
+				result abserr neval ier
+				z-leniw z-lenw last)
+	      (slatec:dqagp (float-integrand-or-lose '$quad_qagp fun var)
+			    (float-or-lose a)
+			    (float-or-lose b)
+			    npts2
+			    p
+			    (float-or-lose epsabs)
+			    (float-or-lose epsrel)
+			    0.0 0.0 0 0
+			    leniw lenw 0 iwork work)
+	    (declare (ignore junk z-a z-b z-npts z-points z-epsabs z-epsrel
+			     z-leniw z-lenw last))
+	    (make-mlist result abserr neval ier))
+        (error (e)
+	  (when *debug-quadpack*
+	    (format t "~S" e))
+	  `(($quad_qagp) ,fun ,var ,a ,b ,points
+	    ((mequal) $epsrel ,epsrel)
+	    ((mequal) $epsabs ,epsabs)
+	    ((mequal) $limit ,limit)))))))
 					
 ;; error checking similar to that done by $defint
 (defun quad_argument_check (name exp var ll ul) 

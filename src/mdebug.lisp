@@ -3,8 +3,7 @@
 (declaim (optimize (safety 2) (space 3)))
 
 (eval-when
-    #+gcl (compile eval)
-    #-gcl (:compile-toplevel :execute)
+    (:compile-toplevel :execute)
 
     (defmacro f (op &rest args)
       `(the fixnum (,op ,@ (mapcar #'(lambda (x) `(the fixnum ,x)) args))))
@@ -85,8 +84,7 @@
     (cond (fun
 	   (setq args (cons fun args))
 					; jfa temporary hack
-	   #+gcl(evalhook args nil nil *break-env*)
-	   #-gcl(eval args)
+	   (eval args)
 	   )
 	  (t (format *debug-io* 
 	             (intl:gettext "~&~S is an undefined break command.~%")
@@ -265,6 +263,20 @@
 		 (eof-value nil) repeat-if-newline  &aux tem  ch
 		 (mprompt *mread-prompt*) (*mread-prompt* ""))
   (if (and *need-prompt* (> (length mprompt) 0))
+#+clisp
+    (progn
+      (finish-output *standard-output*)
+      (if (output-stream-p stream)
+        (progn
+          (fresh-line stream)
+          (princ mprompt stream)
+          (finish-output stream))
+        (progn
+          (fresh-line *standard-output*)
+          (princ mprompt *standard-output*)
+          (finish-output *standard-output*)))
+      (setf *prompt-on-read-hang* nil))
+#-clisp
     (progn
       (fresh-line *standard-output*)
       (princ mprompt *standard-output*)
@@ -635,11 +647,11 @@ Command      Description~%~
                                 "usage: :info :bkpt -- show breakpoints")))) 
   "Print information about item")
 
-(defmacro lisp-quiet (&rest l)
+(defmacro lisp-quiet (&rest l-lisp-quiet)
   (if (not (string= *mread-prompt* ""))
       (setq *lisp-quiet-suppressed-prompt* *mread-prompt*))
   (setq *mread-prompt* "")
-  (eval (cons 'progn l))
+  (eval (cons 'progn l-lisp-quiet))
   nil)
 
 (def-break :lisp-quiet 'lisp-quiet 
@@ -648,13 +660,13 @@ Command      Description~%~
 (def-break :lisp 'lisp-eval 
   "Evaluate the lisp form following on the line")
 
-(defmacro lisp-eval (&rest l)
+(defmacro lisp-eval (&rest l-lisp-eval)
   (if (string= *mread-prompt* "")
       (setq *mread-prompt* *lisp-quiet-suppressed-prompt*))
   
-  (dolist (v (multiple-value-list (eval (cons 'progn l))))
+  (dolist (v-lisp-eval (multiple-value-list (eval (cons 'progn l-lisp-eval))))
     (fresh-line *standard-output*)
-    (princ v)))
+    (princ v-lisp-eval)))
    
 (def-break :delete #'(lambda (&rest l) (iterate-over-bkpts l :delete) (values))
   "Delete all breakpoints, or if arguments are supplied delete the

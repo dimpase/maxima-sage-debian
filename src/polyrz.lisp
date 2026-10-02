@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -12,10 +12,7 @@
 
 (macsyma-module polyrz)
 
-(declare-top (special $programmode varlist
-		      $ratprint $factorflag genvar
-		      equations $keepfloat $ratfac $rootsepsilon
-		      $multiplicities))
+;;(declare-top (special equations))
 
 (load-macsyma-macros ratmac)
 
@@ -50,19 +47,22 @@
 	((equal (caar pt) 'rat) (cons (cadr pt) (caddr pt)))
 	(t (merror (intl:gettext "MAKRAT: argument must be a number; found: ~M") pt))))
 
-(declare-top (special equations))
+;;(declare-top (special equations))
 
 (defun sturmseq (exp exp1 eps)
-  (let (varlist equations $factorflag $ratprint $ratfac)
+  (let (varlist $factorflag $ratprint $ratfac)
     (cond ($programmode
 	   (cons '(mlist)
 		 (multout (findroots (psqfr (pabs (unipoly exp exp1)))
 				     (makrat eps)))))
-	  (t (solve2 (findroots (psqfr (pabs (unipoly exp exp1)))
-				(makrat eps)))
-	     (cons '(mlist) equations)))))
+	  (t
+	   (let ((equations (nth-value 1
+	       (solve2 (findroots (psqfr (pabs (unipoly exp exp1)))
+				  (makrat eps))
+		       nil))))
+	     (cons '(mlist) equations))))))
 
-(declare-top (unspecial equations))
+;;(declare-top (unspecial equations))
 
 (defun sturm1 (poly eps &aux b llist)
   (setq b (cons (root-bound (cdr poly)) 1))
@@ -259,4 +259,4 @@
     (setq $multiplicities (cons '(mlist)  (cdr rootlist)))
     (car rootlist)))
 
-(declare-top (unspecial equations))
+;;(declare-top (unspecial equations))

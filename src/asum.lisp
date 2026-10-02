@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -14,12 +14,26 @@
 
 (load-macsyma-macros rzmac)
 
-(declare-top (special opers *a *n $factlim sum msump *i *opers-list opers-list $ratsimpexpons makef $factorial_expand))
+(declare-top (special *a sum *i))
 
+(defmvar $opproperties
+    (list* '(mlist simp)
+	   ;; This list was obtained by using an existing version of
+	   ;; maxima and printing out the value.  It can also be
+	   ;; obtained by examining the code below to see what is
+	   ;; placed on the OPER variable.
+	   '($linear $additive $multiplicative $outative $evenfun $oddfun
+	     $commutative $symmetric $antisymmetric $nary $lassociative $rassociative))
+  "List of the special operator properties recognized by the Maxima simplifier."
+  ;; Don't reset this.  (This was originally a defparameter which
+  ;; wouldn't get reset.)
+  no-reset
+  ;; We probably don't want the user to modify this except via
+  ;; define_opproperty.
+  :properties ((assign 'neverset)))
+  
 (loop for (x y) on '(%cot %tan %csc %sin %sec %cos %coth %tanh %csch %sinh %sech %cosh)
    by #'cddr do (putprop x y 'recip) (putprop y x 'recip))
-
-(defmvar $zeta%pi t)
 
 ;; polynomial predicates and other such things
 
@@ -60,12 +74,6 @@
 
 ;; factorial stuff
 
-(defmvar $factlim 100000) ; set to a big integer which will work (not -1)
-(defvar makef nil)
-
-(defmfun $genfact (&rest l)
-  (cons '(%genfact) l))
-
 (defun gfact (n %m i)
   (cond ((minusp %m) (improper-arg-err %m '$genfact))
 	((= %m 0) 1)
@@ -85,16 +93,15 @@
 ;; This is much faster (3-4 times) than the original factorial
 ;; function.
 
-(defun k (n m) 
-  (if (<= n m)
-      n
-      (* (k n (* 2 m))
-	 (k (- n m) (* 2 m)))))
-
 (defun factorial (n)
-  (if (zerop n)
-      1
-      (k n 1)))
+  (labels ((k (n m) 
+	     (if (<= n m)
+		 n
+		 (* (k n (* 2 m))
+		    (k (- n m) (* 2 m))))))
+    (if (zerop n)
+	1
+	(k n 1))))
 
 ;;; Factorial has mirror symmetry
 
@@ -154,12 +161,15 @@
 	 (list '(%gamma) (list '(mplus) 1 (makegamma1 (cadr e)))))
 
 	;; Begin code copied from orthopoly/orthopoly-init.lisp
-	;; Do pochhammer(x,n) ==> gamma(x+n)/gamma(x).
+	;; Do pochhammer(x,n) ==> gamma(x+n)/gamma(x),
+    ;; but not if x is a negative integer or zero.
 
 	((eq (caar e) '$pochhammer)
 	 (let ((x (makegamma1 (nth 1 e)))
 	       (n (makegamma1 (nth 2 e))))
-	   (div (take '(%gamma) (add x n)) (take '(%gamma) x))))
+	  (if (and (integerp x) (<= x 0))
+        e
+	    (div (take '(%gamma) (add x n)) (take '(%gamma) x)))))
 	 
 	;; (gamma(x/z+1)*z^floor(y))/gamma(x/z-floor(y)+1)
 
@@ -343,11 +353,10 @@
 		e)))
 	(t (recur-apply #'makegamma1 e))))
 
-(defun simpgfact (x vestigial z)
-  (declare (ignore vestigial))
-  (arg-count-check 3 x)
-  (setq z (mapcar #'(lambda (q) (simpcheck q z)) (cdr x)))
-  (let ((a (car z)) (b (take '($floor) (cadr z))) (c (caddr z)))
+(def-simplifier genfact (x y z)
+  (let ((a x)
+	(b (take '($floor) y))
+	(c z))
     (cond ((and (fixnump a)
                 (fixnump b)
                 (fixnump c))
@@ -355,53 +364,27 @@
                     (> b -1) 
                     (or (<= c a) (= b 0))
                     (<= b (/ a c)))
-             (gfact a b c)
-             (merror (intl:gettext "genfact: generalized factorial not defined for given arguments."))))
-	  (t (eqtest (list '(%genfact) a
-			   (if (and (not (atom b))
-				    (eq (caar b) '$floor))
-			       (cadr b)
-			     b)
-			   c)
-		     x)))))
+               (gfact a b c)
+               (merror (intl:gettext "genfact: generalized factorial not defined for given arguments."))))
+	  (t
+	   ;; Give up, we want to return a result with args that are
+	   ;; different from the original.  In particular, we want the
+	   ;; floor of y if y was real number.  Otherwise, we leave
+	   ;; it.
+	   (give-up :args (list a
+		                (if (and (not (atom b))
+				         (eq (caar b) '$floor))
+			            (cadr b)
+			            b)
+		                c))))))
 
 ;; sum begins
 
-(defmvar $cauchysum nil
-  "When multiplying together sums with INF as their upper limit, 
-causes the Cauchy product to be used rather than the usual product.
-In the Cauchy product the index of the inner summation is a function of 
-the index of the outer one rather than varying independently."
-  modified-commands '$sum)
-
-(defmvar $gensumnum 0
-  "The numeric suffix used to generate the next variable of
-summation.  If it is set to FALSE then the index will consist only of
-GENINDEX with no numeric suffix."
-  modified-commands '$sum
-  setting-predicate #'(lambda (x) (or (null x) (integerp x))))
-
-(defmvar $genindex '$i
-  "The alphabetic prefix used to generate the next variable of
-summation when necessary."
-  modified-commands '$sum
-  setting-predicate #'symbolp)
-
-(defmvar $zerobern t)
-(defmvar $simpsum nil)
-(defmvar $simpproduct nil)
-
-(defvar *infsumsimp t)
-
 ;; These variables should be initialized where they belong.
 
-(defmvar $cflength 1)
-(defmvar $taylordepth 3)
+;; FIXME: maxtaydiff and *trunclist don't appear to used anywhere.
 (defmvar $maxtaydiff 4)
-(defmvar $verbose nil)
 (defvar *trunclist nil)
-(defvar ps-bmt-disrep t)
-(defvar silent-taylor-flag nil)
 
 (defmacro sum-arg (sum)
   `(cadr ,sum))
@@ -441,9 +424,9 @@ summation when necessary."
     
 (defun simpsum (x y z)
   (let (($ratsimpexpons t))
-    (setq y (simplifya (sum-arg x) z)))
-  (simpsum1 y (sum-index x) (simplifya (sum-lower x) z)
-	    (simplifya (sum-upper x) z)))
+    (setq y (maybe-simplifya (sum-arg x) z)))
+  (simpsum1 y (sum-index x) (maybe-simplifya (sum-lower x) z)
+	    (maybe-simplifya (sum-upper x) z)))
 
 ; This function was SIMPSUM1 until the sum/product code was revised Nov 2005.
 ; The revised code punts back to this function since this code knows
@@ -474,7 +457,7 @@ summation when necessary."
 	      neg-part)
 	     (t (m+ neg-part pos-part)))))
 	((or (eq lo '$minf)
-	     (alike1 lo '((mtimes simp) -1 '$inf)))
+	     (alike1 lo '((mtimes simp) -1 $inf)))
 	 (simpsum2 (maxima-substitute (m- i) i exp) i (m- hi) '$inf))
 	(t (simpsum2 exp i lo hi))))
 
@@ -515,12 +498,10 @@ summation when necessary."
 
 (defun subst-if-not-freeof (x y expr)
   (if ($freeof y expr)
+      ;; suppressing substitution here avoids substituting for
+      ;; local variables recognize by freeof, e.g., formal argument of lambda.
       expr
-      (if (atom expr)
-	  x
-	  (let* ((args (cdr expr))
-		 (L (eval `(mapcar (lambda (a) (subst-if-not-freeof ',x ',y a)) ',args))))
-	    (cons (car expr) L)))))
+      (let ($simp) (maxima-substitute x y expr))))
 
 (defun mevalsumarg (expr ind low hi)
   (if (let (($prederror nil))
@@ -580,7 +561,7 @@ summation when necessary."
       (if (not (eq t (csign hi))) (mfuncall '$assume `((mgeqp) ,hi ,i)))
 
       (setq ex (subst i k e))
-      (setq ex (subst i k ex))
+      (setq ex (subst i k ex)) ; Why substitute again?
 
       (setq acc
             (cond ((and (eq n '$inf) ($freeof i ex))
@@ -605,7 +586,6 @@ summation when necessary."
                      (setq acc (add acc (resimplify (subst (add j lo) i ex))))))
 
                   (t
-                   (setq ex (subst '%sum '$sum ex))
                    `((%sum simp) ,(subst k i ex) ,k ,lo ,hi))))
 
       (setq acc (subst k i acc))
@@ -613,9 +593,14 @@ summation when necessary."
       ;; If expression is still a summation,
       ;; punt to previous simplification code.
 
-      (if (and $simpsum (op-equalp acc '$sum '%sum))
+      (if (and $simpsum (op-equalp acc '%sum))
         (let* ((args (cdr acc)) (e (first args)) (i (second args)) (i0 (third args)) (i1 (fourth args)))
           (setq acc (simpsum1-save e i i0 i1))))
+
+      ; If the expression is no longer a %sum, resimplify.
+      ; Ordering of expressions may change due to the gensym -> index substitution.
+      (unless (op-equalp acc '%sum)
+        (setq acc (resimplify acc)))
 
       acc)))
 
@@ -632,7 +617,7 @@ summation when necessary."
       (if (not (eq t (csign hi))) (mfuncall '$assume `((mgeqp) ,hi ,i)))
 
       (setq ex (subst i k e))
-      (setq ex (subst i k ex))
+      (setq ex (subst i k ex)) ; Why substitute again?
 
       (setq acc
             (cond
@@ -663,18 +648,21 @@ summation when necessary."
                  (setq acc (mult acc (resimplify (subst (add j lo) i ex))))))
 
               (t
-               (setq ex (subst '%product '$product ex))
                `((%product simp) ,(subst k i ex) ,k ,lo ,hi))))
 
       ;; Hmm, this is curious... don't call existing product simplifications
       ;; if index range is infinite -- what's up with that??
 
-      (if (and $simpproduct (op-equalp acc '$product '%product) (not (like n '$inf)))
+      (if (and $simpproduct (op-equalp acc '%product) (not (like n '$inf)))
         (let* ((args (cdr acc)) (e (first args)) (i (second args)) (i0 (third args)) (i1 (fourth args)))
           (setq acc (simpprod1-save e i i0 i1))))
 
       (setq acc (subst k i acc))
-      (setq acc (subst '%product '$product acc))
+
+      ; If the expression is no longer a %product, resimplify.
+      ; Ordering of expressions may change due to the gensym -> index substitution.
+      (unless (op-equalp acc '%product)
+        (setq acc (resimplify acc)))
 
       acc)))
 
@@ -714,7 +702,9 @@ summation when necessary."
 ;; multiplication of sums
 
 (defun gensumindex ()
-  (intern (format nil "~S~D" $genindex (incf $gensumnum))))
+  (if $gensumnum
+      (intern (format nil "~S~D" $genindex (incf $gensumnum)))
+      (intern (format nil "~S" $genindex))))
 
 (defun sumtimes (x y)
   (cond ((null x) y)
@@ -789,9 +779,6 @@ summation when necessary."
   (m* e q (m- (m+ a 1) b)))
 
 ;; linear operator stuff
-
-(defparameter *opers-list '(($linear . linearize1)))
-(defparameter  opers (list '$linear))
 
 (defun oper-apply (e z)
   (cond ((null opers-list)
@@ -1073,8 +1060,8 @@ summation when necessary."
     ((ans0 (oper-apply (cons (car e) (total-nary e)) z))
      (ans (if (consp ans0) (cdr ans0))))
     (cond ((or (null (cddr ans)) (not (eq (caar ans0) (caar e)))) ans0)
-          ((do ((newans (list (car e) (car ans) (cadr ans))
-                        (list (car e) newans (car ans)))
+          ((do ((newans (list (car ans0) (car ans) (cadr ans))
+                        (list (car ans0) newans (car ans)))
                 (ans (cddr ans) (cdr ans)))
                ((null ans) newans))))))
 
@@ -1087,8 +1074,8 @@ summation when necessary."
      (ans (if (consp ans0) (cdr ans0))))
     (cond ((or (null (cddr ans)) (not (eq (caar ans0) (caar e)))) ans0)
 	  (t (setq ans (nreverse ans))
-	     (do ((newans (list (car e) (cadr ans) (car ans))
-			  (list (car e) (car ans) newans))
+	     (do ((newans (list (car ans0) (cadr ans) (car ans))
+			          (list (car ans0) (car ans) newans))
 		  (ans (cddr ans) (cdr ans)))
 		 ((null ans) newans))))))
 
@@ -1098,5 +1085,3 @@ summation when necessary."
     (setq ans (if (and (not (atom (car l))) (eq (caaar l) (caar e)))
 		  (nconc (reverse (total-nary (car l))) ans)
 		  (cons (car l) ans)))))
-
-(defparameter $opproperties (cons '(mlist simp) (reverse opers)))

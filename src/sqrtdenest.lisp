@@ -15,7 +15,7 @@
 ;;;
 ;;; You should have received a copy of the GNU General Public License along
 ;;; with this library; if not, write to the Free Software
-;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 ;;;
 ;;; Copyright (C) 2016 David Billinghurst
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,7 +84,7 @@
 ;;; Squaring both sides
 ;;;     X + Y = A + B + 2 sqrt(AB)           (4.10)
 ;;;
-;;; One way to satify this is to set X=A+B and Y^2=4AB
+;;; One way to satisfy this is to set X=A+B and Y^2=4AB
 ;;;
 ;;; Also have
 ;;;     sqrt(X-Y) = sqrt(A) - sqrt(B)          (4.11)

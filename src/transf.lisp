@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -13,20 +13,28 @@
 
 (macsyma-module transf)
 
+(defmvar $tr_float_can_branch_complex t
+  "States whether the arc functions might return complex results. The
+arc functions are SQRT,LOG,ACOS, etc. e.g. When it is TRUE then
+ACOS(X) will be of mode ANY even if X is of mode FLOAT. When FALSE
+then ACOS(X) will be of mode FLOAT if and only if X is of mode FLOAT.")
+
+
 ;;; some floating point translations. with tricks.
 
 (defun translate-with-flonum-op (form can-branch-p)
-  (declare (special *flonum-op*))
-  (let ((arg (translate (cadr form)))
-        (lisp-function (gethash (caar form) *flonum-op*)))
-    (if (and (eq (car arg) '$float)
-             lisp-function)
-        (let ((call `(funcall ,lisp-function ,(cdr arg))))
-          (if (and can-branch-p
-                   $tr_float_can_branch_complex)
-              `($any . (complexify ,call))
-              `($float . ,call)))
-        `($any . (simplify (list '(,(caar form)) ,(cdr arg)))))))
+  (destructuring-bind (mode . targs)
+      (translate-args/union-mode (cdr form))
+    (let ((args (mapcar (lambda (a) (dconv a mode)) targs))
+          (lisp-function (gethash (caar form) *flonum-op*)))
+      (if (and (eq mode '$float)
+               lisp-function)
+          (let ((call `(funcall ,lisp-function ,@args)))
+            (if (and can-branch-p
+                     $tr_float_can_branch_complex)
+                `($any . (complexify ,call))
+                `($float . ,call)))
+          `($any . (simplify (list '(,(caar form)) ,@args)))))))
 
 (def%tr %sin (form)
   (translate-with-flonum-op form nil))
@@ -46,15 +54,9 @@
 (def-same%tr %asinh %sin)
 (def-same%tr %acsch %sin)
 (def-same%tr %atan %sin)
+(def-same%tr %atan2 %sin)
 (def-same%tr %erf %sin)
 (def-same%tr %exp %sin)
-
-(defmvar $tr_float_can_branch_complex t
-  "States wether the arc functions might return complex
-	 results. The arc functions are SQRT,LOG,ACOS, etc.
-	 e.g. When it is TRUE then ACOS(X) will be of mode ANY even if X is
-	 of mode FLOAT. When FALSE then ACOS(X) will be of mode FLOAT
-	 if and only if X is of mode FLOAT.")
 
 (def%tr %acos (form)
   (translate-with-flonum-op form t))
@@ -67,4 +69,5 @@
 (def-same%tr %atanh %acos)
 (def-same%tr %acoth %acos)
 (def-same%tr %log %acos)
+(def-same%tr %plog %acos)
 (def-same%tr %sqrt %acos)

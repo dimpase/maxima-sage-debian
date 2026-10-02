@@ -6,11 +6,10 @@
 (in-package :f2cl-lib)
 
 (defparameter *f2cl-macros-version*
-  "$Id: macros.l,v 3fe93de3be82 2012/05/06 02:17:14 toy $")
+  "$Id: f2cl-lib.lisp d70f1e6 | 2025-04-12 15:05:59 +0000 | Raymond Toy  $")
 
 (eval-when
-    #+gcl (compile load eval)
-    #-gcl (:compile-toplevel :load-toplevel :execute)
+    (:compile-toplevel :load-toplevel :execute)
     (proclaim '(special *verbose*)))
 ;;----------------------------------------------------------------------------
 (defvar *check-array-bounds* nil
@@ -340,8 +339,7 @@ is not included")
 
 ;; macro for a lisp equivalent of Fortran assigned GOTOs
 (eval-when
-    #+gcl (compile load eval)
-    #-gcl (:load-toplevel :compile-toplevel :execute)
+    (:load-toplevel :compile-toplevel :execute)
 (defun make-label (n) 
   (read-from-string (concatenate 'string (symbol-name :label) (princ-to-string n))))
 
@@ -693,19 +691,19 @@ is not included")
 ;; Should we make these macros that expand directly to the appropriate
 ;; max?
 (defun max0 (x y &rest z)
-  #-gcl(declare (integer x y))
+  (declare (integer x y))
   (apply #'max x y z))
 (defun amax1 (x y &rest z)
-  #-gcl(declare (single-float x y))
+  (declare (single-float x y))
   (apply #'max x y z))
 (defun dmax1 (x y &rest z)
-  #-gcl(declare (double-float x y))
+  (declare (double-float x y))
   (apply #'max x y z))
 (defun max1 (x y &rest z)
-  #-gcl(declare (single-float x y))
+  (declare (single-float x y))
   (int (apply #'max x y z)))
 (defun amax0 (x y &rest z)
-  #-gcl(declare (type integer4 x y))
+  (declare (type integer4 x y))
   (float (apply #'max x y z) 1f0))
 
 (defun min0 (x y &rest z)
@@ -751,6 +749,18 @@ is not included")
 
 (defun len (s)
   (length s))
+
+;; Fortran 95
+;; Length of a character entity without trailing blank characters
+(defun len_trim (s)
+  ;; Find the position of the last blank.  If there is one, then the
+  ;; length is one more than that.  Otherwise, the length is 0.
+  (let ((p (position-if #'(lambda (c)
+			    (char/= c #\space))
+			s)))
+    (if p
+	(1+ p)
+	0)))
 
 ;; From http://www.fortran.com/fortran/F77_std/rjcnf0001-sh-15.html#sh-15.10:
 ;;
@@ -961,12 +971,7 @@ is not included")
    
 ;; Map Fortran logical unit numbers to Lisp streams
 
-#-gcl
 (defparameter *lun-hash*
-  (make-hash-table))
-
-#+gcl
-(defvar *lun-hash*
   (make-hash-table))
 
 (defun lun->stream (lun &optional readp)
@@ -1065,9 +1070,6 @@ causing all pending operations to be flushed"
 	(declare (ignorable ,result))
 	,(if err `(unless ,result (go ,(f2cl-lib::make-label err))))
 	,(if iostat `(setf ,iostat (if ,result 0 1))))))
-
-#-gcl
-(declaim (ftype (function (t) stream) lun->stream))
 
 (defmacro fformat (dest-lun format-cilist &rest args)
   (let ((stream (gensym)))
@@ -1260,7 +1262,13 @@ causing all pending operations to be flushed"
 	   (arg-list
 	    (apply #'append
 		   (map 'list #'(lambda (x)
-				  (cond ((bigfloat:numberp x)
+                                  ;; For maxima, use BIGFLOAT:NUMBERP
+                                  ;; instead of CL:NUMBERP.
+				  (cond #+#.(cl:if (cl:find-package "BIGFLOAT") '(and) '(or))
+                                        ((bigfloat:numberp x)
+                                         (list x))
+                                        #-#.(cl:if (cl:find-package "BIGFLOAT") '(and) '(or))
+                                        ((numberp x)
 					 (list x))
 					((stringp x)
 					 (list x))
@@ -1360,10 +1368,10 @@ causing all pending operations to be flushed"
   (ecase i
     (1 least-positive-normalized-double-float)
     (2 most-positive-double-float)
-    (3 #-(or gcl ecl) double-float-epsilon
-       #+(or gcl ecl) (scale-float (float #X10000000000001 1d0) -105))
-    (4 (scale-float #-(or gcl ecl) double-float-epsilon
-		    #+(or gcl ecl) (scale-float (float #X10000000000001 1d0) -105)
+    (3 #-ecl double-float-epsilon
+       #+ecl (scale-float (float #X10000000000001 1d0) -105))
+    (4 (scale-float #-ecl double-float-epsilon
+		    #+ecl (scale-float (float #X10000000000001 1d0) -105)
 		    1))
     (5 (log (float (float-radix 1d0) 1d0) 10d0))))
 
@@ -1554,7 +1562,7 @@ causing all pending operations to be flushed"
 ;;;-------------------------------------------------------------------------
 ;;; end of macros.l
 ;;;
-;;; $Id: macros.l,v 3fe93de3be82 2012/05/06 02:17:14 toy $
+;;; $Id: f2cl-lib.lisp d70f1e6 | 2025-04-12 15:05:59 +0000 | Raymond Toy  $
 ;;; $Log$
 ;;; Revision 1.117  2011/02/28 22:21:07  rtoy
 ;;; When opening an old file, we should set :if-exists to :overwrite to
@@ -1688,7 +1696,7 @@ causing all pending operations to be flushed"
 ;;; Revision 1.98  2008/03/06 20:04:10  rtoy
 ;;; Use ~G for list-directed I/O so that numbers come out reasonably.
 ;;; (F77 standard says E or F is used, depending on the magnitude of the
-;;; number.  The parameters for E and F are processor dependent as is the
+;;; number.  The parameters for E and F are processer dependent as is the
 ;;; magnitude used to select between E or F.  This is pretty close to how
 ;;; ~G works in Lisp.)
 ;;;
@@ -1953,7 +1961,7 @@ causing all pending operations to be flushed"
 ;;;   is multi-dimensional.
 ;;;
 ;;; Revision 1.64  2006/01/04 17:53:40  rtoy
-;;; We were not correctly processing initialization of string arrays in
+;;; We were not correctly processing intialization of string arrays in
 ;;; data statements.
 ;;;
 ;;; src/f2cl1.l:

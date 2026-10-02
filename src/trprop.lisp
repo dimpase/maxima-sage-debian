@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -21,7 +21,7 @@
 (defmvar meta-prop-l nil)
 
 (defun meta-output (form)
-  (if *in-translate-file* (push form meta-prop-l))
+  (push form meta-prop-l)
   ;; unfortunately, MATCOM needs to see properties in order
   ;; to compose tellsimps. so eval it always.
   (eval form))

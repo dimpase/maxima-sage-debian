@@ -1,3 +1,4 @@
+@c -*- mode: texinfo -*-
 @menu
 * Functions for Numbers::
 * Functions for Complex Numbers::
@@ -8,7 +9,7 @@
 @end menu
 
 @c -----------------------------------------------------------------------------
-@node Functions for Numbers, Functions for Complex Numbers, Mathematical Functions, Mathematical Functions
+@node Functions for Numbers, Functions for Complex Numbers, , Elementary Functions
 @section Functions for Numbers
 @c -----------------------------------------------------------------------------
 
@@ -45,17 +46,24 @@ distributes over the elements of a list.
 @c abs(%e+%i);
 @c abs([inf, infinity, minf]);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) abs([-4, 0, 1, 1+%i]);
 (%o1)                  [4, 0, 1, sqrt(2)]
-
+@end group
+@group
 (%i2) abs((1+%i)*(1-%i));
 (%o2)                           2
+@end group
+@group
 (%i3) abs(%e+%i);
-                                2
-(%o3)                    sqrt(%e  + 1)
+                                 2
+(%o3)                     sqrt(%e  + 1)
+@end group
+@group
 (%i4) abs([inf, infinity, minf]);
-(%o4)                   [inf, inf, inf]
+(%o4)                    [inf, inf, inf]
+@end group
 @end example
 
 Simplification of expressions containing @code{abs}:
@@ -66,18 +74,25 @@ Simplification of expressions containing @code{abs}:
 @c abs(abs(x));
 @c abs(conjugate(x));
 @c ===end===
-@example
-(%i5) abs(x^2);
+@example maxima
+@group
+(%i1) abs(x^2);
                                 2
-(%o5)                          x
-(%i6) abs(x^3);
+(%o1)                          x
+@end group
+@group
+(%i2) abs(x^3);
                              2
-(%o6)                       x  abs(x)
-
-(%i7) abs(abs(x));
-(%o7)                       abs(x)
-(%i8) abs(conjugate(x));
-(%o8)                       abs(x)
+(%o2)                       x  abs(x)
+@end group
+@group
+(%i3) abs(abs(x));
+(%o3)                        abs(x)
+@end group
+@group
+(%i4) abs(conjugate(x));
+(%o4)                        abs(x)
+@end group
 @end example
 
 Integrating and differentiating with the @code{abs} function. Note that more
@@ -94,43 +109,50 @@ transform of @code{abs}: see @mrefdot{laplace}
 @c integrate(abs(x),x,-2,%pi);
 @c laplace(abs(x),x,s);
 @c ===end===
-@example
-(%i9) diff(x*abs(x),x),expand;
-(%o9)                       2 abs(x)
-
-(%i10) integrate(abs(x),x);
-                             x abs(x)
-(%o10)                       --------
-                                2
-
-(%i11) integrate(x*abs(x),x);
-                           /
-                           [
-(%o11)                     I x abs(x) dx
-                           ]
-                           /
-
-(%i12) load("abs_integrate")$
-(%i13) integrate(x*abs(x),x);
-                      2           3
-                     x  abs(x)   x  signum(x)
-(%o13)               --------- - ------------
-                         2            6
-
-(%i14) integrate(abs(x),x,-2,%pi);
+@example maxima
+@group
+(%i1) diff(x*abs(x),x),expand;
+(%o1)                       2 abs(x)
+@end group
+@group
+(%i2) integrate(abs(x),x);
+                            x abs(x)
+(%o2)                       --------
+                               2
+@end group
+@group
+(%i3) integrate(x*abs(x),x);
+                          /
+                          |
+(%o3)                     | x abs(x) dx
+                          |
+                          /
+@end group
+(%i4) load("abs_integrate")$
+@group
+(%i5) integrate(x*abs(x),x);
+                           3
+                          x  signum(x)
+(%o5)                     ------------
+                               3
+@end group
+@group
+(%i6) integrate(abs(x),x,-2,%pi);
                                2
                             %pi
-(%o14)                      ---- + 2
+(%o6)                       ---- + 2
                              2
-
-(%i15) laplace(abs(x),x,s);
+@end group
+@group
+(%i7) laplace(abs(x),x,s);
                                1
-(%o15)                         --
+(%o7)                          --
                                 2
                                s
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -161,7 +183,7 @@ Here are examples of the simplifications that @code{ceiling} knows about:
 @c ceiling (x);
 @c tex (ceiling (a));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) ceiling (ceiling (x));
 (%o1)                      ceiling(x)
@@ -202,7 +224,7 @@ can use this information; for example:
 @c floor (f(x));
 @c ceiling (f(x) - 1);
 @c ===end===
-@example
+@example maxima
 (%i1) declare (f, integervalued)$
 @group
 (%i2) floor (f(x));
@@ -231,7 +253,8 @@ Example use:
 @c unitfrac (36/37);
 @c apply ("+", %);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) unitfrac(r) := block([uf : [], q],
     if not(ratnump(r)) then
        error("unitfrac: argument must be a rational number"),
@@ -240,14 +263,14 @@ Example use:
         r : r - q),
     reverse(uf));
 (%o1) unitfrac(r) := block([uf : [], q], 
-if not ratnump(r) then
-error("unitfrac: argument must be a rational number"), 
-                                  1
-while r # 0 do (uf : cons(q : ----------, uf), r : r - q), 
-                                      1
-                              ceiling(-)
-                                      r
+if not ratnump(r) then error("unitfrac: argument must be a rational number"
+                                     1
+), while r # 0 do (uf : cons(q : ----------, uf), r : r - q), 
+                                         1
+                                 ceiling(-)
+                                         r
 reverse(uf))
+@end group
 @group
 (%i2) unitfrac (9/10);
                             1  1  1
@@ -286,7 +309,7 @@ reverse(uf))
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -299,7 +322,7 @@ Returns the largest integer less than or equal to @var{x} where @var{x} is
 numeric.  @mref{fix} (as in @code{fixnum}) is a synonym for this, so
 @code{fix(@var{x})} is precisely the same.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -330,7 +353,7 @@ are examples of the simplifications that @code{floor} knows about:
 @c floor (x);
 @c tex (floor (a));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) floor (ceiling (x));
 (%o1)                      ceiling(x)
@@ -371,7 +394,7 @@ can use this information; for example:
 @c floor (f(x));
 @c ceiling (f(x) - 1);
 @c ===end===
-@example
+@example maxima
 (%i1) declare (f, integervalued)$
 @group
 (%i2) floor (f(x));
@@ -383,7 +406,7 @@ can use this information; for example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -394,7 +417,7 @@ can use this information; for example:
 
 A synonym for @code{entier (@var{x})}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -409,7 +432,7 @@ to zero.
 If you want a unit step function that takes on the value of 0 at @var{x}
 equal to zero, use @mrefdot{unit_step}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Laplace transform}
 @category{Mathematical functions}
 @closecatbox
@@ -424,7 +447,7 @@ When @var{L} is a list or a set, return @code{apply ('max, args (@var{L}))}.
 When @var{L} is not a list or a set, signal an error.
 See also @mref{lmin} and @mrefdot{max}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @category{Lists}
 @category{Sets}
@@ -439,7 +462,7 @@ When @var{L} is a list or a set, return @code{apply ('min, args (@var{L}))}.
 When @var{L} is not a list or a set, signal an error.
 See also @mref{lmax} and @mrefdot{min}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @category{Lists}
 @category{Sets}
@@ -450,36 +473,105 @@ See also @mref{lmax} and @mrefdot{min}
 @anchor{max}
 @deffn {Function} max (@var{x_1}, @dots{}, @var{x_n})
 
-Return a simplified value for the maximum of the expressions @var{x_1} through
-@var{x_n}.  When @code{get (trylevel, maxmin)}, is 2 or greater, @code{max}
-uses the simplification @code{max (e, -e) --> |e|}.  When
-@code{get (trylevel, maxmin)} is 3 or greater, @var{max} tries to eliminate
-expressions that are between two other arguments; for example,
-@code{max (x, 2*x, 3*x) --> max (x, 3*x)}.  To set the value of @code{trylevel}
-to 2, use @code{put (trylevel, 2, maxmin)}.
+Return a simplified value for the numerical maximum of the expressions @var{x_1} 
+through @var{x_n}. For an empty argument list, @code{max} yields @code{minf}.
 
-See also @mref{min} and @mrefdot{lmax}
+The option variable @code{maxmin_effort} controls which simplification methods are 
+applied. Using the default value of @emph{twelve} for @code{maxmin_effort}, 
+@code{max} uses @emph{all} available simplification methods. To to inhibit all 
+simplifications, set @code{maxmin_effort} to zero.
 
-@opencatbox
+When @code{maxmin_effort} is one or more, for an explicit list of real numbers, 
+@code{max} returns a number. 
+
+Unless @code{max} needs to simplify a lengthy list of expressions, we suggest using 
+the default value of @code{maxmin_effort}. Setting @code{maxmin_effort} to zero 
+(no simplifications), will cause problems for some Maxima functions; accordingly, 
+generally @code{maxmin_effort} should be nonzero.
+
+See also @mref{min}, @mrefdot{lmax}, and @mrefdot{lmin}.
+
+@b{Examples:}
+
+In the first example, setting @code{maxmin_effort} to zero suppresses simplifications.
+@example
+(%i1) block([maxmin_effort : 0], max(1,2,x,x, max(a,b)));
+(%o1) max(1,2,max(a,b),x,x)
+
+(%i2) block([maxmin_effort : 1], max(1,2,x,x, max(a,b)));
+(%o2) max(2,a,b,x)
+@end example
+
+When @code{maxmin_effort} is two or more, @code{max} compares pairs of members:
+@example
+(%i1) block([maxmin_effort : 1], max(x,x+1,x+3));
+(%o1) max(x,x+1,x+3)
+
+(%i2) block([maxmin_effort : 2], max(x,x+1,x+3));
+(%o2) x+3
+@end example
+
+Finally, when @code{maxmin_effort} is three or more, @code{max} compares triples 
+members and excludes those that are in between; for example
+@example
+(%i1) block([maxmin_effort : 4], max(x, 2*x, 3*x, 4*x));
+(%o1) max(x,4*x)
+@end example
+
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
 
-@c -----------------------------------------------------------------------------
 @anchor{min}
 @deffn {Function} min (@var{x_1}, @dots{}, @var{x_n})
 
-Return a simplified value for the minimum of the expressions @code{x_1} through
-@code{x_n}.  When @code{get (trylevel, maxmin)}, is 2 or greater, @code{min}
-uses the simplification @code{min (e, -e) --> -|e|}.  When
-@code{get (trylevel, maxmin)} is 3 or greater, @code{min} tries to eliminate
-expressions that are between two other arguments; for example,
-@code{min (x, 2*x, 3*x) --> min (x, 3*x)}.  To set the value of @code{trylevel}
-to 2, use @code{put (trylevel, 2, maxmin)}.
+Return a simplified value for the numerical minimum of the expressions @var{x_1} 
+through @var{x_n}. For an empty argument list, @code{minf} yields @code{inf}.
 
-See also @mref{max} and @mrefdot{lmin}
+The option variable @code{maxmin_effort} controls which simplification methods are 
+applied. Using the default value of @emph{twelve} for @code{maxmin_effort}, 
+@code{max} uses @emph{all} available simplification methods. To to inhibit all 
+simplifications, set @code{maxmin_effort} to zero.
 
-@opencatbox
+When @code{maxmin_effort} is one or more, for an explicit list of real numbers, 
+@code{min} returns a number. 
+
+Unless @code{min} needs to simplify a lengthy list of expressions, we suggest using 
+the default value of @code{maxmin_effort}. Setting @code{maxmin_effort} to zero 
+(no simplifications), will cause problems for some Maxima functions; accordingly, 
+generally @code{maxmin_effort} should be nonzero.
+
+See also @mref{max}, @mrefdot{lmax}, and @mrefdot{lmin}.
+
+@b{Examples:}
+
+In the first example, setting @code{maxmin_effort} to zero suppresses simplifications.
+@example
+(%i1) block([maxmin_effort : 0], min(1,2,x,x, min(a,b)));
+(%o1) min(1,2,a,b,x,x)
+
+(%i2) block([maxmin_effort : 1], min(1,2,x,x, min(a,b)));
+(%o2) min(1,a,b,x)
+@end example
+
+When @code{maxmin_effort} is two or more, @code{min} compares pairs of members:
+@example
+(%i1) block([maxmin_effort : 1], min(x,x+1,x+3));
+(%o1) min(x,x+1,x+3)
+
+(%i2) block([maxmin_effort : 2], min(x,x+1,x+3));
+(%o2) x
+@end example
+
+Finally, when @code{maxmin_effort} is three or more, @code{min} compares triples 
+members and excludes those that are in between; for example
+@example
+(%i1) block([maxmin_effort : 4], min(x, 2*x, 3*x, 4*x));
+(%o1) max(x,4*x)
+@end example
+
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -495,7 +587,7 @@ Multiples of 1/2 are rounded to the nearest even integer.  Evaluation of
 The @code{round} function distributes over lists, matrices and equations.
 See @mrefdot{distribute_over}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -518,7 +610,7 @@ gives @code{-signum(x)}) and multiplicative identity (@code{signum(x*y)} gives
 The @code{signum} function distributes over a list, a matrix, or an
 equation.  See @mref{sign} and @mrefdot{distribute_over}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
@@ -534,13 +626,13 @@ to @mref{floor} and @mrefdot{ceiling}
 The @code{truncate} function distributes over lists, matrices and equations.
 See @mrefdot{distribute_over}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
 
 @c -----------------------------------------------------------------------------
-@node Functions for Complex Numbers, Combinatorial Functions, Functions for Numbers, Mathematical Functions
+@node Functions for Complex Numbers, Combinatorial Functions, Functions for Numbers, Elementary Functions
 @section Functions for Complex Numbers
 @c -----------------------------------------------------------------------------
 
@@ -562,7 +654,7 @@ calculates the absolute value of @code{x + %i*y} as
 @c cabs (exp (3/2 * %pi * %i));
 @c cabs (17 * exp (2 * %i));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) cabs (1);
 (%o1)                           1
@@ -599,7 +691,7 @@ some properties of the variables involved not being known:
 @c assume(a>0,b>0);
 @c cabs (a+%i*b);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) cabs (a+%i*b);
                                 2    2
@@ -654,13 +746,17 @@ Examples with @mref{sqrt} and @mrefdot{sin}
 @c cabs(sqrt(1+%i*x));
 @c cabs(sin(x+%i*y));
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) cabs(sqrt(1+%i*x));
                              2     1/4
 (%o1)                      (x  + 1)
+@end group
+@group
 (%i2) cabs(sin(x+%i*y));
                     2        2         2        2
 (%o2)       sqrt(cos (x) sinh (y) + sin (x) cosh (y))
+@end group
 @end example
 
 The error function, @mrefcomma{erf} has mirror symmetry, which is used here in
@@ -669,16 +765,18 @@ the calculation of the absolute value with a complex argument:
 @c ===beg===
 @c cabs(erf(x+%i*y));
 @c ===end===
-@example
-(%i3) cabs(erf(x+%i*y));
+@example maxima
+@group
+(%i1) cabs(erf(x+%i*y));
                                           2
            (erf(%i y + x) - erf(%i y - x))
-(%o3) sqrt(--------------------------------
+(%o1) sqrt(--------------------------------
                           4
                                                                2
-                                (erf(%i y + x) + erf(%i y - x))
-                              - --------------------------------)
-                                               4
+                              (- erf(%i y + x) - erf(%i y - x))
+                            - ----------------------------------)
+                                              4
+@end group
 @end example
 
 Maxima knows complex identities for the Bessel functions, which allow
@@ -688,12 +786,14 @@ example for @mrefdot{bessel_j}
 @c ===beg===
 @c cabs(bessel_j(1,%i));
 @c ===end===
-@example
-(%i4) cabs(bessel_j(1,%i));
-(%o4)                 abs(bessel_j(1, %i))
+@example maxima
+@group
+(%i1) cabs(bessel_j(1,%i));
+(%o1)                    bessel_i(1, 1)
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 @end deffn
@@ -722,7 +822,7 @@ Examples:
 @c carg (exp (3/2 * %pi * %i));
 @c carg (17 * exp (2 * %i));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) carg (1);
 (%o1)                           0
@@ -767,7 +867,7 @@ some properties of the variables involved not being known:
 @c assume(a>0,b>0);
 @c carg (a+%i*b);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) carg (a+%i*b);
 (%o1)                      atan2(b, a)
@@ -792,7 +892,7 @@ some properties of the variables involved not being known:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 @end deffn
@@ -810,7 +910,7 @@ Returns the complex conjugate of @var{x}.
 @c conjugate (ii);
 @c conjugate (xx + yy);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) declare ([aa, bb], real, cc, complex, ii, imaginary);
 (%o1)                         done
@@ -833,7 +933,7 @@ Returns the complex conjugate of @var{x}.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 @end deffn
@@ -859,7 +959,7 @@ Example:
 @c imagpart (1);
 @c imagpart (sqrt(2)*%i);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) imagpart (a+b*%i);
 (%o1)                           b
@@ -878,7 +978,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 @end deffn
@@ -899,11 +999,11 @@ Example:
 @c polarform(1+%i);
 @c polarform(1+2*%i);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) polarform(a+b*%i);
-                       2    2    %i atan2(b, a)
-(%o1)            sqrt(b  + a ) %e
+                   %i atan2(b, a)       2    2
+(%o1)            %e               sqrt(b  + a )
 @end group
 @group
 (%i2) polarform(1+%i);
@@ -919,7 +1019,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @category{Exponential and logarithm functions}
 @closecatbox
@@ -941,7 +1041,7 @@ Example:
 @c realpart (sqrt(2)*%i);
 @c realpart (1);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) realpart (a+b*%i);
 (%o1)                           a
@@ -960,7 +1060,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 @end deffn
@@ -979,7 +1079,7 @@ Example:
 @c rectform(sqrt(b^2+a^2)*%e^(%i*atan2(b, a)));
 @c rectform(sqrt(5)*%e^(%i*atan(2)));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) rectform(sqrt(2)*%e^(%i*%pi/4));
 (%o1)                        %i + 1
@@ -994,42 +1094,241 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Complex variables}
 @closecatbox
 @end deffn
 
 @c -----------------------------------------------------------------------------
-@node Combinatorial Functions, Root Exponential and Logarithmic Functions, Functions for Complex Numbers, Mathematical Functions
+@node Combinatorial Functions, Root Exponential and Logarithmic Functions, Functions for Complex Numbers, Elementary Functions
 @section Combinatorial Functions
 @c -----------------------------------------------------------------------------
 
 @c -----------------------------------------------------------------------------
 @anchor{!!}
-@deffn {Operator} !!
-@ifinfo
+@anchor{double_factorial}
 @fnindex Double factorial
-@end ifinfo
+@deffn {Operator} !!
+@deffnx {Function} double_factorial (@var{z})
 
 The double factorial operator.
+@code{!!} and @code{double_factorial} are equivalent.
+The operator is displayed as @code{!!}
+whether input as @code{!!} or @code{double_factorial}.
 
-For an integer, float, or rational number @code{n}, @code{n!!} evaluates to the
-product @code{n (n-2) (n-4) (n-6) ... (n - 2 (k-1))} where @code{k} is equal to
-@code{entier (n/2)}, that is, the largest integer less than or equal to
-@code{n/2}.  Note that this definition does not coincide with other published
-definitions for arguments which are not integers.
-@c REPORTED TO BUG TRACKER AS BUG # 1093138 !!!
+@code{0!!} simplifies to @code{1} and @code{(- 1)!!} simplifies to @code{1}.
 
-For an even (or odd) integer @code{n}, @code{n!!} evaluates to the product of
-all the consecutive even (or odd) integers from 2 (or 1) through @code{n}
-inclusive.
+For a positive integer @var{n},
+@code{@var{n}!!} simplifies to
+the product @code{n (n - 2) (n - 4) (n - 6) ... 5 3 1} for odd @var{n}
+and @code{n (n - 2) (n - 4) ... 6 4 2} for even @var{n}.
 
-For an argument @code{n} which is not an integer, float, or rational, @code{n!!}
-yields a noun form @code{genfact (n, n/2, 2)}.
-@c n!! IS NEITHER SIMPLIFIED NOR EVALUATED IN THIS CASE 
-@c -- MENTION THAT? OR TOO MUCH DETAIL ???
+For a negative odd integer @var{n},
+the double factorial is equal to @code{(- 1)^((n - 1)/2)*n/(- n)!!}.
+The double factorial is not defined for negative even integers.
 
-@opencatbox
+For real or complex float or bigfloat argument @var{z},
+@code{@var{z}!!} simplifies to a real or complex float or bigfloat result,
+equal to @code{sqrt(2/%pi)^((1 - cos(%pi*z))/2)*(2^(z/2))*gamma(1 + z/2)}.
+This expression agrees with the product definitions for even and odd positive integers.
+
+When the global flag @code{factorial_expand} is @code{true},
+@code{(@var{z} - 1)!!} simplifies to @code{@var{z}!/@var{z}!!},
+where @var{z} is any expression.
+
+Also when the global flag @code{factorial_expand} is @code{true} and @code{k} is an even positive integer,
+@code{(@var{z} + k)!!} simplifies to
+@code{(@var{z} + 2) (@var{z} + 4) (@var{z} + 6) ... (@var{z} + k) @var{z}!!},
+and @code{@var{z} - k} simplifies to
+@code{@var{z}!!/((@var{z} - k + 2) (@var{z} - k + 4) (@var{z} - k + 6) ... @var{z})}.
+
+Maxima knows the derivative of the double factorial.
+
+@code{!!} distributes over lists, matrices, and equations.
+See @mrefdot{distribute_over}
+
+Examples:
+
+@code{!!} and @code{double_factorial} are equivalent.
+
+@c ===beg===
+@c 8!!;
+@c double_factorial (8);
+@c x!!;
+@c double_factorial (x);
+@c is (x!! = double_factorial (x));
+@c ===end===
+@example maxima
+@group
+(%i1) 8!!;
+(%o1)                          384
+@end group
+@group
+(%i2) double_factorial (8);
+(%o2)                          384
+@end group
+@group
+(%i3) x!!;
+(%o3)                          x!!
+@end group
+@group
+(%i4) double_factorial (x);
+(%o4)                          x!!
+@end group
+@group
+(%i5) is (x!! = double_factorial (x));
+(%o5)                         true
+@end group
+@end example
+
+Double factorial of even and odd positive integers.
+
+@c ===beg===
+@c makelist (n!!, n, 1, 9);
+@c ===end===
+@example maxima
+@group
+(%i1) makelist (n!!, n, 1, 9);
+(%o1)          [1, 2, 3, 8, 15, 48, 105, 384, 945]
+@end group
+@end example
+
+Double factorial of odd negative integers.
+
+@c ===beg===
+@c makelist (n!!, n, -9, -1, 2);
+@c ===end===
+@example maxima
+@group
+(%i1) makelist (n!!, n, -9, -1, 2);
+                       1     1   1
+(%o1)                [---, - --, -, - 1, 1]
+                      105    15  3
+@end group
+@end example
+
+Double factorial of float and bigfloat values.
+
+@c ===beg===
+@c makelist ((float (k + 1/2))!!, k, -5, 5, 2);
+@c makelist ((bfloat (k + 1/2))!!, k, -5, 5, 2);
+@c ===end===
+@example maxima
+@group
+(%i1) makelist ((float (k + 1/2))!!, k, -5, 5, 2);
+(%o1) [0.7363534302684733, - 1.8408835756711817, 
+0.9204417878355904, 1.3806626817533858, 4.8323193861368505, 
+26.577756623752663]
+@end group
+@group
+(%i2) makelist ((bfloat (k + 1/2))!!, k, -5, 5, 2);
+(%o2) [7.363534302684728b-1, - 1.840883575671182b0, 
+9.20441787835591b-1, 1.380662681753387b0, 4.832319386136853b0, 
+2.657775662375269b1]
+@end group
+@end example
+
+Double factorial of complex float and complex bigfloat values.
+
+@c ===beg===
+@c makelist ((float (k + %i/2))!!, k, -5, 5, 2);
+@c makelist ((bfloat (k + %i/2))!!, k, -5, 5, 2);
+@c ===end===
+@example maxima
+@group
+(%i1) makelist ((float (k + %i/2))!!, k, -5, 5, 2);
+(%o1) [0.0738293842296815 %i + 0.20245223746676777, 
+- 0.12026203395566047 %i - 0.644271404515144, 
+0.7044024214929739 - 0.2018736683019115 %i, 
+0.15032754244457538 %i + 0.8053392556439295, 
+0.8536522551556902 %i + 2.3408539957095003, 
+5.438688273633204 %i + 11.27744385096966]
+@end group
+@group
+(%i2) makelist ((bfloat (k + %i/2))!!, k, -5, 5, 2);
+(%o2) [7.382938422968142b-2 %i + 2.024522374667677b-1, 
+- 1.202620339556604b-1 %i - 6.442714045151438b-1, 
+7.04402421492974b-1 - 2.018736683019115b-1 %i, 
+1.503275424445755b-1 %i + 8.053392556439297b-1, 
+8.536522551556913b-1 %i + 2.340853995709501b0, 
+5.438688273633207b0 %i + 1.127744385096966b1]
+@end group
+@end example
+
+Simplification of double factorial when @code{factorial_expand} is @code{true}.
+
+@c ===beg===
+@c factorial_expand: true;
+@c (n - 1)!!;
+@c (n + 6)!!;
+@c (n - 6)!!;
+@c ===end===
+@example maxima
+@group
+(%i1) factorial_expand: true;
+(%o1)                         true
+@end group
+@group
+(%i2) (n - 1)!!;
+                               n!
+(%o2)                          ---
+                               n!!
+@end group
+@group
+(%i3) (n + 6)!!;
+(%o3)              (n + 2) (n + 4) (n + 6) n!!
+@end group
+@group
+(%i4) (n - 6)!!;
+                               n!!
+(%o4)                   -----------------
+                        (n - 4) (n - 2) n
+@end group
+@end example
+
+Derivative of the double factorial.
+
+@c ===beg===
+@c diff (x!!, x);
+@c ===end===
+@example maxima
+@group
+(%i1) diff (x!!, x);
+                    2
+           %pi log(---) sin(%pi x)
+                   %pi                    x
+      x!! (----------------------- + psi (- + 1) + log(2))
+                      2                 0 2
+(%o1) ----------------------------------------------------
+                               2
+@end group
+@end example
+
+Distributing the double factorial over a list, a matrix, and an equation.
+
+@c ===beg===
+@c [ 1, 3, 7, 9 ]!!;
+@c matrix ([1, 3, 7], [9, 11, 13])!!;
+@c (z = 7)!!;
+@c ===end===
+@example maxima
+@group
+(%i1) [ 1, 3, 7, 9 ]!!;
+(%o1)                   [1, 3, 105, 945]
+@end group
+@group
+(%i2) matrix ([1, 3, 7], [9, 11, 13])!!;
+                     [  1     3     105   ]
+(%o2)                [                    ]
+                     [ 945  10395  135135 ]
+@end group
+@group
+(%i3) (z = 7)!!;
+(%o3)                       z!! = 105
+@end group
+@end example
+
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @category{Operators}
 @closecatbox
@@ -1053,7 +1352,7 @@ Examples:
 @c binomial (x + 7, x);
 @c binomial (11, y);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) binomial (11, 7);
 (%o1)                          330
@@ -1080,7 +1379,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Number theory}
 @closecatbox
 @end deffn
@@ -1106,7 +1405,7 @@ Example:
 @c (n + 1)*(n + 1)*n!;
 @c factcomb (%);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) sumsplitfact;
 (%o1)                         true
@@ -1135,7 +1434,7 @@ Example:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @closecatbox
 @end deffn
@@ -1189,7 +1488,7 @@ evaluated in float or bigfloat precision.
 @c [4,77!, (1.0+%i)!];
 @c [2.86b0!, (1.0b0+%i)!];
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) factlim : 10;
 (%o1)                          10
@@ -1219,7 +1518,7 @@ operand.
 @c [(%i + 1)!, %pi!, %e!, (cos(1) + sin(1))!];
 @c ev (%, numer, %enumer);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) [(%i + 1)!, %pi!, %e!, (cos(1) + sin(1))!];
 (%o1)      [(%i + 1)!, %pi!, %e!, (sin(1) + cos(1))!]
@@ -1251,7 +1550,7 @@ Thus @code{x!} may be replaced even in a quoted expression.
 @c ===beg===
 @c '([0!, (7/2)!, 4.77!, 8!, 20!]);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) '([0!, (7/2)!, 4.77!, 8!, 20!]);
           105 sqrt(%pi)
@@ -1266,7 +1565,7 @@ Maxima knows the derivative of the factorial function.
 @c ===beg===
 @c diff(x!,x);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) diff(x!,x);
 (%o1)                    x! psi (x + 1)
@@ -1280,14 +1579,14 @@ simplification of expressions with the factorial function.
 @c ===beg===
 @c (n+1)!/n!,factorial_expand:true;
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) (n+1)!/n!,factorial_expand:true;
 (%o1)                         n + 1
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @category{Operators}
 @closecatbox
@@ -1303,7 +1602,7 @@ Default value: 100000
 @code{factlim} specifies the highest factorial which is
 automatically expanded.  If it is -1 then all integers are expanded.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @closecatbox
 @end defvr
@@ -1314,10 +1613,10 @@ automatically expanded.  If it is -1 then all integers are expanded.
 Default value: false
 
 The option variable @code{factorial_expand} controls the simplification of 
-expressions like @code{(n+1)!}, where @code{n} is an integer.
+expressions like @code{(x+n)!}, where @code{n} is an integer.
 See @mref{factorial} for an example.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @closecatbox
 @end defvr
@@ -1332,7 +1631,11 @@ Returns the generalized factorial, defined as
 @code{x (x-z) (x - 2 z) ... (x - (y - 1) z)}.  Thus, when @var{x} is an integer,
 @code{genfact (x, x, 1) = x!} and @code{genfact (x, x/2, 2) = x!!}.
 
-@opencatbox
+When @var{x} and @var{z} are integers,
+and @code{floor(@var{y})} is an integer,
+@code{genfact(@var{x}, @var{y}, @var{y})} simplifies to a number.
+
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @closecatbox
 @end deffn
@@ -1355,18 +1658,22 @@ which differ by an integer.
 @c n!/(n+2)!;
 @c minfactorial (%);
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) n!/(n+2)!;
                                n!
 (%o1)                       --------
                             (n + 2)!
+@end group
+@group
 (%i2) minfactorial (%);
                                 1
 (%o2)                    ---------------
                          (n + 1) (n + 2)
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Number theory}
 @closecatbox
 @end deffn
@@ -1388,7 +1695,7 @@ When @code{sumsplitfact} is @code{false},
 @c n!/(n+2)!;
 @c factcomb(%);
 @c ===end=== 
-@example
+@example maxima
 @group
 (%i1) sumsplitfact;
 (%o1)                         true
@@ -1423,14 +1730,14 @@ When @code{sumsplitfact} is @code{false},
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Gamma and factorial functions}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
 
 @c -----------------------------------------------------------------------------
-@node Root Exponential and Logarithmic Functions, Trigonometric Functions, Combinatorial Functions, Mathematical Functions
+@node Root Exponential and Logarithmic Functions, Trigonometric Functions, Combinatorial Functions, Elementary Functions
 @section Root, Exponential and Logarithmic Functions
 @c -----------------------------------------------------------------------------
 
@@ -1445,7 +1752,7 @@ that the @code{radcan} command also does this transformation, and more
 complicated transformations of this ilk as well.  The @code{logcontract}
 command "contracts" expressions containing @code{log}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -1479,7 +1786,7 @@ When @code{%emode} is @code{false}, no special simplification of
 @c %e^(%pi*%i*120/144);
 @c %e^(%pi*%i*121/144);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) %emode;
 (%o1)                         true
@@ -1494,15 +1801,15 @@ When @code{%emode} is @code{false}, no special simplification of
 @end group
 @group
 (%i4) %e^(%pi*%i*192/144);
-                          sqrt(3) %i    1
-(%o4)                  (- ----------) - -
-                              2         2
+                          sqrt(3) %i   1
+(%o4)                   - ---------- - -
+                              2        2
 @end group
 @group
 (%i5) %e^(%pi*%i*180/144);
-                           %i          1
-(%o5)                 (- -------) - -------
-                         sqrt(2)    sqrt(2)
+                           %i         1
+(%o5)                  - ------- - -------
+                         sqrt(2)   sqrt(2)
 @end group
 @group
 (%i6) %e^(%pi*%i*120/144);
@@ -1519,7 +1826,7 @@ When @code{%emode} is @code{false}, no special simplification of
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -1549,7 +1856,7 @@ See also @mref{ev} and @mrefdot{numer}
 @c 2*%e^1;  
 @c 2*%e^x;  
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) %enumer;
 (%o1)                         false
@@ -1589,7 +1896,7 @@ See also @mref{ev} and @mrefdot{numer}
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Evaluation flags}
 @closecatbox
@@ -1621,7 +1928,7 @@ See @mrefdot{%emode}
 @c demoivre: not demoivre;
 @c %e^(a + b*%i);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) demoivre;
 (%o1)                         false
@@ -1642,7 +1949,7 @@ See @mrefdot{%emode}
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @closecatbox
 @end deffn
@@ -1655,10 +1962,13 @@ See @mrefdot{%emode}
 Represents the polylogarithm function of order @var{s} and argument @var{z},
 defined by the infinite series
 
-@tex
-$${\rm Li}_s \left(z\right) = \sum_{k=1}^\infty {z^k \over k^s}$$
-@end tex
-@ifnottex
+@html
+$$
+{\rm Li}_s \left(z\right) = \sum_{k=1}^\infty {z^k \over k^s}
+$$
+@end html
+@ifinfo
+
 @example
                                  inf
                                  ====   k
@@ -1668,9 +1978,25 @@ $${\rm Li}_s \left(z\right) = \sum_{k=1}^\infty {z^k \over k^s}$$
                                  ====  k
                                  k = 1
 @end example
-@end ifnottex
 
-@code{li [1]} is @code{- log (1 - z)}.  @code{li [2]} and @code{li [3]} are the
+@end ifinfo
+@tex
+$${\rm Li}_s \left(z\right) = \sum_{k=1}^\infty {z^k \over k^s}$$
+@end tex
+
+
+
+@code{li[1](z)} is
+@html
+\(-\log(1 - z).\)
+@end html
+@ifinfo
+@math{-log(1-z).}
+@end ifinfo
+@iftex
+@math{-\log(1 - z).}
+@end iftex
+@code{li[2]} and @code{li[3]} are the
 dilogarithm and trilogarithm functions, respectively.
 
 When the order is 1, the polylogarithm simplifies to @code{- log (1 - z)}, which
@@ -1687,6 +2013,11 @@ Examples:
 @c ===beg===
 @c assume (x > 0);
 @c integrate ((log (1 - t)) / t, t, 0, x);
+@c li[4](1);
+@c li[5](1);
+@c li[2](1/2);
+@c li[2](%i);
+@c li[2](1+%i);
 @c li [2] (7);
 @c li [2] (7), numer;
 @c li [3] (7);
@@ -1695,59 +2026,69 @@ Examples:
 @c map (lambda ([x], li [2] (x)), L);
 @c map (lambda ([x], li [3] (x)), L);
 @c ===end===
-@example
+RETRIEVE: End of file encountered.
+ -- an error. To debug this try: debugmode(true);
+@example maxima
 @group
 (%i1) assume (x > 0);
 (%o1)                        [x > 0]
 @end group
 @group
 (%i2) integrate ((log (1 - t)) / t, t, 0, x);
-(%o2)                       - li (x)
-                                2
+Is x - 1 positive, negative or zero?
+
 @end group
 @group
-(%i3) li [2] (7);
-(%o3)                        li (7)
-                               2
+Is x - 1 positive, negative or zero?
+li[4](1);
 @end group
 @group
-(%i4) li [2] (7), numer;
-(%o4)       1.248273182099423 - 6.113257028817991 %i
+Is x - 1 positive, negative or zero?
+li[5](1);
 @end group
 @group
-(%i5) li [3] (7);
-(%o5)                        li (7)
-                               3
+Is x - 1 positive, negative or zero?
+li[2](1/2);
 @end group
 @group
-(%i6) li [3] (7), numer;
-(%o6)       5.319257992145674 - 5.94792444808033 %i
+Is x - 1 positive, negative or zero?
+li[2](%i);
 @end group
 @group
-(%i7) L : makelist (i / 4.0, i, 0, 8);
-(%o7)   [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+Is x - 1 positive, negative or zero?
+li[2](1+%i);
 @end group
 @group
-(%i8) map (lambda ([x], li [2] (x)), L);
-(%o8) [0.0, 0.2676526390827326, 0.5822405264650125, 
-0.978469392930306, 1.644934066848226, 
-2.190177011441645 - 0.7010261415046585 %i, 
-2.37439527027248 - 1.2738062049196 %i, 
-2.448686765338205 - 1.758084848210787 %i, 
-2.467401100272339 - 2.177586090303601 %i]
+Is x - 1 positive, negative or zero?
+li [2] (7);
 @end group
 @group
-(%i9) map (lambda ([x], li [3] (x)), L);
-(%o9) [0.0, 0.2584613953442624, 0.537213192678042, 
-0.8444258046482203, 1.2020569, 1.642866878950322
- - 0.07821473130035025 %i, 2.060877505514697
- - 0.2582419849982037 %i, 2.433418896388322
- - 0.4919260182322965 %i, 2.762071904015935
- - 0.7546938285978846 %i]
+Is x - 1 positive, negative or zero?
+li [2] (7), numer;
+@end group
+@group
+Is x - 1 positive, negative or zero?
+li [3] (7);
+@end group
+@group
+Is x - 1 positive, negative or zero?
+li [2] (7), numer;
+@end group
+@group
+Is x - 1 positive, negative or zero?
+L : makelist (i / 4.0, i, 0, 8);
+@end group
+@group
+Is x - 1 positive, negative or zero?
+map (lambda ([x], li [2] (x)), L);
+@end group
+@group
+Is x - 1 positive, negative or zero?
+map (lambda ([x], li [3] (x)), L);
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @closecatbox
 @end deffn
@@ -1759,7 +2100,7 @@ Examples:
 Represents the natural (base @math{e}) logarithm of @var{x}.
 
 Maxima does not have a built-in function for the base 10 logarithm or other 
-bases. @code{log10(x) := log(x) / log(10)} is an useful definition.
+bases. @code{log10(x) := log(x) / log(10)} is a useful definition.
 
 Simplification and evaluation of logarithms is governed by several global flags:
 
@@ -1788,7 +2129,7 @@ and more complicated transformations of this as well. The @code{logcontract}
 command "contracts" expressions containing @code{log}.
 @end table
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @closecatbox
 @end deffn
@@ -1805,7 +2146,7 @@ if @code{logabs} is @code{true}, but in terms of @code{log(...)} if
 setting is used, because here "evaluation" of the indefinite integral at the
 endpoints is often needed.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Integral calculus}
 @category{Global flags}
@@ -1822,7 +2163,7 @@ inverse circular and hyperbolic functions with equivalent logarithmic
 functions for an expression @var{expr} without setting the global
 variable @code{logarc}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @category{Simplification functions}
@@ -1837,7 +2178,7 @@ inverse circular and hyperbolic functions are replaced by
 equivalent logarithmic functions.
 The default value of @code{logarc} is @code{false}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @category{Simplification functions}
@@ -1856,7 +2197,7 @@ SQRTs, you can do @code{logconcoeffp:'logconfun$
 logconfun(m):=featurep(m,integer) or ratnump(m)$} .  Then
 @code{logcontract(1/2*log(x));} will give @code{log(sqrt(x))}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -1874,7 +2215,7 @@ subexpressions of the form @code{a1*log(b1) + a2*log(b2) + c} into
 @c 2*(a*log(x) + 2*a*log(y))$
 @c logcontract(%);
 @c ===end===
-@example
+@example maxima
 (%i1) 2*(a*log(x) + 2*a*log(y))$
 @group
 (%i2) logcontract(%);
@@ -1893,7 +2234,7 @@ E.g. if you like to generate SQRTs, you can do @code{logconcoeffp:'logconfun$
 logconfun(m):=featurep(m,integer) or ratnump(m)$} .  Then
 @code{logcontract(1/2*log(x));} will give @code{log(sqrt(x))}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @closecatbox
 @end deffn
@@ -1921,9 +2262,11 @@ When @code{logexpand} is @code{true},
 @c ===beg===
 @c log(n^2), logexpand=true;
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) log(n^2), logexpand=true;
 (%o1)                       2 log(n)
+@end group
 @end example
 
 When @code{logexpand} is @code{all},
@@ -1932,9 +2275,11 @@ When @code{logexpand} is @code{all},
 @c ===beg===
 @c log(10*x), logexpand=all;
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) log(10*x), logexpand=all;
 (%o1)                   log(x) + log(10)
+@end group
 @end example
 
 When @code{logexpand} is @code{super},
@@ -1944,9 +2289,11 @@ for rational numbers @code{a/b} with @code{a#1}.
 @c ===beg===
 @c log(a/(n + 1)), logexpand=super;
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) log(a/(n + 1)), logexpand=super;
 (%o1)                  log(a) - log(n + 1)
+@end group
 @end example
 
 When @code{logexpand} is set to @code{all} or @code{super},
@@ -1957,30 +2304,36 @@ the logarithm of a product expression simplifies to a summation of logarithms.
 @c log(my_product), logexpand=all;
 @c log(my_product), logexpand=super;
 @c ===end===
-@example
+@example maxima
+@group
 (%i1) my_product : product (X(i), i, 1, n);
                              n
-                           /===\
-                            ! !
-(%o1)                       ! !  X(i)
-                            ! !
+                           _____
+                           |   |
+(%o1)                      |   | X(i)
+                           |   |
                            i = 1
+@end group
+@group
 (%i2) log(my_product), logexpand=all;
                           n
-                         ====
+                         ____
                          \
 (%o2)                     >    log(X(i))
                          /
-                         ====
+                         ----
                          i = 1
+@end group
+@group
 (%i3) log(my_product), logexpand=super;
                           n
-                         ====
+                         ____
                          \
 (%o3)                     >    log(X(i))
                          /
-                         ====
+                         ----
                          i = 1
+@end group
 @end example
 
 When @code{logexpand} is @code{false},
@@ -1993,27 +2346,35 @@ these simplifications are disabled.
 @c log(a/(n + 1));
 @c log ('product (X(i), i, 1, n));
 @c ===end===
-@example
+@example maxima
 (%i1) logexpand : false $
+@group
 (%i2) log(n^2);
                                   2
 (%o2)                        log(n )
+@end group
+@group
 (%i3) log(10*x);
 (%o3)                       log(10 x)
+@end group
+@group
 (%i4) log(a/(n + 1));
                                  a
 (%o4)                      log(-----)
                                n + 1
+@end group
+@group
 (%i5) log ('product (X(i), i, 1, n));
                                n
-                             /===\
-                              ! !
-(%o5)                    log( ! !  X(i))
-                              ! !
+                             _____
+                             |   |
+(%o5)                    log(|   | X(i))
+                             |   |
                              i = 1
+@end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2027,7 +2388,7 @@ Default value: @code{false}
 If @code{true} implements the rule
 @code{log(-n) -> log(n)+%i*%pi} for @code{n} a positive integer.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2041,7 +2402,7 @@ Default value: @code{true}
 If @code{false} then no simplification of @code{%e} to a
 power containing @code{log}'s is done.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2054,7 +2415,7 @@ power containing @code{log}'s is done.
 Represents the principal branch of the complex-valued natural
 logarithm with @code{-%pi < carg(@var{x}) <= +%pi} .
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Exponential and logarithm functions}
 @category{Complex variables}
 @closecatbox
@@ -2067,14 +2428,14 @@ logarithm with @code{-%pi < carg(@var{x}) <= +%pi} .
 The square root of @var{x}.  It is represented internally by
 @code{@var{x}^(1/2)}.  See also @mref{rootscontract} and @mrefdot{radexpand}
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Mathematical functions}
 @closecatbox
 @end deffn
 
 @c -----------------------------------------------------------------------------
 @page
-@node Trigonometric Functions, Random Numbers, Root Exponential and Logarithmic Functions, Mathematical Functions
+@node Trigonometric Functions, Random Numbers, Root Exponential and Logarithmic Functions, Elementary Functions
 @section Trigonometric Functions
 @c -----------------------------------------------------------------------------
 
@@ -2091,20 +2452,21 @@ The square root of @var{x}.  It is represented internally by
 Maxima has many trigonometric functions defined.  Not all trigonometric
 identities are programmed, but it is possible for the user to add many
 of them using the pattern matching capabilities of the system.  The
-trigonometric functions defined in Maxima are: @code{acos},
-@code{acosh}, @code{acot}, @code{acoth}, @code{acsc},
-@code{acsch}, @code{asec}, @code{asech}, @code{asin},
-@code{asinh}, @code{atan}, @code{atanh}, @code{cos},
-@code{cosh}, @code{cot}, @code{coth}, @code{csc}, @code{csch},
-@code{sec}, @code{sech}, @code{sin}, @code{sinh}, @code{tan},
-and @code{tanh}.  There are a number of commands especially for
-handling trigonometric functions, see @code{trigexpand},
-@code{trigreduce}, and the switch @code{trigsign}.  Two share
+trigonometric functions defined in Maxima are: @mref{acos},
+@mref{acosh}, @mref{acot}, @mref{acoth}, @mref{acsc},
+@mref{acsch}, @mref{asec}, @mref{asech}, @mref{asin},
+@mref{asinh}, @mref{atan}, @mref{atanh}, @mref{cos},
+@mref{cosh}, @mref{cot}, @mref{coth}, @mref{csc}, @mref{csch},
+@mref{sec}, @mref{sech}, @mref{sin}, @mref{sinh}, @mref{tan},
+and @mref{tanh}.  There are a number of commands especially for
+handling trigonometric functions, see @mref{trigexpand},
+@mref{trigreduce}, and the switch @mref{trigsign}.  Three share
 packages extend the simplification rules built into Maxima,
-@code{ntrig} and @code{atrig1}.  Do @code{describe(@var{command})}
+@mref{ntrig}, @mref{atrig1} and @ref{Introduction to trigtools}.
+Do @code{describe(@var{command})}
 for details.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @closecatbox
 
@@ -2113,6 +2475,399 @@ for details.
 @subsection Functions and Variables for Trigonometric
 @c -----------------------------------------------------------------------------
 
+@menu
+* Trigonometric and Hyperbolic Functions::
+* Options Controlling Simplification::
+* Explicit Simplifications Using Identities::
+* Additional Functions::
+@end menu
+
+@node Trigonometric and Hyperbolic Functions, Options Controlling Simplification, Functions and Variables for Trigonometric, Functions and Variables for Trigonometric
+@subsubsection Trigonometric and Hyperbolic Functions
+
+@c Use this to make the same cross-references to variables that
+@c control simplification of trig (and hyperbolic) functions.
+@macro xreftrigvars{}
+For variables that control simplification @pxref{%piargs},
+@ref{%iargs}, @ref{halfangles}, @ref{triginverses}, and
+@ref{trigsign}.
+
+@end macro
+@c -----------------------------------------------------------------------------
+@anchor{acos}
+@deffn {Function} acos (@var{x})
+
+-- Arc Cosine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{acosh}
+@deffn {Function} acosh (@var{x})
+
+-- Hyperbolic Arc Cosine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{acot}
+@deffn {Function} acot (@var{x})
+
+-- Arc Cotangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{acoth}
+@deffn {Function} acoth (@var{x})
+
+-- Hyperbolic Arc Cotangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{acsc}
+@deffn {Function} acsc (@var{x})
+
+-- Arc Cosecant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{acsch}
+@deffn {Function} acsch (@var{x})
+
+-- Hyperbolic Arc Cosecant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{asec}
+@deffn {Function} asec (@var{x})
+
+-- Arc Secant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{asech}
+@deffn {Function} asech (@var{x})
+
+-- Hyperbolic Arc Secant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{asin}
+@deffn {Function} asin (@var{x})
+
+-- Arc Sine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{asinh}
+@deffn {Function} asinh (@var{x})
+
+-- Hyperbolic Arc Sine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{atan}
+@deffn {Function} atan (@var{x})
+
+-- Arc Tangent.
+
+See also @mref{atan2}.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{atan2}
+@deffn {Function} atan2 (@var{y}, @var{x})
+
+-- yields the value of
+@html
+\(\tan^{-1}(y/x)\)
+@end html
+@ifinfo
+@math{atan(y/x)}
+@end ifinfo
+@iftex
+@math{\tan^{-1}(y/x)}
+@end iftex
+in the interval
+@html
+\(-\pi\)
+@end html
+@ifinfo
+@math{-%pi}
+@end ifinfo
+@iftex
+@math{-\pi}
+@end iftex
+to
+@html
+\(\pi\)
+@end html
+@ifinfo
+@math{%pi}
+@end ifinfo
+@iftex
+@math{\pi}
+@end iftex
+taking into
+consideration the quadrant of the point 
+@html
+\((x,y).\)
+@end html
+@ifinfo
+@math{(x,y).}
+@end ifinfo
+@iftex
+@math{(x,y).}
+@end iftex
+
+Along the branch cut with @math{y = 0} and @math{x < 0}, @code{atan2}
+is continuous with the second quadrant.
+See also @mref{atan}.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{atanh}
+@deffn {Function} atanh (@var{x})
+
+-- Hyperbolic Arc Tangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{cos}
+@deffn {Function} cos (@var{x})
+
+-- Cosine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{cosh}
+@deffn {Function} cosh (@var{x})
+
+-- Hyperbolic Cosine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{cot}
+@deffn {Function} cot (@var{x})
+
+-- Cotangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{coth}
+@deffn {Function} coth (@var{x})
+
+-- Hyperbolic Cotangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{csc}
+@deffn {Function} csc (@var{x})
+
+-- Cosecant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{csch}
+@deffn {Function} csch (@var{x})
+
+-- Hyperbolic Cosecant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{sec}
+@deffn {Function} sec (@var{x})
+
+-- Secant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{sech}
+@deffn {Function} sech (@var{x})
+
+-- Hyperbolic Secant.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{sin}
+@deffn {Function} sin (@var{x})
+
+-- Sine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{sinh}
+@deffn {Function} sinh (@var{x})
+
+-- Hyperbolic Sine.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{tan}
+@deffn {Function} tan (@var{x})
+
+-- Tangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@closecatbox
+@end deffn
+
+@c -----------------------------------------------------------------------------
+@anchor{tanh}
+@deffn {Function} tanh (@var{x})
+
+-- Hyperbolic Tangent.
+
+@xreftrigvars{}
+
+@opencatbox{Categories:}
+@category{Hyperbolic functions}
+@closecatbox
+@end deffn
+
+@unmacro xreftrigvars
+
+@node Options Controlling Simplification, Explicit Simplifications Using Identities, Trigonometric and Hyperbolic Functions, Functions and Variables for Trigonometric
+@subsubsection Options Controlling Simplification
 @c -----------------------------------------------------------------------------
 @anchor{%piargs}
 @defvr {Option variable} %piargs
@@ -2120,20 +2875,69 @@ Default value: @code{true}
 
 When @code{%piargs} is @code{true},
 trigonometric functions are simplified to algebraic constants
-when the argument is an integer multiple of
+when the argument is an integer multiple
+of
+@html
+\(\pi,\)
+@end html
+@ifinfo
+@math{%pi,}
+@end ifinfo
 @iftex
-@math{\pi}, @math{\pi/2}, @math{\pi/3}, @math{\pi/4}, or @math{\pi/6}.
+@math{\pi,}
 @end iftex
-@ifnottex
-@math{%pi}, @math{%pi/2}, @math{%pi/3}, @math{%pi/4}, or @math{%pi/6}.
-@end ifnottex
+@html
+\(\pi/2,\)
+@end html
+@ifinfo
+@math{%pi/2,}
+@end ifinfo
+@iftex
+@math{\pi/2,}
+@end iftex
+@html
+\(\pi/4,\)
+@end html
+@ifinfo
+@math{%pi/4,}
+@end ifinfo
+@iftex
+@math{\pi/4,}
+@end iftex
+or
+@html
+\(\pi/6.\)
+@end html
+@ifinfo
+@math{%pi/6.}
+@end ifinfo
+@iftex
+@math{\pi/6.}
+@end iftex
+@c @iftex
+@c @math{\pi}, @math{\pi/2}, @math{\pi/3}, @math{\pi/4}, or @math{\pi/6}.
+@c @end iftex
+@c @ifnottex
+@c @math{%pi}, @math{%pi/2}, @math{%pi/3}, @math{%pi/4}, or @math{%pi/6}.
+@c @end ifnottex
 
+Maxima knows some identities which can be applied when
+@html
+\(\pi,\)
+@end html
+@ifinfo
+@math{%pi,}
+@end ifinfo
 @iftex
-Maxima knows some identities which can be applied when @math{\pi}, etc.,
+@math{\pi,}
 @end iftex
-@ifnottex
-Maxima knows some identities which can be applied when @math{%pi}, etc.,
-@end ifnottex
+etc.,
+@c @iftex
+@c Maxima knows some identities which can be applied when @math{\pi}, etc.,
+@c @end iftex
+@c @ifnottex
+@c Maxima knows some identities which can be applied when @math{%pi}, etc.,
+@c @end ifnottex
 are multiplied by an integer variable (that is, a symbol declared to be
 integer).
 
@@ -2149,7 +2953,7 @@ Examples:
 @c [cos (%pi/3), cos (10*%pi/3), tan (10*%pi/3),
 @c        cos (sqrt(2)*%pi/3)];
 @c ===end===
-@example
+@example maxima
 (%i1) %piargs : false$
 @group
 (%i2) [sin (%pi), sin (%pi/2), sin (%pi/3)];
@@ -2185,21 +2989,43 @@ Examples:
 @end group
 @end example
 
+Some identities are applied when 
+@html
+\(\pi\)
+@end html
+@ifinfo
+@math{%pi}
+@end ifinfo
 @iftex
-Some identities are applied when @math{\pi} and @math{\pi/2} are multiplied by
-an integer variable.
+@math{\pi}
 @end iftex
-@ifnottex
-Some identities are applied when @math{%pi} and @math{%pi/2} are multiplied by
-an integer variable.
-@end ifnottex
+and 
+@html
+\(\pi/2\)
+@end html
+@ifinfo
+@math{%pi/2}
+@end ifinfo
+@iftex
+@math{\pi/2}
+@end iftex
+are
+multiplied by an integer variable.
+@c @iftex
+@c Some identities are applied when @math{\pi} and @math{\pi/2} are multiplied by
+@c an integer variable.
+@c @end iftex
+@c @ifnottex
+@c Some identities are applied when @math{%pi} and @math{%pi/2} are multiplied by
+@c an integer variable.
+@c @end ifnottex
 
 @c ===beg===
 @c declare (n, integer, m, even)$
 @c [sin (%pi * n), cos (%pi * m), sin (%pi/2 * m),
 @c        cos (%pi/2 * m)];
 @c ===end===
-@example
+@example maxima
 (%i1) declare (n, integer, m, even)$
 @group
 (%i2) [sin (%pi * n), cos (%pi * m), sin (%pi/2 * m),
@@ -2209,7 +3035,7 @@ an integer variable.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2222,20 +3048,42 @@ Default value: @code{true}
 
 When @code{%iargs} is @code{true},
 trigonometric functions are simplified to hyperbolic functions
+when the argument is apparently a multiple of the imaginary
+unit 
+@html
+\(i.\)
+@end html
+@ifinfo
+@math{%i.}
+@end ifinfo
 @iftex
-when the argument is apparently a multiple of the imaginary unit @math{i}.
+@math{i.}
 @end iftex
-@ifnottex
-when the argument is apparently a multiple of the imaginary unit @math{%i}.
-@end ifnottex
+@c @iftex
+@c when the argument is apparently a multiple of the imaginary unit @math{i}.
+@c @end iftex
+@c @ifnottex
+@c when the argument is apparently a multiple of the imaginary unit @math{%i}.
+@c @end ifnottex
 
 Even when the argument is demonstrably real, the simplification is applied;
+Maxima considers only whether the argument is a literal multiple
+of 
+@html
+\(i.\)
+@end html
+@ifinfo
+@math{%i.}
+@end ifinfo
 @iftex
-Maxima considers only whether the argument is a literal multiple of @math{i}.
+@math{i.}
 @end iftex
-@ifnottex
-Maxima considers only whether the argument is a literal multiple of @math{%i}.
-@end ifnottex
+@c @iftex
+@c Maxima considers only whether the argument is a literal multiple of @math{i}.
+@c @end iftex
+@c @ifnottex
+@c Maxima considers only whether the argument is a literal multiple of @math{%i}.
+@c @end ifnottex
 
 Examples:
 
@@ -2245,7 +3093,7 @@ Examples:
 @c %iargs : true$
 @c [sin (%i * x), cos (%i * x), tan (%i * x)];
 @c ===end===
-@example
+@example maxima
 (%i1) %iargs : false$
 @group
 (%i2) [sin (%i * x), cos (%i * x), tan (%i * x)];
@@ -2265,7 +3113,7 @@ Even when the argument is demonstrably real, the simplification is applied.
 @c [featurep (x, imaginary), featurep (x, real)];
 @c sin (%i * x);
 @c ===end===
-@example
+@example maxima
 (%i1) declare (x, imaginary)$
 @group
 (%i2) [featurep (x, imaginary), featurep (x, real)];
@@ -2277,246 +3125,12 @@ Even when the argument is demonstrably real, the simplification is applied.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Hyperbolic functions}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
-
-@c -----------------------------------------------------------------------------
-@anchor{acos}
-@deffn {Function} acos (@var{x})
-
--- Arc Cosine.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{acosh}
-@deffn {Function} acosh (@var{x})
-
--- Hyperbolic Arc Cosine.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{acot}
-@deffn {Function} acot (@var{x})
-
--- Arc Cotangent.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{acoth}
-@deffn {Function} acoth (@var{x})
-
--- Hyperbolic Arc Cotangent.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{acsc}
-@deffn {Function} acsc (@var{x})
-
--- Arc Cosecant.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{acsch}
-@deffn {Function} acsch (@var{x})
-
--- Hyperbolic Arc Cosecant.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{asec}
-@deffn {Function} asec (@var{x})
-
--- Arc Secant.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{asech}
-@deffn {Function} asech (@var{x})
-
--- Hyperbolic Arc Secant.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{asin}
-@deffn {Function} asin (@var{x})
-
--- Arc Sine.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{asinh}
-@deffn {Function} asinh (@var{x})
-
--- Hyperbolic Arc Sine.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{atan}
-@deffn {Function} atan (@var{x})
-
--- Arc Tangent.
-
-See also @mref{atan2}.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{atan2}
-@deffn {Function} atan2 (@var{y}, @var{x})
-
--- yields the value of @code{atan(@var{y}/@var{x})} in the interval @code{-%pi}
-to @code{%pi}.
-
-See also @mref{atan}.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{atanh}
-@deffn {Function} atanh (@var{x})
-
--- Hyperbolic Arc Tangent.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c IS THIS DESCRIPTION ACCURATE ??
-@c LET'S BE EXPLICIT ABOUT EXACTLY WHAT ARE THE RULES IMPLEMENTED BY THIS PACKAGE
-
-@c -----------------------------------------------------------------------------
-@anchor{atrig1}
-@defvr {Package} atrig1
-
-The @code{atrig1} package contains several additional simplification rules
-for inverse trigonometric functions.  Together with rules
-already known to Maxima, the following angles are fully implemented:
-@code{0}, @code{%pi/6}, @code{%pi/4}, @code{%pi/3}, and @code{%pi/2}.
-Corresponding angles in the other three quadrants are also available.
-Do @code{load("atrig1");} to use them.
-
-@opencatbox
-@category{Trigonometric functions}
-@category{Package atrig1}
-@closecatbox
-@end defvr
-
-@c -----------------------------------------------------------------------------
-@anchor{cos}
-@deffn {Function} cos (@var{x})
-
--- Cosine.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{cosh}
-@deffn {Function} cosh (@var{x})
-
--- Hyperbolic Cosine.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{cot}
-@deffn {Function} cot (@var{x})
-
--- Cotangent.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{coth}
-@deffn {Function} coth (@var{x})
-
--- Hyperbolic Cotangent.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{csc}
-@deffn {Function} csc (@var{x})
-
--- Cosecant.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{csch}
-@deffn {Function} csch (@var{x})
-
--- Hyperbolic Cosecant.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
 
 @c -----------------------------------------------------------------------------
 @anchor{halfangles}
@@ -2526,29 +3140,71 @@ Default value: @code{false}
 When @code{halfangles} is @code{true}, trigonometric functions of arguments 
 @code{@var{expr}/2} are simplified to functions of @var{expr}.
 
-For a real argument @var{x} in the interval @code{0 < x < 2*%pi} the sine of 
-the half-angle simplifies to a simple formula:
-
+For a real argument @math{x} in the interval
+@html
+\(0 \le x < 2\pi,\)
+@end html
+@ifinfo
+@math{0 <= x < 2*%pi,}
+@end ifinfo
+@iftex
+@math{0 \le x < 2\pi,}
+@end iftex
+@html
+\(\sin{x\over 2}\)
+@end html
+@ifinfo
+@math{sin(x/2)}
+@end ifinfo
+@iftex
+@math{\sin{x\over 2}}
+@end iftex
+simplifies to a simple formula:
+@html
+$$
+{\sqrt{1-\cos x}\over\sqrt{2}}
+$$
+@end html
+@ifinfo
 @example
                          sqrt(1 - cos(x))
                          ----------------
                              sqrt(2)
 @end example
 
+@end ifinfo
+@tex
+$${\sqrt{1-\cos x}\over\sqrt{2}}$$
+@end tex
+
+
 A complicated factor is needed to make this formula correct for all complex 
-arguments @var{z}:
+arguments @math{z = x+iy}:
+@html
+$$
+(-1)^{\lfloor{x/(2\pi)}\rfloor}
+\left[1-\rm{unit\_step}(-y)
+\left(1+(-1)^{\lfloor{x/(2\pi)}\rfloor - \lceil{x/(2\pi)}\rceil}\right)\right]
 
+$$
+@end html
+@ifinfo
 @verbatim
-           realpart(z)
-     floor(-----------)
-              2 %pi
-(- 1)                   (1 - unit_step(- imagpart(z))
-
-                            realpart(z)            realpart(z)
-                      floor(-----------) - ceiling(-----------)
-                               2 %pi                  2 %pi
-                ((- 1)                                          + 1))
+              x                       x                x
+      floor(-----)            floor(-----) - ceiling(-----)
+            2 %pi                   2 %pi            2 %pi
+ (- 1)             (1 - ((- 1)                              + 1)
+                                                          unit_step(- y))
 @end verbatim
+
+@end ifinfo
+@tex
+$$(-1)^{\lfloor{x/(2\pi)}\rfloor}
+\left[1-\rm{unit\_step}(-y)
+\left(1+(-1)^{\lfloor{x/(2\pi)}\rfloor - \lceil{x/(2\pi)}\rceil}\right)\right]
+$$
+@end tex
+
 
 Maxima knows this factor and similar factors for the functions @code{sin}, 
 @code{cos}, @code{sinh}, and @code{cosh}.  For special values of the argument 
@@ -2564,7 +3220,7 @@ Examples:
 @c assume(x>0, x<2*%pi)$
 @c sin(x / 2);
 @c ===end===
-@example
+@example maxima
 (%i1) halfangles : false$
 @group
 (%i2) sin (x / 2);
@@ -2591,96 +3247,50 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification flags and variables}
 @closecatbox
 @end defvr
 
-@c IS THIS DESCRIPTION ACCURATE ??
-@c LET'S BE EXPLICIT ABOUT EXACTLY WHAT ARE THE RULES IMPLEMENTED BY THIS PACKAGE
-
 @c -----------------------------------------------------------------------------
-@defvr {Package} ntrig
+@anchor{trigsign}
+@defvr {Option variable} trigsign
+Default value: @code{true}
 
-The @code{ntrig} package contains a set of simplification rules that are
-used to simplify trigonometric function whose arguments are of the form
-@code{@var{f}(@var{n} %pi/10)} where @var{f} is any of the functions
-@code{sin}, @code{cos}, @code{tan}, @code{csc}, @code{sec} and @code{cot}.
-@c NEED TO LOAD THIS PACKAGE ??
+When @code{trigsign} is @code{true}, it permits simplification of negative
+arguments to trigonometric functions.  E.g., 
+@html
+\(\sin(-x)\)
+@end html
+@ifinfo
+@math{@code{sin(-x)}}
+@end ifinfo
+@iftex
+@math{\sin(-x)}
+@end iftex 
+will
+become 
+@html
+\(-\sin x\)
+@end html
+@ifinfo
+@math{@code{-sin(x)}}
+@end ifinfo
+@iftex
+@math{-\sin x}
+@end iftex
+only if @code{trigsign} is @code{true}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
-@category{Package ntrig}
+@category{Simplification flags and variables}
 @closecatbox
 @end defvr
 
-@c -----------------------------------------------------------------------------
-@anchor{sec}
-@deffn {Function} sec (@var{x})
 
--- Secant.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{sech}
-@deffn {Function} sech (@var{x})
-
--- Hyperbolic Secant.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{sin}
-@deffn {Function} sin (@var{x})
-
--- Sine.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{sinh}
-@deffn {Function} sinh (@var{x})
-
--- Hyperbolic Sine.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{tan}
-@deffn {Function} tan (@var{x})
-
--- Tangent.
-
-@opencatbox
-@category{Trigonometric functions}
-@closecatbox
-@end deffn
-
-@c -----------------------------------------------------------------------------
-@anchor{tanh}
-@deffn {Function} tanh (@var{x})
-
--- Hyperbolic Tangent.
-
-@opencatbox
-@category{Hyperbolic functions}
-@closecatbox
-@end deffn
-
+@node Explicit Simplifications Using Identities, Additional Functions, Options Controlling Simplification, Functions and Variables for Trigonometric
+@subsubsection Explicit Simplifications Using Identities
 @c NEEDS CLARIFICATION AND EXAMPLES
 
 @c -----------------------------------------------------------------------------
@@ -2696,18 +3306,18 @@ into sines and cosines immediately, set the switch @code{trigexpand: true}.
 
 @code{trigexpand} is governed by the following global flags:
 
-@table @code
-@item trigexpand
+@table @asis
+@item @mref{trigexpand}
 If @code{true} causes expansion of all
 expressions containing sin's and cos's occurring subsequently.
-@item halfangles
+@item @mref{halfangles}
 If @code{true} causes half-angles to be simplified
 away.
-@item trigexpandplus
+@item @mref{trigexpandplus}
 Controls the "sum" rule for @code{trigexpand},
 expansion of sums (e.g. @code{sin(x + y)}) will take place only if
 @code{trigexpandplus} is @code{true}.
-@item trigexpandtimes
+@item @mref{trigexpandtimes}
 Controls the "product" rule for @code{trigexpand},
 expansion of products (e.g. @code{sin(2 x)}) will take place only if
 @code{trigexpandtimes} is @code{true}.
@@ -2719,11 +3329,11 @@ Examples:
 @c x+sin(3*x)/sin(x),trigexpand=true,expand;
 @c trigexpand(sin(10*x+y));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) x+sin(3*x)/sin(x),trigexpand=true,expand;
-                         2            2
-(%o1)              (- sin (x)) + 3 cos (x) + x
+                         2           2
+(%o1)               - sin (x) + 3 cos (x) + x
 @end group
 @group
 (%i2) trigexpand(sin(10*x+y));
@@ -2731,7 +3341,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification functions}
 @closecatbox
@@ -2743,12 +3353,12 @@ Examples:
 Default value: @code{true}
 
 @code{trigexpandplus} controls the "sum" rule for
-@code{trigexpand}.  Thus, when the @code{trigexpand} command is used or the
-@code{trigexpand} switch set to @code{true}, expansion of sums
+@mref{trigexpand}.  Thus, when the @mref{trigexpand} command is used or the
+@mref{trigexpand} switch set to @code{true}, expansion of sums
 (e.g. @code{sin(x+y))} will take place only if @code{trigexpandplus} is
 @code{true}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2759,12 +3369,12 @@ Default value: @code{true}
 @defvr {Option variable} trigexpandtimes
 Default value: @code{true}
 
-@code{trigexpandtimes} controls the "product" rule for @code{trigexpand}.
-Thus, when the @code{trigexpand} command is used or the @code{trigexpand}
+@code{trigexpandtimes} controls the "product" rule for @mref{trigexpand}.
+Thus, when the @mref{trigexpand} command is used or the @mref{trigexpand}
 switch set to @code{true}, expansion of products (e.g. @code{sin(2*x)})
 will take place only if @code{trigexpandtimes} is @code{true}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2790,7 +3400,7 @@ If @code{false}, both the
 @code{@var{fun}(@var{arcfun}(@var{x}))}
 simplifications are turned off.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification flags and variables}
 @closecatbox
@@ -2812,7 +3422,7 @@ See also @mref{poissimp}.
 @c ===beg===
 @c trigreduce(-sin(x)^2+3*cos(x)^2+x);
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) trigreduce(-sin(x)^2+3*cos(x)^2+x);
                cos(2 x)      cos(2 x)   1        1
@@ -2844,56 +3454,62 @@ See also @mref{poissimp}.
 @c (%o3)                       - cos(x)
 @c @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification functions}
 @closecatbox
 @end deffn
 
 @c -----------------------------------------------------------------------------
-@anchor{trigsign}
-@defvr {Option variable} trigsign
-Default value: @code{true}
-
-When @code{trigsign} is @code{true}, it permits simplification of negative
-arguments to trigonometric functions.  E.g., @code{sin(-x)} will become
-@code{-sin(x)} only if @code{trigsign} is @code{true}.
-
-@opencatbox
-@category{Trigonometric functions}
-@category{Simplification flags and variables}
-@closecatbox
-@end defvr
-
-@c -----------------------------------------------------------------------------
 @anchor{trigsimp}
 @deffn {Function} trigsimp (@var{expr})
 
-@iftex
-Employs the identities
-@tex
-$\sin\left(x\right)^2 + \cos\left(x\right)^2 = 1$
-@end tex
-and
-@tex
-$\cosh\left(x\right)^2 - \sinh\left(x\right)^2 = 1$
-@end tex
-to simplify expressions containing @code{tan}, @code{sec},
-etc., to @code{sin}, @code{cos}, @code{sinh}, @code{cosh}.
-@end iftex
-@ifnottex
-Employs the identities @math{sin(x)^2 + cos(x)^2 = 1} and
-@math{cosh(x)^2 - sinh(x)^2 = 1} to simplify expressions containing @code{tan},
-@code{sec}, etc., to @code{sin}, @code{cos}, @code{sinh}, @code{cosh}.
-@end ifnottex
 
-@code{trigreduce}, @code{ratsimp}, and @code{radcan} may be
+Employs the identities
+@html
+\(\sin\left(x\right)^2 + \cos\left(x\right)^2 = 1\)
+@end html
+@ifinfo
+@math{sin(x)^2+cos(x)^2 = 1}
+@end ifinfo
+@iftex
+@math{\sin\left(x\right)^2 + \cos\left(x\right)^2 = 1}
+@end iftex
+and 
+@html
+\(\cosh\left(x\right)^2 - \sinh\left(x\right)^2 = 1\)
+@end html
+@ifinfo
+@math{cosh(x)^2-sinh(x)^2 = 1}
+@end ifinfo
+@iftex
+@math{\cosh\left(x\right)^2 - \sinh\left(x\right)^2 = 1}
+@end iftex
+to
+@c @iftex
+@c @tex
+@c $\sin\left(x\right)^2 + \cos\left(x\right)^2 = 1$
+@c @end tex
+@c and
+@c @tex
+@c $\cosh\left(x\right)^2 - \sinh\left(x\right)^2 = 1$
+@c @end tex
+simplify expressions containing @code{tan}, @code{sec},
+etc., to @code{sin}, @code{cos}, @code{sinh}, @code{cosh}.
+@c @end iftex
+@c @ifnottex
+@c Employs the identities @math{sin(x)^2 + cos(x)^2 = 1} and
+@c @math{cosh(x)^2 - sinh(x)^2 = 1} to simplify expressions containing @code{tan},
+@c @code{sec}, etc., to @code{sin}, @code{cos}, @code{sinh}, @code{cosh}.
+@c @end ifnottex
+
+@mref{trigreduce}, @mref{ratsimp}, and @mref{radcan} may be
 able to further simplify the result.
 
 @code{demo ("trgsmp.dem")} displays some examples of @code{trigsimp}.
 @c MERGE EXAMPLES INTO THIS ITEM
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification functions}
 @closecatbox
@@ -2916,7 +3532,7 @@ possible.
 @c ===beg===
 @c trigrat(sin(3*a)/sin(a+%pi/3));
 @c ===end===
-@example
+@example maxima
 @group
 (%i1) trigrat(sin(3*a)/sin(a+%pi/3));
 (%o1)            sqrt(3) sin(2 a) + cos(2 a) - 1
@@ -2934,14 +3550,14 @@ Addison-Wesley), section 1.5.5, Morley theorem.
 @c ac2 : ba^2 + bc^2 - 2*bc*ba*cos(b);
 @c trigrat (ac2);
 @c ===end===
-@example
+@example maxima
 (%i1) c : %pi/3 - a - b$
 @group
 (%i2) bc : sin(a)*sin(3*c)/sin(a+b);
-                                           %pi
-                 sin(a) sin(3 ((- b) - a + ---))
-                                            3
-(%o2)            -------------------------------
+                                          %pi
+                  sin(a) sin(3 (- b - a + ---))
+                                           3
+(%o2)             -----------------------------
                            sin(b + a)
 @end group
 @group
@@ -2963,18 +3579,18 @@ Addison-Wesley), section 1.5.5, Morley theorem.
                 2     %pi
              sin (a - ---)
                        3
-                                         %pi
- - (2 sin(a) sin(3 a) sin(3 ((- b) - a + ---)) cos(b)
-                                          3
+                                       %pi
+ - (2 sin(a) sin(3 a) sin(3 (- b - a + ---)) cos(b)
+                                        3
              %pi            %pi
  sin(b + a - ---))/(sin(a - ---) sin(b + a))
               3              3
-      2       2                %pi
-   sin (a) sin (3 ((- b) - a + ---))
-                                3
- + ---------------------------------
-                 2
-              sin (b + a)
+      2       2              %pi
+   sin (a) sin (3 (- b - a + ---))
+                              3
+ + -------------------------------
+                2
+             sin (b + a)
 @end group
 @group
 (%i5) trigrat (ac2);
@@ -2988,15 +3604,94 @@ Addison-Wesley), section 1.5.5, Morley theorem.
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Trigonometric functions}
 @category{Simplification functions}
 @closecatbox
 @end deffn
 
+
+@node Additional Functions,  , Explicit Simplifications Using Identities, Functions and Variables for Trigonometric
+@subsubsection Additional Functions
+@c IS THIS DESCRIPTION ACCURATE ??
+@c LET'S BE EXPLICIT ABOUT EXACTLY WHAT ARE THE RULES IMPLEMENTED BY THIS PACKAGE
+
+@c -----------------------------------------------------------------------------
+@anchor{atrig1}
+@defvr {Package} atrig1
+
+The @code{atrig1} package contains several additional simplification rules
+for inverse trigonometric functions.  Together with rules
+already known to Maxima, the following angles are fully implemented:
+@math{0},
+@html
+\(\pi/6,\)
+@end html
+@ifinfo
+@math{%pi/6,}
+@end ifinfo
+@iftex
+@math{\pi/6,}
+@end iftex
+@html
+\(\pi/4,\)
+@end html
+@ifinfo
+@math{%pi/4,}
+@end ifinfo
+@iftex
+@math{\pi/4,}
+@end iftex
+@html
+\(\pi/3,\)
+@end html
+@ifinfo
+@math{%pi/3,}
+@end ifinfo
+@iftex
+@math{\pi/3,}
+@end iftex
+and
+@html
+\(\pi/2.\)
+@end html
+@ifinfo
+@math{%pi/2.}
+@end ifinfo
+@iftex
+@math{\pi/2.}
+@end iftex
+Corresponding angles in the other three quadrants are also available.
+Do @code{load("atrig1");} to use them.
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@category{Package atrig1}
+@closecatbox
+@end defvr
+
+@c IS THIS DESCRIPTION ACCURATE ??
+@c LET'S BE EXPLICIT ABOUT EXACTLY WHAT ARE THE RULES IMPLEMENTED BY THIS PACKAGE
+
+@c -----------------------------------------------------------------------------
+@anchor{ntrig}
+@defvr {Package} ntrig
+
+The @code{ntrig} package contains a set of simplification rules that are
+used to simplify trigonometric function whose arguments are of the form
+@code{@var{f}(@var{n} %pi/10)} where @var{f} is any of the functions
+@code{sin}, @code{cos}, @code{tan}, @code{csc}, @code{sec} and @code{cot}.
+@c NEED TO LOAD THIS PACKAGE ??
+
+@opencatbox{Categories:}
+@category{Trigonometric functions}
+@category{Package ntrig}
+@closecatbox
+@end defvr
+
 @c -----------------------------------------------------------------------------
 @page
-@node Random Numbers, , Trigonometric Functions, Mathematical Functions
+@node Random Numbers,  , Trigonometric Functions, Elementary Functions
 @section Random Numbers
 @c -----------------------------------------------------------------------------
 
@@ -3030,7 +3725,7 @@ using the current computer clock time as the seed.
 @code{make_random_state (false)} returns a copy of the current state
 of the random number generator.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Random numbers}
 @closecatbox
 @end deffn
@@ -3043,7 +3738,7 @@ Copies @var{s} to the random number generator state.
 
 @code{set_random_state} always returns @code{done}.
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Random numbers}
 @closecatbox
 @end deffn
@@ -3082,7 +3777,7 @@ Examples:
 @c random (10.0);
 @c random (100.0);
 @c ===end===
-@example
+@example maxima
 (%i1) s1: make_random_state (654321)$
 @group
 (%i2) set_random_state (s1);
@@ -3107,7 +3802,7 @@ Examples:
 @end group
 @group
 (%i8) random (10.0);
-(%o8)                   4.394553645870825
+(%o8)                  4.3945536458708245
 @end group
 @group
 (%i9) random (100.0);
@@ -3123,7 +3818,7 @@ Examples:
 @end group
 @group
 (%i12) random (10.0);
-(%o12)                  4.394553645870825
+(%o12)                 4.3945536458708245
 @end group
 @group
 (%i13) random (100.0);
@@ -3131,7 +3826,7 @@ Examples:
 @end group
 @end example
 
-@opencatbox
+@opencatbox{Categories:}
 @category{Random numbers}
 @category{Numerical methods}
 @closecatbox

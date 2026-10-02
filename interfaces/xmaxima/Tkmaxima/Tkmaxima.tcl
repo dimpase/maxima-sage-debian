@@ -1,7 +1,9 @@
-# -*-mode: tcl; fill-column: 75; tab-width: 8; coding: iso-latin-1-unix -*-
-#
-#       $Id: Tkmaxima.tcl,v 1.7 2011-03-21 09:17:17 villate Exp $
-#
+############################################################
+# Tkmaxima.tcl                                                  #
+# Copyright (C) 1998 William F. Schelter                   #
+# For distribution under GNU public License.  See COPYING. #
+#                                                          #
+############################################################
 
 # The Header.tcl is created by autoconf to make the xmaxima script
 # auto executable. After the header the various tcl pieces are put together:
@@ -13,11 +15,6 @@
 
 # Source Tkmaxima/COPYING.tcl           ;# license info
 # Source Tkmaxima/Cygwin.tcl 		;# required - must not be autoloaded
-# Source Utils/FileDlg.tcl
-# Source Utils/Messages.tcl
-# Source Utils/Misc.tcl
-# Source ObjTcl/Object.tcl
-# Source ObjTcl/Feedback.tcl
 # Source Tkmaxima/Constants.tcl 	;# required - must not be autoloaded
 # Source Tkmaxima/Preamble.tcl 		;# required - must not be autoloaded
 # Source Tkmaxima/Readdata.tcl 		;# can be autoloaded
@@ -37,7 +34,6 @@
 # Source Tkmaxima/Plotconf.tcl 		;# can be autoloaded
 # Source Tkmaxima/Adams.tcl 		;# can be autoloaded
 # Source Tkmaxima/Rk.tcl 		;# can be autoloaded
-# Source Tkmaxima/rk4.tcl
 # Source Tkmaxima/Plotdf.tcl 		;# can be autoloaded
 # Source Tkmaxima/Plot2d.tcl 		;# defined globals
 # Source Tkmaxima/Matrix.tcl 		;# can be autoloaded
@@ -51,7 +47,6 @@
 # Source Tkmaxima/Browser.tcl 		;# defines globals
 # Source Tkmaxima/Bindings.tcl 		;# defines bindings
 # Source Tkmaxima/Wmenu.tcl 		;# can be autoloaded
-# Source Tkmaxima/Tryftp2.tcl 		;# can be autoloaded
 # Source Tkmaxima/Myhtml.tcl 		;# defines globals and tags
 # Source Tkmaxima/Myhtml1.tcl 		;# can be autoloaded
 # Source Tkmaxima/Base64.tcl 		;# can be autoloaded
@@ -60,7 +55,6 @@
 # Source Tkmaxima/OpenMath.tcl 		;# active
 # Source Tkmaxima/NConsole.tcl 		;# can be autoloaded
 # Source Tkmaxima/String.tcl 		;# can be autoloaded
-# Source Tkmaxima/Prefs.tcl 		;# can be autoloaded
 # Source Tkmaxima/RunMaxima.tcl		;# can be autoloaded
 # Source Tkmaxima/Menu.tcl
 # Source Tkmaxima/Paths.tcl
@@ -93,9 +87,9 @@ Options:
 }
 
 proc lMaxInitSetOpts {} {
-    global maxima_priv argv argv0
-    set maxima_priv(opts) {}
-    set maxima_priv(plotfile) {}
+    global argv argv0
+    set ::xmaxima_priv(opts) {}
+    set ::xmaxima_priv(plotfile) {}
     set state key
     foreach arg $argv {
 	switch -- $state {
@@ -113,7 +107,7 @@ proc lMaxInitSetOpts {} {
 		    {^--$}             {set state noopts}
 		    {^-.*}             {vMaxUsage $argv0 "Unknown option $arg"}
 		    default {
-			lappend maxima_priv(plotfile) $arg
+			lappend ::xmaxima_priv(plotfile) $arg
 			set state file
 		    }
 		}
@@ -124,78 +118,23 @@ proc lMaxInitSetOpts {} {
 		    default {lappend plotfile $arg}
 		}
 	    }
-	    url     {set maxima_priv(firstUrl) $arg; set state key}
-	    version {lappend maxima_priv(opts) -u $arg; set state key}
-	    lisp    {lappend maxima_priv(opts) -l $arg; set state key}
-	    lispoptions  {lappend maxima_priv(opts) [format " -X \"%s\" " $arg]}
+	    url     {set ::xmaxima_priv(firstUrl) $arg; set state key}
+	    version {lappend ::xmaxima_priv(opts) -u $arg; set state key}
+	    lisp    {lappend ::xmaxima_priv(opts) -l $arg; set state key}
+	    lispoptions  {lappend ::xmaxima_priv(opts) [format " -X \"%s\" " $arg]}
 	    noopts  {lappend file $arg}
 	}
     }
 }
 
-object_class MAXTkmaxima {
-
-    method create {} {
-	global tcl_platform maxima_priv
-
-	if {$tcl_platform(platform) == "windows" } {
-
-	    set dir [file dir [info name]]
-	    # These should be in the same directory as the xmaxima.exe
-	    set maxima_priv(kill) [file join $dir winkill.exe]
-
-	    set file [file join $dir tclwinkill.dll]
-	    if {[file isfile $file]} {
-		catch {load  $file}
-	    }
-	    unset file
-	} else {
-	    # unix
-	    set maxima_priv(kill) kill
-	}
-
-    }
-
-    method install {} {
-	global maxima_priv argv argv0 env fontSize maxima_default
-
-	wm withdraw .
-	wm title . [mc {Xmaxima: console}]
-
-	set fr .maxima
-	MAXGui gui
-	set w [gui install $fr]
-
-	#mike Defer looking for maxima until the interface has been built
-	vMAXSetMaximaCommand
-
-	#mike Defer the starting of maxima until the interface has been built
-	if {[catch {runOneMaxima $w} err]} {
-	    tide_failure [concat [mc "Error starting Maxima:"] "\n$err"]
-	    return
-	}
-	after idle focus $maxima_priv(cConsoleText)
-    }
-
-    method exit {{text ""} {val "0"}} {
-	global maxima_priv
-	# save user settings for future sessions
-	catch {savePreferences}
-	update
-	if {$text == ""} {
-	    if {[info exists maxima_priv(cConsoleText)]} {
-		set text $maxima_priv(cConsoleText)
-	    }
-	}
-	
-	if {$text != ""} {
-	    if {[catch {closeMaxima $text} err]} {
-		tide_failure $err
-	    }
-	}
-	tkexit $val
-    }
-
-
-}
-
+# Exists Maxima after saving the current settings
+proc maxExit {{text ""} {val "0"}} {
+    # save user settings for future sessions
+    catch {savePreferences}
+    update
+    if {$text eq ""} {
+        if {[info exists ::xmaxima_priv(cConsoleText)]} {
+            set text $::xmaxima_priv(cConsoleText)}
+    } elseif {[catch {closeMaxima $text} err]} {
+        tk_messageBox -title Error -icon error -message $err}
+    tkexit $val}

@@ -25,8 +25,7 @@
 ;;; DAMAGE.
 (in-package :intl)
 
-(eval-when #-gcl (:compile-toplevel :execute)
-	   #+gcl (compile eval)
+(eval-when (:compile-toplevel :execute)
   (defparameter intl::*default-domain* "maxima")
   (unless (and (fboundp 'intl:read-translatable-string)
 	       (eq (get-macro-character #\_)
@@ -278,8 +277,7 @@
     (multiple-value-bind (tree end) (conditional (next))
       (unless (eq end 'end)
 	(error _"Expecting end of expression.  ~S." end))
-      (let (#-gcl
-	    (*compile-print* nil))
+      (let ((*compile-print* nil))
 	(compile nil
 		 `(lambda (n)
 		    (declare (type (unsigned-byte 32) n)
@@ -493,10 +491,11 @@
 	     #+scl (cdr (assoc var ext:*environment-list* :test 'string=))
 	     #+SBCL (sb-ext:posix-getenv var)
 	     #+Allegro (system:getenv var)
-	     #+LispWorks (hcl:getenv var)
+	     #+LispWorks (lw:environment-variable var)
 	     #+clisp (ext:getenv var)
 	     #+(or openmcl mcl) (ccl::getenv var)
-	     #+(or gcl ecl) (si::getenv var)))
+	     #+(or gcl ecl) (si::getenv var)
+	     #+abcl (ext:getenv var)))
     (if (equal val "") nil val)))
 
 (defun setlocale (&optional locale)
@@ -508,8 +507,7 @@
 		     *locale*)))
 
 (defmacro textdomain (domain)
-  `(eval-when #-gcl (:compile-toplevel :execute)
-	      #+gcl (compile eval)
+  `(eval-when (:compile-toplevel :execute)
      (setf *default-domain* ,domain)))
 
 (defmacro gettext (string)
@@ -772,8 +770,7 @@
 
 
 
-(eval-when #-gcl (:compile-toplevel :execute)
-	   #+gcl (compile eval)
+(eval-when (:compile-toplevel :execute)
   (setq *default-domain* "maxima")
   (unless (and (fboundp 'intl:read-translatable-string)
 	       (eq (get-macro-character #\_)

@@ -1,6 +1,6 @@
 ;;; -*-  Mode: Lisp; Package: Maxima; Syntax: Common-Lisp; Base: 10 -*- ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;     The data in this file contains enhancments.                    ;;;;;
+;;;     The data in this file contains enhancements.                   ;;;;;
 ;;;                                                                    ;;;;;
 ;;;  Copyright (c) 1984,1987 by William Schelter,University of Texas   ;;;;;
 ;;;     All rights reserved                                            ;;;;;
@@ -36,7 +36,6 @@
 ;;; ((MQAPPLY ARRAY) X Y) is a strange form, meaning (X)[Y].
 
 (defun marrayref (aarray ind1 &rest inds)
-  (declare (special fixunbound flounbound))
   (typecase aarray
     (cl:array
      (case (array-element-type aarray)
@@ -45,14 +44,14 @@
        (t
 	(merror (intl:gettext "MARRAYREF: encountered array ~M of unknown type.") aarray))))
     (cl:hash-table
-     (gethash (if inds (cons ind1 inds) inds) aarray))
+     (gethash (if inds (cons ind1 inds) ind1) aarray))
     (cl:symbol
      (if $use_fast_arrays
          (let ((tem (and (boundp aarray) (symbol-value aarray))))
            (simplify (cond ((arrayp tem)
                             (apply #'aref tem ind1 inds))
                            ((hash-table-p tem)
-                            (gethash (if inds (cons ind1 inds) inds) tem))
+                            (gethash (if inds (cons ind1 inds) ind1) tem))
                            ((eq aarray 'mqapply)
                             (apply #'marrayref ind1 inds))
                            ((mget aarray 'hashar)
@@ -73,7 +72,7 @@
                                     ((fixnum) (= val fixunbound))
                                     ((t) (eq val munbound))
                                     (t (merror (intl:gettext "MARRAYREF: encountered array pointer ~S of unknown type.") ap)))
-                                  (arrfind `((,aarray ,aarray) ,ind1 ,@inds))
+                                  (arrfind `((,aarray array) ,ind1 ,@inds))
                                   val)))
                            ((setq ap (mget aarray 'array))
                             (arrfind `((,aarray array) ,ind1 ,@inds)))
@@ -86,7 +85,7 @@
     (cl:list
      (simplify (if (member (caar aarray) '(mlist $matrix) :test #'eq)
 		   (list-ref aarray (cons ind1 inds))
-		   `((mqapply aarray) ,aarray ,ind1 ,@inds))))
+		   `((mqapply array) ,aarray ,ind1 ,@inds))))
     (t
      (merror (intl:gettext "MARRAYREF: cannot retrieve an element of ~M") aarray))))
 
@@ -174,10 +173,7 @@
 	(t
 	 (list-ref (list-ref l `(,(car indexl))) (cdr indexl)))))
 
-(declare-top (special $dispflag))
-
 (defun display-for-tr (labelsp equationsp &rest argl)
-  (declare (special *linelabel*))
   (do ((argl argl (cdr argl))
        (lablist nil)
        (tim 0))
@@ -202,7 +198,6 @@
 	  (setf (symbol-value *linelabel*) ans)))
       (setq tim (get-internal-run-time))
       (let ((*display-labels-p* (not (null lablist))))
-	(declare (special *display-labels-p*))
 	(displa `((mlabel) ,(cond (labelsp *linelabel*)) ,ans)))
       (mterpri)
       (timeorg tim))))
@@ -227,7 +222,7 @@
 	     (add2lnc fnname $arrays)
 	     (setq ary (mgetl fnname '(hashar array))))
 	 (unless (= (if (eq (car ary) 'hashar)
-			(funcall (cadr ary) 2)
+			(aref (symbol-array (cadr ary)) 2)
 			(length (cdr (arraydims (cadr ary)))))
 		    number-of-args)
 	   (merror (intl:gettext "INSURE-ARRAY-PROPS: array ~:@M already defined with different dimensions.") fnname)))
@@ -250,8 +245,6 @@
   (let ((a (get var 'assign)))
     (if a (funcall a var val))))
 
-(declare-top (special maplp))
-
 (defun maplist_tr (fun  l1 &rest l)
   (setq l (cons l1 (copy-list l)))
   (simplify (let ((maplp t) res)
@@ -266,70 +259,68 @@
 ;;; to call the function IS because double-evaluation will then
 ;;; result, which is wrong, not to mention being incompatible with
 ;;; the interpreter.
-;;;
-;;; This code is taken from the COMPAR module, and altered such that calls to
-;;; the macsyma evaluator do not take place. It would be a lot
-;;; better to simply modify the code in COMPAR! However, mumble...
-;;; Anyway, be careful of changes to COMPAR that break this code.
 
-(defun is-boole-check (form)
-  (cond ((null form) nil)
-	((eq form t) t)
+(defun boole-verify (form error? $unknown?)
+  (cond ((typep form 'boolean)
+         form)
+        (error?
+         (pre-err form))
+        ($unknown?
+         '$unknown)
+        (t
+         form)))
+
+(defun boole-eval (form error? $unknown?)
+  (if (typep form 'boolean)
+      form
+      (let ((ans (mevalp_tr form error?)))
+        (if (or (typep ans 'boolean)
+                (not $unknown?))
+            ans
+            '$unknown))))
+
+(defun $is-boole-verify (form)
+  (boole-verify form $prederror t))
+
+(defun $is-boole-eval (form)
+  (boole-eval form $prederror t))
+
+(setf (get '$is 'tr-boole-verify) '$is-boole-verify)
+(setf (get '$is 'tr-boole-eval) '$is-boole-eval)
+
+(defun $maybe-boole-verify (form)
+  (boole-verify form nil t))
+
+(defun $maybe-boole-eval (form)
+  (boole-eval form nil t))
+
+(setf (get '$maybe 'tr-boole-verify) '$maybe-boole-verify)
+(setf (get '$maybe 'tr-boole-eval) '$maybe-boole-eval)
+
+(defun mcond-boole-verify (form)
+  (boole-verify form $prederror nil))
+
+(defun mcond-boole-eval (form)
+  (boole-eval form $prederror nil))
+
+(setf (get 'mcond 'tr-boole-verify) 'mcond-boole-verify)
+(setf (get 'mcond 'tr-boole-eval) 'mcond-boole-eval)
+
+(defun mevalp_tr (pat error?)
+  (boole-verify (mevalp1_tr pat error?) error? nil))
+
+(defun mevalp1_tr (pat error?)
+  (cond ((atom pat) pat)
+	((member (caar pat) '(mnot mand mor) :test #'eq)
+	 (flet ((pred-eval (o) (mevalp_tr o error?)))
+	   (cond ((eq 'mnot (caar pat)) (is-mnot #'pred-eval (cadr pat)))
+	         ((eq 'mand (caar pat)) (is-mand #'pred-eval (cdr pat)))
+	         (t (is-mor #'pred-eval (cdr pat))))))
 	(t
-	 ;; We check for T and NIL quickly, otherwise go for the database.
-	 (mevalp_tr form $prederror nil))))
-
-(defun maybe-boole-check (form)
-  (mevalp_tr form nil nil))
-
-(defun mevalp_tr (pat error? meval?)
-  (let (patevalled ans)
-    (declare (special patevalled))
-    (setq ans (mevalp1_tr pat error? meval?))
-    (cond ((member ans '(t nil) :test #'eq) ans)
-	  (error?
-	   (pre-err patevalled))
-	  ('else '$unknown))))
-
-(defun mevalp1_tr (pat error? meval?)
-  (declare (special patevalled))
-  (cond ((and (not (atom pat)) (member (caar pat) '(mnot mand mor) :test #'eq))
-	 (cond ((eq 'mnot (caar pat)) (is-mnot_tr (cadr pat) error? meval?))
-	       ((eq 'mand (caar pat)) (is-mand_tr (cdr pat) error? meval?))
-	       (t (is-mor_tr (cdr pat) error? meval?))))
-	((atom (setq patevalled (if meval? (meval pat) pat))) patevalled)
-	((member (caar patevalled) '(mnot mand mor) :test #'eq) (mevalp1_tr patevalled
-									    error?
-									    meval?))
-	(t (mevalp2 patevalled (caar patevalled) (cadr patevalled) (caddr patevalled)))))
-
-(defun is-mnot_tr (pred error? meval?)
-  (setq pred (mevalp_tr pred error? meval?))
-  (cond ((eq t pred) nil)
-	((not pred))
-	(t (pred-reverse pred))))
-
-(defun is-mand_tr (pl error? meval?)
-  (do ((dummy) (npl))
-      ((null pl) (cond ((null npl))
-		       ((null (cdr npl)) (car npl))
-		       (t (cons '(mand) (nreverse npl)))))
-    (setq dummy (mevalp_tr (car pl) error? meval?)
-	  pl (cdr pl))
-    (cond ((eq t dummy))
-	  ((null dummy) (return nil))
-	  (t (setq npl (cons dummy npl))))))
-
-(defun is-mor_tr (pl error? meval?)
-  (do ((dummy) (npl))
-      ((null pl) (cond ((null npl) nil)
-		       ((null (cdr npl)) (car npl))
-		       (t (cons '(mor) (nreverse npl)))))
-    (setq dummy (mevalp_tr (car pl) error? meval?)
-	  pl (cdr pl))
-    (cond ((eq t dummy) (return t))
-	  ((null dummy))
-	  (t (setq npl (cons dummy npl))))))
+	 (let ((ans (mevalp2 pat (caar pat) (cadr pat) (caddr pat))))
+	   (if (typep ans 'boolean)
+	       ans
+	       pat)))))
 
 ;; Some functions for even faster calling of arrays.
 

@@ -63,7 +63,7 @@ g(x+1);
 is(inpart(%,0) = nounify(limit));
 true;
 dpart(x+y/z^2,1,2,1);
-y/?mbox(z)^2+x;
+y/box(z)^2+x;
 exp:expand((b+a)^4);
 b^4+4*a*b^3+6*a^2*b^2+4*a^3*b+a^4;
 (b+a)^2*(y+x)^2;
@@ -75,7 +75,7 @@ exp:exp/%;
 factor(%);
 (b+a)^2/(y+x)^2;
 dpart(exp,2,4);
-(b^4+4*a*b^3+6*a^2*b^2+4*a^3*b+a^4)/(b^2*y^2+2*a*b*y^2+a^2*y^2+?mbox(2*b^2*x*y)+4*a*b*x*y+2*a^2*x*y+b^2*x^2+2*a*b*x^2+a^2*x^2);
+(b^4+4*a*b^3+6*a^2*b^2+4*a^3*b+a^4)/(b^2*y^2+2*a*b*y^2+a^2*y^2+box(2*b^2*x*y)+4*a*b*x*y+2*a^2*x*y+b^2*x^2+2*a*b*x^2+a^2*x^2);
 part(exp,2,4);
 2*b^2*x*y;
 
@@ -90,6 +90,16 @@ operatorp(x+y,["*"]);
 false$
 operatorp(x+y,"*");
 false$
+
+/* Bug #4307: partswitch affects op and operatorp */
+block([partswitch:false],errcatch(op('x)));
+[];
+block([partswitch:true],errcatch(op('x)));
+[];
+block([partswitch:false],errcatch(operatorp('x,'end)));
+[];
+block([partswitch:true],errcatch(operatorp('x,'end)));
+[];
 
 subst(a,x+y,x+(x+y)^2+y);
 y+x+a^2;
@@ -162,6 +172,41 @@ cos(11/10)/1000;
 (load(lrats), 0);
 0;
 
+/* SF bug #4176: fullratsubst
+   In these examples, we make sure that both forms of calling
+   fullratsubst work as described in the documentation.
+*/
+fullratsubst(3*z^8 + 13, z^9, 147*z^13 -637);
+35721*z^8+1911*z^4+5733*z^3+17199*z^2+51597*z+154154;
+
+fullratsubst(z^9 = 3*z^8 + 13, 147*z^13 -637);
+35721*z^8+1911*z^4+5733*z^3+17199*z^2+51597*z+154154;
+
+fullratsubst([z^9 = 3*z^8 + 13], 147*z^13 -637);
+35721*z^8+1911*z^4+5733*z^3+17199*z^2+51597*z+154154;
+
+
+/* The following are examples from the documentation for
+   fullratsubst, ratsubst and fullratsubstflag
+*/
+lratsubst ([a^2 = b, c^2 = d], (a + e)*c*(a + c));
+(d + a*c)*e + a*d + b*c;
+
+lratsubst (a^2 = b, a^3);
+a*b;
+
+ratsubst (b*a, a^2, a^3);
+a^2*b;
+
+fullratsubst (b*a, a^2, a^3);
+a*b^2;
+
+fullratsubst ([a^2 = b, b^2 = c, c^2 = a], a^3*b*c);
+b;
+
+fullratsubst (a^2 = b*a, a^3);
+a*b^2;
+
 /* SF bug #3376: fullratsubst doesn't catch infinite recursions
    In this example, fullratsubst1 should loop exactly lrats_max_iter=30 times,
    adding a power of b each time.
@@ -181,7 +226,7 @@ c $
 errcatch(lratsubst([[a=b,b=c],[b=c]],a)) $
 [] $
 
-lratsubst1 ([phi_2 = 1.1], 0.001*cos(phi_2)), numer;
+lratsubst ([phi_2 = 1.1], 0.001*cos(phi_2)), numer;
 0.001*cos(11/10);
 
 /* original example from #3658;
@@ -216,7 +261,7 @@ fl,
 /* SF bug #2012: "Lisp stack overflow with dpart." */
 
 dpart(cos(a+b),1);
-cos(?mbox(a+b));
+cos(box(b+a));
 
 /* SF bug #3390: "?great mishandles box" */
 
@@ -226,3 +271,25 @@ true;
 ?great(-box(x+t),box(x+t));
 false;
 
+/* SF bug #3848: "ratsubst error ZEROP: ((MMINUS) 1) is not a number" */
+
+(kill (y),
+ d:-(3^(3/2)*%i+1)^(1/2)/3,
+ ratsubst(y,5,d));
+-(sqrt(3^(3/2)*%i+1)/3);
+
+ratsubst (1, 1, -1/2);
+-1/2;
+
+kill(all);
+done;
+
+/* verify that box(...) expressions are displayed as expected in 1-d output
+ * (2-d output is tested elsewhere)
+ */
+
+string (box (a + b + c));
+"box(c+b+a)";
+
+string (box (a + b + c, FOO));
+"box(c+b+a,FOO)";
