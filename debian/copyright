@@ -118,9 +118,7 @@ Files: doc/intromax/intromax.html
  share/finance/finance.mac
  share/fourier_elim/fourier_elim.lisp
  share/hypergeometric/abramowitz_id.mac
- share/hypergeometric/hypergeometric.lisp
  share/hypergeometric/hypergeometric_mac.mac
- share/hypergeometric/nfloat.lisp
  share/linearalgebra/eigens-by-jacobi.lisp
  share/linearalgebra/linearalgebra.mac
  share/linearalgebra/lu.lisp
@@ -133,6 +131,8 @@ Files: doc/intromax/intromax.html
  share/solve_rat_ineq/solve_rat_ineq.mac
  src/conjugate.lisp
  src/expintegral.lisp
+ src/hypergeometric.lisp
+ src/nfloat.lisp
  src/nset.lisp
 Copyright: 1988-2010, Richard H. Rand.
   2000-2009, Barton Willis
