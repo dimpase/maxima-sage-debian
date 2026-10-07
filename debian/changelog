@@ -1,4 +1,4 @@
-maxima-sage (5.50.0-1) UNRELEASED; urgency=medium
+maxima-sage (5.50.0-1) unstable; urgency=medium
 
   * New upstream version.
   * Remove patches:
@@ -9,7 +9,7 @@ maxima-sage (5.50.0-1) UNRELEASED; urgency=medium
   * Add patch:
     - no-mathjax.patch
 
- -- Tobias Hansen <thansen@debian.org>  Fri, 02 Oct 2026 15:52:31 +0100
+ -- Tobias Hansen <thansen@debian.org>  Wed, 07 Oct 2026 19:15:33 +0100
 
 maxima-sage (5.45.1-2) unstable; urgency=medium
 
