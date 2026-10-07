@@ -266,6 +266,12 @@ License: GPL-1+
 Files: src/intl.lisp
 Copyright: 1999-2010, Paul Foley (mycroft@actrix.gen.nz)
 License: Expat
+
+Files: desktopintegration/net.sourceforge.maxima.xmaxima.appdata.xml
+Copyright: 2019-2024 the Maxima developers
+License: Expat
+
+License: Expat
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this Software to deal in the Software without restriction,
  including without limitation the rights to use, copy, modify, merge,
