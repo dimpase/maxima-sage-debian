@@ -1,3 +1,4 @@
 renew-cl-info.lsp-patch-to-set-alternative-info-directory
 change_name_to_maxima-sage.patch
 handle-multiple-ldflags.patch
+no-mathjax.patch

@@ -6,6 +6,8 @@ maxima-sage (5.50.0-1) UNRELEASED; urgency=medium
     - matrixexp.patch (fixed upstream)
     - undoing_true_false_printing_patch.patch (does not apply anymore)
     - texinfo-encoding.patch (applied upstream)
+  * Add patch:
+    - no-mathjax.patch
 
  -- Tobias Hansen <thansen@debian.org>  Fri, 02 Oct 2026 15:52:31 +0100
 

@@ -1,0 +1,16 @@
+Description: Don't use mathjax for the html documentation
+ makeinfo adds code for loading remote mathjax which triggers
+ the lintian warning privacy-breach-generic.
+Author: Tobias Hansen <thansen@debian.org>
+
+--- a/doc/info/build_html.sh.in
++++ b/doc/info/build_html.sh.in
+@@ -191,7 +191,7 @@
+ # is not set, set the HTML_MATH variable so that makeinfo will include
+ # mathjax for us.
+ if [ -z "@NEED_MATHJAX@" ]; then
+-    SET_HTML_MATH="--set-customization-variable HTML_MATH=mathjax"
++    SET_HTML_MATH="--set-customization-variable HTML_MATH=none"
+ fi
+ 
+ if [ -n "@USE_PYGMENTS@" ]; then
