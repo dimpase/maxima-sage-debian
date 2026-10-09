@@ -34,4 +34,4 @@ debian/%.install: debian/%.install.in
 	cat $< | sed "s,@MVERS@,$(MVERS),g" >$@
 
 override_dh_compress:
-	dh_compress -Xmaxima-index.lisp -Xmaxima.info
+	dh_compress -X.lisp -Xmaxima.info
