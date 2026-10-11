@@ -11,7 +11,8 @@ Vcs-Browser: https://salsa.debian.org/math-team/maxima-sage
 
 Package: maxima-sage
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ecl (>= 26.5.5+dfsg-1~)
+Breaks: python3-sage (<< 10.9-4~)
 Recommends: maxima-sage-share
 Suggests: maxima-sage-doc
 Description: Computer algebra system -- base system
