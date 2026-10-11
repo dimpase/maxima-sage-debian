@@ -1,0 +1,3 @@
+Tests: command-line, ecl-module
+Depends: @, ecl (>= 26.5.5+dfsg-1~)
+Restrictions: allow-stderr

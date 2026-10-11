@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+ecl --norc \
+  --eval '(handler-case
+    (progn
+      (require :maxima)
+      (unless (= (eval (read-from-string
+        "(maxima::meval (quote ((maxima::mplus) 40 2)))")) 42)
+        (error "Unexpected Maxima result"))
+      (ext:quit 0))
+    (error (condition)
+      (format *error-output* "~A~%" condition)
+      (ext:quit 1)))'
