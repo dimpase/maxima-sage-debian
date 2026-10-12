@@ -19,8 +19,6 @@ override_dh_auto_install:
 	mkdir -p debian/tmp/usr/share/doc
 	mv debian/tmp/usr/share/maxima-sage/$(MVERS)/doc debian/tmp/usr/share/doc/maxima-sage-doc
 	ln -snf ../../doc/maxima-sage-doc debian/tmp/usr/share/maxima-sage/$(MVERS)/doc
-	mkdir -p debian/tmp/usr/lib/ecl
-	cp src/binary-ecl/maxima.fas debian/tmp/usr/lib/ecl/
 	rm -f debian/tmp/usr/share/maxima-sage/$(MVERS)/share/logic/COPYING
 	rm -f debian/tmp/usr/share/maxima-sage/$(MVERS)/share/.gitattributes
 	chmod 755 debian/tmp/usr/share/maxima-sage/$(MVERS)/share/contrib/lurkmathml/mathmltest

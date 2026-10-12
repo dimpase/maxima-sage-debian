@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+unset ECL_SIDE_MODULES_PATH
 
 ecl --norc \
   --eval '(handler-case

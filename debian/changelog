@@ -3,6 +3,8 @@ maxima-sage (5.50.0-3) UNRELEASED; urgency=medium
   * Build with ECL 26.5.5 for the libecl26.5 transition.
   * Require matching ECL and prevent loading the new module in old Sage.
   * Add autopkgtests for the installed executable and ECL side module.
+  * Install maxima.fas directly with dh_install in ECL's module search
+    directory and test discovery without ECL_SIDE_MODULES_PATH overrides.
 
  -- Dima Pasechnik <dima@pasechnik.info>  Sun, 11 Oct 2026 12:00:00 -0500
 
